@@ -1,0 +1,6 @@
+@MSAuthentication.Api_HostAddress = http://localhost:5249
+
+GET {{MSAuthentication.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,6 @@
+@MSSeguimiento.Api_HostAddress = http://localhost:5249
+
+GET {{MSSeguimiento.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
