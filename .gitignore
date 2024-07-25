@@ -361,5 +361,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/MC.Mercurio.Desktop/Views/Home/FrmPrincipal.cs
-/MC.Mercurio.Core.sln
