@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "pDPWI9yuVDsxwXXnudgTBNydGlWWMvirIf6hCfIpwcM=",
+  "Source": "MSSeguimiento.Api",
+  "BasePath": "_content/MSSeguimiento.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

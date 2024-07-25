@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "4bJSSe4Ywtuo7QmFn9f6Lrp6YqAPHPqr1gvJbJ6+m6c=",
+  "Source": "MSNNA.Api",
+  "BasePath": "_content/MSNNA.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

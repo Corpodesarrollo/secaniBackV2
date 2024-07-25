@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "fvS5KjgfkhLlvgOLC8fyXXqHnn+BIa2iomiseFlLRQE=",
+  "Source": "MSAuthentication.Api",
+  "BasePath": "_content/MSAuthentication.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
