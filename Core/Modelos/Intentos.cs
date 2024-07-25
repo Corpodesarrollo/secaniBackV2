@@ -1,6 +1,8 @@
-﻿namespace Core.Modelos
+﻿using Core.Modelos.Common;
+
+namespace Core.Modelos
 {
-    public class Intento
+    public class Intentos : BaseEntity
     {
         public long ContactoNNAId { get; set; }
         public string Email { get; set; }

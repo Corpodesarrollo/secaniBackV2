@@ -1,13 +1,12 @@
-﻿using MSAuthentication.Core.DTOs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.response
+namespace MSAuthentication.Core.DTOs
 {
-    public class GetVwMenuResponse
+    public class MenuDto
     {
         public long PermisoId { get; set; }
         public string RoleId { get; set; }
@@ -20,7 +19,5 @@ namespace Core.response
         public int MenuOrden { get; set; }
         public int MenuIdPadre { get; set; }
         public int TieneSubMenu { get; set; }
-
-        public List<MenuDto>? SubMenus { get; set; }
     }
 }

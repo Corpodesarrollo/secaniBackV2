@@ -2,7 +2,7 @@
 
 namespace Core.Modelos
 {
-    public class NNA : BaseEntity
+    public class NNAs : BaseEntity
     {
         public int estadoId { get; set; }
         public int ResidenciaActualCategoriaId { get; set; }
