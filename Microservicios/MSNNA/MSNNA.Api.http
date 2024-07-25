@@ -1,0 +1,6 @@
+@MSNNA.Api_HostAddress = http://localhost:5021
+
+GET {{MSNNA.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
