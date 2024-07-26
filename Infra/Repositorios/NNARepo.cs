@@ -68,6 +68,29 @@ namespace Infra.Repositorios
             return response;
         }
 
+        public List<TPEstadoNNA> TpEstadosNNA()
+        {
+            var response = _context.TPEstadoNNA
+                                    .Select(e => new TPEstadoNNA
+                                    {
+                                        Id = e.Id,
+                                        EstadoNNA = e.EstadoNNA,
+                                        Descripcion = e.Descripcion,
+                                        ColorBG = e.ColorBG,
+                                        ColorText = e.ColorText
+                                    })
+                                    .ToList();
+
+            return response;
+        }
+
+        public List<VwAgentesAsignados> VwAgentesAsignados()
+        {
+            var response = _context.VwAgentesAsignados.ToList();
+
+            return response;
+        }
+
         public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId)
         {
             var response = new RespuestaResponse<ContactoNNA>();

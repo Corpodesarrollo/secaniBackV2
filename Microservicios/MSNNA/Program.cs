@@ -1,20 +1,8 @@
 using Core.Interfaces.Repositorios;
-using Infra.Repositories;
 using Infra.Repositorios;
 using MSNNA.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Add services to the container.
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:4200")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials());
-});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -25,6 +13,23 @@ builder.CustomConfigureServices();
 
 //Registro de Repos
 builder.Services.AddScoped<INNARepo, NNARepo>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder.WithOrigins("http://localhost:4200")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials());
+});
+
+builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
+{
+    policy.AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowAnyOrigin();
+}));
+
 
 var app = builder.Build();
 

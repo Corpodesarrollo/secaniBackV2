@@ -62,6 +62,12 @@ namespace Infra
                 eb.ToView("VwSubMenu"); // Esto es válido para versiones recientes de EF Core
             });
 
+            modelBuilder.Entity<VwAgentesAsignados>(eb =>
+            {
+                eb.HasNoKey();
+                eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
+            });
+            
             modelBuilder.Entity<NNAs>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -91,6 +97,10 @@ namespace Infra
         public DbSet<ContactoEntidad> ContactoEntidades { get; set; }
         public DbSet<VwMenuModel> VwMenu { get; set; }
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
+
+        public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
+
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
     }
 }

@@ -55,6 +55,22 @@ namespace Api.Controllers
             return Ok(response.Datos);
         }
 
+        [HttpGet("TpEstadosNNA")]
+        public IActionResult TpEstadosNNA()
+        {
+
+            var response = _nNARepo.TpEstadosNNA();
+            return Ok(response);
+        }
+
+        [HttpGet("VwAgentesAsignados")]
+        public IActionResult VwAgentesAsignados()
+        {
+
+            var response = _nNARepo.VwAgentesAsignados();
+            return Ok(response);
+        }
+
         [HttpPost("ConsultarNNAFiltro")]
         public IActionResult ConsultarNNAFiltro(FiltroNNARequest request)
         {

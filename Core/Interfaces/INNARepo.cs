@@ -19,5 +19,9 @@ namespace Core.Interfaces.Repositorios
         public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId);
 
         public RespuestaResponse<FiltroNNADto> ConsultarNNAFiltro(FiltroNNARequest entrada);
+
+        public List<TPEstadoNNA> TpEstadosNNA();
+
+        public List<VwAgentesAsignados> VwAgentesAsignados();
     }
 }
