@@ -18,7 +18,7 @@ namespace MSAuthentication.Api.Controllers
         [HttpPost("MenuXRolId")]
         public List<GetVwMenuResponse> MenuXRolId(GetVwMenuRequest request)
         {
-            List<GetVwMenuResponse> response = new();
+            List<GetVwMenuResponse> response = new List<GetVwMenuResponse>();
 
             response = permisosRepo.MenuXRolId(request);
 

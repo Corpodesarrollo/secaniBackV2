@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.request
+namespace Core.Modelos
 {
-    public class GetVwMenuRequest
+    public class UsuarioAsignados
     {
-        public string RoleId { get; set; }
     }
 }

@@ -1,17 +1,16 @@
-﻿using MSAuthentication.Core.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Core.response
+namespace Core.Modelos
+
 {
-    public class GetVwMenuResponse
-    {
+    [Table("VwSubMenu")]
+    public class VwSubMenuModel
+    {        
         public long PermisoId { get; set; }
-        public string RoleId { get; set; }
-        public string RoleNombre { get; set; }
+        public String RoleId { get; set; }
+        public String RoleNombre { get; set; }
         public string FuncionalidadNombre { get; set; }
         public int MenuId { get; set; }
         public string MenuNombre { get; set; }
@@ -20,7 +19,5 @@ namespace Core.response
         public int MenuOrden { get; set; }
         public int MenuIdPadre { get; set; }
         public int TieneSubMenu { get; set; }
-
-        public List<MenuDto>? SubMenus { get; set; }
     }
 }

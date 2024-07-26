@@ -25,7 +25,7 @@ namespace Core.Modelos
         public string ArchivoAdjunto { get; set; }
         public virtual Entidad Entidad { get; set; }
         public virtual AlertaSeguimiento AlertaSeguimiento { get; set; }
-        public virtual NNA NNA { get; set; }
+        public virtual NNAs NNAs { get; set; }
         public string Membrete { get; set; }
 
     }

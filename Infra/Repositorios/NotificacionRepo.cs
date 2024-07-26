@@ -58,7 +58,7 @@ namespace Infra.Repositories
                                          where als.Id == request.IdAlertaSeguimiento
                                          select als).FirstOrDefault();
 
-            NNA? nna = (from Tnna in _context.NNAs
+            NNAs? nna = (from Tnna in _context.NNAs
                         where Tnna.Id == request.IdNNA
                         select Tnna).FirstOrDefault();
 
@@ -104,7 +104,7 @@ namespace Infra.Repositories
             notificacionEntidad.Ciudad = request.Ciudad;
             notificacionEntidad.Mensaje = request.Mensaje;
             notificacionEntidad.Comentario = request.Comentario;
-            notificacionEntidad.NNA = nna;
+            notificacionEntidad.NNAs = nna;
             notificacionEntidad.NNAId = nna.Id;
             notificacionEntidad.Firmajpg = request.FirmaJpg;
 
