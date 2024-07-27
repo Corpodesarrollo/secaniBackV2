@@ -1,33 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Infra.csproj": {}
+    "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Infra\\Infra.csproj": {}
   },
   "projects": {
-    "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Core.csproj": {
+    "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Core\\Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Core.csproj",
+        "projectUniqueName": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Core\\Core.csproj",
         "projectName": "Core",
-        "projectPath": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Core.csproj",
-        "packagesPath": "C:\\Users\\charl\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\obj\\",
+        "projectPath": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Core\\Core.csproj",
+        "packagesPath": "C:\\Users\\ingju\\.nuget\\packages\\",
+        "outputPath": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Core\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\charl\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\ingju\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
-          "C:\\Users\\Public\\Documents\\Syncfusion\\ASP.NET Core - EJ2\\21.1.35\\nuget": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -58,6 +51,14 @@
             "Mapster": {
               "target": "Package",
               "version": "[7.4.0, )"
+            },
+            "Microsoft.Data.SqlClient": {
+              "target": "Package",
+              "version": "[5.2.1, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [
@@ -76,42 +77,35 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.303/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.302/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Infra.csproj": {
+    "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Infra\\Infra.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Infra.csproj",
+        "projectUniqueName": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Infra\\Infra.csproj",
         "projectName": "Infra",
-        "projectPath": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Infra.csproj",
-        "packagesPath": "C:\\Users\\charl\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\obj\\",
+        "projectPath": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Infra\\Infra.csproj",
+        "packagesPath": "C:\\Users\\ingju\\.nuget\\packages\\",
+        "outputPath": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Infra\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\charl\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\ingju\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
-          "C:\\Users\\Public\\Documents\\Syncfusion\\ASP.NET Core - EJ2\\21.1.35\\nuget": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Core.csproj": {
-                "projectPath": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Core.csproj"
+              "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Core\\Core.csproj": {
+                "projectPath": "D:\\PLURALSOFT\\FRONT\\secaniBackV2\\Core\\Core.csproj"
               }
             }
           }
@@ -131,6 +125,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.Data.SqlClient": {
+              "target": "Package",
+              "version": "[5.2.1, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.7, )"
@@ -156,7 +154,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.303/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.302/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -1,5 +1,6 @@
 using Core.Interfaces.Repositorios;
 using Infra.Repositories;
+using Infra.Repositorios;
 using MSSeguimiento.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,8 @@ builder.CustomConfigureServices();
 
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
+builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
+builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
 
 builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
 {
