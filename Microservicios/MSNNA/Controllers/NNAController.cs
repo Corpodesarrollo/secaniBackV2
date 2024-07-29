@@ -77,5 +77,12 @@ namespace Api.Controllers
             var response = _nNARepo.ConsultarNNAFiltro(request);
             return Ok(response.Datos);
         }
+
+        [HttpPost("ActualizarNNASeguimiento")]
+        public IActionResult ActualizarNNASeguimiento(NNASeguimientoRequest request)
+        {
+            _nNARepo.ActualizarNNASeguimiento(request);
+            return Ok();
+        }
     }
 }

@@ -193,6 +193,60 @@ namespace Infra.Repositorios
 
             return response;
         }
+
+        public void ActualizarNNASeguimiento(NNASeguimientoRequest request)
+        {
+            NNAs? nna = (from nn in _context.NNAs
+                        where nn.Id == request.NNAId
+                        select nn).FirstOrDefault();
+
+            if (nna != null)
+            {
+                ContactoNNA? contacto;
+
+                foreach (ContactoRequest c in request.Contactos)
+                {
+                    contacto = (from contact in _context.ContactoNNAs
+                                where contact.Nombres == c.Nombre && contact.NNAId == request.NNAId
+                                select contact).FirstOrDefault();
+
+                    if (contacto != null)
+                    {
+                        contacto.ParentescoId = c.IdParentesco;
+                        contacto.Telefonos = string.Concat(c.Telefono1, " ", c.Telefono2);
+
+                        _context.ContactoNNAs.Update(contacto);
+                    }
+                    else
+                    {
+                        contacto = new ContactoNNA();
+                        contacto.NNAId = request.NNAId;
+                        contacto.Nombres = c.Nombre;
+                        contacto.ParentescoId = c.IdParentesco;
+                        contacto.Telefonos = string.Concat(c.Telefono1, " ", c.Telefono2);
+                        _context.ContactoNNAs.Add(contacto);
+                    }
+                    _context.SaveChanges();
+                }
+
+                nna.OrigenReporteId = request.IdOrigenEstrategia;
+                nna.PrimerNombre = request.PrimerNombreNNA;
+                nna.SegundoNombre = request.SegundoNombreNNA;
+                nna.PrimerApellido = request.PrimerApellidoNNA;
+                nna.SegundoApellido = request.SegundoApellidoNNA;
+                nna.TipoIdentificacionId = request.IdTipoIdentificacionNNA;
+                nna.NumeroIdentificacion = request.NumeroIdentificacionNNA;
+                nna.FechaNacimiento = request.FechaNacimientoNNA;
+                nna.EtniaId = request.IdEtniaNNA;
+                nna.GrupoPoblacionId = request.IdGrupoPoblacionalNNA;
+                nna.SexoId = request.IdSexoNNA;
+                nna.TipoRegimenSSId = request.IdRegimenAfiliacionNNA;
+                nna.EAPBId = request.EAPBNNA;
+
+                _context.Update(nna);
+                _context.SaveChanges();
+            }
+        }
     }
 
 }
