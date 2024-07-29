@@ -10,7 +10,7 @@ namespace Core.Modelos
         public string ResidenciaActualBarrio { get; set; }
         public int ResidenciaActualAreaId { get; set; }
         public string ResidenciaActualDireccion { get; set; }
-        public string ResidenciaActualEstratoId { get; set; }
+        public int ResidenciaActualEstratoId { get; set; }
         public string ResidenciaActualTelefono { get; set; }
         public int ResidenciaOrigenCategoriaId { get; set; }
         public int ResidenciaOrigenMunicipioId { get; set; }
@@ -48,7 +48,7 @@ namespace Core.Modelos
         public DateTime FechaInicioTratamiento { get; set; }
         public bool Recaida { get; set; }
         public int CantidadRecaidas { get; set; }
-        public DateTime FechaUltimaRecaida { get; set; }
+        public DateTime? FechaUltimaRecaida { get; set; }
         public int TipoDiagnosticoId { get; set; }
         public string DiagnosticoId { get; set; }
         public DateTime FechaDiagnostico { get; set; }
