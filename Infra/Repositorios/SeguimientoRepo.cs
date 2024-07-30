@@ -1,11 +1,5 @@
 ﻿using Core.Interfaces.Repositorios;
-using Core.Modelos;
 using Core.Request;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Core.response;
 using Core.Modelos;
 using MSAuthentication.Core.DTOs;
@@ -19,7 +13,6 @@ namespace Infra.Repositorios
         public SeguimientoRepo(ApplicationDbContext context) => _context = context;
 
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
-        public SeguimientoRepo(ApplicationDbContext context)
         {
             List<GetSeguimientoResponse> response = (from un in _context.Seguimientos
                                                      join nna in _context.NNAs on un.NNAId equals nna.Id
@@ -68,34 +61,24 @@ namespace Infra.Repositorios
                                                          PrimerApellido = g.Key.PrimerApellido,
                                                          SegundoApellido = g.Key.SegundoApellido,
                                                          FechaNotificacionSIVIGILA = g.Key.FechaNotificacionSIVIGILA,
-                                                         CantidadAlertas = g.Count(subAlerta => subAlerta != null) 
+                                                         CantidadAlertas = g.Count(subAlerta => subAlerta != null)
                                                      }).ToList();
 
 
 
             return response;
-            _context = context;
         }
 
-        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
         public int RepoSeguimientoActualizacionFecha(PutSeguimientoActualizacionFechaRequest request)
         {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                        where seg.Id == request.IdSeguimiento
-                                        select seg).FirstOrDefault();
 
             var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
 
             if (seguimiento == null)
-            if (seguimiento != null)
             {
                 return -1;
             }
-                NNAs? nna = (from nn in _context.NNAs
-                           where nn.Id == seguimiento.NNAId
-                           select nn).FirstOrDefault();
 
-                if (nna != null)
             seguimiento.FechaSeguimiento = request.FechaSeguimiento;
 
             _context.SaveChanges();
@@ -103,21 +86,20 @@ namespace Infra.Repositorios
         }
 
         public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
-                {
+        {
             var seguimientoOriginal = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
 
             if (seguimientoOriginal == null)
             {
-                return -1; 
-                }
+                return -1;
+            }
 
-            
+
             DateTime hoy = DateTime.Now;
             if (seguimientoOriginal.FechaSeguimiento < hoy)
             {
-                return -2; 
+                return -2;
             }
-        }
 
             // Actualizar el EstadoId a cero
             seguimientoOriginal.EstadoId = 3;
@@ -126,15 +108,10 @@ namespace Infra.Repositorios
             _context.SaveChanges();
 
             try
-        public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
-        {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                        where seg.Id == request.IdSeguimiento
-                                        select seg).FirstOrDefault();
+            {
 
                 var nuevoSeguimiento = new Seguimiento
-            if (seguimiento != null)
-            {
+                {
                     NNAId = seguimientoOriginal.NNAId,
                     FechaSeguimiento = seguimientoOriginal.FechaSeguimiento,
 
@@ -149,7 +126,7 @@ namespace Infra.Repositorios
                     FechaSolicitud = seguimientoOriginal.FechaSolicitud,
                     TieneDiagnosticos = seguimientoOriginal.TieneDiagnosticos,
 
-                    ObservacionesSolicitante = seguimientoOriginal.ObservacionesSolicitante+" "+request.ObservacionesSolicitante, // Nuevas observaciones
+                    ObservacionesSolicitante = seguimientoOriginal.ObservacionesSolicitante + " " + request.ObservacionesSolicitante, // Nuevas observaciones
 
                     DateCreated = DateTime.Now,
                     CreatedByUserId = seguimientoOriginal.CreatedByUserId,
@@ -161,51 +138,133 @@ namespace Infra.Repositorios
             }
             catch (Exception ex)
             {
-                
-                return -3; 
+
+                return -3;
             }
 
-            return 1; 
+            return 1;
         }
 
-        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
 
         public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal)
         {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                        where seg.Id == request.IdSeguimiento
-                                        select seg).FirstOrDefault();
             List<GetSeguimientoFestivoResponse> response = (from un in _context.TPFestivos
-                                                     where 
-                                                           un.Festivo >= FechaInicial
-                                                           && un.Festivo <= FechaFinal
+                                                            where
+                                                                  un.Festivo >= FechaInicial
+                                                                  && un.Festivo <= FechaFinal
 
-            NNAs? nna=null;
-            if (seguimiento != null)
-                                                     select new GetSeguimientoFestivoResponse()
-            {
-                                                         
-                                                         Festivo = un.Festivo,
-                                                         
-                                                     }).ToList();
+                                                            select new GetSeguimientoFestivoResponse()
+                                                            {
+
+                                                                Festivo = un.Festivo,
+
+                                                            }).ToList();
 
 
 
             return response;
+        }
+
+
+        public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
+        {
+            List<GetSeguimientoHorarioAgenteResponse> response = (from un in _context.HorarioLaboralAgente
+                                                                  where
+                                                                  un.UserId == UsuarioId
+                                                                       && un.Fecha >= FechaInicial
+                                                                       && un.Fecha <= FechaFinal
+
+                                                                  select new GetSeguimientoHorarioAgenteResponse()
+                                                                  {
+
+                                                                      Fecha = un.Fecha,
+                                                                      HoraEntrada = un.HoraEntrada,
+                                                                      HoraSalida = un.HoraSalida,
+
+                                                                  }).ToList();
+
+
+
+            return response;
+        }
+
+
+        public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
+        {
+            var response = (from ur in _context.AspNetUserRoles
+                            join r in _context.AspNetRoles on ur.RoleId equals r.Id
+                            join u in _context.AspNetUsers on ur.UserId equals u.Id
+                            where r.Name.Contains("Agentes de seguimiento")
+                            && u.Id != UsuarioId
+                            select new GetSeguimientoAgentesResponse
+                            {
+                                Id = u.Id,
+                                FullName = u.FullName!
+                            }).ToList();
+
+            return response;
+        }
+
+
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+
+                    nna.DiagnosticoId = request.IdDiagnostico;
+                    nna.FechaConsultaDiagnostico = request.FechaDiagnostico;
+                    nna.FechaConsultaOrigenReporte = request.FechaConsulta;
+                    nna.FechaInicioTratamiento = request.FechaInicioTratamiento;
+                    nna.IPSId = request.IdIPS;
+                    nna.Recaida = request.Recaidas;
+                    nna.CantidadRecaidas = request.NumeroRecaidas;
+                    nna.FechaUltimaRecaida = request.FechaUltimaRecaida;
+                    nna.MotivoNoDiagnosticoId = request.IdMotivoNoDiagnostico;
+                    nna.MotivoNoDiagnosticoOtro = request.RazonNoDiagnostico;
+                }
+            }
+        }
+
+        public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                seguimiento.EstadoId = request.IdEstado;
+                _context.Seguimientos.Update(seguimiento);
+                _context.SaveChanges();
+            }
+        }
+
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            NNAs? nna = null;
+            if (seguimiento != null)
+            {
                 nna = (from nn in _context.NNAs
-                            where nn.Id == seguimiento.NNAId
-                            select nn).FirstOrDefault();
+                       where nn.Id == seguimiento.NNAId
+                       select nn).FirstOrDefault();
             }
 
             if (nna != null)
-
-        public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
             {
-            List<GetSeguimientoHorarioAgenteResponse> response = (from un in _context.HorarioLaboralAgente
-                                                            where
-                                                            un.UserId == UsuarioId
-                                                                 && un.Fecha >= FechaInicial
-                                                                 && un.Fecha <= FechaFinal
                 nna.ResidenciaOrigenMunicipioId = request.residenciaOrigen.IdMunicipio;
                 nna.ResidenciaOrigenBarrio = request.residenciaOrigen.Barrio;
                 nna.ResidenciaOrigenAreaId = request.residenciaOrigen.IdArea;
@@ -213,7 +272,6 @@ namespace Infra.Repositorios
                 nna.ResidenciaOrigenEstratoId = request.residenciaOrigen.IdEstrato;
                 nna.ResidenciaOrigenTelefono = request.residenciaOrigen.TelefonoFijo;
 
-                                                            select new GetSeguimientoHorarioAgenteResponse()
                 if (request.residenciaDestino != null)
                 {
                     nna.ResidenciaActualMunicipioId = request.residenciaDestino.IdMunicipio;
@@ -222,16 +280,6 @@ namespace Infra.Repositorios
                     nna.ResidenciaActualDireccion = request.residenciaDestino.Direccion;
                     nna.ResidenciaActualEstratoId = request.residenciaDestino.IdEstrato;
                     nna.ResidenciaActualTelefono = request.residenciaDestino.TelefonoFijo;
-
-                                                                Fecha = un.Fecha,
-                                                                HoraEntrada = un.HoraEntrada,
-                                                                HoraSalida = un.HoraSalida,
-
-                                                            }).ToList();
-
-
-
-            return response;
                 }
 
                 nna.TrasladoTieneCapacidadEconomica = request.CapacidadEconomicaTraslado;
@@ -249,26 +297,16 @@ namespace Infra.Repositorios
         }
 
         public void SetDificultadesProceso(DificultadesProcesoRequest request)
-        public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
         {
-            var response = (from ur in _context.AspNetUserRoles
-                            join r in _context.AspNetRoles on ur.RoleId equals r.Id
-                            join u in _context.AspNetUsers on ur.UserId equals u.Id
-                            where r.Name.Contains("Agentes de seguimiento")
-                            && u.Id != UsuarioId
-                            select new GetSeguimientoAgentesResponse
             Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                       where seg.Id == request.IdSeguimiento
-                                       select seg).FirstOrDefault();
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
 
             if (seguimiento != null)
             {
                 NNAs? nna = (from nn in _context.NNAs
-                            where nn.Id == seguimiento.NNAId
-                            select nn).FirstOrDefault();
-                                Id = u.Id,
-                                FullName = u.FullName!
-                            }).ToList();
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
 
                 if (nna != null)
                 {
@@ -287,12 +325,11 @@ namespace Infra.Repositorios
                     nna.SubcategoriaAlertaId = request.IdSubcategoriaAlerta;
                     nna.TrasladosHaSidoTrasladadodeInstitucion = request.HaSidoTrasladado;
                     nna.TrasladosNumerodeTraslados = request.NumeroTraslados;
-                    nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal; 
+                    nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal;
                     nna.TrasladosTipoAccionLegalId = request.IdTipoRecurso;
                     nna.TrasladosMotivoAccionLegal = request.MotivoAccionLegal;
                 }
             }
-            return response;
         }
 
     }
