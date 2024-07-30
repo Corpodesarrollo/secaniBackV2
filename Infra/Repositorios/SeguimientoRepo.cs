@@ -165,8 +165,6 @@ namespace Infra.Repositorios
                     nna.TratamientoEstudiaActualmente = request.EstudiaActualmente;
                     nna.TratamientoHaDejadodeAsistirColegio = request.HaDejadoEstudiar;
                     nna.TratamientoTiempoInasistenciaColegio = request.CuantoTiempoDejadoEstudiar;
-                    nna.IPS unidad= request.IdUnidadTiempoDejadoEstudiar;
-
                 }
             }
         }
