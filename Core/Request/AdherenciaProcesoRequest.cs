@@ -8,10 +8,11 @@ namespace Core.Request
 {
     public class AdherenciaProcesoRequest
     {
-        public bool DejadoTratamiento { get; set; }
+        public bool HaDejadoTratamiento { get; set; }
         public int TiempoDejadoTratamiento { get; set; }
-        public int IdUnidadTiempo { get; set; }
-        public int IdCausaInasistencia { get; set; }
+        public int IdUnidadTiempoDejadoTratamiento { get; set; }
+        public int IdCausaInasistenciaTratamiento { get; set; }
+        public string OtraCausaDejadoTratamiento { get; set; }
         public bool EstudiaActualmente { get; set; }
         public bool HaDejadoEstudiar { get; set; }
         public int CuantoTiempoDejadoEstudiar { get; set; }
