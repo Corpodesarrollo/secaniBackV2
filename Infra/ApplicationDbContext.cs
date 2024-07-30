@@ -102,5 +102,8 @@ namespace Infra
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
 
         public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<Permiso> Permisos { get; set; }
+        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto { get; set; }
+        public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
     }
 }
