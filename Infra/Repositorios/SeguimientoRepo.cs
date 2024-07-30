@@ -41,6 +41,8 @@ namespace Infra.Repositorios
                     nna.Recaida = request.Recaidas;
                     nna.CantidadRecaidas = request.NumeroRecaidas;
                     nna.FechaUltimaRecaida = request.FechaUltimaRecaida;
+                    nna.MotivoNoDiagnosticoId = request.IdMotivoNoDiagnostico;
+                    nna.MotivoNoDiagnosticoOtro = request.RazonNoDiagnostico;
                 }
             }
         }
@@ -91,8 +93,54 @@ namespace Infra.Repositorios
                     nna.ResidenciaActualEstratoId = request.residenciaDestino.IdEstrato;
                     nna.ResidenciaActualTelefono = request.residenciaDestino.TelefonoFijo;
                 }
+
+                nna.TrasladoTieneCapacidadEconomica = request.CapacidadEconomicaTraslado;
+                nna.TrasladoEAPBSuministroApoyo = request.ServiciosSocialesEAPB;
+                nna.TrasladosServiciosdeApoyoOportunos = request.ServiciosSocialesEntregados;
+                nna.TrasladosServiciosdeApoyoCobertura = request.ServiciosSocialesCobertura;
+                nna.TrasladosHaSolicitadoApoyoFundacion = request.ApoyoFundacion;
+                nna.TrasladosNombreFundacion = request.NombreFundacion;
+                nna.TrasladosPropietarioResidenciaActualId = request.IdTipoResidenciaActual;
+                nna.TrasladosQuienAsumioCostosTraslado = request.AsumeCostoTraslado;
+                nna.TrasladosQuienAsumioCostosVivienda = request.AsumeCostoVivienda;
                 _context.NNAs.Update(nna);
                 _context.SaveChanges();
+            }
+        }
+
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                       where seg.Id == request.IdSeguimiento
+                                       select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                            where nn.Id == seguimiento.NNAId
+                            select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+                    nna.DifAutorizaciondeMedicamentos = request.AutorizacionMedicamento;
+                    nna.DifEntregaMedicamentosLAP = request.EntregaMedicamentoLAP;
+                    nna.DifEntregaMedicamentosNoLAP = request.EntregaMedicamentoNoLAP;
+                    nna.DifAsignaciondeCitas = request.AsignacionCitas;
+                    nna.DifHanCobradoCuotasoCopagos = request.CobradoCopagos;
+                    nna.DifAutorizacionProcedimientos = request.AutorizacionProcedimientos;
+                    nna.DifRemisionInstitucionesEspecializadas = request.RemisionEspecialistas;
+                    nna.DifMalaAtencionIPS = request.MalaAtencionIPS;
+                    nna.DifMalaAtencionNombreIPSId = request.IdMalaIPS;
+                    nna.DifFallasenMIPRES = request.FallasMIPRES;
+                    nna.DifFallaConvenioEAPBeIPSTratante = request.FallasConvenio;
+                    nna.CategoriaAlertaId = request.IdCategoriaAlerta;
+                    nna.SubcategoriaAlertaId = request.IdSubcategoriaAlerta;
+                    nna.TrasladosHaSidoTrasladadodeInstitucion = request.HaSidoTrasladado;
+                    nna.TrasladosNumerodeTraslados = request.NumeroTraslados;
+                    nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal; 
+                    nna.TrasladosTipoAccionLegalId = request.IdTipoRecurso;
+                    nna.TrasladosMotivoAccionLegal = request.MotivoAccionLegal;
+                }
             }
         }
     }

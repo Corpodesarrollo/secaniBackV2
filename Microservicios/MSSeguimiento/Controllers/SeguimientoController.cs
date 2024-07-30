@@ -32,5 +32,17 @@ namespace MSSeguimiento.Api.Controllers
         {
             seguimientoRepo.SetResidenciaDiagnosticoTratamiento(request);
         }
+
+        [HttpPost("SetDificultadesProceso")]
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            seguimientoRepo.SetDificultadesProceso(request);
+        }
+
+        [HttpPost("SetAdherenciaProceso")]
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            seguimientoRepo.SetAdherenciaProceso(request);
+        }
     }
 }
