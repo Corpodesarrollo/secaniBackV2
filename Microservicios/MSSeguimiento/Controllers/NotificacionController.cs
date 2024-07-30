@@ -10,16 +10,17 @@ namespace MSSeguimiento.Api.Controllers
     [Route("[controller]")]
     public class NotificacionController : ControllerBase
     {
-        private INotificacionRepo notificacionRepo;
+        private readonly INotificacionRepo notificacionRepo;
 
         public NotificacionController(INotificacionRepo notificacion)
         {
             notificacionRepo = notificacion;
         }
+
         [HttpPost("GetNotification")]
         public List<GetNotificacionResponse> GetNotifications(GetNotificacionRequest request)
         {
-            List<GetNotificacionResponse> response = new();
+            List<GetNotificacionResponse> response;
 
             response = notificacionRepo.GetNotificacionUsuario(request.AgenteDestinoId);
 
@@ -36,6 +37,12 @@ namespace MSSeguimiento.Api.Controllers
         public string GenerarOficioNotificacion(OficioNotificacionRequest request)
         {
             return notificacionRepo.GenerarOficioNotificacion(request);
+        }
+
+        [HttpPost("EliminarNotificacion")]
+        public void EliminarNotificacion(EliminarNotificacionRequest request)
+        {
+            notificacionRepo.EliminarNotificacion(request);
         }
     }
 }

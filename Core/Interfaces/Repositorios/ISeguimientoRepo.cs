@@ -1,4 +1,9 @@
 ﻿using Core.Request;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Core.response;
 
 
@@ -12,5 +17,10 @@ namespace Core.Interfaces.Repositorios
         public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal);
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal);
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId);
+        public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request);
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request);
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request);
+        public void SetDificultadesProceso(DificultadesProcesoRequest request);
+        public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
     }
 }
