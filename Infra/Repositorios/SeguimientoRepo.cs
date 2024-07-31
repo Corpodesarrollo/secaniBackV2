@@ -353,7 +353,12 @@ namespace Infra.Repositorios
                     nna.TratamientoEstudiaActualmente = request.EstudiaActualmente;
                     nna.TratamientoHaDejadodeAsistirColegio = request.HaDejadoEstudiar;
                     nna.TratamientoTiempoInasistenciaColegio = request.CuantoTiempoDejadoEstudiar;
+                    nna.TratamientoTiempoInasistenciaUnidadMedidaId = request.IdUnidadTiempoDejadoEstudiar;
+                    nna.TratamientoHaSidoInformadoClaramente = request.InformacionClara;
+                    nna.TratamientoObservaciones = request.Observacion;
 
+                    _context.NNAs.Add(nna);
+                    _context.SaveChanges();
                 }
             }
         }
