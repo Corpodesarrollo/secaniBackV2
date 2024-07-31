@@ -22,5 +22,6 @@ namespace Core.Interfaces.Repositorios
         public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request);
         public void SetDificultadesProceso(DificultadesProcesoRequest request);
         public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
+        public void FinalizarSeguimiento(FinalizarSeguimientoRequest request);
     }
 }

@@ -328,6 +328,8 @@ namespace Infra.Repositorios
                     nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal;
                     nna.TrasladosTipoAccionLegalId = request.IdTipoRecurso;
                     nna.TrasladosMotivoAccionLegal = request.MotivoAccionLegal;
+                    _context.NNAs.Update(nna);
+                    _context.SaveChanges();
                 }
             }
         }
@@ -353,7 +355,31 @@ namespace Infra.Repositorios
                     nna.TratamientoEstudiaActualmente = request.EstudiaActualmente;
                     nna.TratamientoHaDejadodeAsistirColegio = request.HaDejadoEstudiar;
                     nna.TratamientoTiempoInasistenciaColegio = request.CuantoTiempoDejadoEstudiar;
+                    _context.NNAs.Update(nna);
+                    _context.SaveChanges();
+                }
+            }
+        }
 
+        public void FinalizarSeguimiento(FinalizarSeguimientoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSegumiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+                    nna.FechaDefuncion = request.FechaDefuncion;
+                    nna.MotivoDefuncion = request.CausaMuerte;
+                    nna.TratamientoObservaciones = request.Observacion;
+                    _context.NNAs.Update(nna);
+                    _context.SaveChanges();
                 }
             }
         }

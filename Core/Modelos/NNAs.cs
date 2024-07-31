@@ -43,8 +43,8 @@ namespace Core.Modelos
         public int TipoCancerId { get; set; }
         public DateTime FechaInicioSintomas { get; set; }
         public DateTime FechaHospitalizacion { get; set; }
-        public DateTime FechaDefuncion { get; set; }
-        public string MotivoDefuncion { get; set; }
+        public DateTime? FechaDefuncion { get; set; }
+        public string? MotivoDefuncion { get; set; }
         public DateTime? FechaInicioTratamiento { get; set; }
         public bool Recaida { get; set; }
         public int? CantidadRecaidas { get; set; }
@@ -94,7 +94,7 @@ namespace Core.Modelos
         public int TratamientoTiempoInasistenciaColegio { get; set; }
         public int TratamientoTiempoInasistenciaUnidadMedidaId { get; set; }
         public bool TratamientoHaSidoInformadoClaramente { get; set; }
-        public string TratamientoObservaciones { get; set; }
+        public string? TratamientoObservaciones { get; set; }
         public string CuidadorNombres { get; set; }
         public int CuidadorParentescoId { get; set; }
         public string CuidadorEmail { get; set; }

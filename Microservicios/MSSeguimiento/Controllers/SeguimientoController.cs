@@ -93,6 +93,11 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo.SetAdherenciaProceso(request);
         }
 
+        public void FinalizarSegiminento(FinalizarSeguimientoRequest request)
+        {
+            seguimientoRepo.FinalizarSeguimiento(request);
+        }
+
     }
 
 
