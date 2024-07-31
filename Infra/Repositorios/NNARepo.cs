@@ -242,6 +242,8 @@ namespace Infra.Repositorios
                 nna.SexoId = request.IdSexoNNA;
                 nna.TipoRegimenSSId = request.IdRegimenAfiliacionNNA;
                 nna.EAPBId = request.EAPBNNA;
+                nna.OrigenReporteOtro = request.OtroOrigenEstrategia;
+                nna.PaisId = request.IdPaisNacimientoNNA;
 
                 _context.Update(nna);
                 _context.SaveChanges();

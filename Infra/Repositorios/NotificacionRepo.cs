@@ -23,7 +23,9 @@ namespace Infra.Repositories
                                                       select new GetNotificacionResponse()
                                                       {
                                                           TextoNotificacion = string.Join("", "El Agente de seguimiento ", uOrigen.FullName ?? string.Empty,
-                                                          " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A")
+                                                          " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A"),
+                                                          FechaNotificacion = un.FechaNotificacion,
+                                                          URLNotificacion = un.Url==null?"":un.Url
                                                       }).ToList();
 
             return response;
@@ -126,5 +128,21 @@ namespace Infra.Repositories
             return "Oficio creado correctamente";
         }
 
+        public void EliminarNotificacion(EliminarNotificacionRequest request)
+        {
+            NotificacionesUsuario? notificacion = (from ne in _context.NotificacionesUsuarios
+                                                  where ne.Id == request.IdNotificacionUsuario
+                                                  select ne).FirstOrDefault();
+
+            if (notificacion != null)
+            {
+                notificacion.IsDeleted = true;
+                notificacion.DeletedByUserId = request.IdUsuario;
+                notificacion.DateDeleted = DateTime.Now;
+
+                _context.Update(notificacion);
+                _context.SaveChanges();
+            }
+        }
     }
 }
