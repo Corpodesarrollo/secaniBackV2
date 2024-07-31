@@ -8,5 +8,6 @@ namespace Core.Interfaces.Repositorios
         public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId);
         public int GetNumeroNotificacionUsuario(string AgenteDestinoId);
         public string GenerarOficioNotificacion(OficioNotificacionRequest request);
+        public void EliminarNotificacion(EliminarNotificacionRequest request);
     }
 }

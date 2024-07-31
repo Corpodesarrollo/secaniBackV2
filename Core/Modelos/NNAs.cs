@@ -33,28 +33,28 @@ namespace Core.Modelos
         public int TipoRegimenSSId { get; set; }
         public int EAPBId { get; set; }
         public int EPSId { get; set; }
-        public int IPSId { get; set; }
+        public int? IPSId { get; set; }
         public int GrupoPoblacionId { get; set; }
         public int EtniaId { get; set; }
         public int EstadoIngresoEstrategiaId { get; set; }
         public DateTime FechaIngresoEstrategia { get; set; }
         public int OrigenReporteId { get; set; }
-        public DateTime FechaConsultaOrigenReporte { get; set; }
+        public DateTime? FechaConsultaOrigenReporte { get; set; }
         public int TipoCancerId { get; set; }
         public DateTime FechaInicioSintomas { get; set; }
         public DateTime FechaHospitalizacion { get; set; }
         public DateTime FechaDefuncion { get; set; }
         public string MotivoDefuncion { get; set; }
-        public DateTime FechaInicioTratamiento { get; set; }
+        public DateTime? FechaInicioTratamiento { get; set; }
         public bool Recaida { get; set; }
-        public int CantidadRecaidas { get; set; }
+        public int? CantidadRecaidas { get; set; }
         public DateTime? FechaUltimaRecaida { get; set; }
         public int TipoDiagnosticoId { get; set; }
         public string DiagnosticoId { get; set; }
         public DateTime FechaDiagnostico { get; set; }
-        public int MotivoNoDiagnosticoId { get; set; }
-        public string MotivoNoDiagnosticoOtro { get; set; }
-        public DateTime FechaConsultaDiagnostico { get; set; }
+        public int? MotivoNoDiagnosticoId { get; set; }
+        public string? MotivoNoDiagnosticoOtro { get; set; }
+        public DateTime? FechaConsultaDiagnostico { get; set; }
         public int DepartamentoTratamientoId { get; set; }
         public bool IPSIdTratamiento { get; set; }
         public bool PropietarioResidenciaActual { get; set; }
@@ -64,7 +64,7 @@ namespace Core.Modelos
         public bool TrasladosServiciosdeApoyoOportunos { get; set; }
         public bool TrasladosServiciosdeApoyoCobertura { get; set; }
         public bool TrasladosHaSolicitadoApoyoFundacion { get; set; }
-        public bool TrasladosNombreFundacion { get; set; }
+        public string TrasladosNombreFundacion { get; set; }
         public bool TrasladosApoyoRecibidoxFundacion { get; set; }
         public bool DifAutorizaciondeMedicamentos { get; set; }
         public bool DifEntregaMedicamentosLAP { get; set; }
@@ -101,5 +101,13 @@ namespace Core.Modelos
         public string CuidadorTelefono { get; set; }
         public string SeguimientoLoDesea { get; set; }
         public string SeguimientoMotivoNoLoDesea { get; set; }
+
+        public string? OrigenReporteOtro { get; set; }
+        public int TrasladosPropietarioResidenciaActualId { get; set; }
+        public string? TrasladosPropietarioResidenciaActualOtro { get; set; }
+        public string? TrasladosQuienAsumioCostosTraslado { get; set; }
+        public string? TrasladosQuienAsumioCostosVivienda { get; set; }
+        public int PaisId {  get; set; }
+        public string? TrasladosMotivoAccionLegal { get; set; }
     }
 }

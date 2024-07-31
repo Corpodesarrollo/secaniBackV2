@@ -1,6 +1,8 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Microsoft.AspNetCore.Mvc;
+using Core.Interfaces.Repositorios;
 using Core.Request;
-using Microsoft.AspNetCore.Mvc;
+using Core.response;
+using Infra.Repositorios;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -8,12 +10,58 @@ namespace MSSeguimiento.Api.Controllers
     [Route("[controller]")]
     public class SeguimientoController : ControllerBase
     {
-        private readonly ISeguimientoRepo seguimientoRepo;
+        private ISeguimientoRepo seguimientoRepo;
 
-        public SeguimientoController(ISeguimientoRepo seguimientoRepo)
+        public SeguimientoController(ISeguimientoRepo seguimiento)
         {
-            this.seguimientoRepo = seguimientoRepo;
+            seguimientoRepo = seguimiento;
         }
+
+
+        [HttpGet("GetSeguimientoUsuario")]
+        public List<GetSeguimientoResponse> GetSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
+        {
+
+            List<GetSeguimientoResponse> response = seguimientoRepo.RepoSeguimientoUsuario(UsuarioId, FechaInicial, FechaFinal);
+            return response;
+        }
+
+        [HttpPut("PutSeguimientotActualizacionFecha")]
+        public int PutSeguimientotActualizacionFecha(PutSeguimientoActualizacionFechaRequest request)
+        {
+            return seguimientoRepo.RepoSeguimientoActualizacionFecha(request);
+        }
+
+        [HttpPut("PutSeguimientoActualizacionUsuario")]
+        public int PutSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
+        {
+            return seguimientoRepo.RepoSeguimientoActualizacionUsuario(request);
+        }
+
+        [HttpGet("GetSeguimientoFestivos")]
+        public List<GetSeguimientoFestivoResponse> GetSeguimientoFestivos(DateTime FechaInicial, DateTime FechaFinal)
+        {
+
+            List<GetSeguimientoFestivoResponse> response = seguimientoRepo.RepoSeguimientoFestivo(FechaInicial, FechaFinal);
+            return response;
+        }
+
+        [HttpGet("GetSeguimientoHorarioAgente")]
+        public List<GetSeguimientoHorarioAgenteResponse> GetSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
+        {
+
+            List<GetSeguimientoHorarioAgenteResponse> response = seguimientoRepo.RepoSeguimientoHorarioAgente(UsuarioId, FechaInicial, FechaFinal);
+            return response;
+        }
+
+        [HttpGet("GetSeguimientoAgentes")]
+        public List<GetSeguimientoAgentesResponse> GetSeguimientoAgentes(string UsuarioId)
+        {
+
+            List<GetSeguimientoAgentesResponse> response = seguimientoRepo.RepoSeguimientoAgentes(UsuarioId);
+            return response;
+        }
+
 
         [HttpPost("SetEstadoDiagnosticoTratamiento")]
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
@@ -32,5 +80,23 @@ namespace MSSeguimiento.Api.Controllers
         {
             seguimientoRepo.SetResidenciaDiagnosticoTratamiento(request);
         }
+
+        [HttpPost("SetDificultadesProceso")]
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            seguimientoRepo.SetDificultadesProceso(request);
+        }
+
+        [HttpPost("SetAdherenciaProceso")]
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            seguimientoRepo.SetAdherenciaProceso(request);
+        }
+
     }
+
+
+    
 }
+
+

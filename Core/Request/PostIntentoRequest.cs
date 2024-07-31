@@ -1,8 +1,6 @@
-﻿using Core.Modelos.Common;
-
-namespace Core.Modelos
+﻿namespace Core.Request
 {
-    public class Intentos : BaseEntity
+    public class PostIntentoRequest
     {
         public long ContactoNNAId { get; set; }
         public string? Email { get; set; }
@@ -10,5 +8,6 @@ namespace Core.Modelos
         public string? Telefono { get; set; }
         public int TipoResultadoIntentoId { get; set; }
         public int TipoFallaIntentoId { get; set; }
+        public string? CreatedByUserId { get; set; }
     }
 }

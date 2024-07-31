@@ -1,5 +1,6 @@
 ﻿using Core.Modelos;
 using Microsoft.EntityFrameworkCore;
+using MSSeguimiento.Core.Modelos;
 
 namespace Infra
 {
@@ -102,5 +103,12 @@ namespace Infra
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
 
         public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+
+        public DbSet<NNAsSeguimiento> NNAsSeguimiento { get; set; }
+        public DbSet<TPFestivos> TPFestivos { get; set; }
+        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
+        public DbSet<AspNetRoles> AspNetRoles { get; set; }
+
+        public DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
     }
 }
