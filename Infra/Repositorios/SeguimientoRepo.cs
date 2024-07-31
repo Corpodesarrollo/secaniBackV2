@@ -332,5 +332,30 @@ namespace Infra.Repositorios
             }
         }
 
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                       where seg.Id == request.IdSeguimiento
+                                       select seg).FirstOrDefault();
+
+            if (seguimiento != null) {
+                NNAs? nna = (from nn in _context.NNAs
+                            where nn.Id == seguimiento.NNAId
+                            select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+                    nna.TratamientoHaDejadodeAsistir = request.HaDejadoTratamiento;
+                    nna.TratamientoCuantoTiemposinAsistir = request.TiempoDejadoTratamiento;
+                    nna.TratamientoUnidadMedidaIdTiempoId = request.IdUnidadTiempoDejadoTratamiento;
+                    nna.TratamientoCausasInasistenciaId = request.IdCausaInasistenciaTratamiento;
+                    nna.TratamientoCausasInasistenciaOtra = request.OtraCausaDejadoTratamiento;
+                    nna.TratamientoEstudiaActualmente = request.EstudiaActualmente;
+                    nna.TratamientoHaDejadodeAsistirColegio = request.HaDejadoEstudiar;
+                    nna.TratamientoTiempoInasistenciaColegio = request.CuantoTiempoDejadoEstudiar;
+
+                }
+            }
+        }
     }
 }
