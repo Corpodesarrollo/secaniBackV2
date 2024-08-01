@@ -46,7 +46,7 @@ namespace Infra.Repositorios
             {
                 ContactoNNAId = request.ContactoNNAId,
                 Email = request.Email,
-                FechaIntento = request.FechaIntento,
+                FechaIntento = DateTime.Now,
                 Telefono = request.Telefono,
                 TipoResultadoIntentoId = request.TipoResultadoIntentoId,
                 TipoFallaIntentoId = request.TipoFallaIntentoId,
