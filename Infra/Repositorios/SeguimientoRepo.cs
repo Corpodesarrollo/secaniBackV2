@@ -145,7 +145,6 @@ namespace Infra.Repositorios
             return 1;
         }
 
-
         public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal)
         {
             List<GetSeguimientoFestivoResponse> response = (from un in _context.TPFestivos
@@ -164,7 +163,6 @@ namespace Infra.Repositorios
 
             return response;
         }
-
 
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {
@@ -187,7 +185,6 @@ namespace Infra.Repositorios
 
             return response;
         }
-
 
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
         {
