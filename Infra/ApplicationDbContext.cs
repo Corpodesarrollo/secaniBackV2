@@ -1,4 +1,5 @@
 ﻿using Core.Modelos;
+using Core.Modelos.TablasParametricas;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Core.Modelos;
 
@@ -103,5 +104,10 @@ namespace Infra
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
 
         public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<TPCategoriaAlerta> TPCategoriaAlerta { get; set; }
+        public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
+        public DbSet<TPEstadoSeguimiento> TPEstadoSeguimiento { get; set; }
+        public DbSet<TPFestivos> TPFestivos { get; set; }
     }
 }

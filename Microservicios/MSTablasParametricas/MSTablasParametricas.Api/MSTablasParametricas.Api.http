@@ -1,0 +1,6 @@
+@MSTablasParametricas.Api_HostAddress = http://localhost:5093
+
+GET {{MSTablasParametricas.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
