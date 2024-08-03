@@ -4,6 +4,7 @@ using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
+using Infra.Repositorios;
 
 
 namespace Api.Controllers
@@ -83,6 +84,17 @@ namespace Api.Controllers
         {
             _nNARepo.ActualizarNNASeguimiento(request);
             return Ok();
+        }
+
+        [HttpGet("{id}")]
+        public ActionResult<NNAs> GetById(long id)
+        {
+            var nna = _nNARepo.GetById(id);
+            if (nna == null)
+            {
+                return NotFound(); // Retorna 404 si no se encuentra el registro
+            }
+            return Ok(nna); // Retorna 200 con el registro encontrado
         }
     }
 }

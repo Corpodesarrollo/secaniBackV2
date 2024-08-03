@@ -12,6 +12,13 @@ namespace Infra.Repositorios
 
         public SeguimientoRepo(ApplicationDbContext context) => _context = context;
 
+
+        public Seguimiento GetById(long id)
+        {
+
+            return _context.Seguimientos.FirstOrDefault(s => s.Id == id);
+        }
+
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {
             List<GetSeguimientoResponse> response = (from un in _context.Seguimientos

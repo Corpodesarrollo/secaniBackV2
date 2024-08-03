@@ -3,6 +3,7 @@ using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Infra.Repositorios;
+using Core.Modelos;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -17,6 +18,16 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo = seguimiento;
         }
 
+        [HttpGet("{id}")]
+        public ActionResult<Seguimiento> GetById(long id)
+        {
+            var seguimiento = seguimientoRepo.GetById(id);
+            if (seguimiento == null)
+            {
+                return NotFound(); // Retorna 404 si no se encuentra el registro
+            }
+            return Ok(seguimiento); // Retorna 200 con el registro encontrado
+        }
 
         [HttpGet("GetSeguimientoUsuario")]
         public List<GetSeguimientoResponse> GetSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
