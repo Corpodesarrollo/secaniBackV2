@@ -3,6 +3,7 @@ using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Infra.Repositorios;
+using Core.Response;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -91,6 +92,14 @@ namespace MSSeguimiento.Api.Controllers
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
         {
             seguimientoRepo.SetAdherenciaProceso(request);
+        }
+
+        [HttpGet("GetSeguimientosNNA")]
+        public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
+        {
+
+            List<SeguimientoNNAResponse> response = seguimientoRepo.GetSeguimientosNNA(idNNA);
+            return response;
         }
 
     }

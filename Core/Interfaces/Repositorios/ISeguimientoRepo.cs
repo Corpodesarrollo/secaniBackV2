@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Core.response;
+using Core.Modelos;
+using Core.Response;
 
 
 namespace Core.Interfaces.Repositorios
@@ -22,5 +24,6 @@ namespace Core.Interfaces.Repositorios
         public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request);
         public void SetDificultadesProceso(DificultadesProcesoRequest request);
         public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
+        public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
     }
 }

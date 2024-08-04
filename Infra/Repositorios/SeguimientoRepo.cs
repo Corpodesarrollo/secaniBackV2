@@ -3,6 +3,8 @@ using Core.Request;
 using Core.response;
 using Core.Modelos;
 using MSAuthentication.Core.DTOs;
+using Core.Response;
+using System.Collections.Generic;
 
 namespace Infra.Repositorios
 {
@@ -353,6 +355,32 @@ namespace Infra.Repositorios
 
                 }
             }
+        }
+
+        public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
+        {
+            List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
+                                                  where seg.NNAId == idNNA
+                                                  select new SeguimientoNNAResponse()
+                                                  {
+                                                      FechaNotificacion = seg.FechaSolicitud,
+                                                      FechaSeguimiento = seg.FechaSeguimiento,
+                                                      IdSeguimiento = seg.Id,
+                                                      Asunto = seg.UltimaActuacionAsunto,
+                                                      Observacion = seg.ObservacionesSolicitante
+                                                  }).ToList();
+
+            List<AlertaSeguimiento>? alertas;
+            foreach (SeguimientoNNAResponse seg in seguimientos)
+            {
+                alertas = (from alert in _context.AlertaSeguimientos
+                           where alert.SeguimientoId==seg.IdSeguimiento
+                           select alert).ToList();
+
+                seg.alertasSeguimientos = alertas;
+            }
+
+            return seguimientos;
         }
     }
 }
