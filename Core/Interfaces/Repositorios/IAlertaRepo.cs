@@ -5,7 +5,7 @@ namespace Core.Interfaces.Repositorios
 {
     public interface IAlertaRepo
     {
-        public string CrearAlertaSeguimiento(CrearAlertaSeguimientoRequest request);
+        public string CrearAlertaSeguimiento(string token,CrearAlertaSeguimientoRequest request);
         public string GestionarAlerta(GestionarAlertaRequest request);
         public List<AlertaSeguimiento> ConsultarAlertaSeguimiento(ConsultarAlertasRequest request);
 

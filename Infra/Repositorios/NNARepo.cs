@@ -1,10 +1,16 @@
-﻿using Core.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Core.Request;
-using Core.Response;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Data.Common;
+using Core.DTOs;
+using Core.Response;
 
 
 namespace Infra.Repositorios
@@ -68,7 +74,7 @@ namespace Infra.Repositorios
                                     .Select(e => new TPEstadoNNA
                                     {
                                         Id = e.Id,
-                                        Nombre = e.Nombre,
+                                        EstadoNNA = e.EstadoNNA,
                                         Descripcion = e.Descripcion,
                                         ColorBG = e.ColorBG,
                                         ColorText = e.ColorText
@@ -88,7 +94,7 @@ namespace Infra.Repositorios
         public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId)
         {
             var response = new RespuestaResponse<ContactoNNA>();
-            List<ContactoNNA> li = new();
+            List<ContactoNNA> li = new List<ContactoNNA>();
 
             try
             {
@@ -122,7 +128,7 @@ namespace Infra.Repositorios
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista = new();
+            List<FiltroNNA> lista = new List<FiltroNNA>();
 
             try
             {
@@ -140,7 +146,7 @@ namespace Infra.Repositorios
                 ).ToList();
                 if (results != null)
                 {
-                    if (results.Count() > 0)
+                    if (results.Count() >0)
                     {
                         response.Estado = true;
                         response.Descripcion = "Consulta realizada con éxito.";
@@ -150,10 +156,10 @@ namespace Infra.Repositorios
                         response.Estado = false;
                         response.Descripcion = "No trajo datos en la consulta.";
                     }
-
+                    
                     foreach (var filtroNNA in results)
                     {
-                        FiltroNNADto dto = new()
+                        FiltroNNADto dto = new FiltroNNADto
                         {
                             NoCaso = filtroNNA.NoCaso,
                             NombreNNA = filtroNNA.NombreNNA,
@@ -168,7 +174,7 @@ namespace Infra.Repositorios
                         };
 
                         response.Datos.Add(dto);
-                    }
+                    }   
                 }
                 else
                 {
@@ -176,7 +182,7 @@ namespace Infra.Repositorios
                     response.Descripcion = "No trae información.";
                     response.Datos = null;
                 }
-
+                
             }
             catch (Exception ex)
             {
@@ -186,6 +192,62 @@ namespace Infra.Repositorios
             }
 
             return response;
+        }
+
+        public void ActualizarNNASeguimiento(NNASeguimientoRequest request)
+        {
+            NNAs? nna = (from nn in _context.NNAs
+                        where nn.Id == request.NNAId
+                        select nn).FirstOrDefault();
+
+            if (nna != null)
+            {
+                ContactoNNA? contacto;
+
+                foreach (ContactoRequest c in request.Contactos)
+                {
+                    contacto = (from contact in _context.ContactoNNAs
+                                where contact.Nombres == c.Nombre && contact.NNAId == request.NNAId
+                                select contact).FirstOrDefault();
+
+                    if (contacto != null)
+                    {
+                        contacto.ParentescoId = c.IdParentesco;
+                        contacto.Telefonos = string.Concat(c.Telefono1, " ", c.Telefono2);
+
+                        _context.ContactoNNAs.Update(contacto);
+                    }
+                    else
+                    {
+                        contacto = new ContactoNNA();
+                        contacto.NNAId = request.NNAId;
+                        contacto.Nombres = c.Nombre;
+                        contacto.ParentescoId = c.IdParentesco;
+                        contacto.Telefonos = string.Concat(c.Telefono1, " ", c.Telefono2);
+                        _context.ContactoNNAs.Add(contacto);
+                    }
+                    _context.SaveChanges();
+                }
+
+                nna.OrigenReporteId = request.IdOrigenEstrategia;
+                nna.PrimerNombre = request.PrimerNombreNNA;
+                nna.SegundoNombre = request.SegundoNombreNNA;
+                nna.PrimerApellido = request.PrimerApellidoNNA;
+                nna.SegundoApellido = request.SegundoApellidoNNA;
+                nna.TipoIdentificacionId = request.IdTipoIdentificacionNNA;
+                nna.NumeroIdentificacion = request.NumeroIdentificacionNNA;
+                nna.FechaNacimiento = request.FechaNacimientoNNA;
+                nna.EtniaId = request.IdEtniaNNA;
+                nna.GrupoPoblacionId = request.IdGrupoPoblacionalNNA;
+                nna.SexoId = request.IdSexoNNA;
+                nna.TipoRegimenSSId = request.IdRegimenAfiliacionNNA;
+                nna.EAPBId = request.EAPBNNA;
+                nna.OrigenReporteOtro = request.OtroOrigenEstrategia;
+                nna.PaisId = request.IdPaisNacimientoNNA;
+
+                _context.Update(nna);
+                _context.SaveChanges();
+            }
         }
     }
 

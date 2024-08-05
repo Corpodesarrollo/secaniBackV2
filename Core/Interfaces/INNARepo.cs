@@ -23,5 +23,7 @@ namespace Core.Interfaces.Repositorios
         public List<TPEstadoNNA> TpEstadosNNA();
 
         public List<VwAgentesAsignados> VwAgentesAsignados();
+
+        public void ActualizarNNASeguimiento(NNASeguimientoRequest request);
     }
 }
