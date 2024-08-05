@@ -67,7 +67,7 @@ namespace Infra
                 eb.HasNoKey();
                 eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
             });
-            
+
             modelBuilder.Entity<NNAs>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -101,6 +101,8 @@ namespace Infra
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
 
-        public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
+        public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
     }
 }

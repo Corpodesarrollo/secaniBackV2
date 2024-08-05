@@ -3,6 +3,66 @@
   "WorkspaceRootPath": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\repositorios\\seguimientorepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\repositorios\\seguimientorepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE62C76D-3B68-46C7-AB6A-891CC320B40C}|Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\microservicios\\msseguimiento\\controllers\\seguimientocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DE62C76D-3B68-46C7-AB6A-891CC320B40C}|Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj|solutionrelative:microservicios\\msseguimiento\\controllers\\seguimientocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\dtos\\seguimientocntfiltrosdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\dtos\\seguimientocntfiltrosdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\modelos\\seguimiento.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\modelos\\seguimiento.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\modelos\\tpestadoalerta.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\modelos\\tpestadoalerta.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\dtos\\alertaseguimientodto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\dtos\\alertaseguimientodto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\modelos\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\modelos\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\repositorios\\nnarepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\repositorios\\nnarepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\dtos\\seguimientodto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\dtos\\seguimientodto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE62C76D-3B68-46C7-AB6A-891CC320B40C}|Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\microservicios\\msseguimiento\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DE62C76D-3B68-46C7-AB6A-891CC320B40C}|Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj|solutionrelative:microservicios\\msseguimiento\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{040E1B71-E009-43B4-940C-DCC70456B244}|Microservicios\\MSNNA\\MSNNA.Api.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\microservicios\\msnna\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{040E1B71-E009-43B4-940C-DCC70456B244}|Microservicios\\MSNNA\\MSNNA.Api.csproj|solutionrelative:microservicios\\msnna\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DE62C76D-3B68-46C7-AB6A-891CC320B40C}|Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\microservicios\\msseguimiento\\controllers\\notificacioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DE62C76D-3B68-46C7-AB6A-891CC320B40C}|Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj|solutionrelative:microservicios\\msseguimiento\\controllers\\notificacioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\repositorios\\notificacionrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\repositorios\\notificacionrepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\repositorios\\alertarepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\repositorios\\alertarepo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{553EF79C-B75C-4F36-BDE8-9E7AE2A9A7B3}|Microservicios\\MSAuthentication\\MSAuthentication.Api.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\microservicios\\msauthentication\\msauthentication.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
       "RelativeMoniker": "D:0:0:{553EF79C-B75C-4F36-BDE8-9E7AE2A9A7B3}|Microservicios\\MSAuthentication\\MSAuthentication.Api.csproj|solutionrelative:microservicios\\msauthentication\\msauthentication.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
@@ -42,20 +102,12 @@
       "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\request\\consultaralertasestadosrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\modelos\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\modelos\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\core\\core.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
       "RelativeMoniker": "D:0:0:{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3}|Core\\Core.csproj|solutionrelative:core\\core.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\infra.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
       "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\infra.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|c:\\users\\charl\\onedrive\\documentos\\github\\secanibackv2\\infra\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{743840ED-A3DD-43A0-A905-9CD7F031D444}|Infra\\Infra.csproj|solutionrelative:infra\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSAuthentication\\Program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
@@ -80,7 +132,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 15,
+          "SelectedChildIndex": 19,
           "Children": [
             {
               "$type": "Bookmark",
@@ -132,7 +184,181 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "SeguimientoCntFiltrosDto.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\DTOs\\SeguimientoCntFiltrosDto.cs",
+              "RelativeDocumentMoniker": "Core\\DTOs\\SeguimientoCntFiltrosDto.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\DTOs\\SeguimientoCntFiltrosDto.cs",
+              "RelativeToolTip": "Core\\DTOs\\SeguimientoCntFiltrosDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAIAAAAEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-08-05T02:00:48.527Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AlertaSeguimientoDto.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\DTOs\\AlertaSeguimientoDto.cs",
+              "RelativeDocumentMoniker": "Core\\DTOs\\AlertaSeguimientoDto.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\DTOs\\AlertaSeguimientoDto.cs",
+              "RelativeToolTip": "Core\\DTOs\\AlertaSeguimientoDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAIAAAAlAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T04:04:47.875Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "TPEstadoAlerta.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\TPEstadoAlerta.cs",
+              "RelativeDocumentMoniker": "Core\\Modelos\\TPEstadoAlerta.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\TPEstadoAlerta.cs",
+              "RelativeToolTip": "Core\\Modelos\\TPEstadoAlerta.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAYAAAAKAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T03:58:50.438Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "NNARepo.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\NNARepo.cs",
+              "RelativeDocumentMoniker": "Infra\\Repositorios\\NNARepo.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\NNARepo.cs",
+              "RelativeToolTip": "Infra\\Repositorios\\NNARepo.cs",
+              "ViewState": "AQIAACoAAAAAAAAAAAAqwEYAAAA5AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T03:00:00.88Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSNNA\\Program.cs",
+              "RelativeDocumentMoniker": "Microservicios\\MSNNA\\Program.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSNNA\\Program.cs",
+              "RelativeToolTip": "Microservicios\\MSNNA\\Program.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAEAAAAMAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T02:59:54.781Z"
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "SeguimientoController.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\Controllers\\SeguimientoController.cs",
+              "RelativeDocumentMoniker": "Microservicios\\MSSeguimiento\\Controllers\\SeguimientoController.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\Controllers\\SeguimientoController.cs",
+              "RelativeToolTip": "Microservicios\\MSSeguimiento\\Controllers\\SeguimientoController.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAAmAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T02:55:29.387Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Seguimiento.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\Seguimiento.cs",
+              "RelativeDocumentMoniker": "Core\\Modelos\\Seguimiento.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\Seguimiento.cs",
+              "RelativeToolTip": "Core\\Modelos\\Seguimiento.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAqwAsAAAAVAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T00:02:45.473Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SeguimientoRepo.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\SeguimientoRepo.cs",
+              "RelativeDocumentMoniker": "Infra\\Repositorios\\SeguimientoRepo.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\SeguimientoRepo.cs*",
+              "RelativeToolTip": "Infra\\Repositorios\\SeguimientoRepo.cs*",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAUAAAAFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T00:00:07.53Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\Program.cs",
+              "RelativeDocumentMoniker": "Microservicios\\MSSeguimiento\\Program.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\Program.cs",
+              "RelativeToolTip": "Microservicios\\MSSeguimiento\\Program.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAAiAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T03:24:10.594Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "SeguimientoDto.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\DTOs\\SeguimientoDto.cs",
+              "RelativeDocumentMoniker": "Core\\DTOs\\SeguimientoDto.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\DTOs\\SeguimientoDto.cs",
+              "RelativeToolTip": "Core\\DTOs\\SeguimientoDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAqwBUAAAAoAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-31T03:48:06.888Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "NotificacionRepo.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\NotificacionRepo.cs",
+              "RelativeDocumentMoniker": "Infra\\Repositorios\\NotificacionRepo.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\NotificacionRepo.cs",
+              "RelativeToolTip": "Infra\\Repositorios\\NotificacionRepo.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAA9AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-30T23:56:47.064Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "AlertaRepo.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\AlertaRepo.cs",
+              "RelativeDocumentMoniker": "Infra\\Repositorios\\AlertaRepo.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\AlertaRepo.cs",
+              "RelativeToolTip": "Infra\\Repositorios\\AlertaRepo.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-30T23:58:42.474Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "NotificacionController.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\Controllers\\NotificacionController.cs",
+              "RelativeDocumentMoniker": "Microservicios\\MSSeguimiento\\Controllers\\NotificacionController.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\Controllers\\NotificacionController.cs",
+              "RelativeToolTip": "Microservicios\\MSSeguimiento\\Controllers\\NotificacionController.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAACMAAAAyAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-30T23:53:04.741Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Infra\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Infra\\ApplicationDbContext.cs",
+              "ViewState": "AQIAAEwAAAAAAAAAAAAiwFQAAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-25T03:57:57.685Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
               "Title": "MSSeguimiento.Api.csproj",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj",
               "RelativeDocumentMoniker": "Microservicios\\MSSeguimiento\\MSSeguimiento.Api.csproj",
@@ -144,7 +370,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 17,
               "Title": "MSNNA.Api.csproj",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSNNA\\MSNNA.Api.csproj",
               "RelativeDocumentMoniker": "Microservicios\\MSNNA\\MSNNA.Api.csproj",
@@ -156,7 +382,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 18,
               "Title": "MSEntidad.Api.csproj",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSEntidad\\MSEntidad.Api.csproj",
               "RelativeDocumentMoniker": "Microservicios\\MSEntidad\\MSEntidad.Api.csproj",
@@ -168,7 +394,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 7,
+              "Title": "BaseEntity.cs",
+              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\Common\\BaseEntity.cs",
+              "RelativeDocumentMoniker": "Core\\Modelos\\Common\\BaseEntity.cs",
+              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\Common\\BaseEntity.cs",
+              "RelativeToolTip": "Core\\Modelos\\Common\\BaseEntity.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAQAAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-25T04:06:06.162Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
               "Title": "MSAuthentication.Api.csproj",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Microservicios\\MSAuthentication\\MSAuthentication.Api.csproj",
               "RelativeDocumentMoniker": "Microservicios\\MSAuthentication\\MSAuthentication.Api.csproj",
@@ -176,12 +414,11 @@
               "RelativeToolTip": "Microservicios\\MSAuthentication\\MSAuthentication.Api.csproj",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2024-07-25T15:52:07.566Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-07-25T15:52:07.566Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 19,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSSeguimiento\\Program.cs",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSSeguimiento\\Program.cs",
@@ -193,7 +430,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 27,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSAuthentication\\Program.cs",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSAuthentication\\Program.cs",
@@ -205,7 +442,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 22,
               "Title": "GetVwMenuResponse.cs",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Response\\GetVwMenuResponse.cs",
               "RelativeDocumentMoniker": "Core\\Response\\GetVwMenuResponse.cs",
@@ -217,7 +454,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 23,
               "Title": "GetNotificacionResponse.cs",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Response\\GetNotificacionResponse.cs",
               "RelativeDocumentMoniker": "Core\\Response\\GetNotificacionResponse.cs",
@@ -229,7 +466,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 24,
               "Title": "ConsultarAlertasEstadosRequest.cs",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Request\\ConsultarAlertasEstadosRequest.cs",
               "RelativeDocumentMoniker": "Core\\Request\\ConsultarAlertasEstadosRequest.cs",
@@ -241,19 +478,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "BaseEntity.cs",
-              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\Common\\BaseEntity.cs",
-              "RelativeDocumentMoniker": "Core\\Modelos\\Common\\BaseEntity.cs",
-              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Modelos\\Common\\BaseEntity.cs",
-              "RelativeToolTip": "Core\\Modelos\\Common\\BaseEntity.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-07-25T04:06:06.162Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 25,
               "Title": "Core",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Core.csproj",
               "RelativeDocumentMoniker": "Core\\Core.csproj",
@@ -264,7 +489,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 26,
               "Title": "Infra",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Infra.csproj",
               "RelativeDocumentMoniker": "Infra\\Infra.csproj",
@@ -275,7 +500,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 20,
               "Title": "GenericRepository.cs",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\Repositorios\\Common\\GenericRepository.cs",
               "RelativeDocumentMoniker": "Infra\\Repositorios\\Common\\GenericRepository.cs",
@@ -287,7 +512,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 21,
               "Title": "ContactoEntidadService.cs",
               "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Core\\Services\\ContactoEntidadService.cs",
               "RelativeDocumentMoniker": "Core\\Services\\ContactoEntidadService.cs",
@@ -299,19 +524,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "Infra\\ApplicationDbContext.cs",
-              "ToolTip": "C:\\Users\\charl\\OneDrive\\Documentos\\GitHub\\secaniBackV2\\Infra\\ApplicationDbContext.cs",
-              "RelativeToolTip": "Infra\\ApplicationDbContext.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-07-25T03:57:57.685Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 28,
               "Title": "launchSettings.json",
               "DocumentMoniker": "C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSSeguimiento\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSSeguimiento\\Properties\\launchSettings.json",
@@ -323,7 +536,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 29,
               "Title": "launchSettings.json",
               "DocumentMoniker": "C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSNNA\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSNNA\\Properties\\launchSettings.json",
@@ -335,7 +548,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 30,
               "Title": "launchSettings.json",
               "DocumentMoniker": "C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSEntidad\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSEntidad\\Properties\\launchSettings.json",
@@ -347,7 +560,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 31,
               "Title": "launchSettings.json",
               "DocumentMoniker": "C:\\Users\\charl\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSAuthentication\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "..\\..\\..\\..\\Source\\Repos\\SecaniBack\\SecaniBack\\Microservicios\\MSAuthentication\\Properties\\launchSettings.json",
