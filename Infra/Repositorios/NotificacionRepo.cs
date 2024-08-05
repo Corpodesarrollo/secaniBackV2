@@ -22,6 +22,7 @@ namespace Infra.Repositories
                                                       where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
                                                       select new GetNotificacionResponse()
                                                       {
+                                                          IdNotificacion=un.Id,
                                                           TextoNotificacion = string.Join("", "El Agente de seguimiento ", uOrigen.FullName ?? string.Empty,
                                                           " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A"),
                                                           FechaNotificacion = un.FechaNotificacion,
