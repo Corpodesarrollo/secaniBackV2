@@ -1,133 +1,18 @@
-﻿using Core.DTOs;
+﻿using Core.Interfaces.Repositorios;
+using Core.Request;
+using Core.response;
+using Core.Modelos;
+using MSAuthentication.Core.DTOs;
+using Core.Response;
+using System.Collections.Generic;
 
 namespace Infra.Repositorios
 {
-    public class SeguimientoRepo(ApplicationDbContext db)
+    public class SeguimientoRepo : ISeguimientoRepo
     {
+        private readonly ApplicationDbContext _context;
 
-        public IQueryable<SeguimientoDto> GetSelect(string id)
-        {
-            return from s in db.Seguimientos
-                   join e in db.TPEstadoNNA on s.EstadoId equals e.Id
-                   join n in db.NNAs on s.NNAId equals n.Id
-                   where s.UsuarioId == id
-                   select new SeguimientoDto()
-                                                     {
-                       Id = s.Id,
-                       NoCaso = n.Id,
-                       PrimerNombre = n.PrimerNombre,
-                       SegundoNombre = n.SegundoNombre,
-                       PrimerApellido = n.PrimerApellido,
-                       SegundoApellido = n.SegundoApellido,
-                       FechaNotificacion = s.FechaSeguimiento,
-                       Estado = new TPEstadoNNADto()
-                                                     {
-                           Nombre = e.Nombre,
-                           Descripcion = e.Descripcion,
-                           ColorBG = e.ColorBG,
-                           ColorText = e.ColorText
-                       },
-                       AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
-                       FechaUltimaActuacion = s.UltimaActuacionFecha,
-                       Alertas = (from als in db.AlertaSeguimientos
-                                  join a in db.Alertas on als.AlertaId equals a.Id
-                                  join ea in db.TPEstadoAlerta on als.EstadoId equals ea.Id
-                                  join sca in db.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
-                                  select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
-                   };
-        }
-
-        public List<SeguimientoDto> GetAllByIdUser(string id, int filtro)
-        {
-
-            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
-
-            if (seguimiento == null)
-            {
-                return -1;
-            }
-
-            seguimiento.FechaSeguimiento = request.FechaSeguimiento;
-
-            _context.SaveChanges();
-            return 1;
-        }
-
-        public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
-        {
-            var seguimientoOriginal = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
-
-            if (seguimientoOriginal == null)
-            {
-                return -1;
-            }
-
-
-            DateTime hoy = DateTime.Now;
-            if (seguimientoOriginal.FechaSeguimiento < hoy)
-            {
-                return -2;
-            }
-
-            // Actualizar el EstadoId a cero
-            seguimientoOriginal.EstadoId = 3;
-
-            // Guardar los cambios en el seguimiento original
-            _context.SaveChanges();
-
-            try
-            {
-                var query = GetSelect(id);
-                var result = query.ToList();
-
-                if (filtro == 1) //hoy
-                {
-                    return result.Where(x => x.FechaNotificacion.Date == DateTime.Now.Date).ToList();
-            }
-                else if (filtro == 2) //con alerta
-            {
-                    return result.Where(x => x.Alertas.Count > 0).ToList();
-            }
-                else if (filtro == 3) //Todos
-        {
-                    return result;
-        }
-                else if (filtro == 4) //Solicitados por Cuidador
-        {
-                    return result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").ToList();
-        }
-
-
-                return result;
-            }
-            catch (Exception ex)
-                {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public SeguimientoCntFiltrosDto SeguimientoCntFiltros(string id)
-                {
-            try
-        {
-                var query = GetSelect(id);
-                var result = query.ToList();
-
-                return new SeguimientoCntFiltrosDto
-                {
-                    Todos = result.Count,
-                    Hoy = result.Where(x => x.FechaNotificacion.Date == DateTime.Now.Date).Count(),
-                    ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
-                    SolicitadosPorCuidador = result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").Count()
-                };
-        }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
-            return seguimientos;
-        }
+        public SeguimientoRepo(ApplicationDbContext context) => _context = context;
 
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {
@@ -449,14 +334,13 @@ namespace Infra.Repositorios
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
         {
             Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                        where seg.Id == request.IdSeguimiento
-                                        select seg).FirstOrDefault();
+                                       where seg.Id == request.IdSeguimiento
+                                       select seg).FirstOrDefault();
 
-            if (seguimiento != null)
-            {
+            if (seguimiento != null) {
                 NNAs? nna = (from nn in _context.NNAs
-                             where nn.Id == seguimiento.NNAId
-                             select nn).FirstOrDefault();
+                            where nn.Id == seguimiento.NNAId
+                            select nn).FirstOrDefault();
 
                 if (nna != null)
                 {
@@ -476,21 +360,21 @@ namespace Infra.Repositorios
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
             List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
-                                                         where seg.NNAId == idNNA
-                                                         select new SeguimientoNNAResponse()
-                                                         {
-                                                             FechaNotificacion = seg.FechaSolicitud,
-                                                             FechaSeguimiento = seg.FechaSeguimiento,
-                                                             IdSeguimiento = seg.Id,
-                                                             Asunto = seg.UltimaActuacionAsunto,
-                                                             Observacion = seg.ObservacionesSolicitante
-                                                         }).ToList();
+                                                  where seg.NNAId == idNNA
+                                                  select new SeguimientoNNAResponse()
+                                                  {
+                                                      FechaNotificacion = seg.FechaSolicitud,
+                                                      FechaSeguimiento = seg.FechaSeguimiento,
+                                                      IdSeguimiento = seg.Id,
+                                                      Asunto = seg.UltimaActuacionAsunto,
+                                                      Observacion = seg.ObservacionesSolicitante
+                                                  }).ToList();
 
             List<AlertaSeguimiento>? alertas;
             foreach (SeguimientoNNAResponse seg in seguimientos)
             {
                 alertas = (from alert in _context.AlertaSeguimientos
-                           where alert.SeguimientoId == seg.IdSeguimiento
+                           where alert.SeguimientoId==seg.IdSeguimiento
                            select alert).ToList();
 
                 seg.alertasSeguimientos = alertas;

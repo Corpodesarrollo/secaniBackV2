@@ -1,8 +1,10 @@
-﻿namespace Core.Modelos
+﻿using Core.Modelos.Common;
+
+namespace Core.Modelos
 {
     public class TPEstadoNNA
     {
-        public int? Id { get; set; }
+        public int?  Id { get; set; }
         public string? Nombre { get; set; }
         public string? Descripcion { get; set; }
         public string? ColorBG { get; set; }

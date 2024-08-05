@@ -102,20 +102,6 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
-        [HttpGet("GetAllByIdUser/{IdUser}/{filtro}")]
-        public ActionResult<List<SeguimientoDto>> GetAllByIdUser(string IdUser, int filtro)
-        {
-            var response = repos.GetAllByIdUser(IdUser, filtro);
-            return response;
-        }
-
-        [HttpGet("GetCntSeguimiento/{IdUser}")]
-        public ActionResult<SeguimientoCntFiltrosDto> GetCntSeguimiento(string IdUser)
-        {
-            var response = repos.SeguimientoCntFiltros(IdUser);
-            return response;
-        }
-
     }
 
 

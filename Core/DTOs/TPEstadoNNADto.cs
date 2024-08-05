@@ -1,4 +1,6 @@
-﻿namespace Core.DTOs
+﻿using Core.Modelos.Common;
+
+namespace Core.DTOs
 {
     public class TPEstadoNNADto
     {
