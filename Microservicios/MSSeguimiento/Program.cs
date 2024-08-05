@@ -16,7 +16,8 @@ builder.CustomConfigureServices();
 
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
-builder.Services.AddScoped<SeguimientoRepo>();
+builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
+builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
 
 builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
 {
