@@ -10,39 +10,32 @@ namespace MSSeguimiento.Api.Controllers
     [Route("[controller]")]
     public class NotificacionController : ControllerBase
     {
-        private readonly INotificacionRepo notificacionRepo;
+        private INotificacionRepo notificacionRepo;
 
         public NotificacionController(INotificacionRepo notificacion)
         {
             notificacionRepo = notificacion;
         }
-
-        [HttpGet("GetNotification/{agenteDestinoId}")]
-        public List<GetNotificacionResponse> GetNotifications(string agenteDestinoId)
+        [HttpPost("GetNotification")]
+        public List<GetNotificacionResponse> GetNotifications(GetNotificacionRequest request)
         {
-            List<GetNotificacionResponse> response;
+            List<GetNotificacionResponse> response = new();
 
-            response = notificacionRepo.GetNotificacionUsuario(agenteDestinoId);
+            response = notificacionRepo.GetNotificacionUsuario(request.AgenteDestinoId);
 
             return response;
         }
 
-        [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
-        public int GetNumeroNotifications(string agenteDestinoId)
+        [HttpPost("GetNumeroNotification")]
+        public int GetNumeroNotifications(GetNotificacionRequest request)
         {
-            return notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
+            return notificacionRepo.GetNumeroNotificacionUsuario(request.AgenteDestinoId);
         }
 
         [HttpPost("OficioNotificacion")]
         public string GenerarOficioNotificacion(OficioNotificacionRequest request)
         {
             return notificacionRepo.GenerarOficioNotificacion(request);
-        }
-
-        [HttpPost("EliminarNotificacion/{NotificacionId}")]
-        public void EliminarNotificacion(long NotificacionId)
-        {
-            notificacionRepo.EliminarNotificacion(NotificacionId);
         }
     }
 }

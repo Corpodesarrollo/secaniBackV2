@@ -21,7 +21,7 @@ namespace Core.Modelos
             Password = password;
         }
 
-        public void SendEmail(string fromEmail, string toEmail, string subject, string body, string attachmentPath)
+        public void SendEmail(string fromEmail, string toEmail, string subject, string body, string attachmentPath = null)
         {
             var smtpClient = new SmtpClient(SmtpServer)
             {

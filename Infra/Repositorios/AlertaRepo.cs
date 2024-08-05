@@ -1,7 +1,6 @@
 ﻿using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
-using MSAuthentication.Api.Utilities;
 
 namespace Infra.Repositories
 {
@@ -14,14 +13,12 @@ namespace Infra.Repositories
             _context = context;
         }
 
-        public string CrearAlertaSeguimiento(string token,CrearAlertaSeguimientoRequest request)
+        public string CrearAlertaSeguimiento(CrearAlertaSeguimientoRequest request)
         {
             try
             {
-                DataToken dataToken = JWTUtilities.Decode(token);
-
                 AspNetUsers? user = (from users in _context.AspNetUsers
-                                     where users.Id == dataToken.Jti
+                                     where users.UserName == request.Username
                                      select users).FirstOrDefault();
 
                 if (user == null)

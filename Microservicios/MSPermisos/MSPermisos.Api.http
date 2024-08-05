@@ -1,6 +1,0 @@
-@MSPermisos.Api_HostAddress = http://localhost:5153
-
-GET {{MSPermisos.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

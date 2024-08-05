@@ -22,11 +22,8 @@ namespace Infra.Repositories
                                                       where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
                                                       select new GetNotificacionResponse()
                                                       {
-                                                          IdNotificacion=un.Id,
                                                           TextoNotificacion = string.Join("", "El Agente de seguimiento ", uOrigen.FullName ?? string.Empty,
-                                                          " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A"),
-                                                          FechaNotificacion = un.FechaNotificacion,
-                                                          URLNotificacion = un.Url==null?"":un.Url
+                                                          " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A")
                                                       }).ToList();
 
             return response;
@@ -129,21 +126,5 @@ namespace Infra.Repositories
             return "Oficio creado correctamente";
         }
 
-        public void EliminarNotificacion(long NotificacionId)
-        {
-            NotificacionesUsuario? notificacion = (from ne in _context.NotificacionesUsuarios
-                                                  where ne.Id == NotificacionId
-                                                  select ne).FirstOrDefault();
-
-            if (notificacion != null)
-            {
-                notificacion.IsDeleted = true;
-                notificacion.DeletedByUserId = request.IdUsuario;
-                notificacion.DateDeleted = DateTime.Now;
-
-                _context.Update(notificacion);
-                _context.SaveChanges();
-            }
-        }
     }
 }

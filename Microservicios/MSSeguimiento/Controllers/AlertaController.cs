@@ -9,7 +9,7 @@ namespace MSSeguimiento.Api.Controllers
     [Route("[controller]")]
     public class AlertaController : ControllerBase
     {
-        private readonly IAlertaRepo alertaRepo;
+        private IAlertaRepo alertaRepo;
 
         public AlertaController(IAlertaRepo alerta)
         {
@@ -17,9 +17,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("CrearAlertaSeguimiento")]
-        public string CrearAlerta([FromHeader(Name = "Authorization")] string token, [FromBody] CrearAlertaSeguimientoRequest request)
+        public string CrearAlerta(CrearAlertaSeguimientoRequest request)
         {
-            return alertaRepo.CrearAlertaSeguimiento(token,request);
+            return alertaRepo.CrearAlertaSeguimiento(request);
         }
 
         [HttpPost("GestionarAlerta")]

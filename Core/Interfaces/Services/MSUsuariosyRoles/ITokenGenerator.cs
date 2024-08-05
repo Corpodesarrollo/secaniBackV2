@@ -1,8 +1,0 @@
-﻿namespace Core.Interfaces.Services.MSUsuariosyRoles
-{
-    public interface ITokenGenerator
-    {
-        //public string GenerateToken(string userName, string password);
-        public string GenerateJWTToken((string userId, string userName, IList<string> roles) userDetails);
-    }
-}
