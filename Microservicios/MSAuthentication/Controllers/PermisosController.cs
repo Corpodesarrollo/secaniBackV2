@@ -2,6 +2,8 @@
 using Core.request;
 using Core.response;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
+
 
 namespace MSAuthentication.Api.Controllers
 {
@@ -10,6 +12,7 @@ namespace MSAuthentication.Api.Controllers
     public class PermisosController : ControllerBase
     {
         private IPermisosRepo permisosRepo;
+
 
         public PermisosController(IPermisosRepo _permisos)
         {
@@ -20,7 +23,7 @@ namespace MSAuthentication.Api.Controllers
         {
             List<GetVwMenuResponse> response = new List<GetVwMenuResponse>();
 
-            response = permisosRepo.MenuXRolId(request);
+            response = permisosRepo.MenuXRolId(request, cancellationToken: default);
 
             return response;
         }

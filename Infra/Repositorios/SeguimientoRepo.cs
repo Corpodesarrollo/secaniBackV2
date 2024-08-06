@@ -368,7 +368,7 @@ namespace Infra.Repositorios
                 nna.TrasladoEAPBSuministroApoyo = request.ServiciosSocialesEAPB;
                 nna.TrasladosServiciosdeApoyoOportunos = request.ServiciosSocialesEntregados;
                 nna.TrasladosServiciosdeApoyoCobertura = request.ServiciosSocialesCobertura;
-                nna.TrasladosHaSolicitadoApoyoFundacion = request.ApoyoFundacion;
+                nna.TrasladosHaSolicitadoApoyoFundacion = request.ApoyoRecibidoFundacion;
                 nna.TrasladosNombreFundacion = request.NombreFundacion;
                 nna.TrasladosPropietarioResidenciaActualId = request.IdTipoResidenciaActual;
                 nna.TrasladosQuienAsumioCostosTraslado = request.AsumeCostoTraslado;

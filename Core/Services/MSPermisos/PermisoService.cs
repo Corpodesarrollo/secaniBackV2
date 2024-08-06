@@ -58,6 +58,28 @@ namespace Core.Services.MSPermisos
             return entitiesDto;
         }
 
+        public async Task<IEnumerable<PermisoResponseDTO>> GetPermisosByRoleIdFuncionalidadId(string RoleId, int FuncionalidadId, CancellationToken cancellationToken)
+        {
+            var cacheKeyRoleId = cacheKey + RoleId;
+            if (!_cache.TryGetValue(cacheKeyRoleId, out List<PermisoResponseDTO> entitiesDto))
+            {
+                var entities = await _repository.GetPermisosByRoleIdFuncionalidadId(RoleId, FuncionalidadId, cancellationToken);
+                entitiesDto = new List<PermisoResponseDTO>();
+                foreach (var entity in entities)
+                {
+                    var permisoDto = new PermisoResponseDTO();
+                    permisoDto.CanAdd = entity.CanAdd ?? false;
+                    permisoDto.CanEdit = entity.CanEdit ?? false;
+                    permisoDto.CanView = entity.CanView ?? false;
+                    permisoDto.CanDele = entity.CanDele ?? false;
+
+                    entitiesDto.Add(permisoDto);
+                }
+                _cache.Set(cacheKeyRoleId, entitiesDto, cacheEntryOptions);
+            }
+            return entitiesDto;
+        }
+
         public async Task<PermisoResponseDTO> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             var cacheKeyId = cacheKey + id.ToString();

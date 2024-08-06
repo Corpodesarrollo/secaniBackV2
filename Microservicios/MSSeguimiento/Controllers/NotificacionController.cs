@@ -39,10 +39,10 @@ namespace MSSeguimiento.Api.Controllers
             return notificacionRepo.GenerarOficioNotificacion(request);
         }
 
-        [HttpPost("EliminarNotificacion/{NotificacionId}")]
-        public void EliminarNotificacion(long NotificacionId)
+        [HttpPost("EliminarNotificacion")]
+        public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
-            notificacionRepo.EliminarNotificacion(NotificacionId);
+            notificacionRepo.EliminarNotificacion(request);
         }
     }
 }

@@ -118,6 +118,31 @@ namespace Infra.Repositorios
             return response;
         }
 
+        public NNAs ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion)
+        {
+            var response = new NNAs();
+
+            try
+            {
+                var nnna = _context.NNAs.FirstOrDefault(x => x.TipoIdentificacionId == tipoIdentificacionId && x.NumeroIdentificacion==numeroIdentificacion);
+
+                if (nnna != null)
+                {
+                    response = nnna;
+                }
+                else
+                {
+                    response = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                response = null;
+            }
+
+            return response;
+        }
+
         public RespuestaResponse<FiltroNNADto> ConsultarNNAFiltro(FiltroNNARequest entrada)
         {
             var response = new RespuestaResponse<FiltroNNADto>();
@@ -135,7 +160,7 @@ namespace Infra.Repositorios
                 };
 
                 var results = _context.FiltroNNAs.FromSqlRaw(
-                    "EXEC dbo.sp_consulta_nna_filtro @Estado, @Agente, @Buscar, @Orden",
+                    "EXEC dbo.SpConsultaNnaFiltro @Estado, @Agente, @Buscar, @Orden",
                     parameters
                 ).ToList();
                 if (results != null)
@@ -186,62 +211,6 @@ namespace Infra.Repositorios
             }
 
             return response;
-        }
-
-        public void ActualizarNNASeguimiento(NNASeguimientoRequest request)
-        {
-            NNAs? nna = (from nn in _context.NNAs
-                         where nn.Id == request.NNAId
-                         select nn).FirstOrDefault();
-
-            if (nna != null)
-            {
-                ContactoNNA? contacto;
-
-                foreach (ContactoRequest c in request.Contactos)
-                {
-                    contacto = (from contact in _context.ContactoNNAs
-                                where contact.Nombres == c.Nombre && contact.NNAId == request.NNAId
-                                select contact).FirstOrDefault();
-
-                    if (contacto != null)
-                    {
-                        contacto.ParentescoId = c.IdParentesco;
-                        contacto.Telefonos = string.Concat(c.Telefono1, " ", c.Telefono2);
-
-                        _context.ContactoNNAs.Update(contacto);
-                    }
-                    else
-                    {
-                        contacto = new ContactoNNA();
-                        contacto.NNAId = request.NNAId;
-                        contacto.Nombres = c.Nombre;
-                        contacto.ParentescoId = c.IdParentesco;
-                        contacto.Telefonos = string.Concat(c.Telefono1, " ", c.Telefono2);
-                        _context.ContactoNNAs.Add(contacto);
-                    }
-                    _context.SaveChanges();
-                }
-
-                nna.OrigenReporteId = request.IdOrigenEstrategia;
-                nna.PrimerNombre = request.PrimerNombreNNA;
-                nna.SegundoNombre = request.SegundoNombreNNA;
-                nna.PrimerApellido = request.PrimerApellidoNNA;
-                nna.SegundoApellido = request.SegundoApellidoNNA;
-                nna.TipoIdentificacionId = request.IdTipoIdentificacionNNA;
-                nna.NumeroIdentificacion = request.NumeroIdentificacionNNA;
-                nna.FechaNacimiento = request.FechaNacimientoNNA;
-                nna.EtniaId = request.IdEtniaNNA;
-                nna.GrupoPoblacionId = request.IdGrupoPoblacionalNNA;
-                nna.SexoId = request.IdSexoNNA;
-                nna.TipoRegimenSSId = request.IdRegimenAfiliacionNNA;
-                nna.EAPBId = request.EAPBNNA;
-                nna.OrigenReporteOtro = request.OtroOrigenEstrategia;
-                nna.PaisId = request.IdPaisNacimientoNNA;
-
-                _context.Update(nna);
-                _context.SaveChanges();
-            }
         }
     }
 
