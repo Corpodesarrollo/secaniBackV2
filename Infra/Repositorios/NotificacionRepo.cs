@@ -129,11 +129,11 @@ namespace Infra.Repositories
             return "Oficio creado correctamente";
         }
 
-        public void EliminarNotificacion(long NotificacionId)
+        public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
             NotificacionesUsuario? notificacion = (from ne in _context.NotificacionesUsuarios
-                                                  where ne.Id == NotificacionId
-                                                  select ne).FirstOrDefault();
+                                                  where ne.Id == request.IdNotificacionUsuario
+                                                   select ne).FirstOrDefault();
 
             if (notificacion != null)
             {
