@@ -1,11 +1,6 @@
-﻿using Core.Request;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Core.DTOs;
+using Core.Request;
 using Core.response;
-using Core.Modelos;
 using Core.Response;
 
 
@@ -23,7 +18,9 @@ namespace Core.Interfaces.Repositorios
         public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request);
         public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request);
         public void SetDificultadesProceso(DificultadesProcesoRequest request);
-        public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request);
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
+        Task<SeguimientoCntFiltrosDto> SeguimientoCntFiltros(string id);
+        Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);
     }
 }
