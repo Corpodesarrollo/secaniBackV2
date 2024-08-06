@@ -1,10 +1,11 @@
-﻿using Core.Modelos.Common;
+﻿using System;
+using Core.Modelos.Common;
 
 namespace Core.Modelos
 {
     public class NNAs : BaseEntity
     {
-        public int estadoId { get; set; }
+        public int EstadoId { get; set; }
         public int ResidenciaActualCategoriaId { get; set; }
         public int ResidenciaActualMunicipioId { get; set; }
         public string ResidenciaActualBarrio { get; set; }
@@ -27,7 +28,6 @@ namespace Core.Modelos
         public int TipoIdentificacionId { get; set; }
         public string NumeroIdentificacion { get; set; }
         public DateTime FechaNacimiento { get; set; }
-        public int Edad() => DateTime.Today.Year - FechaNacimiento.Year - (DateTime.Today.DayOfYear < FechaNacimiento.DayOfYear ? 1 : 0);
         public int MunicipioNacimientoId { get; set; }
         public int SexoId { get; set; }
         public int TipoRegimenSSId { get; set; }
@@ -53,7 +53,7 @@ namespace Core.Modelos
         public string DiagnosticoId { get; set; }
         public DateTime FechaDiagnostico { get; set; }
         public int? MotivoNoDiagnosticoId { get; set; }
-        public string? MotivoNoDiagnosticoOtro { get; set; }
+        public string MotivoNoDiagnosticoOtro { get; set; }
         public DateTime? FechaConsultaDiagnostico { get; set; }
         public int DepartamentoTratamientoId { get; set; }
         public bool IPSIdTratamiento { get; set; }
@@ -63,8 +63,8 @@ namespace Core.Modelos
         public bool TrasladoEAPBSuministroApoyo { get; set; }
         public bool TrasladosServiciosdeApoyoOportunos { get; set; }
         public bool TrasladosServiciosdeApoyoCobertura { get; set; }
-        public bool TrasladosHaSolicitadoApoyoFundacion { get; set; }
-        public string TrasladosNombreFundacion { get; set; }
+        public string? TrasladosHaSolicitadoApoyoFundacion { get; set; }
+        public string? TrasladosNombreFundacion { get; set; }
         public bool TrasladosApoyoRecibidoxFundacion { get; set; }
         public bool DifAutorizaciondeMedicamentos { get; set; }
         public bool DifEntregaMedicamentosLAP { get; set; }
@@ -101,13 +101,9 @@ namespace Core.Modelos
         public string CuidadorTelefono { get; set; }
         public string SeguimientoLoDesea { get; set; }
         public string SeguimientoMotivoNoLoDesea { get; set; }
-
-        public string? OrigenReporteOtro { get; set; }
-        public int TrasladosPropietarioResidenciaActualId { get; set; }
-        public string? TrasladosPropietarioResidenciaActualOtro { get; set; }
-        public string? TrasladosQuienAsumioCostosTraslado { get; set; }
-        public string? TrasladosQuienAsumioCostosVivienda { get; set; }
-        public int PaisId {  get; set; }
-        public string? TrasladosMotivoAccionLegal { get; set; }
+        public string TrasladosMotivoAccionLegal {  get; set; }  
+        public int? TrasladosPropietarioResidenciaActualId { get; set; }
+        public string? TrasladosQuienAsumioCostosTraslado {  get; set; }
+        public string? TrasladosQuienAsumioCostosVivienda {  get; set; }
     }
 }
