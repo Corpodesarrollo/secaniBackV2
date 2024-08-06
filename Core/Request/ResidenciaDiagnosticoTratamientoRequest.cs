@@ -15,7 +15,6 @@ namespace Core.Request
         public bool ServiciosSocialesEAPB { get; set; }
         public bool ServiciosSocialesEntregados { get; set; }
         public bool ServiciosSocialesCobertura { get; set; }
-        public bool ApoyoFundacion { get; set; }
         public string? NombreFundacion { get; set; }
         public string? ApoyoRecibidoFundacion { get; set; }
         public int IdTipoResidenciaActual { get; set; }

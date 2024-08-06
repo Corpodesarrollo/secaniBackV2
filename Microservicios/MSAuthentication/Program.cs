@@ -11,6 +11,9 @@ builder.Services.AddSwaggerGen();
 
 builder.CustomConfigureServices();
 
+// Registrar IMemoryCache
+builder.Services.AddMemoryCache();
+
 //Registro de Repos
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
 
