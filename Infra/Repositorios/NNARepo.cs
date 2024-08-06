@@ -1,16 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Core.Request;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
-using System.Data.Common;
-using Core.DTOs;
 using Core.Response;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Infra.Repositorios
@@ -94,7 +88,7 @@ namespace Infra.Repositorios
         public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId)
         {
             var response = new RespuestaResponse<ContactoNNA>();
-            List<ContactoNNA> li = new List<ContactoNNA>();
+            List<ContactoNNA> li = new();
 
             try
             {
@@ -153,7 +147,7 @@ namespace Infra.Repositorios
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista = new List<FiltroNNA>();
+            List<FiltroNNA> lista = new();
 
             try
             {
@@ -171,7 +165,7 @@ namespace Infra.Repositorios
                 ).ToList();
                 if (results != null)
                 {
-                    if (results.Count() >0)
+                    if (results.Count() > 0)
                     {
                         response.Estado = true;
                         response.Descripcion = "Consulta realizada con éxito.";
@@ -181,10 +175,10 @@ namespace Infra.Repositorios
                         response.Estado = false;
                         response.Descripcion = "No trajo datos en la consulta.";
                     }
-                    
+
                     foreach (var filtroNNA in results)
                     {
-                        FiltroNNADto dto = new FiltroNNADto
+                        FiltroNNADto dto = new()
                         {
                             NoCaso = filtroNNA.NoCaso,
                             NombreNNA = filtroNNA.NombreNNA,
@@ -199,7 +193,7 @@ namespace Infra.Repositorios
                         };
 
                         response.Datos.Add(dto);
-                    }   
+                    }
                 }
                 else
                 {
@@ -207,7 +201,7 @@ namespace Infra.Repositorios
                     response.Descripcion = "No trae información.";
                     response.Datos = null;
                 }
-                
+
             }
             catch (Exception ex)
             {
