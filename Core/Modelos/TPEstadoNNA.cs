@@ -1,6 +1,4 @@
-﻿using Core.Modelos.Common;
-
-namespace Core.Modelos
+﻿namespace Core.Modelos
 {
     public class TPEstadoNNA
     {
