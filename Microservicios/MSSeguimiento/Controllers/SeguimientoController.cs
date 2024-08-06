@@ -26,11 +26,11 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
-        [HttpGet("SeguimientoCntFiltros/{UsuarioId}")]
-        public async Task<SeguimientoCntFiltrosDto> SeguimientoCntFiltros(string UsuarioId)
+        [HttpGet("GetCntSeguimiento/{UsuarioId}")]
+        public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string UsuarioId)
         {
 
-            var response = await seguimientoRepo.SeguimientoCntFiltros(UsuarioId);
+            var response = await seguimientoRepo.GetCntSeguimiento(UsuarioId);
             return response;
         }
 
