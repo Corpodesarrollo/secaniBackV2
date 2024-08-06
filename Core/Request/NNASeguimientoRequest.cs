@@ -19,7 +19,7 @@ namespace Core.Request
         public int IdTipoIdentificacionNNA { get; set; }
         public string NumeroIdentificacionNNA { get; set; }
         public DateTime FechaNacimientoNNA { get; set; }
-        public int IdPaisNacimientoNNA {  get; set; }
+        public int? IdPaisNacimientoNNA {  get; set; }
         public int IdEtniaNNA { get; set; }
         public int IdGrupoPoblacionalNNA { get; set; }
         public int IdSexoNNA {  get; set; }

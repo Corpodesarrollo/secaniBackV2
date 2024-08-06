@@ -23,5 +23,22 @@ namespace Core.Interfaces.Repositorios
         public List<TPEstadoNNA> TpEstadosNNA();
 
         public List<VwAgentesAsignados> VwAgentesAsignados();
+
+        public void ActualizarNNASeguimiento(NNASeguimientoRequest request);
+
+        public List<TPTipoIdentificacionDto> GetTpTipoId();
+        public List<TPTipoIdentificacionDto> GetTPTipoIdentificacion();
+
+        public List<TPRegimenAfiliacionDto> GetTPRegimenAfiliacion();
+        public List<TPParentescoDto> GetTPParentesco();
+        public List<TPPaisDto> GetTPPais();
+        public List<TPDepartamentoDto> GetTPDepartamento(int PaisId);
+        public List<TPCiudadDto> GetTPCiudad(int DepartamentoId);
+        public List<TPOrigenReporteDto> GetTPOrigenReporte();
+        public List<TPGrupoPoblacionalDto> GetGrupoPoblacional();
+        public List<TPEtniaDto> GetTPEtnia();
+        public List<TPEAPBDto> GetTPEAPB();
+        public List<TPEstadoIngresoEstrategiaDto> GetTPEstadoIngresoEstrategia();
+        public NNAs ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion);
     }
 }
