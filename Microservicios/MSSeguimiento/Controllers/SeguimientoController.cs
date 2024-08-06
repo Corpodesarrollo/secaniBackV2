@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
-using Infra.Repositorios;
+using Core.Response;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -17,6 +18,21 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo = seguimiento;
         }
 
+        [HttpGet("GetAllByIdUser/{UsuarioId}/{filtro}")]
+        public async Task<List<SeguimientoDto>> GetAllByIdUser(string UsuarioId, int filtro)
+        {
+
+            var response = await seguimientoRepo.GetAllByIdUser(UsuarioId, filtro);
+            return response;
+        }
+
+        [HttpGet("GetCntSeguimiento/{UsuarioId}")]
+        public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string UsuarioId)
+        {
+
+            var response = await seguimientoRepo.GetCntSeguimiento(UsuarioId);
+            return response;
+        }
 
         [HttpGet("GetSeguimientoUsuario")]
         public List<GetSeguimientoResponse> GetSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
@@ -93,10 +109,18 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo.SetAdherenciaProceso(request);
         }
 
+        [HttpGet("GetSeguimientosNNA")]
+        public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
+        {
+
+            List<SeguimientoNNAResponse> response = seguimientoRepo.GetSeguimientosNNA(idNNA);
+            return response;
+        }
+
     }
 
 
-    
+
 }
 
 

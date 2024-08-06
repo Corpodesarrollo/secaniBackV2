@@ -5,6 +5,6 @@ namespace Core.Interfaces.Repositorios
 {
     public interface IPermisosRepo
     {
-        public List<GetVwMenuResponse> MenuXRolId(GetVwMenuRequest request);
+        public List<GetVwMenuResponse> MenuXRolId(GetVwMenuRequest request, CancellationToken cancellationToken);
     }
 }

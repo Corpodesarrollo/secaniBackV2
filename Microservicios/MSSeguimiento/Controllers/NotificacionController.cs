@@ -17,20 +17,20 @@ namespace MSSeguimiento.Api.Controllers
             notificacionRepo = notificacion;
         }
 
-        [HttpPost("GetNotification")]
-        public List<GetNotificacionResponse> GetNotifications(GetNotificacionRequest request)
+        [HttpGet("GetNotification/{agenteDestinoId}")]
+        public List<GetNotificacionResponse> GetNotifications(string agenteDestinoId)
         {
             List<GetNotificacionResponse> response;
 
-            response = notificacionRepo.GetNotificacionUsuario(request.AgenteDestinoId);
+            response = notificacionRepo.GetNotificacionUsuario(agenteDestinoId);
 
             return response;
         }
 
-        [HttpPost("GetNumeroNotification")]
-        public int GetNumeroNotifications(GetNotificacionRequest request)
+        [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
+        public int GetNumeroNotifications(string agenteDestinoId)
         {
-            return notificacionRepo.GetNumeroNotificacionUsuario(request.AgenteDestinoId);
+            return notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
         }
 
         [HttpPost("OficioNotificacion")]

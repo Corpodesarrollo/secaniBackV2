@@ -14,5 +14,8 @@ namespace Core.Modelos
         public DateTime FechaSolicitud { get; set; }
         public bool TieneDiagnosticos { get; set; }
         public string ObservacionesSolicitante { get; set; }
+        public string ObservacionAgente { get; set; }
+        public string? UltimaActuacionAsunto { get; set; }
+        public DateTime? UltimaActuacionFecha { get; set; }
     }
 }

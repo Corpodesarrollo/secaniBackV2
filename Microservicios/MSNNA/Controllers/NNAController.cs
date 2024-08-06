@@ -30,14 +30,14 @@ namespace Api.Controllers
             contactoNNA.TelefnosInactivos = request.TelefnosInactivos;
 
             var response = _nNARepo.CrearContactoNNA(contactoNNA);
-            return Ok(response); 
+            return Ok(response);
         }
 
         [HttpPut("ContactoNNAActualizar")]
         public IActionResult ContactoNNAActualizar(ContactoNNARequest request)
         {
             var contactoNNA = new ContactoNNA();
-            contactoNNA.Nombres= request.Nombres;
+            contactoNNA.Nombres = request.Nombres;
             contactoNNA.ParentescoId = request.ParentescoId;
             contactoNNA.Email = request.Email;
             contactoNNA.Telefonos = request.Telefonos;
@@ -78,11 +78,120 @@ namespace Api.Controllers
             return Ok(response.Datos);
         }
 
+        [HttpGet("ConsultarNNAsByTipoIdNumeroId/{tipoIdentificacionId}/{numeroIdentificacion}")]
+        public IActionResult ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion)
+        {
+
+            var response = _nNARepo.ConsultarNNAsByTipoIdNumeroId(tipoIdentificacionId, numeroIdentificacion);
+            return Ok(response);
+        }
+
         [HttpPost("ActualizarNNASeguimiento")]
         public IActionResult ActualizarNNASeguimiento(NNASeguimientoRequest request)
         {
             _nNARepo.ActualizarNNASeguimiento(request);
             return Ok();
+        }
+
+
+
+        /***
+         * Migración de metodos al proyecto 
+         * */
+        [HttpGet("GetTpTipoId")]
+        public IActionResult GetTpTipoId()
+        {
+
+            var response = _nNARepo.GetTpTipoId();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPTipoIdentificacion")]
+        public IActionResult GetTPTipoIdentificacion()
+        {
+
+            var response = _nNARepo.GetTPTipoIdentificacion();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPRegimenAfiliacion")]
+        public IActionResult GetTPRegimenAfiliacion()
+        {
+
+            var response = _nNARepo.GetTPRegimenAfiliacion();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPParentesco")]
+        public IActionResult GetTPParentesco()
+        {
+
+            var response = _nNARepo.GetTPParentesco();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPPais")]
+        public IActionResult GetTPPais()
+        {
+
+            var response = _nNARepo.GetTPPais();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPDepartamento/{PaisId}")]
+        public IActionResult GetTPDepartamento(int PaisId)
+        {
+
+            var response = _nNARepo.GetTPDepartamento(PaisId);
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPCiudad/{DepartamentoId}")]
+        public IActionResult GetTPCiudad(int DepartamentoId)
+        {
+
+            var response = _nNARepo.GetTPCiudad(DepartamentoId);
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPOrigenReporte")]
+        public IActionResult GetTPOrigenReporte()
+        {
+
+            var response = _nNARepo.GetTPOrigenReporte();
+            return Ok(response);
+        }
+
+        [HttpGet("GetGrupoPoblacional")]
+        public IActionResult GetGrupoPoblacional()
+        {
+
+            var response = _nNARepo.GetGrupoPoblacional();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPEtnia")]
+        public IActionResult GetTPEtnia()
+        {
+
+            var response = _nNARepo.GetTPEtnia();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPEAPB")]
+        public IActionResult GetTPEAPB()
+        {
+
+            var response = _nNARepo.GetTPEAPB();
+            return Ok(response);
+        }
+
+        [HttpGet("GetTPEstadoIngresoEstrategia")]
+        public IActionResult GetTPEstadoIngresoEstrategia()
+        {
+
+            var response = _nNARepo.GetTPEstadoIngresoEstrategia();
+            return Ok(response);
         }
     }
 }

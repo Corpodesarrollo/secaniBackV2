@@ -1,16 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Core.Request;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
-using System.Data.Common;
-using Core.DTOs;
 using Core.Response;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Infra.Repositorios
@@ -74,7 +68,7 @@ namespace Infra.Repositorios
                                     .Select(e => new TPEstadoNNA
                                     {
                                         Id = e.Id,
-                                        EstadoNNA = e.EstadoNNA,
+                                        Nombre = e.Nombre,
                                         Descripcion = e.Descripcion,
                                         ColorBG = e.ColorBG,
                                         ColorText = e.ColorText
@@ -94,7 +88,7 @@ namespace Infra.Repositorios
         public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId)
         {
             var response = new RespuestaResponse<ContactoNNA>();
-            List<ContactoNNA> li = new List<ContactoNNA>();
+            List<ContactoNNA> li = new();
 
             try
             {
@@ -124,11 +118,36 @@ namespace Infra.Repositorios
             return response;
         }
 
+        public NNAs ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion)
+        {
+            var response = new NNAs();
+
+            try
+            {
+                var nnna = _context.NNAs.FirstOrDefault(x => x.TipoIdentificacionId == tipoIdentificacionId && x.NumeroIdentificacion==numeroIdentificacion);
+
+                if (nnna != null)
+                {
+                    response = nnna;
+                }
+                else
+                {
+                    response = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                response = null;
+            }
+
+            return response;
+        }
+
         public RespuestaResponse<FiltroNNADto> ConsultarNNAFiltro(FiltroNNARequest entrada)
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista = new List<FiltroNNA>();
+            List<FiltroNNA> lista = new();
 
             try
             {
@@ -141,12 +160,12 @@ namespace Infra.Repositorios
                 };
 
                 var results = _context.FiltroNNAs.FromSqlRaw(
-                    "EXEC dbo.sp_consulta_nna_filtro @Estado, @Agente, @Buscar, @Orden",
+                    "EXEC dbo.SpConsultaNnaFiltro @Estado, @Agente, @Buscar, @Orden",
                     parameters
                 ).ToList();
                 if (results != null)
                 {
-                    if (results.Count() >0)
+                    if (results.Count() > 0)
                     {
                         response.Estado = true;
                         response.Descripcion = "Consulta realizada con éxito.";
@@ -156,10 +175,10 @@ namespace Infra.Repositorios
                         response.Estado = false;
                         response.Descripcion = "No trajo datos en la consulta.";
                     }
-                    
+
                     foreach (var filtroNNA in results)
                     {
-                        FiltroNNADto dto = new FiltroNNADto
+                        FiltroNNADto dto = new()
                         {
                             NoCaso = filtroNNA.NoCaso,
                             NombreNNA = filtroNNA.NombreNNA,
@@ -174,7 +193,7 @@ namespace Infra.Repositorios
                         };
 
                         response.Datos.Add(dto);
-                    }   
+                    }
                 }
                 else
                 {
@@ -182,7 +201,7 @@ namespace Infra.Repositorios
                     response.Descripcion = "No trae información.";
                     response.Datos = null;
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -197,8 +216,8 @@ namespace Infra.Repositorios
         public void ActualizarNNASeguimiento(NNASeguimientoRequest request)
         {
             NNAs? nna = (from nn in _context.NNAs
-                        where nn.Id == request.NNAId
-                        select nn).FirstOrDefault();
+                         where nn.Id == request.NNAId
+                         select nn).FirstOrDefault();
 
             if (nna != null)
             {
@@ -248,6 +267,249 @@ namespace Infra.Repositorios
                 _context.Update(nna);
                 _context.SaveChanges();
             }
+        }
+
+
+
+        /**
+         * Lista de parametros
+        */
+        public List<TPTipoIdentificacionDto> GetTpTipoId()
+        {
+            List<TPTipoIdentificacionDto> list = new List<TPTipoIdentificacionDto>
+            {
+                new TPTipoIdentificacionDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPTipoIdentificacionDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                },
+                new TPTipoIdentificacionDto
+                {
+                    Id = 3,
+                    Name = "NUI"
+                },
+                new TPTipoIdentificacionDto
+                {
+                    Id = 4,
+                    Name = "NUI"
+                },
+                new TPTipoIdentificacionDto
+                {
+                    Id = 5,
+                    Name = "NUI"
+                },
+                new TPTipoIdentificacionDto
+                {
+                    Id = 6,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPTipoIdentificacionDto> GetTPTipoIdentificacion()
+        {
+            List<TPTipoIdentificacionDto> list = new List<TPTipoIdentificacionDto>
+            {
+                new TPTipoIdentificacionDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPTipoIdentificacionDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPRegimenAfiliacionDto> GetTPRegimenAfiliacion()
+        {
+            List<TPRegimenAfiliacionDto> list = new List<TPRegimenAfiliacionDto>
+            {
+                new TPRegimenAfiliacionDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPRegimenAfiliacionDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPParentescoDto> GetTPParentesco()
+        {
+            List<TPParentescoDto> list = new List<TPParentescoDto>
+            {
+                new TPParentescoDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPParentescoDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPPaisDto> GetTPPais()
+        {
+            List<TPPaisDto> list = new List<TPPaisDto>
+            {
+                new TPPaisDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPPaisDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+        public List<TPDepartamentoDto> GetTPDepartamento(int PaisId)
+        {
+            List<TPDepartamentoDto> list = new List<TPDepartamentoDto>
+            {
+                new TPDepartamentoDto
+                {
+                    Id = 1,
+                    Name = "TI",
+                    PaisId = PaisId
+                },
+                new TPDepartamentoDto
+                {
+                    Id = 2,
+                    Name = "NUI",
+                    PaisId = PaisId
+                }
+            };
+            return list;
+        }
+
+        public List<TPCiudadDto> GetTPCiudad(int DepartamentoId)
+        {
+            List<TPCiudadDto> list = new List<TPCiudadDto>
+            {
+                new TPCiudadDto
+                {
+                    Id = 1,
+                    Name = "TI",
+                    DepartamentoId = DepartamentoId
+                },
+                new TPCiudadDto
+                {
+                    Id = 2,
+                    Name = "NUI",
+                    DepartamentoId = DepartamentoId
+                }
+            };
+            return list;
+        }
+        public List<TPOrigenReporteDto> GetTPOrigenReporte()
+        {
+            List<TPOrigenReporteDto> list = new List<TPOrigenReporteDto>
+            {
+                new TPOrigenReporteDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPOrigenReporteDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPGrupoPoblacionalDto> GetGrupoPoblacional()
+        {
+            List<TPGrupoPoblacionalDto> list = new List<TPGrupoPoblacionalDto>
+            {
+                new TPGrupoPoblacionalDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPGrupoPoblacionalDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPEtniaDto> GetTPEtnia()
+        {
+            List<TPEtniaDto> list = new List<TPEtniaDto>
+            {
+                new TPEtniaDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPEtniaDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPEAPBDto> GetTPEAPB()
+        {
+            List<TPEAPBDto> list = new List<TPEAPBDto>
+            {
+                new TPEAPBDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPEAPBDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
+        }
+
+        public List<TPEstadoIngresoEstrategiaDto> GetTPEstadoIngresoEstrategia()
+        {
+            List<TPEstadoIngresoEstrategiaDto> list = new List<TPEstadoIngresoEstrategiaDto>
+            {
+                new TPEstadoIngresoEstrategiaDto
+                {
+                    Id = 1,
+                    Name = "TI"
+                },
+                new TPEstadoIngresoEstrategiaDto
+                {
+                    Id = 2,
+                    Name = "NUI"
+                }
+            };
+            return list;
         }
     }
 
