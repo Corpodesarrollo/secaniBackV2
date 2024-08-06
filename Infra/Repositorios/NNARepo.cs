@@ -74,7 +74,7 @@ namespace Infra.Repositorios
                                     .Select(e => new TPEstadoNNA
                                     {
                                         Id = e.Id,
-                                        EstadoNNA = e.EstadoNNA,
+                                        Nombre = e.Nombre,
                                         Descripcion = e.Descripcion,
                                         ColorBG = e.ColorBG,
                                         ColorText = e.ColorText
