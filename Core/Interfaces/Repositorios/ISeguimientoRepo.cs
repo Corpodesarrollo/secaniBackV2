@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Core.response;
 using Core.Modelos;
 using Core.Response;
+using Core.DTOs;
 
 
 namespace Core.Interfaces.Repositorios
@@ -25,5 +26,7 @@ namespace Core.Interfaces.Repositorios
         public void SetDificultadesProceso(DificultadesProcesoRequest request);
         public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
+        Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);
+        Task<SeguimientoCntFiltrosDto> SeguimientoCntFiltros(string id);
     }
 }
