@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -24,8 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Core\Core.csproj" />
     <ProjectReference Include="..\..\..\Infra\Infra.csproj" />
-    <ProjectReference Include="..\MSTablasParametricas.Application\MSTablasParametricas.Application.csproj" />
-    <ProjectReference Include="..\MSTablasParametricas.Infra\MSTablasParametricas.Infra.csproj" />
   </ItemGroup>
 
 </Project>

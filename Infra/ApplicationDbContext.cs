@@ -113,6 +113,13 @@ namespace Infra
         public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
         public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
         public DbSet<TPEstadoSeguimiento> TPEstadoSeguimiento { get; set; }
-        public DbSet<TPFestivos> TPFestivos { get; set; }
+
+        public DbSet<TPRazonesSinDiagnostico> TPRazonesSinDiagnostico { get; set; }
+        public DbSet<TPMotivoCierreSolicitud> TPMotivoCierreSolicitud { get; set; }
+        public DbSet<TPTipoFallaLlamada> TPTipoFallaLlamada { get; set; }
+        public DbSet<TPMalaAtencionIPS> TPMalaAtencionIPS { get; set; }
+        public DbSet<TPCausaInasistencia> tPCausaInasistencia { get; set; }
+        public DbSet<TPEstadoIngresoEstrategia> tPEstadoIngresoEstrategia { get; set; }
+        public DbSet<TPOrigenReporte> TPOrigenReporte { get; set; }
     }
 }

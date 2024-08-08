@@ -1,5 +1,4 @@
-﻿
-using Core.DTOs.MSTablasParametricas;
+﻿using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Modelos.TablasParametricas;
 using Microsoft.AspNetCore.Mvc;

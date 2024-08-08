@@ -1,6 +1,6 @@
-﻿namespace Core.Modelos.TablasParametricas
+﻿namespace Core.Modelos.Common
 {
-    public class TPEstadoAlerta
+    public abstract class TPBase
     {
         public int Id { get; set; }
         public string Nombre { get; set; }
