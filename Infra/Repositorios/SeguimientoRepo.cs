@@ -76,7 +76,7 @@ namespace Infra.Repositorios
             }
         }
 
-        public async Task<SeguimientoCntFiltrosDto> SeguimientoCntFiltros(string id)
+        public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id)
         {
             try
             {
