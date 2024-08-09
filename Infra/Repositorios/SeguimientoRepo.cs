@@ -464,12 +464,23 @@ namespace Infra.Repositorios
                                                              Observacion = seg.ObservacionesSolicitante
                                                          }).ToList();
 
-            List<AlertaSeguimiento>? alertas;
+            List<AlertaSeguimientoResponse>? alertas;
             foreach (SeguimientoNNAResponse seg in seguimientos)
             {
                 alertas = (from alert in _context.AlertaSeguimientos
+                           join al in _context.Alertas on alert.AlertaId equals al.Id
+                           join ea in _context.TPEstadoAlerta on alert.EstadoId equals ea.Id
+                           join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
                            where alert.SeguimientoId == seg.IdSeguimiento
-                           select alert).ToList();
+                           select new AlertaSeguimientoResponse()
+                           {
+                               AlertaId = alert.AlertaId,
+                               EstadoId = alert.EstadoId,
+                               Observaciones = alert.Observaciones,
+                               SeguimientoId = alert.SeguimientoId,
+                               UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
+                               NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador
+                           }).ToList();
 
                 seg.alertasSeguimientos = alertas;
             }
