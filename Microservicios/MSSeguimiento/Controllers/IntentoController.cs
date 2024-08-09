@@ -2,6 +2,8 @@
 using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
+using Core.Modelos;
+using Infra.Repositorios;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -40,6 +42,29 @@ namespace MSSeguimiento.Api.Controllers
         public int PutIntentoUsuarioActualizacionUsuario(PutIntentoActualizacionUsuarioRequest request)
         {
             return _intentoRepo.RepoIntentoActualizacionUsuario(request);
+        }
+
+        [HttpGet("GetIntentoContactoAgrupado")]
+        public List<GetIntentoContactoAgrupadoResponse> GetIntentoContactoAgrupado(int NNAId)
+        {
+            List<GetIntentoContactoAgrupadoResponse> response = _intentoRepo.RepoIntentoContactoAgrupado(NNAId);
+            return response;
+        }
+
+        [HttpGet("GetIntentosContactoNNA")]
+        public List<GetContactoNNAIntentoResponse> GetIntentosContactoNNA(int NNAId)
+        {
+            List<GetContactoNNAIntentoResponse> response = _intentoRepo.RepoIntentosContactoNNA(NNAId);
+            return response;
+        }
+
+
+        [HttpGet("GetTiposFallas")]
+        public IActionResult GetTipoFallas()
+        {
+
+            var response = _intentoRepo.RepoTipoFallas();
+            return Ok(response);
         }
     }
 }

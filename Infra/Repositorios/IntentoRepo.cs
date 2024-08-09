@@ -46,7 +46,7 @@ namespace Infra.Repositorios
             {
                 ContactoNNAId = request.ContactoNNAId,
                 Email = request.Email,
-                FechaIntento = request.FechaIntento,
+                FechaIntento = DateTime.Now,
                 Telefono = request.Telefono,
                 TipoResultadoIntentoId = request.TipoResultadoIntentoId,
                 TipoFallaIntentoId = request.TipoFallaIntentoId,
@@ -89,6 +89,70 @@ namespace Infra.Repositorios
 
             _context.SaveChanges();
             return 1;
+        }
+
+        public List<GetIntentoContactoAgrupadoResponse> RepoIntentoContactoAgrupado(int NNAId)
+        {
+            List<GetIntentoContactoAgrupadoResponse> response = (from c in _context.ContactoNNAs
+                            join i in _context.Intentos on c.Id equals i.ContactoNNAId into intentoGroup
+                            from ig in intentoGroup.DefaultIfEmpty()
+                            where c.NNAId == NNAId
+                            group ig by new { c.Id, c.NNAId, c.Nombres, c.ParentescoId, c.Email, c.Telefonos, c.TelefnosInactivos, c.Cuidador } into grouped
+                            select new GetIntentoContactoAgrupadoResponse
+                            {
+                                Id = grouped.Key.Id,
+                                NNAId = grouped.Key.NNAId,
+                                Nombres = grouped.Key.Nombres,
+                                ParentescoId = grouped.Key.ParentescoId,
+                                Email = grouped.Key.Email,
+                                Telefonos = grouped.Key.Telefonos,
+                                TelefnosInactivos = grouped.Key.TelefnosInactivos,
+                                Cuidador = grouped.Key.Cuidador,
+                                TipoResultadoIntento1 = grouped.Count(i => i != null && i.TipoResultadoIntentoId == 1),
+                                TipoResultadoIntento2 = grouped.Count(i => i != null && i.TipoResultadoIntentoId == 2)
+                            }).ToList();
+
+            return response;
+        }
+
+        public List<GetContactoNNAIntentoResponse> RepoIntentosContactoNNA(int NNAId)
+        {
+            List<GetContactoNNAIntentoResponse> response = (from c in _context.ContactoNNAs
+                                                            join i in _context.Intentos on c.Id equals i.ContactoNNAId
+                                                            join t in _context.TPTipoFallaLLamada on i.TipoFallaIntentoId equals t.Id
+                                                            where c.NNAId == NNAId
+                                                            select new GetContactoNNAIntentoResponse
+                                                            {
+                                                                Id = c.Id,
+                                                                NNAId = c.NNAId,
+                                                                Nombres = c.Nombres,
+                                                                ParentescoId = c.ParentescoId,
+                                                                Email = c.Email,
+                                                                Telefonos = c.Telefonos,
+                                                                TelefnosInactivos = c.TelefnosInactivos,
+                                                                Cuidador = c.Cuidador,
+                                                                FechaIntento = i.FechaIntento,
+                                                                TipoResultadoIntentoId = i.TipoResultadoIntentoId,
+                                                                TipoFallaIntentoId = i.TipoFallaIntentoId,
+                                                                TipoFallaIntentoNombre = t.Nombre,
+                                                            }).ToList();
+
+            return response;
+        }
+
+
+        public List<TPTipoFallaLLamada> RepoTipoFallas()
+        {
+            var response = _context.TPTipoFallaLLamada
+                                    .Select(e => new TPTipoFallaLLamada
+                                    {
+                                        Id = e.Id,
+                                        Nombre = e.Nombre,
+                                        Descripcion = e.Descripcion,
+                                    })
+                                    .ToList();
+
+            return response;
         }
     }
 }

@@ -100,14 +100,15 @@ namespace Infra
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
-        public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
-        public DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
-        public DbSet<AspNetRoles> AspNetRoles { get; set; }
-        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
-        public DbSet<Permiso> Permisos { get; set; }
-        public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
-        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto { get; set; }
-        public DbSet<TPFestivos> TPFestivos { get; set; }
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<AspNetUserRoles> AspNetUserRoles {  get; set; }
+        public DbSet<AspNetRoles> AspNetRoles {  get; set; }
+        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente {  get; set; }
+        public DbSet<Permiso> Permisos {  get; set; }
+        public DbSet<TPFuncionalidad> TPFuncionalidad {  get; set; }
+        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto {  get; set; }
+        public DbSet<TPFestivos> TPFestivos {  get; set; }
+        public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
         public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
         public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
     }
