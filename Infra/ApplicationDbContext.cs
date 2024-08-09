@@ -68,7 +68,7 @@ namespace Infra
                 eb.HasNoKey();
                 eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
             });
-            
+
             modelBuilder.Entity<NNAs>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -111,5 +111,15 @@ namespace Infra
 
         public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
 
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
+        public DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
+        public DbSet<AspNetRoles> AspNetRoles { get; set; }
+        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
+        public DbSet<Permiso> Permisos { get; set; }
+        public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
+        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto { get; set; }
+        public DbSet<TPFestivos> TPFestivos { get; set; }
+        public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
     }
 }
