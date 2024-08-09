@@ -23,9 +23,6 @@ namespace Core.Interfaces.Repositorios
         public void SetDificultadesProceso(DificultadesProcesoRequest request);
         public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
         public GetNNaParcialResponse GetNNaById(long id);
-
-
-        public void SetAdherenciaProceso(AdherenciaProcesoRequest request);
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
         Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);
         Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id);
