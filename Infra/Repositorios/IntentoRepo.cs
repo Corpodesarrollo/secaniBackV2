@@ -139,5 +139,20 @@ namespace Infra.Repositorios
 
             return response;
         }
+
+
+        public List<TPTipoFallaLLamada> RepoTipoFallas()
+        {
+            var response = _context.TPTipoFallaLLamada
+                                    .Select(e => new TPTipoFallaLLamada
+                                    {
+                                        Id = e.Id,
+                                        Nombre = e.Nombre,
+                                        Descripcion = e.Descripcion,
+                                    })
+                                    .ToList();
+
+            return response;
+        }
     }
 }
