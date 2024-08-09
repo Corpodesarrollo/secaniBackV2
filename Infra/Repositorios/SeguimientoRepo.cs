@@ -152,6 +152,7 @@ namespace Infra.Repositorios
             return 1;
         }
 
+
         public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal)
         {
             List<GetSeguimientoFestivoResponse> response = (from un in _context.TPFestivos
@@ -170,6 +171,7 @@ namespace Infra.Repositorios
 
             return response;
         }
+
 
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {
@@ -192,6 +194,7 @@ namespace Infra.Repositorios
 
             return response;
         }
+
 
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
         {
@@ -360,6 +363,28 @@ namespace Infra.Repositorios
 
                 }
             }
+        }
+
+        public GetNNaParcialResponse GetNNaById(long id)
+        {
+
+
+            GetNNaParcialResponse? response = (from u in _context.NNAs
+                            where u.Id != id
+                            select new GetNNaParcialResponse
+                            {
+                                Id = u.Id,
+                                PrimerNombre = u.PrimerNombre,
+                                SegundoNombre = u.SegundoNombre,
+                                PrimerApellido = u.PrimerApellido,
+                                SegundoApellido = u.SegundoApellido,
+                                FechaNotificacionSIVIGILA = u.FechaNotificacionSIVIGILA
+
+                             }).FirstOrDefault();
+
+            return response;
+
+            
         }
     }
 }

@@ -41,5 +41,19 @@ namespace MSSeguimiento.Api.Controllers
         {
             return _intentoRepo.RepoIntentoActualizacionUsuario(request);
         }
+
+        [HttpGet("GetIntentoContactoAgrupado")]
+        public List<GetIntentoContactoAgrupadoResponse> GetIntentoContactoAgrupado(int NNAId)
+        {
+            List<GetIntentoContactoAgrupadoResponse> response = _intentoRepo.RepoIntentoContactoAgrupado(NNAId);
+            return response;
+        }
+
+        [HttpGet("GetIntentosContactoNNA")]
+        public List<GetContactoNNAIntentoResponse> GetIntentosContactoNNA(int NNAId)
+        {
+            List<GetContactoNNAIntentoResponse> response = _intentoRepo.RepoIntentosContactoNNA(NNAId);
+            return response;
+        }
     }
 }

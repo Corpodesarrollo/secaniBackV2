@@ -9,5 +9,7 @@ namespace Core.Interfaces.Repositorios
         int RepoInsertarIntento(PostIntentoRequest request);
         int RepoIntentoActualizacionFecha(PutIntentoActualizacionFechaRequest request);
         int RepoIntentoActualizacionUsuario(PutIntentoActualizacionUsuarioRequest request);
+        List<GetIntentoContactoAgrupadoResponse> RepoIntentoContactoAgrupado(int NNAId);
+        List<GetContactoNNAIntentoResponse> RepoIntentosContactoNNA(int NNAId);
     }
 }

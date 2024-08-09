@@ -104,6 +104,13 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo.SetAdherenciaProceso(request);
         }
 
+        [HttpGet("NNa/{id}")]
+        public GetNNaParcialResponse GetNNaById(long id)
+        {
+            var seguimiento = seguimientoRepo.GetNNaById(id);
+            return seguimiento;
+        }
+
     }
 
 

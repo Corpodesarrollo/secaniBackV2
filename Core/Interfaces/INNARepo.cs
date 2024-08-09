@@ -12,7 +12,6 @@ namespace Core.Interfaces.Repositorios
 {
     public interface INNARepo
     {
-        public NNAs GetById(long id);
         public RespuestaResponse<ContactoNNA> CrearContactoNNA(ContactoNNA contactoNNA);
 
         public RespuestaResponse<ContactoNNA> ActualizarContactoNNA(ContactoNNA contactoNNA);
@@ -26,6 +25,5 @@ namespace Core.Interfaces.Repositorios
         public List<VwAgentesAsignados> VwAgentesAsignados();
 
         public void ActualizarNNASeguimiento(NNASeguimientoRequest request);
-       
     }
 }

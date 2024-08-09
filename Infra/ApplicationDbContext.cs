@@ -108,5 +108,8 @@ namespace Infra
         public DbSet<TPFuncionalidad> TPFuncionalidad {  get; set; }
         public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto {  get; set; }
         public DbSet<TPFestivos> TPFestivos {  get; set; }
+
+        public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
+
     }
 }

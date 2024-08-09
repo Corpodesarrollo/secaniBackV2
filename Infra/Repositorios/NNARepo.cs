@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using Core.DTOs;
 using Core.Response;
-using Azure.Core;
 
 
 namespace Infra.Repositorios
@@ -23,15 +22,6 @@ namespace Infra.Repositorios
         public NNARepo(ApplicationDbContext context)
         {
             _context = context;
-        }
-
-        public NNAs GetById(long id)
-        {
-
-            NNAs? nna = (from nn in _context.NNAs
-                         where nn.Id == id
-                         select nn).FirstOrDefault();
-            return nna;
         }
 
         public RespuestaResponse<ContactoNNA> CrearContactoNNA(ContactoNNA contactoNNA)
@@ -258,6 +248,7 @@ namespace Infra.Repositorios
                 _context.Update(nna);
                 _context.SaveChanges();
             }
-        } 
+        }
     }
+
 }
