@@ -1,4 +1,5 @@
-﻿using Core.Request;
+﻿using Core.Modelos;
+using Core.Request;
 using Core.response;
 
 namespace Core.Interfaces.Repositorios
@@ -9,5 +10,8 @@ namespace Core.Interfaces.Repositorios
         int RepoInsertarIntento(PostIntentoRequest request);
         int RepoIntentoActualizacionFecha(PutIntentoActualizacionFechaRequest request);
         int RepoIntentoActualizacionUsuario(PutIntentoActualizacionUsuarioRequest request);
+        List<GetIntentoContactoAgrupadoResponse> RepoIntentoContactoAgrupado(int NNAId);
+        List<GetContactoNNAIntentoResponse> RepoIntentosContactoNNA(int NNAId);
+        public List<TPTipoFallaLLamada> RepoTipoFallas();
     }
 }
