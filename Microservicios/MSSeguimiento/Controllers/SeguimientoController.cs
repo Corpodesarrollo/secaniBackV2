@@ -136,6 +136,14 @@ namespace MSSeguimiento.Api.Controllers
             return seguimiento;
         }
 
+        [HttpPost("SetSeguimiento")]
+        public string SetSeguimiento(SetSeguimientoRequest request)
+        {
+            string response = seguimientoRepo.SetSeguimiento(request);
+
+            return response;
+        }
+
     }
 
 
