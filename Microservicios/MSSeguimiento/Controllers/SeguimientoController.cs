@@ -4,6 +4,8 @@ using Core.Request;
 using Core.response;
 using Core.Response;
 using Microsoft.AspNetCore.Mvc;
+using Infra.Repositorios;
+using Core.Modelos;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -26,12 +28,22 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
-        [HttpGet("SeguimientoCntFiltros/{UsuarioId}")]
-        public async Task<SeguimientoCntFiltrosDto> SeguimientoCntFiltros(string UsuarioId)
+        [HttpGet("GetCntSeguimiento/{UsuarioId}")]
+        public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string UsuarioId)
         {
 
-            var response = await seguimientoRepo.SeguimientoCntFiltros(UsuarioId);
+            var response = await seguimientoRepo.GetCntSeguimiento(UsuarioId);
             return response;
+        }
+        [HttpGet("{id}")]
+        public ActionResult<Seguimiento> GetById(long id)
+        {
+            var seguimiento = seguimientoRepo.GetById(id);
+            if (seguimiento == null)
+            {
+                return NotFound(); // Retorna 404 si no se encuentra el registro
+            }
+            return Ok(seguimiento); // Retorna 200 con el registro encontrado
         }
 
         [HttpGet("GetSeguimientoUsuario")]
@@ -114,6 +126,21 @@ namespace MSSeguimiento.Api.Controllers
         {
 
             List<SeguimientoNNAResponse> response = seguimientoRepo.GetSeguimientosNNA(idNNA);
+            return response;
+        }
+
+        [HttpGet("NNa/{id}")]
+        public GetNNaParcialResponse GetNNaById(long id)
+        {
+            var seguimiento = seguimientoRepo.GetNNaById(id);
+            return seguimiento;
+        }
+
+        [HttpPost("SetSeguimiento")]
+        public string SetSeguimiento(SetSeguimientoRequest request)
+        {
+            string response = seguimientoRepo.SetSeguimiento(request);
+
             return response;
         }
 
