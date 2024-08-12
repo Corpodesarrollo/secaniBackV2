@@ -5,7 +5,7 @@ namespace Core.Modelos
     public class Seguimiento : BaseEntity
     {
         public long NNAId { get; set; }
-        public DateTime FechaSeguimiento { get; set; }
+        public DateTime? FechaSeguimiento { get; set; }
         public int EstadoId { get; set; }
         public long ContactoNNAId { get; set; }
         public string? Telefono { get; set; }
