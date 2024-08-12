@@ -11,7 +11,7 @@ namespace Core.Response
     {
         public long IdSeguimiento {  get; set; }
         public DateTime FechaSeguimiento { get; set; }
-        public List<AlertaSeguimiento> alertasSeguimientos {  get; set; }
+        public List<AlertaSeguimientoResponse> alertasSeguimientos {  get; set; }
         public string Observacion {  get; set; }
         public string NombreEntidad {  get; set; }
         public DateTime FechaNotificacion { get; set; }

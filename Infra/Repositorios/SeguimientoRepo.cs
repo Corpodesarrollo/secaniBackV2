@@ -97,7 +97,6 @@ namespace Infra.Repositorios
             }
         }
 
-
         public Seguimiento GetById(long id)
         {
 
@@ -237,7 +236,6 @@ namespace Infra.Repositorios
             return 1;
         }
 
-
         public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal)
         {
             List<GetSeguimientoFestivoResponse> response = (from un in _context.TPFestivos
@@ -256,7 +254,6 @@ namespace Infra.Repositorios
 
             return response;
         }
-
 
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {
@@ -280,7 +277,6 @@ namespace Infra.Repositorios
             return response;
         }
 
-
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
         {
             var response = (from ur in _context.AspNetUserRoles
@@ -296,7 +292,6 @@ namespace Infra.Repositorios
 
             return response;
         }
-
 
         public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
         {
@@ -464,12 +459,23 @@ namespace Infra.Repositorios
                                                              Observacion = seg.ObservacionesSolicitante
                                                          }).ToList();
 
-            List<AlertaSeguimiento>? alertas;
+            List<AlertaSeguimientoResponse>? alertas;
             foreach (SeguimientoNNAResponse seg in seguimientos)
             {
                 alertas = (from alert in _context.AlertaSeguimientos
+                           join al in _context.Alertas on alert.AlertaId equals al.Id
+                           join ea in _context.TPEstadoAlerta on alert.EstadoId equals ea.Id
+                           join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
                            where alert.SeguimientoId == seg.IdSeguimiento
-                           select alert).ToList();
+                           select new AlertaSeguimientoResponse()
+                           {
+                               AlertaId = alert.AlertaId,
+                               EstadoId = alert.EstadoId,
+                               Observaciones = alert.Observaciones,
+                               SeguimientoId = alert.SeguimientoId,
+                               UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
+                               NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador
+                           }).ToList();
 
                 seg.alertasSeguimientos = alertas;
             }
@@ -496,6 +502,34 @@ namespace Infra.Repositorios
 
             return response;
 
+            
+        }
+
+        public string SetSeguimiento(SetSeguimientoRequest request)
+        {
+            try
+            {
+                Seguimiento seguimiento = new Seguimiento();
+                seguimiento.NNAId = request.IdNNA;
+                seguimiento.FechaSeguimiento = request.FechaSeguimiento;
+                seguimiento.EstadoId = request.IdEstado;
+                seguimiento.ContactoNNAId = request.IdContactoNNA;
+                seguimiento.Telefono = request.Telefono;
+                seguimiento.UsuarioId = request.IdUsuario;
+                seguimiento.SolicitanteId = request.IdSolicitante;
+                seguimiento.ObservacionesSolicitante = request.ObservacionSolicitante;
+                seguimiento.CreatedByUserId = request.IdUsuarioCreacion;
+                seguimiento.DateCreated = DateTime.Now;
+
+                _context.Seguimientos.Add(seguimiento);
+                _context.SaveChanges();
+
+                return "Segumiento almacenado correctamente";
+            }
+            catch (Exception ex)
+            {
+                return "Existe una error al almacenar el segumiento";
+            }
             
         }
     }

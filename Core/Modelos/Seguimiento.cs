@@ -10,7 +10,7 @@ namespace Core.Modelos
         public long ContactoNNAId { get; set; }
         public string? Telefono { get; set; }
         public string? UsuarioId { get; set; }
-        public long SolicitanteId { get; set; }
+        public long? SolicitanteId { get; set; }
         public DateTime FechaSolicitud { get; set; }
         public bool TieneDiagnosticos { get; set; }
         public string ObservacionesSolicitante { get; set; }
