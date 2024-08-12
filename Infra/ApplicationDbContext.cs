@@ -1,5 +1,4 @@
 ﻿using Core.Modelos;
-using Core.Modelos.TablasParametricas;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Core.Modelos;
 
@@ -69,7 +68,7 @@ namespace Infra
                 eb.HasNoKey();
                 eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
             });
-            
+
             modelBuilder.Entity<NNAs>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -101,17 +100,18 @@ namespace Infra
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
-        public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
-        public DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
-        public DbSet<AspNetRoles> AspNetRoles { get; set; }
-        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
-        public DbSet<Permiso> Permisos { get; set; }
-        public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
-        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto { get; set; }
-        public DbSet<TPFestivos> TPFestivos { get; set; }
- 	public DbSet<TPCategoriaAlerta> TPCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<AspNetUserRoles> AspNetUserRoles {  get; set; }
+        public DbSet<AspNetRoles> AspNetRoles {  get; set; }
+        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente {  get; set; }
+        public DbSet<Permiso> Permisos {  get; set; }
+        public DbSet<TPFuncionalidad> TPFuncionalidad {  get; set; }
+        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto {  get; set; }
+        public DbSet<TPFestivos> TPFestivos {  get; set; }
+        public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
         public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
         public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
+public DbSet<TPCategoriaAlerta> TPCategoriaAlerta { get; set; }
         public DbSet<TPEstadoSeguimiento> TPEstadoSeguimiento { get; set; }
 
         public DbSet<TPRazonesSinDiagnostico> TPRazonesSinDiagnostico { get; set; }

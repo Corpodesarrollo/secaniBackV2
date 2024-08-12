@@ -53,7 +53,7 @@ namespace Infra.Repositorios
 
                 if (filtro == 1) //hoy
                 {
-                    return result.Where(x => x.FechaNotificacion.Date == DateTime.Now.Date).ToList();
+                    return result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).ToList();
                 }
                 else if (filtro == 2) //con alerta
                 {
@@ -86,7 +86,7 @@ namespace Infra.Repositorios
                 return new SeguimientoCntFiltrosDto
                 {
                     Todos = result.Count,
-                    Hoy = result.Where(x => x.FechaNotificacion.Date == DateTime.Now.Date).Count(),
+                    Hoy = result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).Count(),
                     ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
                     SolicitadosPorCuidador = result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").Count()
                 };
@@ -95,6 +95,12 @@ namespace Infra.Repositorios
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public Seguimiento GetById(long id)
+        {
+
+            return _context.Seguimientos.FirstOrDefault(s => s.Id == id);
         }
 
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
@@ -287,7 +293,6 @@ namespace Infra.Repositorios
             return response;
         }
 
-
         public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
         {
             Seguimiento? seguimiento = (from seg in _context.Seguimientos
@@ -454,17 +459,78 @@ namespace Infra.Repositorios
                                                              Observacion = seg.ObservacionesSolicitante
                                                          }).ToList();
 
-            List<AlertaSeguimiento>? alertas;
+            List<AlertaSeguimientoResponse>? alertas;
             foreach (SeguimientoNNAResponse seg in seguimientos)
             {
                 alertas = (from alert in _context.AlertaSeguimientos
+                           join al in _context.Alertas on alert.AlertaId equals al.Id
+                           join ea in _context.TPEstadoAlerta on alert.EstadoId equals ea.Id
+                           join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
                            where alert.SeguimientoId == seg.IdSeguimiento
-                           select alert).ToList();
+                           select new AlertaSeguimientoResponse()
+                           {
+                               AlertaId = alert.AlertaId,
+                               EstadoId = alert.EstadoId,
+                               Observaciones = alert.Observaciones,
+                               SeguimientoId = alert.SeguimientoId,
+                               UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
+                               NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador
+                           }).ToList();
 
                 seg.alertasSeguimientos = alertas;
             }
 
             return seguimientos;
+        }
+
+        public GetNNaParcialResponse GetNNaById(long id)
+        {
+
+
+            GetNNaParcialResponse? response = (from u in _context.NNAs
+                            where u.Id != id
+                            select new GetNNaParcialResponse
+                            {
+                                Id = u.Id,
+                                PrimerNombre = u.PrimerNombre,
+                                SegundoNombre = u.SegundoNombre,
+                                PrimerApellido = u.PrimerApellido,
+                                SegundoApellido = u.SegundoApellido,
+                                FechaNotificacionSIVIGILA = u.FechaNotificacionSIVIGILA
+
+                             }).FirstOrDefault();
+
+            return response;
+
+            
+        }
+
+        public string SetSeguimiento(SetSeguimientoRequest request)
+        {
+            try
+            {
+                Seguimiento seguimiento = new Seguimiento();
+                seguimiento.NNAId = request.IdNNA;
+                seguimiento.FechaSeguimiento = request.FechaSeguimiento;
+                seguimiento.EstadoId = request.IdEstado;
+                seguimiento.ContactoNNAId = request.IdContactoNNA;
+                seguimiento.Telefono = request.Telefono;
+                seguimiento.UsuarioId = request.IdUsuario;
+                seguimiento.SolicitanteId = request.IdSolicitante;
+                seguimiento.ObservacionesSolicitante = request.ObservacionSolicitante;
+                seguimiento.CreatedByUserId = request.IdUsuarioCreacion;
+                seguimiento.DateCreated = DateTime.Now;
+
+                _context.Seguimientos.Add(seguimiento);
+                _context.SaveChanges();
+
+                return "Segumiento almacenado correctamente";
+            }
+            catch (Exception ex)
+            {
+                return "Existe una error al almacenar el segumiento";
+            }
+            
         }
     }
 }
