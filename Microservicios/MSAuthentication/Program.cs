@@ -27,13 +27,6 @@ builder.Services.AddCors(options =>
                           .AllowCredentials());
 });
 
-builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
-{
-    policy.AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowAnyOrigin();
-}));
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -46,7 +39,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseCors("CorsPolicy");
+app.UseCors("AllowSpecificOrigin");
 
 app.UseHttpsRedirection();
 
