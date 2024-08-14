@@ -193,5 +193,13 @@ namespace Api.Controllers
             var response = _nNARepo.GetTPEstadoIngresoEstrategia();
             return Ok(response);
         }
+
+        [HttpGet("ConsultarNNAsById/{NNAId}")]
+        public IActionResult ConsultarNNAsById(long NNAId)
+        {
+
+            var response = _nNARepo.ConsultarNNAsById(NNAId);
+            return Ok(response);
+        }
     }
 }

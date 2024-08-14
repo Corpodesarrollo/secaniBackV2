@@ -511,6 +511,31 @@ namespace Infra.Repositorios
             };
             return list;
         }
+
+        public NNAs ConsultarNNAsById(long NNAId)
+        {
+            var response = new NNAs();
+
+            try
+            {
+                var nnna = _context.NNAs.FirstOrDefault(x => x.Id == NNAId);
+
+                if (nnna != null)
+                {
+                    response = nnna;
+                }
+                else
+                {
+                    response = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                response = null;
+            }
+
+            return response;
+        }
     }
 
 }
