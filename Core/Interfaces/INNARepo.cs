@@ -41,5 +41,7 @@ namespace Core.Interfaces.Repositorios
         public List<TPEstadoIngresoEstrategiaDto> GetTPEstadoIngresoEstrategia();
         public NNAs ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion);
         public NNAs ConsultarNNAsById(long NNAId );
+        public DatosBasicosNNAResponse ConsultarDatosBasicosNNAById(long  NNAId);
+        public SolicitudSeguimientoCuidadorResponse SolicitudSeguimientoCuidador(long NNAId);
     }
 }
