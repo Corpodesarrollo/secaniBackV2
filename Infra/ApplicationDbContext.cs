@@ -1,4 +1,5 @@
 ﻿using Core.Modelos;
+using Core.Modelos.TablasParametricas;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Core.Modelos;
 
@@ -104,12 +105,22 @@ namespace Infra
         public DbSet<AspNetUserRoles> AspNetUserRoles {  get; set; }
         public DbSet<AspNetRoles> AspNetRoles {  get; set; }
         public DbSet<HorarioLaboralAgente> HorarioLaboralAgente {  get; set; }
-        public DbSet<Permiso> Permisos {  get; set; }
+        public DbSet<Permisos> TPermisos { get; set; }
         public DbSet<TPFuncionalidad> TPFuncionalidad {  get; set; }
         public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto {  get; set; }
         public DbSet<TPFestivos> TPFestivos {  get; set; }
         public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
         public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
         public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
+        public DbSet<TPCategoriaAlerta> TPCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoSeguimiento> TPEstadoSeguimiento { get; set; }
+
+        public DbSet<TPRazonesSinDiagnostico> TPRazonesSinDiagnostico { get; set; }
+        public DbSet<TPMotivoCierreSolicitud> TPMotivoCierreSolicitud { get; set; }
+        public DbSet<TPTipoFallaLlamada> TPTipoFallaLlamada { get; set; }
+        public DbSet<TPMalaAtencionIPS> TPMalaAtencionIPS { get; set; }
+        public DbSet<TPCausaInasistencia> tPCausaInasistencia { get; set; }
+        public DbSet<TPEstadoIngresoEstrategia> tPEstadoIngresoEstrategia { get; set; }
+        public DbSet<TPOrigenReporte> TPOrigenReporte { get; set; }
     }
 }

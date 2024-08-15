@@ -23,16 +23,16 @@ namespace Core.Services.MSPermisos
         {
             if (!_cache.TryGetValue(cacheKey, out List<PermisoResponseDTO> entitiesDto))
             {
-                var entities = await _repository.GetAllAsync(cancellationToken);
-                entitiesDto = new List<PermisoResponseDTO>();
-                foreach (var entity in entities)
-                {
-                    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
-                    var permisoDto = permiso.Adapt<PermisoResponseDTO>();
-                    permisoDto.Funcionalidad = funcionalidad;
-                    permisoDto.Modulo = modulo;
-                    entitiesDto.Add(permisoDto);
-                }
+                var entities = await _repository.GetPermisos(cancellationToken);
+                entitiesDto = entities.Adapt<List<PermisoResponseDTO>>();
+                //foreach (var entity in entities)
+                //{
+                //    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                //    var permisoDto = permiso.Adapt<PermisoResponseDTO>();
+                //    permisoDto.Funcionalidad = funcionalidad;
+                //    permisoDto.Modulo = modulo;
+                //    entitiesDto.Add(permisoDto);
+                //}
                 _cache.Set(cacheKey, entitiesDto, cacheEntryOptions);
             }
             return entitiesDto;
@@ -58,28 +58,6 @@ namespace Core.Services.MSPermisos
             return entitiesDto;
         }
 
-        public async Task<IEnumerable<PermisoResponseDTO>> GetPermisosByRoleIdFuncionalidadId(string RoleId, int FuncionalidadId, CancellationToken cancellationToken)
-        {
-            var cacheKeyRoleId = cacheKey + RoleId;
-            if (!_cache.TryGetValue(cacheKeyRoleId, out List<PermisoResponseDTO> entitiesDto))
-            {
-                var entities = await _repository.GetPermisosByRoleIdFuncionalidadId(RoleId, FuncionalidadId, cancellationToken);
-                entitiesDto = new List<PermisoResponseDTO>();
-                foreach (var entity in entities)
-                {
-                    var permisoDto = new PermisoResponseDTO();
-                    permisoDto.CanAdd = entity.CanAdd ?? false;
-                    permisoDto.CanEdit = entity.CanEdit ?? false;
-                    permisoDto.CanView = entity.CanView ?? false;
-                    permisoDto.CanDele = entity.CanDele ?? false;
-
-                    entitiesDto.Add(permisoDto);
-                }
-                _cache.Set(cacheKeyRoleId, entitiesDto, cacheEntryOptions);
-            }
-            return entitiesDto;
-        }
-
         public async Task<PermisoResponseDTO> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             var cacheKeyId = cacheKey + id.ToString();
@@ -98,7 +76,7 @@ namespace Core.Services.MSPermisos
         //Commands
         public async Task<(bool, PermisoResponseDTO)> AddAsync(PermisoRequestDTO entity, CancellationToken cancellationToken)
         {
-            var newEntity = entity.Adapt<Permiso>();
+            var newEntity = entity.Adapt<Permisos>();
             var (success, response) = await _repository.AddAsync(newEntity);
             if (!success)
             {
@@ -111,7 +89,7 @@ namespace Core.Services.MSPermisos
         public async Task<bool> DeleteAsync(PermisoResponseDTO entity, CancellationToken cancellationToken)
         {
             await ClearCacheAsync(cacheKey, entity.RoleId, entity.Id.ToString());
-            return await _repository.DeleteAsync(entity.Adapt<Permiso>());
+            return await _repository.DeleteAsync(entity.Adapt<Permisos>());
         }
 
         public async Task<(bool, PermisoResponseDTO)> UpdateAsync(PermisoResponseDTO entity, CancellationToken cancellationToken)

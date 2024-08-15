@@ -53,7 +53,7 @@ namespace Infra.Repositorios
 
                 if (filtro == 1) //hoy
                 {
-                    return result.Where(x => x.FechaNotificacion.Date == DateTime.Now.Date).ToList();
+                    return result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).ToList();
                 }
                 else if (filtro == 2) //con alerta
                 {
@@ -86,7 +86,7 @@ namespace Infra.Repositorios
                 return new SeguimientoCntFiltrosDto
                 {
                     Todos = result.Count,
-                    Hoy = result.Where(x => x.FechaNotificacion.Date == DateTime.Now.Date).Count(),
+                    Hoy = result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).Count(),
                     ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
                     SolicitadosPorCuidador = result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").Count()
                 };

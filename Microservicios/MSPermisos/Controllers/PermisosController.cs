@@ -31,13 +31,6 @@ namespace MSPermisos.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("Role/{roleid}/Funcionalidad/{funcionalidadid}")]
-        public async Task<IActionResult> GetAllByRoleId(string roleid, int funcionalidadid)
-        {
-            var result = await _service.GetPermisosByRoleIdFuncionalidadId(roleid, funcionalidadid, cancellationToken: default);
-            return Ok(result);
-        }
-
         [HttpPost]
         public async Task<IActionResult> Add(PermisoRequestDTO dto)
         {

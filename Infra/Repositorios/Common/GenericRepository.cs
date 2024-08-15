@@ -26,7 +26,12 @@ namespace Infra.Repositories.Common
         }
         public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return await _context.Set<T>().ToListAsync();
+            Type type = this.GetType();
+
+            // Get the generic type arguments
+            Type[] genericArguments = type.GetGenericArguments();
+            var items = await _context.Set<T>().ToListAsync();
+            return items ?? Enumerable.Empty<T>();
         }
         public async Task<T> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
