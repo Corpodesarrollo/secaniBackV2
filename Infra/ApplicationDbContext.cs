@@ -105,7 +105,7 @@ namespace Infra
         public DbSet<AspNetUserRoles> AspNetUserRoles {  get; set; }
         public DbSet<AspNetRoles> AspNetRoles {  get; set; }
         public DbSet<HorarioLaboralAgente> HorarioLaboralAgente {  get; set; }
-        public DbSet<Permiso> Permisos {  get; set; }
+        public DbSet<Permisos> TPermisos { get; set; }
         public DbSet<TPFuncionalidad> TPFuncionalidad {  get; set; }
         public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto {  get; set; }
         public DbSet<TPFestivos> TPFestivos {  get; set; }

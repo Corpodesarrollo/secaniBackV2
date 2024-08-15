@@ -3,10 +3,10 @@ using Core.Modelos;
 
 namespace Core.Interfaces.Repositorios.MSPermisos
 {
-    public interface IPermisoRepository : IGenericRepository<Permiso>
+    public interface IPermisoRepository : IGenericRepository<Permisos>
     {
-        public Task<(Permiso, TPFuncionalidad, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken);
-        public Task<IList<Permiso>> GetPermisosByRoleId(string RoleId, CancellationToken cancellationToken);
-        Task<IList<Permiso>> GetPermisosByRoleIdFuncionalidadId(string RoleId, int FuncionalidadId, CancellationToken cancellationToken);
+        public Task<(Permisos, TPFuncionalidad, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken);
+        public Task<IList<Permisos>> GetPermisos(CancellationToken cancellationToken);
+        public Task<IList<Permisos>> GetPermisosByRoleId(string RoleId, CancellationToken cancellationToken);
     }
 }

@@ -5,23 +5,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios.MSPermisos
 {
-    public class PermisoRepository(ApplicationDbContext context) : GenericRepository<Permiso>(context), IPermisoRepository
+    public class PermisoRepository : GenericRepository<Permisos>, IPermisoRepository
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
-        public async Task<IList<Permiso>> GetPermisosByRoleId(string RoleId, CancellationToken cancellationToken)
+        public PermisoRepository(ApplicationDbContext context): base(context) 
         {
-            return await _context.Permisos.Where(x => x.RoleId == RoleId).ToListAsync();
+            _context = context;
         }
 
-        public async Task<IList<Permiso>> GetPermisosByRoleIdFuncionalidadId(string RoleId, int FuncionalidadId, CancellationToken cancellationToken)
+        public async Task<IList<Permisos>> GetPermisosByRoleId(string RoleId, CancellationToken cancellationToken)
         {
-            return await _context.Permisos.Where(x => x.RoleId == RoleId && x.FuncionalidadId == FuncionalidadId).ToListAsync();
+            return await _context.TPermisos.Where(x => x.RoleId == RoleId).ToListAsync();
         }
 
-        public async Task<(Permiso, TPFuncionalidad, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken)
+        public async Task<IList<Permisos>> GetPermisos(CancellationToken cancellationToken)
         {
-            var permiso = await _context.Permisos.FirstOrDefaultAsync(x => x.Id == id);
+            var items = await _context.TPermisos.ToListAsync();
+            return items;
+        }
+
+        public async Task<(Permisos, TPFuncionalidad, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken)
+        {
+            var permiso = await _context.TPermisos.FirstOrDefaultAsync(x => x.Id == id);
             if (permiso == null)
             {
                 return (null, null, null);
