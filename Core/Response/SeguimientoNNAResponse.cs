@@ -17,5 +17,7 @@ namespace Core.Response
         public DateTime FechaNotificacion { get; set; }
         public DateTime FechaRespuesta { get; set; }
         public string Asunto {  get; set; }
+        public NNAResponse NNA { get; set; }
+        public DateTime? FechaInicioSeguimiento { get; set; }
     }
 }
