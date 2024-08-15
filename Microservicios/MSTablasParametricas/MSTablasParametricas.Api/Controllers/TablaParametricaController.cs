@@ -21,6 +21,13 @@ namespace MSTablasParametricas.Api.Controllers
             var result = await _service.GetBynomTREF(nomTREF, CancellationToken.None);
             return Ok(result);
         }
+
+        [HttpGet("Municipios/{CodDepto}")]
+        public async Task<ActionResult<List<TPExternalEntityBase>>> GetMunicipios(string CodDepto, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetMunicipiosByDepto(CodDepto, cancellationToken);
+            return Ok(result);
+        }
     }
 }
 

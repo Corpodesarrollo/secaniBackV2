@@ -41,5 +41,36 @@ namespace Core.Services.MSTablasParametricas
 
             return entities;
         }
+
+        public async Task<List<TPExternalEntityBase>> GetMunicipiosByDepto(string CodigoDepto, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrl + "Municipio", cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            var entities = new List<TPExternalEntityBase>();
+            foreach (var item in items.EnumerateArray())
+            {
+                if (item.GetProperty("codigo").GetString().StartsWith(CodigoDepto))
+                {
+                    entities.Add(new TPExternalEntityBase
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString()
+                    });
+                }
+            }
+
+            return entities;
+        }
     }
 }
