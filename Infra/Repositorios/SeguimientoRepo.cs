@@ -449,6 +449,7 @@ namespace Infra.Repositorios
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
             List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
+                                                         join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                          where seg.NNAId == idNNA
                                                          select new SeguimientoNNAResponse()
                                                          {
@@ -456,7 +457,15 @@ namespace Infra.Repositorios
                                                              FechaSeguimiento = seg.FechaSeguimiento,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
-                                                             Observacion = seg.ObservacionesSolicitante
+                                                             Observacion = seg.ObservacionesSolicitante,
+                                                             FechaInicioSeguimiento = seg.FechaSeguimiento,
+                                                             NNA = new NNAResponse()
+                                                             {
+                                                                 Id = nna.Id,
+                                                                 FechaNacimiento = nna.FechaNacimiento,
+                                                                 NombreCompleto = string.Join("",nna.PrimerNombre," ",nna.SegundoNombre," ",nna.PrimerApellido," ",nna.SegundoApellido),
+                                                                 Diagnostico = "",
+                                                             }
                                                          }).ToList();
 
             List<AlertaSeguimientoResponse>? alertas;

@@ -518,7 +518,9 @@ namespace Infra.Repositorios
 
             try
             {
-                var nnna = _context.NNAs.FirstOrDefault(x => x.Id == NNAId);
+                var nnna = (from nna in _context.NNAs
+                            where nna.Id == NNAId
+                            select nna).FirstOrDefault();
 
                 if (nnna != null)
                 {
@@ -533,6 +535,55 @@ namespace Infra.Repositorios
             {
                 response = null;
             }
+
+            return response;
+        }
+
+        public DatosBasicosNNAResponse? ConsultarDatosBasicosNNAById(long NNAId)
+        {
+
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                       where seg.NNAId == NNAId
+                                       orderby seg.Id descending
+                                       select seg).FirstOrDefault();
+
+            DatosBasicosNNAResponse? response = (from nna in _context.NNAs
+                                                where nna.Id == NNAId
+                                                select new DatosBasicosNNAResponse()
+                                                {
+                                                    Diagnostico = "",
+                                                    FechaInicioSegumiento = seguimiento.FechaSeguimiento,
+                                                    FechaNacimiento = nna.FechaNacimiento,
+                                                    NombreCompleto = string.Join("",nna.PrimerNombre," ",nna.SegundoNombre," ",nna.PrimerApellido," ",nna.SegundoApellido),
+                                                }).FirstOrDefault();
+
+            return response;
+        }
+
+        public SolicitudSeguimientoCuidadorResponse SolicitudSeguimientoCuidador(long NNAId)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.NNAId == NNAId
+                                        orderby seg.Id descending
+                                        select seg).FirstOrDefault();
+
+            SolicitudSeguimientoCuidadorResponse? response = (from nna in _context.NNAs
+                                                             where nna.Id == NNAId
+                                                             select new SolicitudSeguimientoCuidadorResponse()
+                                                             {
+                                                                 Base64Adjunto = "",
+                                                                 CorreoSolicitante = "",
+                                                                 DiagnosticoNNA = "",
+                                                                 FechaDiagnostico = nna.FechaDiagnostico,
+                                                                 FechaNacimientoNNA = nna.FechaNacimiento,
+                                                                 NoCaso = nna.Id,
+                                                                 NombreAdjunto = "",
+                                                                 NombreCompletoNNA = string.Join("",nna.PrimerNombre," ",nna.SegundoNombre," ",nna.PrimerApellido," ",nna.SegundoApellido),
+                                                                 NombreSolicitante = "",
+                                                                 ObservacionSolicitante = seguimiento==null?"":seguimiento.ObservacionesSolicitante,
+                                                                 SexoNNa = nna.SexoId.ToString(),
+                                                                 TelefonoSolicitante = ""
+                                                             }).FirstOrDefault();
 
             return response;
         }

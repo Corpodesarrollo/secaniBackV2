@@ -201,5 +201,19 @@ namespace Api.Controllers
             var response = _nNARepo.ConsultarNNAsById(NNAId);
             return Ok(response);
         }
+
+        [HttpGet("DatosBasicosNNAById/{NNAId}")]
+        public IActionResult ConsultarDatosBasicosNNAById(long NNAId) {
+
+            var response = _nNARepo.ConsultarDatosBasicosNNAById(NNAId);
+
+            return Ok(response);
+        }
+
+        [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
+        public IActionResult SolicitudSeguimientoCuidador(long NNAId)
+        {
+            var response = _nNARepo
+        }
     }
 }
