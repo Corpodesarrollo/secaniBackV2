@@ -24,15 +24,15 @@ namespace Core.Services.MSPermisos
             if (!_cache.TryGetValue(cacheKey, out List<PermisoResponseDTO> entitiesDto))
             {
                 var entities = await _repository.GetPermisos(cancellationToken);
-                entitiesDto = new List<PermisoResponseDTO>();
-                foreach (var entity in entities)
-                {
-                    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
-                    var permisoDto = permiso.Adapt<PermisoResponseDTO>();
-                    permisoDto.Funcionalidad = funcionalidad;
-                    permisoDto.Modulo = modulo;
-                    entitiesDto.Add(permisoDto);
-                }
+                entitiesDto = entities.Adapt<List<PermisoResponseDTO>>();
+                //foreach (var entity in entities)
+                //{
+                //    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                //    var permisoDto = permiso.Adapt<PermisoResponseDTO>();
+                //    permisoDto.Funcionalidad = funcionalidad;
+                //    permisoDto.Modulo = modulo;
+                //    entitiesDto.Add(permisoDto);
+                //}
                 _cache.Set(cacheKey, entitiesDto, cacheEntryOptions);
             }
             return entitiesDto;
