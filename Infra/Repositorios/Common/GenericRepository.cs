@@ -70,8 +70,15 @@ namespace Infra.Repositories.Common
         public async Task<(bool, T)> AddAsync(T entity)
         {
             await _context.Set<T>().AddAsync(entity);
-            var result = await _context.SaveChangesAsync();
-            return (result > 0, entity);
+            try {
+                await _context.AddAsync<T>(entity);
+                var result = await _context.SaveChangesAsync(); 
+                return (result > 0, entity);
+            } catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            }
+           
+            return (false, null);
         }
 
         // Update
