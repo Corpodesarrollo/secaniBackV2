@@ -37,6 +37,10 @@ namespace Infra.Repositories.Common
         {
             return await _context.Set<T>().FindAsync(id);
         }
+        public async Task<T> GetByIdAsync(int id, CancellationToken cancellationToken)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
         public async Task<T> GetByIdAsync(string id, CancellationToken cancellationToken)
         {
             return await _context.Set<T>().FindAsync(id);
