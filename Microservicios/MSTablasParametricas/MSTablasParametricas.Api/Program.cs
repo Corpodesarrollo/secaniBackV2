@@ -1,8 +1,11 @@
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios.Common;
+using Core.Interfaces.Repositorios.MSTablasParametricas;
+using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Services.MSTablasParametricas;
 using Infra;
 using Infra.Repositories.Common;
+using Infra.Repositorios.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,13 +16,13 @@ builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>)
 //builder.Services.AddTransient<IEstadoAlertaRepository, EstadoAlertaRepository>();
 //builder.Services.AddTransient<IEstadoNNARepository, EstadoNNARepository>();
 //builder.Services.AddTransient<IEstadoSeguimientoRepository, EstadoSeguimientoRepository>();
-//builder.Services.AddTransient<ITPCategoriaAlertaRepository, TPCategoriaAlertaRepository>();
+builder.Services.AddTransient<ICategoriaAlertaRepository, CategoriaAlertaRepository>();
 //builder.Services.AddTransient<ITPSubCategoriaAlertaRepository, TPSubCategoriaAlertaRepository>();
 
 //builder.Services.AddTransient<IEstadoAlertaService, EstadoAlertaService>();
 //builder.Services.AddTransient<IEstadoNNAService, EstadoNNAService>();
 //builder.Services.AddTransient<IEstadoSeguimientoService, EstadoSeguimientoService>();
-//builder.Services.AddTransient<ITPCategoriaAlertaService, TPCategoriaAlertaService>();
+builder.Services.AddTransient<ICategoriaAlertaService, CategoriaAlertaService>();
 //builder.Services.AddTransient<ITPSubCategoriaAlertaService, TPSubCategoriaAlertaService>();
 
 // Add services to the container.
