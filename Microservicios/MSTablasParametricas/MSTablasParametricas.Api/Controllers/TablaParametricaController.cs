@@ -15,10 +15,17 @@ namespace MSTablasParametricas.Api.Controllers
             _service = service;
         }
 
-        [HttpGet("{nomTREF}")]
-        public async Task<ActionResult<List<TPExternalEntityBase>>> Get(string nomTREF, CancellationToken cancellationToken)
+        [HttpGet("{NombreTabla}")]
+        public async Task<ActionResult<List<TPExternalEntityBase>>> Get(string NombreTabla, CancellationToken cancellationToken)
         {
-            var result = await _service.GetBynomTREF(nomTREF, CancellationToken.None);
+            var result = await _service.GetBynomTREF(NombreTabla, CancellationToken.None);
+            return Ok(result);
+        }
+
+        [HttpGet("{NombreTabla}/{Codigo}")]
+        public async Task<ActionResult<List<TPExternalEntityBase>>> GetFilter(string NombreTabla, string Codigo, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetBynomTREFCodigo(NombreTabla, Codigo, CancellationToken.None);
             return Ok(result);
         }
 
