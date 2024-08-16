@@ -213,7 +213,7 @@ namespace Api.Controllers
         [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
         public IActionResult SolicitudSeguimientoCuidador(long NNAId)
         {
-            var response = _nNARepo
+            return Ok("Ok");
         }
     }
 }
