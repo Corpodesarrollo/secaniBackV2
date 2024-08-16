@@ -10,9 +10,9 @@ namespace MSTablasParametricas.Api.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-    public class CIE10Controller : GenericController<TPCIE10, GenericTPDTO>
+    public class CIE10Controller : GenericController<TPCIE10, CIE10DTO>
     {
-        public CIE10Controller(IGenericService<TPCIE10, GenericTPDTO> service) : base(service)
+        public CIE10Controller(IGenericService<TPCIE10, CIE10DTO> service) : base(service)
         {
         }
     }
