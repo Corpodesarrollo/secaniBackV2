@@ -1,4 +1,5 @@
 using Core.Interfaces.Repositorios;
+using Core.Services.MSTablasParametricas;
 using Infra.Repositorios;
 using MSNNA.Api.Extensions;
 
@@ -12,6 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.CustomConfigureServices();
 
 //Registro de Repos
+builder.Services.AddHttpClient<TablaParametricaService>();
 builder.Services.AddScoped<INNARepo, NNARepo>();
 
 builder.Services.AddCors(options =>

@@ -1,8 +1,10 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Common;
 using Core.Request;
 using Core.Response;
+using Core.Services.MSTablasParametricas;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -539,15 +541,15 @@ namespace Infra.Repositorios
             return response;
         }
 
-        public DatosBasicosNNAResponse? ConsultarDatosBasicosNNAById(long NNAId)
+        public async Task<DatosBasicosNNAResponse>? ConsultarDatosBasicosNNAById(long NNAId,TablaParametricaService tablaParametricaService)
         {
 
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+            Seguimiento? seguimiento =await (from seg in _context.Seguimientos
                                        where seg.NNAId == NNAId
                                        orderby seg.Id descending
-                                       select seg).FirstOrDefault();
+                                       select seg).FirstOrDefaultAsync();
 
-            DatosBasicosNNAResponse? response = (from nna in _context.NNAs
+            DatosBasicosNNAResponse? response = await (from nna in _context.NNAs
                                                 where nna.Id == NNAId
                                                 select new DatosBasicosNNAResponse()
                                                 {
@@ -555,19 +557,27 @@ namespace Infra.Repositorios
                                                     FechaInicioSegumiento = seguimiento.FechaSeguimiento,
                                                     FechaNacimiento = nna.FechaNacimiento,
                                                     NombreCompleto = string.Join("",nna.PrimerNombre," ",nna.SegundoNombre," ",nna.PrimerApellido," ",nna.SegundoApellido),
-                                                }).FirstOrDefault();
+                                                    DiagnosticoId = nna.DiagnosticoId
+                                                }).FirstOrDefaultAsync();
+
+            List<TPExternalEntityBase> cie10 = await tablaParametricaService.GetBynomTREFCodigo("CIE10", response.DiagnosticoId, CancellationToken.None);
+
+            if (cie10 != null && cie10.Count > 0)
+            {
+                response.Diagnostico = cie10[0].Nombre;
+            }
 
             return response;
         }
 
-        public SolicitudSeguimientoCuidadorResponse SolicitudSeguimientoCuidador(long NNAId)
+        public async Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId,TablaParametricaService tablaParametricaService)
         {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+            Seguimiento? seguimiento =await (from seg in _context.Seguimientos
                                         where seg.NNAId == NNAId
                                         orderby seg.Id descending
-                                        select seg).FirstOrDefault();
+                                        select seg).FirstOrDefaultAsync();
 
-            SolicitudSeguimientoCuidadorResponse? response = (from nna in _context.NNAs
+            SolicitudSeguimientoCuidadorResponse? response =await (from nna in _context.NNAs
                                                              where nna.Id == NNAId
                                                              select new SolicitudSeguimientoCuidadorResponse()
                                                              {
@@ -582,9 +592,18 @@ namespace Infra.Repositorios
                                                                  NombreSolicitante = "",
                                                                  ObservacionSolicitante = seguimiento==null?"":seguimiento.ObservacionesSolicitante,
                                                                  SexoNNa = nna.SexoId.ToString(),
-                                                                 TelefonoSolicitante = ""
-                                                             }).FirstOrDefault();
+                                                                 TelefonoSolicitante = "",
+                                                                 DiagnosticoId = nna.DiagnosticoId
 
+                                                             }).FirstOrDefaultAsync();
+
+            List<TPExternalEntityBase> cie10 = await tablaParametricaService.GetBynomTREFCodigo("CIE10", response.DiagnosticoId, CancellationToken.None);
+
+            if(cie10 != null && cie10.Count>0)
+            {
+                response.DiagnosticoNNA = cie10[0].Nombre;
+            }   
+            
             return response;
         }
     }

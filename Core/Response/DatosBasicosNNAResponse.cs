@@ -12,5 +12,6 @@ namespace Core.Response
         public DateTime FechaNacimiento { get; set; }
         public string Diagnostico {  get; set; }
         public DateTime? FechaInicioSegumiento { get; set; }
+        public string DiagnosticoId {  get; set; }
     }
 }

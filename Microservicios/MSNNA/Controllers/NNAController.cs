@@ -4,6 +4,7 @@ using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
+using Core.Services.MSTablasParametricas;
 
 
 namespace Api.Controllers
@@ -13,10 +14,12 @@ namespace Api.Controllers
     public class NNAController : ControllerBase
     {
         private INNARepo _nNARepo;
+        private readonly TablaParametricaService tablaParametricaService;
 
-        public NNAController(INNARepo nNARepo)
+        public NNAController(INNARepo nNARepo, TablaParametricaService tablaParametrica)
         {
             _nNARepo= nNARepo;
+            tablaParametricaService = tablaParametrica;
         }
 
         [HttpPost("ContactoNNACrear")]
@@ -203,17 +206,18 @@ namespace Api.Controllers
         }
 
         [HttpGet("DatosBasicosNNAById/{NNAId}")]
-        public IActionResult ConsultarDatosBasicosNNAById(long NNAId) {
+        public async Task<IActionResult> ConsultarDatosBasicosNNAById(long NNAId) {
 
-            var response = _nNARepo.ConsultarDatosBasicosNNAById(NNAId);
+            var response = await _nNARepo.ConsultarDatosBasicosNNAById(NNAId,tablaParametricaService);
 
             return Ok(response);
         }
 
         [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
-        public IActionResult SolicitudSeguimientoCuidador(long NNAId)
+        public async Task<IActionResult> SolicitudSeguimientoCuidador(long NNAId)
         {
-            return Ok("Ok");
+            var response = await _nNARepo.SolicitudSeguimientoCuidador(NNAId, tablaParametricaService);
+            return Ok(response);
         }
     }
 }
