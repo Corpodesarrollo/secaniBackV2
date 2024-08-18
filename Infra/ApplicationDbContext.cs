@@ -122,5 +122,6 @@ namespace Infra
         public DbSet<TPCausaInasistencia> tPCausaInasistencia { get; set; }
         public DbSet<TPEstadoIngresoEstrategia> tPEstadoIngresoEstrategia { get; set; }
         public DbSet<TPOrigenReporte> TPOrigenReporte { get; set; }
+        public DbSet<TPCIE10> CIE10s { get; set; }
     }
 }

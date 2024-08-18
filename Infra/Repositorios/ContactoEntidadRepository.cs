@@ -13,17 +13,17 @@ namespace Infra.Repositories
 
         public async Task<List<ContactoEntidad>> GetAllContactosEntidad(CancellationToken cancellationToken)
         {
-            return await _context.ContactoEntidades.Include(x => x.Entidad).Where(x => !x.IsDeleted).ToListAsync();
+            return await _context.ContactoEntidades.Where(x => !x.IsDeleted).ToListAsync();
         }
 
         public async Task<ContactoEntidad> GetContactoEntidadByEmail(string email, CancellationToken cancellationToken)
         {
-            return await _context.ContactoEntidades.Include(x => x.Entidad).FirstOrDefaultAsync(x => x.Email == email);
+            return await _context.ContactoEntidades.FirstOrDefaultAsync(x => x.Email == email);
         }
 
         public async Task<ContactoEntidad> GetContactoEntidadById(long id, CancellationToken cancellationToken)
         {
-            return await _context.ContactoEntidades.Include(x => x.Entidad).FirstOrDefaultAsync(x => x.Id == id);
+            return await _context.ContactoEntidades.FirstOrDefaultAsync(x => x.Id == id);
         }
     }
 }

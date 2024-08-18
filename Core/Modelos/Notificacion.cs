@@ -8,6 +8,6 @@ namespace Core.Modelos
         public DateTime FechaNotificacion { get; set; }
         public DateTime FechaRespuesta { get; set; }
         public string RespuestaEntidad { get; set; }
-        public long EntidadId { get; set; }
+        public string EntidadId { get; set; }
     }
 }

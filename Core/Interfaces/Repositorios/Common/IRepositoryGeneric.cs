@@ -7,6 +7,7 @@ namespace Core.Interfaces.Repositorios.Common
     {
         //Queries
         Task<T> GetByIdAsync(long id, CancellationToken cancellationToken);
+        Task<T> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<T> GetByIdAsync(string id, CancellationToken cancellationToken);
         Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken);
         Task<T> FindAsync(Expression<Func<T, bool>> predicate);

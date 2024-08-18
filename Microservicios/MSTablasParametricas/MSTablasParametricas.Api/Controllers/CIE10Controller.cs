@@ -7,11 +7,12 @@ using MSTablasParametricas.Api.Controllers.Common;
 
 namespace MSTablasParametricas.Api.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
-    public class SubCategoriaAlertaController : GenericController<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>
+    public class CIE10Controller : GenericController<TPCIE10, CIE10DTO>
     {
-        public SubCategoriaAlertaController(IGenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO> service) : base(service)
+        public CIE10Controller(IGenericService<TPCIE10, CIE10DTO> service) : base(service)
         {
         }
     }

@@ -2,6 +2,7 @@
 using Core.Modelos;
 using Core.Request;
 using Core.Response;
+using Core.Services.MSTablasParametricas;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,7 +42,7 @@ namespace Core.Interfaces.Repositorios
         public List<TPEstadoIngresoEstrategiaDto> GetTPEstadoIngresoEstrategia();
         public NNAs ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion);
         public NNAs ConsultarNNAsById(long NNAId );
-        public DatosBasicosNNAResponse ConsultarDatosBasicosNNAById(long  NNAId);
-        public SolicitudSeguimientoCuidadorResponse SolicitudSeguimientoCuidador(long NNAId);
+        public Task<DatosBasicosNNAResponse> ConsultarDatosBasicosNNAById(long  NNAId, TablaParametricaService tablaParametricaService);
+        public Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId, TablaParametricaService tablaParametricaService);
     }
 }

@@ -20,5 +20,6 @@ namespace Core.Response
         public string ObservacionSolicitante { get; set; }
         public string NombreAdjunto {  get; set; }
         public string Base64Adjunto { get; set; }
+        public string DiagnosticoId {  get; set; }
     }
 }

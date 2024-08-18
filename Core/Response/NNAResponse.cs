@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace Core.Response
 {
-    public class DatosBasicosNNAResponse
+    public class NNAResponse
     {
+        public long Id {  get; set; }
         public string NombreCompleto {  get; set; }
         public DateTime FechaNacimiento { get; set; }
         public string Diagnostico {  get; set; }
-        public DateTime? FechaInicioSegumiento { get; set; }
-        public string DiagnosticoId {  get; set; }
     }
 }
