@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Request
+﻿namespace Core.Request
 {
     public class DiagnosticoTratamientoRequest
     {
@@ -17,7 +11,7 @@ namespace Core.Request
         public bool Recaidas { get; set; }
         public int? NumeroRecaidas { get; set; }
         public DateTime? FechaUltimaRecaida { get; set; }
-        public int? IdMotivoNoDiagnostico { get; set; }
-        public string? RazonNoDiagnostico {  get; set; }
+        public string? IdMotivoNoDiagnostico { get; set; }
+        public string? RazonNoDiagnostico { get; set; }
     }
 }

@@ -1,10 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Core.Modelos
+﻿namespace Core.DTOs
 {
-    public class NNAs
+    public class NNADto
     {
-        [Key]
         public long Id { get; set; }
         public int? estadoId { get; set; }
         public string? ResidenciaActualCategoriaId { get; set; }

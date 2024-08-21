@@ -463,7 +463,7 @@ namespace Infra.Repositorios
                                                              {
                                                                  Id = nna.Id,
                                                                  FechaNacimiento = nna.FechaNacimiento,
-                                                                 NombreCompleto = string.Join("",nna.PrimerNombre," ",nna.SegundoNombre," ",nna.PrimerApellido," ",nna.SegundoApellido),
+                                                                 NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
                                                                  Diagnostico = "",
                                                              }
                                                          }).ToList();
@@ -497,28 +497,28 @@ namespace Infra.Repositorios
 
 
             GetNNaParcialResponse? response = (from u in _context.NNAs
-                            where u.Id != id
-                            select new GetNNaParcialResponse
-                            {
-                                Id = u.Id,
-                                PrimerNombre = u.PrimerNombre,
-                                SegundoNombre = u.SegundoNombre,
-                                PrimerApellido = u.PrimerApellido,
-                                SegundoApellido = u.SegundoApellido,
-                                FechaNotificacionSIVIGILA = u.FechaNotificacionSIVIGILA
+                                               where u.Id != id
+                                               select new GetNNaParcialResponse
+                                               {
+                                                   Id = u.Id,
+                                                   PrimerNombre = u.PrimerNombre,
+                                                   SegundoNombre = u.SegundoNombre,
+                                                   PrimerApellido = u.PrimerApellido,
+                                                   SegundoApellido = u.SegundoApellido,
+                                                   FechaNotificacionSIVIGILA = u.FechaNotificacionSIVIGILA
 
-                             }).FirstOrDefault();
+                                               }).FirstOrDefault();
 
             return response;
 
-            
+
         }
 
         public string SetSeguimiento(SetSeguimientoRequest request)
         {
             try
             {
-                Seguimiento seguimiento = new Seguimiento();
+                Seguimiento seguimiento = new();
                 seguimiento.NNAId = request.IdNNA;
                 seguimiento.FechaSeguimiento = request.FechaSeguimiento;
                 seguimiento.EstadoId = request.IdEstado;
@@ -535,11 +535,11 @@ namespace Infra.Repositorios
 
                 return "Segumiento almacenado correctamente";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return "Existe una error al almacenar el segumiento";
             }
-            
+
         }
     }
 }
