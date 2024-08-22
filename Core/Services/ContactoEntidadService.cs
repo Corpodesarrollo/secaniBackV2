@@ -18,9 +18,20 @@ namespace Core.Services
             return result.Adapt<(bool, ContactoEntidadResponse)>();
         }
 
-        public async Task<(bool, ContactoEntidadResponse)> UpdateAsync(ContactoEntidadResponse entity, CancellationToken cancellationToken)
+        public async Task<(bool, ContactoEntidadResponse)> UpdateAsync(long id, ContactoEntidadRequest request, CancellationToken cancellationToken)
         {
-            var contactoEntidad = entity.Adapt<ContactoEntidad>();
+            var contactoEntidad = await _repository.GetByIdAsync(id, cancellationToken);
+
+            if (contactoEntidad == null)
+            {
+                throw new Exception($"Contacto Entidad con identificar {id} not found");
+            }
+
+            contactoEntidad.Nombres = request.Nombres;
+            contactoEntidad.EntidadId = request.EntidadId;
+            contactoEntidad.Cargo = request.Cargo;
+            contactoEntidad.Email = request.Email;
+            contactoEntidad.Telefonos = request.Telefonos;
 
             var result = await _repository.UpdateAsync(contactoEntidad);
             return result.Adapt<(bool, ContactoEntidadResponse)>();
