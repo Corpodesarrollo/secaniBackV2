@@ -15,10 +15,10 @@ builder.Services.AddSwaggerGen();
 
 builder.CustomConfigureServices();
 
-builder.Services.AddCors(p => p.AddPolicy("corsapp", builder =>
+builder.Services.AddCors(p => p.AddPolicy("CorsPolicy", builder =>
 {
     builder
-    .WithOrigins("*")
+    .AllowAnyOrigin()
     .AllowAnyMethod()
     .AllowAnyHeader();
 }));
