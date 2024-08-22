@@ -7,5 +7,6 @@
         public string Cargo { get; set; }
         public string Email { get; set; }
         public string Telefonos { get; set; }
+        public string ActivoName { get; set; }
     }
 }

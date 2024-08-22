@@ -1,5 +1,6 @@
 ﻿using Core.Modelos;
 using Core.Modelos.Common;
+using MediatR.NotificationPublishers;
 
 namespace Core.DTOs
 {
@@ -10,5 +11,6 @@ namespace Core.DTOs
         public string Cargo { get; set; }
         public string Email { get; set; }
         public string Telefonos { get; set; }
+        public string ActivoName { get; set; }
     }
 }

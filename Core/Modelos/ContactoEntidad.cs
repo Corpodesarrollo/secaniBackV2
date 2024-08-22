@@ -11,7 +11,8 @@ namespace Core.Modelos
         public string Cargo { get; set; }
         public string Email { get; set; }
         public string Telefonos { get; set; }
-        public bool Activo { get; set; }
+        public bool? Activo { get; set; }
+        public string ActivoName { get; set; }
     }
 
     public class ContactoEntidadConfiguration : IEntityTypeConfiguration<ContactoEntidad>
