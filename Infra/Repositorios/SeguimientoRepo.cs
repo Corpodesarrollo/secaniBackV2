@@ -454,7 +454,7 @@ namespace Infra.Repositorios
                                                          select new SeguimientoNNAResponse()
                                                          {
                                                              FechaNotificacion = seg.FechaSolicitud,
-                                                             FechaSeguimiento = seg.FechaSeguimiento,
+                                                             FechaSeguimiento = seg.UltimaActuacionFecha,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
                                                              Observacion = seg.ObservacionesSolicitante,

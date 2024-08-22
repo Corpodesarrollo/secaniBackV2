@@ -740,6 +740,375 @@ namespace Infra.Repositorios
 
             return response;
         }
+
+        public DepuracionProtocoloResponse DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
+        {
+            DepuracionProtocoloResponse response = new DepuracionProtocoloResponse();
+
+            List<DepuracionProtocolo> listaDepuracion = new List<DepuracionProtocolo>();
+
+            for (int i = 0; i < request.Count; i++)
+            {
+                DepuracionProtocolo depuracion = new DepuracionProtocolo()
+                {
+                    Id = i,
+                    DepuracionProtocoloRequest = request[i]
+                };
+
+            }
+
+
+            Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new Dictionary<string, List<DepuracionProtocolo>>();
+
+            Dictionary<string, List<DepuracionProtocolo>> DfechaDefuncion = new Dictionary<string, List<DepuracionProtocolo>>();
+
+            foreach (DepuracionProtocolo r in listaDepuracion)
+            {
+                //mismo tipo y numero de identificacion
+                if (DTipoNumeroDocumento.ContainsKey(r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide))
+                {
+                    DTipoNumeroDocumento[r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide].Add(r);
+                }
+                else
+                {
+                    DTipoNumeroDocumento.Add(r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide, new List<DepuracionProtocolo>());
+                    DTipoNumeroDocumento[r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide].Add(r);
+                }
+
+                //mismo nombre y tipo de cancer 
+                if (DNombreTipoCancer.ContainsKey(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " "/*falta la columna de tipo de cancer*/))
+                {
+                    DNombreTipoCancer[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape].Add(r);
+                }
+                else
+                {
+                    DNombreTipoCancer.Add(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
+                    DNombreTipoCancer[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape].Add(r);
+                }
+
+                //mismo nombre y fecha de notificacion
+                if (DNombreFechaNotificacion.ContainsKey(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not))
+                {
+                    DNombreFechaNotificacion[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not].Add(r);
+                }
+                else
+                {
+                    DNombreFechaNotificacion.Add(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not, new List<DepuracionProtocolo>());
+                    DNombreFechaNotificacion[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not].Add(r);
+                }
+            }
+
+            //identificacion de fallecidos
+            DFallecido = this.IdentificacionFallecidos(DTipoNumeroDocumento, DNombreTipoCancer, DNombreFechaNotificacion);
+
+            //falta recorrido del caso
+
+            //mayor trazabilidad
+            DTrazabilidad = IdentificacionMayorTrazabilidad(DTipoNumeroDocumento, DNombreTipoCancer, DNombreFechaNotificacion, DFallecido);
+
+            //falta verificacion del tipo de cancer
+
+            //falta casos de años anteriores
+
+            //falta casos con diferentes ipos de cancer
+
+            //falta eliminacion de registros    
+
+            //caso mas oportuno es el ultimo
+
+            return response;
+        }
+
+        private Dictionary<string, List<DepuracionProtocolo>> IdentificacionFallecidos(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
+            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion)
+        {
+            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new Dictionary<string, List<DepuracionProtocolo>>();
+
+            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
+            {
+                foreach (DepuracionProtocolo r in par.Value)
+                {
+                    if (r.DepuracionProtocoloRequest.fec_def != null &&
+                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
+                    {
+                        if (DFallecido.ContainsKey(par.Key))
+                        {
+                            DFallecido[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
+                            DFallecido[par.Key].Add(r);
+                        }
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreTipoCancer)
+            {
+                foreach (DepuracionProtocolo r in par.Value)
+                {
+                    if (r.DepuracionProtocoloRequest.fec_def != null &&
+                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
+                    {
+                        if (DFallecido.ContainsKey(par.Key))
+                        {
+                            DFallecido[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
+                            DFallecido[par.Key].Add(r);
+                        }
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreFechaNotificacion)
+            {
+                foreach (DepuracionProtocolo r in par.Value)
+                {
+                    if (r.DepuracionProtocoloRequest.fec_def != null &&
+                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
+                    {
+                        if (DFallecido.ContainsKey(par.Key))
+                        {
+                            DFallecido[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
+                            DFallecido[par.Key].Add(r);
+                        }
+                    }
+                }
+            }
+
+            return DFallecido;
+        }
+
+        private Dictionary<string, List<DepuracionProtocolo>> IdentificacionMayorTrazabilidad(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
+            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion,
+            Dictionary<string, List<DepuracionProtocolo>> DFallecido)
+        {
+            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new Dictionary<string, List<DepuracionProtocolo>>();
+            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
+            {
+                if (!DFallecido.ContainsKey(par.Key))
+                {
+                    foreach (DepuracionProtocolo r in par.Value)
+                    {
+                        if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
+                            && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
+                        {
+                            if (DTrazabilidad.ContainsKey(par.Key))
+                            {
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                            else
+                            {
+                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                        }
+                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
+                            && r.DepuracionProtocoloRequest.fec_tomadd != null)
+                        {
+                            if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
+                            {
+                                value.Add(r);
+                            }
+                            else
+                            {
+                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                        }
+                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
+                        {
+                            if (DTrazabilidad.ContainsKey(par.Key))
+                            {
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                            else
+                            {
+                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                        }
+                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
+                        {
+                            if (DTrazabilidad.ContainsKey(par.Key))
+                            {
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                            else
+                            {
+                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                        }
+                        else if (r.DepuracionProtocoloRequest.fec_initra != null)
+                        {
+                            if (DTrazabilidad.ContainsKey(par.Key))
+                            {
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                            else
+                            {
+                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                                DTrazabilidad[par.Key].Add(r);
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreTipoCancer)
+            {
+                foreach (DepuracionProtocolo r in par.Value)
+                {
+                    if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
+                           && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
+                        && r.DepuracionProtocoloRequest.fec_tomadd != null)
+                    {
+                        if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
+                        {
+                            value.Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreFechaNotificacion)
+            {
+                foreach (DepuracionProtocolo r in par.Value)
+                {
+                    if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
+                            && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
+                        && r.DepuracionProtocoloRequest.fec_tomadd != null)
+                    {
+                        if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
+                        {
+                            value.Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                    else if (r.DepuracionProtocoloRequest.fec_initra != null)
+                    {
+                        if (DTrazabilidad.ContainsKey(par.Key))
+                        {
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                        else
+                        {
+                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
+                            DTrazabilidad[par.Key].Add(r);
+                        }
+                    }
+                }
+            }
+
+            return DTrazabilidad;
+        }
     }
 
 }

@@ -40,5 +40,6 @@ namespace Core.Interfaces.Repositorios
         public Task<DatosBasicosNNAResponse> ConsultarDatosBasicosNNAById(long NNAId, TablaParametricaService tablaParametricaService);
         public Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId, TablaParametricaService tablaParametricaService);
         Task<NNADto?> GetById(long id);
+        public DepuracionProtocoloResponse DepuracionProtocolo(List<DepuracionProtocoloRequest> request);
     }
 }

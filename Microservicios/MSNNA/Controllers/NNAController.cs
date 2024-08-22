@@ -225,5 +225,12 @@ namespace Api.Controllers
             var response = await _nNARepo.SolicitudSeguimientoCuidador(NNAId, tablaParametricaService);
             return Ok(response);
         }
+
+        [HttpPost("DepuracionProtocolo")]
+        public IActionResult DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
+        {
+            var response = _nNARepo.DepuracionProtocolo(request);
+            return Ok(response);
+        }
     }
 }
