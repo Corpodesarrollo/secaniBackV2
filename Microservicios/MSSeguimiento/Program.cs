@@ -19,12 +19,17 @@ builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
 
-builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
+builder.Services.AddCors(options =>
 {
-    policy.AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowAnyOrigin();
-}));
+    options.AddPolicy("CorsPolicy",
+        builder =>
+        {
+            _ = builder.WithOrigins("http://localhost:4200", "http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyOrigin()
+            .AllowAnyMethod();
+        });
+});
 
 var app = builder.Build();
 

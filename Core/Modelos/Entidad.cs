@@ -6,6 +6,5 @@ namespace Core.Modelos
     {
         public int TipoEntidadId { get; set; }
         public string Nombre { get; set; }
-        public virtual ICollection<ContactoEntidad> ContactosEntidad { get; set; }
     }
 }

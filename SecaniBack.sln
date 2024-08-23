@@ -23,6 +23,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra", "Infra\Infra.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSPermisos.Api", "Microservicios\MSPermisos\MSPermisos.Api.csproj", "{1BEDA40C-BE28-462B-8B00-FBFB8A41722C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSTablasParametricas.Api", "Microservicios\MSTablasParametricas\MSTablasParametricas.Api\MSTablasParametricas.Api.csproj", "{16C3EB36-1780-43F6-BF05-64AF444336AF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UsuariosyRoles.Api", "Microservicios\MSUsuariosyRoles\Api\UsuariosyRoles.Api.csproj", "{A32250AA-FED3-47D4-A157-E6AEDE700CD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +61,14 @@ Global
 		{1BEDA40C-BE28-462B-8B00-FBFB8A41722C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BEDA40C-BE28-462B-8B00-FBFB8A41722C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BEDA40C-BE28-462B-8B00-FBFB8A41722C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16C3EB36-1780-43F6-BF05-64AF444336AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16C3EB36-1780-43F6-BF05-64AF444336AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16C3EB36-1780-43F6-BF05-64AF444336AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16C3EB36-1780-43F6-BF05-64AF444336AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A32250AA-FED3-47D4-A157-E6AEDE700CD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A32250AA-FED3-47D4-A157-E6AEDE700CD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A32250AA-FED3-47D4-A157-E6AEDE700CD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A32250AA-FED3-47D4-A157-E6AEDE700CD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -69,6 +81,8 @@ Global
 		{11D610EC-F8E7-4E8F-A6C5-01E66FC741C3} = {72DF9EAD-D902-41B8-B151-F22B7D971B36}
 		{743840ED-A3DD-43A0-A905-9CD7F031D444} = {FD91C0C7-3478-47CA-9EED-25DC0F269592}
 		{1BEDA40C-BE28-462B-8B00-FBFB8A41722C} = {C1BD5D7B-7653-4B6C-BD44-8B9F5180A259}
+		{16C3EB36-1780-43F6-BF05-64AF444336AF} = {C1BD5D7B-7653-4B6C-BD44-8B9F5180A259}
+		{A32250AA-FED3-47D4-A157-E6AEDE700CD3} = {C1BD5D7B-7653-4B6C-BD44-8B9F5180A259}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {26D9599F-1BBB-4923-81DF-BE619B0C7901}

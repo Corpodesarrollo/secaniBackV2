@@ -57,7 +57,7 @@ namespace Infra.Repositories
                                                         select ne).FirstOrDefault();
 
             Entidad? entidad = (from ent in _context.Entidades
-                                where ent.Id == request.IdEntidad
+                                where  ent.Id.ToString() == request.IdEntidad
                                 select ent).FirstOrDefault();
 
             AlertaSeguimiento? alerta = (from als in _context.AlertaSeguimientos

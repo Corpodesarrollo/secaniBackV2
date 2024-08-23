@@ -26,9 +26,18 @@ namespace Infra.Repositories.Common
         }
         public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return await _context.Set<T>().ToListAsync();
+            Type type = this.GetType();
+
+            // Get the generic type arguments
+            Type[] genericArguments = type.GetGenericArguments();
+            var items = await _context.Set<T>().ToListAsync();
+            return items ?? Enumerable.Empty<T>();
         }
         public async Task<T> GetByIdAsync(long id, CancellationToken cancellationToken)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public async Task<T> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             return await _context.Set<T>().FindAsync(id);
         }
@@ -65,8 +74,15 @@ namespace Infra.Repositories.Common
         public async Task<(bool, T)> AddAsync(T entity)
         {
             await _context.Set<T>().AddAsync(entity);
-            var result = await _context.SaveChangesAsync();
-            return (result > 0, entity);
+            try {
+                await _context.AddAsync<T>(entity);
+                var result = await _context.SaveChangesAsync(); 
+                return (result > 0, entity);
+            } catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            }
+           
+            return (false, null);
         }
 
         // Update

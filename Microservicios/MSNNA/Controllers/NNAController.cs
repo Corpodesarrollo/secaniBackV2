@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Core.DTOs;
-using Core.Interfaces.Repositorios;
+﻿using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
+using Core.Services.MSTablasParametricas;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace Api.Controllers
@@ -13,10 +12,19 @@ namespace Api.Controllers
     public class NNAController : ControllerBase
     {
         private INNARepo _nNARepo;
+        private readonly TablaParametricaService tablaParametricaService;
 
-        public NNAController(INNARepo nNARepo)
+        public NNAController(INNARepo nNARepo, TablaParametricaService tablaParametrica)
         {
-            _nNARepo= nNARepo;
+            _nNARepo = nNARepo;
+            tablaParametricaService = tablaParametrica;
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(long id)
+        {
+            var response = await _nNARepo.GetById(id);
+            return Ok(response);
         }
 
         [HttpPost("ContactoNNACrear")]
@@ -79,7 +87,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("ConsultarNNAsByTipoIdNumeroId/{tipoIdentificacionId}/{numeroIdentificacion}")]
-        public IActionResult ConsultarNNAsByTipoIdNumeroId(int tipoIdentificacionId, string numeroIdentificacion)
+        public IActionResult ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
 
             var response = _nNARepo.ConsultarNNAsByTipoIdNumeroId(tipoIdentificacionId, numeroIdentificacion);
@@ -191,6 +199,37 @@ namespace Api.Controllers
         {
 
             var response = _nNARepo.GetTPEstadoIngresoEstrategia();
+            return Ok(response);
+        }
+
+        [HttpGet("ConsultarNNAsById/{NNAId}")]
+        public IActionResult ConsultarNNAsById(long NNAId)
+        {
+
+            var response = _nNARepo.ConsultarNNAsById(NNAId);
+            return Ok(response);
+        }
+
+        [HttpGet("DatosBasicosNNAById/{NNAId}")]
+        public async Task<IActionResult> ConsultarDatosBasicosNNAById(long NNAId)
+        {
+
+            var response = await _nNARepo.ConsultarDatosBasicosNNAById(NNAId, tablaParametricaService);
+
+            return Ok(response);
+        }
+
+        [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
+        public async Task<IActionResult> SolicitudSeguimientoCuidador(long NNAId)
+        {
+            var response = await _nNARepo.SolicitudSeguimientoCuidador(NNAId, tablaParametricaService);
+            return Ok(response);
+        }
+
+        [HttpPost("DepuracionProtocolo")]
+        public IActionResult DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
+        {
+            var response = _nNARepo.DepuracionProtocolo(request);
             return Ok(response);
         }
     }

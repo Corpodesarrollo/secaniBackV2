@@ -83,20 +83,20 @@ namespace MSEntidad.Api.Controllers
                 return BadRequest(validationResult.Errors);
             }
 
-            var contactoEntidad = await _service.GetByIdAsync(id, cancellationToken);
+            //var contactoEntidad = await _service.GetByIdAsync(id, cancellationToken);
 
-            if (contactoEntidad == null)
-            {
-                throw new Exception($"Contacto Entidad con identificar {id} not found");
-            }
+            //if (contactoEntidad == null)
+            //{
+            //    throw new Exception($"Contacto Entidad con identificar {id} not found");
+            //}
 
-            contactoEntidad.Nombres = request.Nombres;
-            contactoEntidad.EntidadId = request.EntidadId;
-            contactoEntidad.Cargo = request.Cargo;
-            contactoEntidad.Email = request.Email;
-            contactoEntidad.Telefonos = request.Telefonos;
+            //contactoEntidad.Nombres = request.Nombres;
+            //contactoEntidad.EntidadId = request.EntidadId;
+            //contactoEntidad.Cargo = request.Cargo;
+            //contactoEntidad.Email = request.Email;
+            //contactoEntidad.Telefonos = request.Telefonos;
 
-            var (result, contacto) = await _service.UpdateAsync(contactoEntidad, cancellationToken);
+            var (result, contacto) = await _service.UpdateAsync(id, request, cancellationToken);
 
             return CreatedAtAction(nameof(GetContactoEntidadById), new { Id = contacto.Id }, contacto);
         }

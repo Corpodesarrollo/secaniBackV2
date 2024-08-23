@@ -6,7 +6,7 @@
         public string CiudadEnvio { get; set; }
         public DateTime FechaEnvio { get; set; }
         public string Membrete { get; set; }
-        public int IdEntidad { get; set; }
+        public string IdEntidad { get; set; }
         public string Ciudad { get; set; }
         public string Asunto { get; set; }
         public string Mensaje { get; set; }
