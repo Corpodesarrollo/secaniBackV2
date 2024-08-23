@@ -2,6 +2,7 @@
 using Core.request;
 using Core.Request;
 using Core.response;
+using Infra.Repositorios;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -43,6 +44,23 @@ namespace MSSeguimiento.Api.Controllers
         public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
             notificacionRepo.EliminarNotificacion(request);
+        }
+
+
+        [HttpGet("GetNotificacionEntidadCasos")]
+        public List<GetNotificacionesEntidadResponse> GetNotificacionEntidadCasos(int entidadId, int alertaSeguimientoId, int nnaId)
+        {
+
+            List<GetNotificacionesEntidadResponse> response = notificacionRepo.RepoNotificacionEntidadCasos(entidadId, alertaSeguimientoId, nnaId);
+            return response;
+        }
+
+        [HttpGet("GetListaCasosNotificacion")]
+        public List<GetListaCasosResponse> GetListaCasosNotificacion(int eapbId, int epsId)
+        {
+
+            List<GetListaCasosResponse> response = notificacionRepo.RepoListaCasosNotificacion(eapbId, epsId);
+            return response;
         }
     }
 }
