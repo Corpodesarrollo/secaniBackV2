@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "apis1": {
+    "apis2": {
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/MSPermisosApi/apis/MSPermisosApi",
       "type": "apis.azure"
     }

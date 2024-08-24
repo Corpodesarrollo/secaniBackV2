@@ -1,11 +1,8 @@
 using Core.CQRS.MSUsuariosyRoles.Commands.User;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Services.MSUsuariosyRoles;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using System.Reflection;
 using System.Text;
 using UsuariosyRoles.Api.Extensions;
 
@@ -73,11 +70,14 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
