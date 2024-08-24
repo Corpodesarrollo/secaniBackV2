@@ -40,15 +40,22 @@ namespace MSEntidad.Api.Extensions
 
         public static void RegisterMiddlewares(this WebApplication app)
         {
-            if (app.Environment.IsDevelopment())
+            //if (app.Environment.IsDevelopment())
+            //{
+            //    app.UseSwagger();
+            //    app.UseSwaggerUI(c =>
+            //    {
+            //        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Requisitos.API v1");
+            //        c.DisplayRequestDuration();
+            //    });
+            //}
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Requisitos.API v1");
-                    c.DisplayRequestDuration();
-                });
-            }
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Requisitos.API v1");
+                c.DisplayRequestDuration();
+            });
 
             app.UseCors("corsapp");
             app.UseMiddleware<ExceptionHandlingMiddleware>();
