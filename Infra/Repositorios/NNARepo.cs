@@ -5,6 +5,8 @@ using Core.Modelos.Common;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Infra.Repositories.Common;
+using Mapster;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,10 +16,48 @@ namespace Infra.Repositorios
     public class NNARepo : INNARepo
     {
         private readonly ApplicationDbContext _context;
+        private readonly GenericRepository<NNAs> _repository;
+
 
         public NNARepo(ApplicationDbContext context)
         {
             _context = context;
+            GenericRepository<NNAs> repository = new GenericRepository<NNAs>(_context);
+            _repository = repository;
+        }
+
+        public async Task<NNADto?> GetById(long id)
+        {
+            try
+            {
+                var result = await SelectBase().FirstOrDefaultAsync(x => x.Id == id);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<(bool, NNAs)> AddAsync(NNAs entity)
+        {
+            var (success, response) = await _repository.AddAsync(entity);
+            if (!success)
+            {
+                throw new Exception("cannot add entity");
+            }
+            return (success, response);
+        }
+
+        public async Task<(bool, NNAs)> UpdateAsync(NNAs entity)
+        {
+            var (success, response) = await _repository.UpdateAsync(entity);
+            if (!success)
+            {
+                throw new Exception("cannot update entity");
+            }
+            return (success, response);
         }
 
         private IQueryable<NNADto> SelectBase()
@@ -140,116 +180,9 @@ namespace Infra.Repositorios
             return result;
         }
 
-        public async Task<NNADto?> GetById(long id)
-        {
-            try
-            {
-                var result = await SelectBase().FirstOrDefaultAsync(x => x.Id == id);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
-        }
-
-        public RespuestaResponse<ContactoNNA> CrearContactoNNA(ContactoNNA contactoNNA)
-        {
-            var response = new RespuestaResponse<ContactoNNA>();
-
-            try
-            {
-                _context.Set<ContactoNNA>().Add(contactoNNA);
-                _context.SaveChangesAsync();
-                response.Estado = true;
-                response.Descripcion = "Contacto creado con éxito.";
-                response.Datos = null;  // Aquí puedes devolver el objeto creado si es necesario.
-            }
-            catch (Exception ex)
-            {
-                response.Estado = false;
-                response.Descripcion = $"Error al crear el contacto: {ex.Message}";
-                response.Datos = null;
-            }
-
-            return response;
-        }
-
-        public RespuestaResponse<ContactoNNA> ActualizarContactoNNA(ContactoNNA contactoNNA)
-        {
-            var response = new RespuestaResponse<ContactoNNA>();
-
-            try
-            {
-                _context.Set<ContactoNNA>().Update(contactoNNA);
-                _context.SaveChangesAsync();
-                response.Estado = true;
-                response.Descripcion = "Contacto actualizado con éxito.";
-                response.Datos = null;  // Aquí puedes devolver el objeto creado si es necesario.
-            }
-            catch (Exception ex)
-            {
-                response.Estado = false;
-                response.Descripcion = $"Error al actualizar el contacto: {ex.Message}";
-                response.Datos = null;
-            }
-
-            return response;
-        }
-
-        public List<TPEstadoNNA> TpEstadosNNA()
-        {
-            var response = _context.TPEstadoNNA
-                                    .Select(e => new TPEstadoNNA
-                                    {
-                                        Id = e.Id,
-                                        Nombre = e.Nombre,
-                                        Descripcion = e.Descripcion,
-                                        ColorBG = e.ColorBG,
-                                        ColorText = e.ColorText
-                                    })
-                                    .ToList();
-
-            return response;
-        }
-
         public List<VwAgentesAsignados> VwAgentesAsignados()
         {
             var response = _context.VwAgentesAsignados.ToList();
-
-            return response;
-        }
-
-        public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId)
-        {
-            var response = new RespuestaResponse<ContactoNNA>();
-            List<ContactoNNA> li = new();
-
-            try
-            {
-                var contacto = _context.ContactoNNAs.Find(NNAId);
-
-                if (contacto != null)
-                {
-                    response.Estado = true;
-                    response.Descripcion = "Contacto obtenido con éxito.";
-                    li.Add(contacto);
-                    response.Datos = li;
-                }
-                else
-                {
-                    response.Estado = false;
-                    response.Descripcion = "No se encontró el contacto con el ID especificado.";
-                    response.Datos = null;
-                }
-            }
-            catch (Exception ex)
-            {
-                response.Estado = false;
-                response.Descripcion = $"Error al obtener el contacto: {ex.Message}";
-                response.Datos = null;
-            }
 
             return response;
         }
@@ -406,247 +339,6 @@ namespace Infra.Repositorios
         }
 
 
-
-        /**
-         * Lista de parametros
-        */
-        public List<TPTipoIdentificacionDto> GetTpTipoId()
-        {
-            List<TPTipoIdentificacionDto> list = new()
-            {
-                new TPTipoIdentificacionDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 3,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 4,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 5,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 6,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPTipoIdentificacionDto> GetTPTipoIdentificacion()
-        {
-            List<TPTipoIdentificacionDto> list = new()
-            {
-                new TPTipoIdentificacionDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPRegimenAfiliacionDto> GetTPRegimenAfiliacion()
-        {
-            List<TPRegimenAfiliacionDto> list = new()
-            {
-                new TPRegimenAfiliacionDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPRegimenAfiliacionDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPParentescoDto> GetTPParentesco()
-        {
-            List<TPParentescoDto> list = new()
-            {
-                new TPParentescoDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPParentescoDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPPaisDto> GetTPPais()
-        {
-            List<TPPaisDto> list = new()
-            {
-                new TPPaisDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPPaisDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-        public List<TPDepartamentoDto> GetTPDepartamento(int PaisId)
-        {
-            List<TPDepartamentoDto> list = new()
-            {
-                new TPDepartamentoDto
-                {
-                    Id = 1,
-                    Name = "TI",
-                    PaisId = PaisId
-                },
-                new TPDepartamentoDto
-                {
-                    Id = 2,
-                    Name = "NUI",
-                    PaisId = PaisId
-                }
-            };
-            return list;
-        }
-
-        public List<TPCiudadDto> GetTPCiudad(int DepartamentoId)
-        {
-            List<TPCiudadDto> list = new()
-            {
-                new TPCiudadDto
-                {
-                    Id = 1,
-                    Name = "TI",
-                    DepartamentoId = DepartamentoId
-                },
-                new TPCiudadDto
-                {
-                    Id = 2,
-                    Name = "NUI",
-                    DepartamentoId = DepartamentoId
-                }
-            };
-            return list;
-        }
-        public List<TPOrigenReporteDto> GetTPOrigenReporte()
-        {
-            List<TPOrigenReporteDto> list = new()
-            {
-                new TPOrigenReporteDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPOrigenReporteDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPGrupoPoblacionalDto> GetGrupoPoblacional()
-        {
-            List<TPGrupoPoblacionalDto> list = new()
-            {
-                new TPGrupoPoblacionalDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPGrupoPoblacionalDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPEtniaDto> GetTPEtnia()
-        {
-            List<TPEtniaDto> list = new()
-            {
-                new TPEtniaDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPEtniaDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPEAPBDto> GetTPEAPB()
-        {
-            List<TPEAPBDto> list = new()
-            {
-                new TPEAPBDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPEAPBDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPEstadoIngresoEstrategiaDto> GetTPEstadoIngresoEstrategia()
-        {
-            List<TPEstadoIngresoEstrategiaDto> list = new()
-            {
-                new TPEstadoIngresoEstrategiaDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPEstadoIngresoEstrategiaDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
 
         public NNAs ConsultarNNAsById(long NNAId)
         {
