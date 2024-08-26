@@ -1,6 +1,13 @@
+using Core.Interfaces;
+using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.Common;
+using Core.Services;
 using Core.Services.MSTablasParametricas;
+using Infra;
+using Infra.Repositories.Common;
 using Infra.Repositorios;
+using Microsoft.EntityFrameworkCore;
 using MSNNA.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,8 +20,29 @@ builder.Services.AddSwaggerGen();
 builder.CustomConfigureServices();
 
 //Registro de Repos
-builder.Services.AddHttpClient<TablaParametricaService>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+
+builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
+builder.Services.AddTransient<IContactoNNARepo, ContactoNNARepo>();
+builder.Services.AddScoped<IContactoNNAService, ContactoNNAService>();
+builder.Services.AddTransient<IContactoNNAService, ContactoNNAService>();
+
+
 builder.Services.AddScoped<INNARepo, NNARepo>();
+builder.Services.AddTransient<INNARepo, NNARepo>();
+builder.Services.AddScoped<INNAService, NNAService>();
+builder.Services.AddTransient<INNAService, NNAService>();
+
+
+// Add services to the container.
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
+            ));
+builder.Services.AddControllers();
+
+builder.Services.AddHttpClient<TablaParametricaService>();
+
 
 builder.Services.AddCors(options =>
 {

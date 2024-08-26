@@ -45,6 +45,19 @@ namespace Infra.Repositories.Common
         {
             return await _context.Set<T>().FindAsync(id);
         }
+
+        public async Task<T> GetByIdAsync(long id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public async Task<T> GetByIdAsync(int id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public async Task<T> GetByIdAsync(string id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
         public async Task<(int totalRegistros, IEnumerable<T> registros)> GetByPageAsync(int pageIndex, int pageSize, string search, bool Ascending, PropertyInfo propertyInfo)
         {
             var totalRegistros = await _context.Set<T>().CountAsync();
