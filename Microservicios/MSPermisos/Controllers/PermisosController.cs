@@ -38,13 +38,6 @@ namespace MSPermisos.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("Role/{roleid}")]
-        public async Task<IActionResult> GetAllByRoleId(string roleid)
-        {
-            var result = await _service.GetAllByRoleIdAsync(roleid, cancellationToken: default);
-            return Ok(result);
-        }
-
         [HttpPost]
         public async Task<IActionResult> Add(PermisoRequestDTO dto)
         {
