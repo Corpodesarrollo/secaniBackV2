@@ -94,7 +94,7 @@
         public bool? TratamientoHaSidoInformadoClaramente { get; set; }
         public string? TratamientoObservaciones { get; set; }
         public string? CuidadorNombres { get; set; }
-        public int? CuidadorParentescoId { get; set; }
+        public string? CuidadorParentescoId { get; set; }
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }
         public string? SeguimientoLoDesea { get; set; }
