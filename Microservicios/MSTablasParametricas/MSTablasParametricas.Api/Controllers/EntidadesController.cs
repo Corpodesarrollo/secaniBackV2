@@ -22,6 +22,20 @@ namespace MSTablasParametricas.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("Entidades/CatMunicipio")]
+        public async Task<ActionResult<List<TPEntidadExterna>>> GetEntidadesCatMunicipio(CancellationToken cancellationToken)
+        {
+            var result = await _service.GetEntidatesCatMunicipio(CancellationToken.None);
+            return Ok(result);
+        }
+
+        [HttpGet("Entidades/CatDepartamento")]
+        public async Task<ActionResult<List<TPEntidadExterna>>> GetEntidadesCatDepartamento(CancellationToken cancellationToken)
+        {
+            var result = await _service.GetEntidatesCatDepartamento(CancellationToken.None);
+            return Ok(result);
+        }
+
         [HttpGet("Entidad/{Codigo}")]
         public async Task<ActionResult<TPEntidadExterna>> GetEntidad(string Codigo, CancellationToken cancellationToken)
         {

@@ -1,4 +1,5 @@
 ﻿using Core.Modelos.Common;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Core.Services.MSTablasParametricas
@@ -119,6 +120,86 @@ namespace Core.Services.MSTablasParametricas
 
             var entities = new List<TPEntidadExterna>();
             foreach (var item in items.EnumerateArray())
+            {
+                entities.Add(new TPEntidadExterna
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString(),
+                    NITConCode = item.GetProperty("extra_V").GetString(),
+                    NITSinCode = item.GetProperty("extra_III").GetString(),
+                    DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                    CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                    CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                    Email = item.GetProperty("extra_X").GetString(),
+                });
+            }
+
+            return entities;
+        }
+
+        public async Task<List<TPEntidadExterna>> GetEntidatesCatDepartamento(CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+            IEnumerable <JsonElement> filterItems = new List<JsonElement>();
+
+            if (items.GetArrayLength() > 0)
+            {
+                filterItems = items.EnumerateArray().Where(x => x.GetProperty("extra_IX").GetString().Contains("DEPARTAMENTO"));
+            }
+
+            var entities = new List<TPEntidadExterna>();
+            foreach (var item in filterItems)
+            {
+                entities.Add(new TPEntidadExterna
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString(),
+                    NITConCode = item.GetProperty("extra_V").GetString(),
+                    NITSinCode = item.GetProperty("extra_III").GetString(),
+                    DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                    CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                    CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                    Email = item.GetProperty("extra_X").GetString(),
+                });
+            }
+
+            return entities;
+        }
+
+        public async Task<List<TPEntidadExterna>> GetEntidatesCatMunicipio(CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+            IEnumerable<JsonElement> filterItems = new List<JsonElement>();
+
+            if (items.GetArrayLength() > 0)
+            {
+                filterItems = items.EnumerateArray().Where(x => x.GetProperty("extra_IX").GetString().Contains("MUNICIPIO"));
+            }
+
+            var entities = new List<TPEntidadExterna>();
+            foreach (var item in filterItems)
             {
                 entities.Add(new TPEntidadExterna
                 {
