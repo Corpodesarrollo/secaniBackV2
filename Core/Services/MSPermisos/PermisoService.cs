@@ -78,6 +78,22 @@ namespace Core.Services.MSPermisos
             return entitiesDto;
         }
 
+        public async Task<IEnumerable<PermisoResponseDTO>> GetAllByModuloandRoleAsync(string RoleId, int ModuloId, CancellationToken cancellationToken)
+        {
+            var entities = await _repository.GetPermisosByRoleandModulo(RoleId, ModuloId, cancellationToken);
+            var entitiesDto = new List<PermisoResponseDTO>();
+            foreach (var entity in entities)
+            {
+                var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                var permisoDto = permiso.Adapt<PermisoResponseDTO>();
+                permisoDto.Funcionalidad = funcionalidad;
+                permisoDto.Modulo = modulo;
+                entitiesDto.Add(permisoDto);
+            }
+
+            return entitiesDto;
+        }
+
         public async Task<PermisoResponseDTO> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             var cacheKeyId = cacheKey + id.ToString();
