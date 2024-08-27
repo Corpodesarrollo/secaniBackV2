@@ -19,6 +19,11 @@ namespace Infra.Repositorios.MSPermisos
             return await _context.TPermisos.Where(x => x.RoleId == RoleId).ToListAsync();
         }
 
+        public async Task<IList<Permisos>> GetPermisosByModuloId(int ModuloId, CancellationToken cancellationToken)
+        {
+            return await _context.TPermisos.Where(x => x.ModuloComponenteObjetoId == ModuloId).ToListAsync();
+        }
+
         public async Task<IList<Permisos>> GetPermisos(CancellationToken cancellationToken)
         {
             var items = await _context.TPermisos.ToListAsync();
