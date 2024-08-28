@@ -109,9 +109,10 @@
         public string? OrigenReporteOtro { get; set; }
         public string? PaisId { get; set; }
         public string? TrasladosMotivoAccionLegal { get; set; }
-        public int? TrasladosPropietarioResidenciaActualId { get; set; }
+        public string? TrasladosPropietarioResidenciaActualId { get; set; }
         public string? TrasladosPropietarioResidenciaActualOtro { get; set; }
         public string? TrasladosQuienAsumioCostosTraslado { get; set; }
         public string? TrasladosQuienAsumioCostosVivienda { get; set; }
+        public bool? TratamientoRequirioCambiodeCiudad { get; set; }
     }
 }
