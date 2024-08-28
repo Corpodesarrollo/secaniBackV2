@@ -116,5 +116,6 @@ namespace Core.Modelos
         public string? TrasladosPropietarioResidenciaActualOtro { get; set; }
         public string? TrasladosQuienAsumioCostosTraslado { get; set; }
         public string? TrasladosQuienAsumioCostosVivienda { get; set; }
+        public bool? TratamientoRequirioCambiodeCiudad { get; set; }
     }
 }
