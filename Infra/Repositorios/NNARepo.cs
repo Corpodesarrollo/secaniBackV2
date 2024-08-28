@@ -315,371 +315,603 @@ namespace Infra.Repositorios
 
         public DepuracionProtocoloResponse DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
         {
-            DepuracionProtocoloResponse response = new();
-
-            List<DepuracionProtocolo> listaDepuracion = new();
-
-            for (int i = 0; i < request.Count; i++)
+            int nuevos = 0;
+            int recaidas = 0;
+            int segundaNeoplasia = 0;
+            int duplicados = 0;
+            int ingresados = 0;
+            DepuracionProtocoloResponse response = new DepuracionProtocoloResponse();
+            try
             {
-                DepuracionProtocolo depuracion = new()
+                Dictionary<string, List<DepuracionProtocolo>> dNNAProtocolo = new Dictionary<string, List<DepuracionProtocolo>>();
+
+                List<DepuracionProtocolo> listaDepuracion = new List<DepuracionProtocolo>();
+
+                for (int i = 0; i < request.Count; i++)
                 {
-                    Id = i,
-                    DepuracionProtocoloRequest = request[i]
+                    DepuracionProtocolo depuracion = new DepuracionProtocolo()
+                    {
+                        Id = i,
+                        DepuracionProtocoloRequest = request[i]
+                    };
+                    listaDepuracion.Add(depuracion);
+                }
+
+                // eliminar registros con ajuste 6 o d
+                for (int i = listaDepuracion.Count - 1; i >= 0; i--)
+                {
+                    if (listaDepuracion[i].DepuracionProtocoloRequest.ajuste == "6" || listaDepuracion[i].DepuracionProtocoloRequest.ajuste == "D")
+                    {
+                        listaDepuracion.RemoveAt(i);
+                    }
+                }
+
+                foreach (DepuracionProtocolo d in listaDepuracion)
+                {
+                    //por documento
+                    if (dNNAProtocolo.ContainsKey(d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide))
+                    {
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide].Add(d);
+                    }
+                    else
+                    {
+                        dNNAProtocolo.Add(d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide, new List<DepuracionProtocolo>());
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide].Add(d);
+                    }
+
+                    //por nombre 
+                    if (dNNAProtocolo.ContainsKey(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape))
+                    {
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+                    else
+                    {
+                        dNNAProtocolo.Add(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+
+                    //por nombre 
+                    if (dNNAProtocolo.ContainsKey(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape))
+                    {
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+                    else
+                    {
+                        dNNAProtocolo.Add(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+                }
+
+                bool fallecido;
+                int recorridoCaso2 = 0;
+                int recorridoCaso3 = 0;
+                bool tieneCancer1;
+                bool tieneCancer2;
+                bool tieneCancer3;
+                bool tieneCancer4;
+                bool tieneCancer13;
+                bool tieneCancer14;
+                DateTime fechaNotificacion;
+                Dictionary<int, List<DateTime?>> dTrazabilidad;
+                int cantidadMaxima = 0;
+                bool anioActual;
+                List<DepuracionProtocolo> depuracionManual;
+                List<DepuracionProtocolo> insertarNNa;
+
+
+                foreach (KeyValuePair<string, List<DepuracionProtocolo>> kvp in dNNAProtocolo)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        duplicados += 1;
+                    }
+                    else
+                    {
+                        ingresados += 1;
+                    }
+                }
+
+                foreach (KeyValuePair<string, List<DepuracionProtocolo>> kvp in dNNAProtocolo)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        //priorizar fallecidos
+                        fallecido = false;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.con_fin == "2")
+                            {
+                                fallecido = true;
+                            }
+                        }
+
+                        if (fallecido)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.con_fin != "2")
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        //recorrido del caso
+                        recorridoCaso2 = 0;
+                        recorridoCaso3 = 0;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.tip_cas == "2")
+                            {
+                                recorridoCaso2 = 2;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.ajuste == "3")
+                            {
+                                recorridoCaso3 = 3;
+                            }
+                        }
+
+                        if (recorridoCaso2 == 2)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.tip_cas != "2")
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+                        else if (recorridoCaso3 == 3)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.tip_cas != "3")
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        //caso oportuno
+                        fechaNotificacion = DateTime.Now;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not < fechaNotificacion)
+                            {
+                                fechaNotificacion = kvp.Value[i].DepuracionProtocoloRequest.fec_not;
+                            }
+                        }
+
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not != fechaNotificacion)
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                        }
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        dTrazabilidad = new Dictionary<int, List<DateTime?>>();
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            List<DateTime?> key = new List<DateTime?>();
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_initra != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_initra);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_tomadp != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_tomadp);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_res_dp != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_res_dp);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_tomadd != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_tomadd);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_res_dd != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_res_dd);
+                            }
+                            dTrazabilidad.Add(kvp.Value[i].Id, key);
+                        }
+
+                        cantidadMaxima = 0;
+                        foreach (KeyValuePair<int, List<DateTime?>> t in dTrazabilidad)
+                        {
+                            if (cantidadMaxima < t.Value.Count)
+                            {
+                                cantidadMaxima = t.Value.Count;
+                            }
+                        }
+
+                        List<DateTime?> date = null;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            dTrazabilidad.TryGetValue(kvp.Value[i].Id, out date);
+
+                            if (date.Count < cantidadMaxima)
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                        }
+                    }
+
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        //tipoCancer
+                        tieneCancer1 = false;
+                        tieneCancer2 = false;
+                        tieneCancer3 = false;
+                        tieneCancer4 = false;
+                        tieneCancer13 = false;
+                        tieneCancer14 = false;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "1")
+                            {
+                                tieneCancer1 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "2")
+                            {
+                                tieneCancer2 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "3")
+                            {
+                                tieneCancer3 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "4")
+                            {
+                                tieneCancer4 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "13")
+                            {
+                                tieneCancer4 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "14")
+                            {
+                                tieneCancer14 = true;
+                            }
+                        }
+
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (tieneCancer1 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "1")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer2 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "2")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer3 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "3")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer4 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "4")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer13 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "13")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer14 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "14")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                        }
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        anioActual = false;
+
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not.Year == DateTime.Now.Year)
+                            {
+                                anioActual = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.recaida == "1")
+                            {
+                                anioActual = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.consx2_neo == "1")
+                            {
+                                anioActual = true;
+                            }
+                        }
+
+                        if (anioActual)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.fec_not.Year != DateTime.Now.Year)
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                depuracionManual = new List<DepuracionProtocolo>();
+                insertarNNa = new List<DepuracionProtocolo>();
+                foreach (KeyValuePair<string, List<DepuracionProtocolo>> kvp in dNNAProtocolo)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        depuracionManual.AddRange(kvp.Value);
+                    }
+                    else
+                    {
+                        insertarNNa.AddRange(kvp.Value);
+                    }
+                }
+
+                List<NNAs> insertNNA = new List<NNAs>();
+                List<NNAs> updateNNA = new List<NNAs>();
+                DateTime fechaDefuncion;
+                foreach (DepuracionProtocolo d in insertarNNa)
+                {
+                    if (d.DepuracionProtocoloRequest.consx2_neo == "1")
+                    {
+                        segundaNeoplasia += 1;
+                    }
+                    else if (d.DepuracionProtocoloRequest.recaida == "1")
+                    {
+                        recaidas += 1;
+                    }
+                    else
+                    {
+                        nuevos += 1;
+                    }
+
+                    NNAs? nna = (from nnas in _context.NNAs
+                                 where nnas.NumeroIdentificacion == d.DepuracionProtocoloRequest.num_ide
+                                 select nnas).FirstOrDefault();
+
+                    if (nna != null)
+                    {
+                        if (d.DepuracionProtocoloRequest.consx2_neo == "1")
+                        {
+                            nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
+                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion))
+                            {
+                                nna.FechaDefuncion = fechaDefuncion;
+                            }
+                            nna.MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte;
+                            updateNNA.Add(nna);
+                        }
+                        else if (d.DepuracionProtocoloRequest.recaida == "1")
+                        {
+                            nna.Recaida = true;
+                            nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
+                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion))
+                            {
+                                nna.FechaDefuncion = fechaDefuncion;
+                            }
+                            nna.MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte;
+                            updateNNA.Add(nna);
+                        }
+                        else
+                        {
+                            depuracionManual.Add(d);
+                        }
+                    }
+                    else
+                    {
+                        fechaDefuncion = DateTime.MinValue;
+                        DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion);
+                        nna = new NNAs()
+                        {
+                            FechaNotificacionSIVIGILA = d.DepuracionProtocoloRequest.fec_not,
+                            EPSId = 0,//verificar de donde sale el id de la eps
+                            PrimerNombre = d.DepuracionProtocoloRequest.pri_nom,
+                            SegundoNombre = d.DepuracionProtocoloRequest.seg_nom,
+                            PrimerApellido = d.DepuracionProtocoloRequest.pri_ape,
+                            SegundoApellido = d.DepuracionProtocoloRequest.seg_ape,
+                            TipoIdentificacionId = d.DepuracionProtocoloRequest.tip_ide,
+                            NumeroIdentificacion = d.DepuracionProtocoloRequest.num_ide,
+                            SexoId = d.DepuracionProtocoloRequest.sexo,
+                            PaisId = d.DepuracionProtocoloRequest.cod_pais_r,
+                            ResidenciaOrigenMunicipioId = d.DepuracionProtocoloRequest.cod_mun_r,
+                            ResidenciaOrigenAreaId = d.DepuracionProtocoloRequest.area,
+                            ResidenciaOrigenBarrio = d.DepuracionProtocoloRequest.bar_ver,
+                            ResidenciaOrigenDireccion = d.DepuracionProtocoloRequest.dir_res,
+                            TipoRegimenSSId = d.DepuracionProtocoloRequest.tip_ss,
+                            EtniaId = d.DepuracionProtocoloRequest.per_etn,
+                            ResidenciaOrigenEstratoId = d.DepuracionProtocoloRequest.estrato,
+                            GrupoPoblacionId = "", //verificar como se asocia a un grupo poblacional
+                            FechaConsultaDiagnostico = d.DepuracionProtocoloRequest.fec_con,
+                            FechaInicioSintomas = d.DepuracionProtocoloRequest.ini_sin,
+                            FechaHospitalizacion = d.DepuracionProtocoloRequest.fec_hos,
+                            FechaDefuncion = (fechaDefuncion == DateTime.MinValue ? null : fechaDefuncion),
+                            ResidenciaOrigenTelefono = d.DepuracionProtocoloRequest.telefono,
+                            FechaNacimiento = d.DepuracionProtocoloRequest.fecha_nto,
+                            MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte,
+                            TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca,
+                            FechaInicioTratamiento = d.DepuracionProtocoloRequest.fec_initra,
+                            Recaida = (d.DepuracionProtocoloRequest.recaida == "1" ? true : false),
+                            FechaDiagnostico = d.DepuracionProtocoloRequest.fec_diag1a,
+                            CuidadorTelefono = d.DepuracionProtocoloRequest.tel_cont_2,
+                        };
+                        insertNNA.Add(nna);
+                    }
+                }
+
+                _context.NNAs.UpdateRange(updateNNA);
+
+                _context.NNAs.AddRange(insertNNA);
+
+                List<DepuracionManualProtocolo> depuracionProtocolos = new List<DepuracionManualProtocolo>();
+
+                foreach (DepuracionProtocolo d in depuracionManual)
+                {
+                    DepuracionManualProtocolo dep = new DepuracionManualProtocolo()
+                    {
+                        ajuste = d.DepuracionProtocoloRequest.ajuste,
+                        anio = d.DepuracionProtocoloRequest.anio,
+                        area = d.DepuracionProtocoloRequest.area,
+                        bar_ver = d.DepuracionProtocoloRequest.bar_ver,
+                        cbmte = d.DepuracionProtocoloRequest.cbmte,
+                        cen_pobla = d.DepuracionProtocoloRequest.cen_pobla,
+                        cer_def = d.DepuracionProtocoloRequest.cer_def,
+                        cod_ase = d.DepuracionProtocoloRequest.cod_ase,
+                        cod_dpto_o = d.DepuracionProtocoloRequest.cod_dpto_o,
+                        cod_dpto_r = d.DepuracionProtocoloRequest.cod_dpto_r,
+                        cod_eve = d.DepuracionProtocoloRequest.cod_eve,
+                        cod_mun_o = d.DepuracionProtocoloRequest.cod_mun_o,
+                        cod_mun_r = d.DepuracionProtocoloRequest.cod_mun_r,
+                        cod_pais_o = d.DepuracionProtocoloRequest.cod_pais_o,
+                        cod_pais_r = d.DepuracionProtocoloRequest.cod_pais_r,
+                        cod_pre = d.DepuracionProtocoloRequest.cod_pre,
+                        cod_sub = d.DepuracionProtocoloRequest.cod_sub,
+                        consx2_neo = d.DepuracionProtocoloRequest.consx2_neo,
+                        con_fin = d.DepuracionProtocoloRequest.con_fin,
+                        crit_dx_de = d.DepuracionProtocoloRequest.crit_dx_de,
+                        crit_dx_pr = d.DepuracionProtocoloRequest.crit_dx_pr,
+                        dir_res = d.DepuracionProtocoloRequest.dir_res,
+                        edad = d.DepuracionProtocoloRequest.edad,
+                        estrato = d.DepuracionProtocoloRequest.estrato,
+                        estrato_datos_complementarios = d.DepuracionProtocoloRequest.estrato_datos_complementarios,
+                        FechaHora = d.DepuracionProtocoloRequest.FechaHora,
+                        fecha_nto = d.DepuracionProtocoloRequest.fecha_nto,
+                        fec_aju = d.DepuracionProtocoloRequest.fec_aju,
+                        fec_arc_xl = d.DepuracionProtocoloRequest.fec_arc_xl,
+                        fec_con = d.DepuracionProtocoloRequest.fec_con,
+                        fec_def = d.DepuracionProtocoloRequest.fec_def,
+                        fec_diag1a = d.DepuracionProtocoloRequest.fec_diag1a,
+                        fec_hos = d.DepuracionProtocoloRequest.fec_hos,
+                        fec_res_dd = d.DepuracionProtocoloRequest.fec_res_dd,
+                        fec_initra = d.DepuracionProtocoloRequest.fec_initra,
+                        fec_not = d.DepuracionProtocoloRequest.fec_not,
+                        fec_res_dp = d.DepuracionProtocoloRequest.fec_res_dp,
+                        fec_tomadd = d.DepuracionProtocoloRequest.fec_tomadd,
+                        fec_tomadp = d.DepuracionProtocoloRequest.fec_tomadp,
+                        fm_fuerza = d.DepuracionProtocoloRequest.fm_fuerza,
+                        fm_grado = d.DepuracionProtocoloRequest.fm_grado,
+                        fm_unidad = d.DepuracionProtocoloRequest.fm_unidad,
+                        fuente = d.DepuracionProtocoloRequest.fuente,
+                        gp_carcela = d.DepuracionProtocoloRequest.gp_carcela,
+                        gp_desmovi = d.DepuracionProtocoloRequest.gp_desmovi,
+                        gp_desplaz = d.DepuracionProtocoloRequest.gp_desplaz,
+                        gp_discapa = d.DepuracionProtocoloRequest.gp_discapa,
+                        gp_gestan = d.DepuracionProtocoloRequest.gp_gestan,
+                        gp_indigen = d.DepuracionProtocoloRequest.gp_indigen,
+                        gp_mad_com = d.DepuracionProtocoloRequest.gp_mad_com,
+                        gp_migrant = d.DepuracionProtocoloRequest.gp_migrant,
+                        gp_otros = d.DepuracionProtocoloRequest.gp_otros,
+                        gp_pobicbf = d.DepuracionProtocoloRequest.gp_pobicbf,
+                        gp_psiquia = d.DepuracionProtocoloRequest.gp_psiquia,
+                        gp_vic_vio = d.DepuracionProtocoloRequest.gp_vic_vio,
+                        ini_sin = d.DepuracionProtocoloRequest.ini_sin,
+                        localidad = d.DepuracionProtocoloRequest.localidad,
+                        nacionali = d.DepuracionProtocoloRequest.nacionali,
+                        ndep_notif = d.DepuracionProtocoloRequest.ndep_notif,
+                        ndep_proce = d.DepuracionProtocoloRequest.ndep_proce,
+                        ndep_resi = d.DepuracionProtocoloRequest.ndep_resi,
+                        nit_upgd = d.DepuracionProtocoloRequest.nit_upgd,
+                        nmun_notif = d.DepuracionProtocoloRequest.nmun_notif,
+                        nmun_proce = d.DepuracionProtocoloRequest.nmun_proce,
+                        nmun_resi = d.DepuracionProtocoloRequest.nmun_resi,
+                        nombre_nacionalidad = d.DepuracionProtocoloRequest.nombre_nacionalidad,
+                        nom_dil_f = d.DepuracionProtocoloRequest.nom_dil_f,
+                        nom_eve = d.DepuracionProtocoloRequest.nom_eve,
+                        nom_grupo = d.DepuracionProtocoloRequest.nom_grupo,
+                        nom_oncolo = d.DepuracionProtocoloRequest.nom_oncolo,
+                        nom_upgd = d.DepuracionProtocoloRequest.nom_upgd,
+                        npais_proce = d.DepuracionProtocoloRequest.npais_proce,
+                        npais_resi = d.DepuracionProtocoloRequest.npais_proce,
+                        num_ide = d.DepuracionProtocoloRequest.num_ide,
+                        nuni_modif = d.DepuracionProtocoloRequest.nuni_modif,
+                        ocupacion = d.DepuracionProtocoloRequest.ocupacion,
+                        pac_hos = d.DepuracionProtocoloRequest.pac_hos,
+                        per_etn = d.DepuracionProtocoloRequest.per_etn,
+                        pri_ape = d.DepuracionProtocoloRequest.pri_ape,
+                        pri_nom = d.DepuracionProtocoloRequest.pri_nom,
+                        recaida = d.DepuracionProtocoloRequest.recaida,
+                        seg_ape = d.DepuracionProtocoloRequest.seg_ape,
+                        seg_nom = d.DepuracionProtocoloRequest.seg_nom,
+                        semana = d.DepuracionProtocoloRequest.semana,
+                        sem_ges = d.DepuracionProtocoloRequest.sem_ges,
+                        sexo = d.DepuracionProtocoloRequest.sexo,
+                        telefono = d.DepuracionProtocoloRequest.telefono,
+                        tel_cont_2 = d.DepuracionProtocoloRequest.tel_cont_2,
+                        tel_dil_f = d.DepuracionProtocoloRequest.tel_dil_f,
+                        tel_oncolo = d.DepuracionProtocoloRequest.tel_oncolo,
+                        tipo_ca = d.DepuracionProtocoloRequest.tipo_ca,
+                        tip_cas = d.DepuracionProtocoloRequest.tip_cas,
+                        tip_ide = d.DepuracionProtocoloRequest.tip_ide,
+                        tip_ss = d.DepuracionProtocoloRequest.tip_ss,
+                        uni_med = d.DepuracionProtocoloRequest.uni_med,
+                        uni_modif = d.DepuracionProtocoloRequest.uni_modif,
+                        vereda = d.DepuracionProtocoloRequest.vereda,
+                        version = d.DepuracionProtocoloRequest.version,
+                    };
+                    depuracionProtocolos.Add(dep);
+                }
+
+                _context.DepuracionManualProtocolos.AddRange(depuracionProtocolos);
+                _context.SaveChanges();
+
+                ReporteDepuracion reporte = new ReporteDepuracion()
+                {
+                    Estado = "Procesada",
+                    Fecha = DateOnly.FromDateTime(DateTime.Now),
+                    Hora = TimeOnly.FromDateTime(DateTime.Now),
+                    Recaidas = recaidas,
+                    RegistrosDuplicados = duplicados,
+                    RegistrosIngresados = ingresados,
+                    RegistrosNuevos = nuevos,
+                    SegundasNeoplasias = segundaNeoplasia
                 };
 
+                _context.reporteDepuracions.AddRange(reporte);
+                _context.SaveChanges();
+
+                response.Nuevos = nuevos;
+                response.Recaidas = recaidas;
+                response.SegundasNeoplasias = segundaNeoplasia;
+                response.Estado = reporte.Estado;
             }
-
-
-            Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento = new();
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer = new();
-            Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion = new();
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new();
-            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new();
-
-            Dictionary<string, List<DepuracionProtocolo>> DfechaDefuncion = new();
-
-            foreach (DepuracionProtocolo r in listaDepuracion)
+            catch (Exception ex)
             {
-                //mismo tipo y numero de identificacion
-                if (DTipoNumeroDocumento.ContainsKey(r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide))
+                ReporteDepuracion reporte = new ReporteDepuracion()
                 {
-                    DTipoNumeroDocumento[r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide].Add(r);
-                }
-                else
-                {
-                    DTipoNumeroDocumento.Add(r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide, new List<DepuracionProtocolo>());
-                    DTipoNumeroDocumento[r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide].Add(r);
-                }
+                    Estado = "Procesada",
+                    Fecha = DateOnly.FromDateTime(DateTime.Now),
+                    Hora = TimeOnly.FromDateTime(DateTime.Now),
+                    Recaidas = recaidas,
+                    RegistrosDuplicados = duplicados,
+                    RegistrosIngresados = ingresados,
+                    RegistrosNuevos = nuevos,
+                    SegundasNeoplasias = segundaNeoplasia
+                };
 
-                //mismo nombre y tipo de cancer 
-                if (DNombreTipoCancer.ContainsKey(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " "/*falta la columna de tipo de cancer*/))
-                {
-                    DNombreTipoCancer[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape].Add(r);
-                }
-                else
-                {
-                    DNombreTipoCancer.Add(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
-                    DNombreTipoCancer[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape].Add(r);
-                }
+                _context.reporteDepuracions.AddRange(reporte);
+                _context.SaveChanges();
 
-                //mismo nombre y fecha de notificacion
-                if (DNombreFechaNotificacion.ContainsKey(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not))
-                {
-                    DNombreFechaNotificacion[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not].Add(r);
-                }
-                else
-                {
-                    DNombreFechaNotificacion.Add(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not, new List<DepuracionProtocolo>());
-                    DNombreFechaNotificacion[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not].Add(r);
-                }
+                response.Nuevos = nuevos;
+                response.Recaidas = recaidas;
+                response.SegundasNeoplasias = segundaNeoplasia;
+                response.Estado = reporte.Estado;
             }
-
-            //identificacion de fallecidos
-            DFallecido = this.IdentificacionFallecidos(DTipoNumeroDocumento, DNombreTipoCancer, DNombreFechaNotificacion);
-
-            //falta recorrido del caso
-
-            //mayor trazabilidad
-            DTrazabilidad = IdentificacionMayorTrazabilidad(DTipoNumeroDocumento, DNombreTipoCancer, DNombreFechaNotificacion, DFallecido);
-
-            //falta verificacion del tipo de cancer
-
-            //falta casos de años anteriores
-
-            //falta casos con diferentes ipos de cancer
-
-            //falta eliminacion de registros    
-
-            //caso mas oportuno es el ultimo
 
             return response;
-        }
-
-        private Dictionary<string, List<DepuracionProtocolo>> IdentificacionFallecidos(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion)
-        {
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new();
-
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
-            {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_def != null &&
-                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
-                    {
-                        if (DFallecido.ContainsKey(par.Key))
-                        {
-                            DFallecido[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
-                            DFallecido[par.Key].Add(r);
-                        }
-                    }
-                }
-            }
-
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreTipoCancer)
-            {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_def != null &&
-                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
-                    {
-                        if (DFallecido.ContainsKey(par.Key))
-                        {
-                            DFallecido[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
-                            DFallecido[par.Key].Add(r);
-                        }
-                    }
-                }
-            }
-
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreFechaNotificacion)
-            {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_def != null &&
-                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
-                    {
-                        if (DFallecido.ContainsKey(par.Key))
-                        {
-                            DFallecido[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
-                            DFallecido[par.Key].Add(r);
-                        }
-                    }
-                }
-            }
-
-            return DFallecido;
-        }
-
-        private Dictionary<string, List<DepuracionProtocolo>> IdentificacionMayorTrazabilidad(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion,
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido)
-        {
-            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new();
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
-            {
-                if (!DFallecido.ContainsKey(par.Key))
-                {
-                    foreach (DepuracionProtocolo r in par.Value)
-                    {
-                        if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                            && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                            && r.DepuracionProtocoloRequest.fec_tomadd != null)
-                        {
-                            if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
-                            {
-                                value.Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                    }
-                }
-
-            }
-
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreTipoCancer)
-            {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                           && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                        && r.DepuracionProtocoloRequest.fec_tomadd != null)
-                    {
-                        if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
-                        {
-                            value.Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                }
-            }
-
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreFechaNotificacion)
-            {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                            && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                        && r.DepuracionProtocoloRequest.fec_tomadd != null)
-                    {
-                        if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
-                        {
-                            value.Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                }
-            }
-
-            return DTrazabilidad;
         }
     }
 
