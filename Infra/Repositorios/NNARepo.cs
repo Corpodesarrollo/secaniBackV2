@@ -22,7 +22,7 @@ namespace Infra.Repositorios
         public NNARepo(ApplicationDbContext context)
         {
             _context = context;
-            GenericRepository<NNAs> repository = new GenericRepository<NNAs>(_context);
+            GenericRepository<NNAs> repository = new(_context);
             _repository = repository;
         }
 
@@ -30,8 +30,8 @@ namespace Infra.Repositorios
         {
             try
             {
-                var result = await SelectBase().FirstOrDefaultAsync(x => x.Id == id);
-                return result;
+                var result = await _repository.GetByIdAsync(id) ?? throw new Exception("Entity not found");
+                return result.Adapt<NNADto>();
             }
             catch (Exception ex)
             {
@@ -58,126 +58,6 @@ namespace Infra.Repositorios
                 throw new Exception("cannot update entity");
             }
             return (success, response);
-        }
-
-        private IQueryable<NNADto> SelectBase()
-        {
-            var result = from n in _context.NNAs
-                         select new NNADto
-                         {
-                             Id = n.Id,
-                             estadoId = n.estadoId,
-                             ResidenciaActualCategoriaId = n.ResidenciaActualCategoriaId,
-                             ResidenciaActualMunicipioId = n.ResidenciaActualMunicipioId,
-                             ResidenciaActualBarrio = n.ResidenciaActualBarrio,
-                             ResidenciaActualAreaId = n.ResidenciaActualAreaId,
-                             ResidenciaActualDireccion = n.ResidenciaActualDireccion,
-                             ResidenciaActualEstratoId = n.ResidenciaActualEstratoId,
-                             ResidenciaActualTelefono = n.ResidenciaActualTelefono,
-                             ResidenciaOrigenCategoriaId = n.ResidenciaOrigenCategoriaId,
-                             ResidenciaOrigenMunicipioId = n.ResidenciaOrigenMunicipioId,
-                             ResidenciaOrigenBarrio = n.ResidenciaOrigenBarrio,
-                             ResidenciaOrigenAreaId = n.ResidenciaOrigenAreaId,
-                             ResidenciaOrigenDireccion = n.ResidenciaOrigenDireccion,
-                             ResidenciaOrigenEstratoId = n.ResidenciaOrigenEstratoId,
-                             ResidenciaOrigenTelefono = n.ResidenciaOrigenTelefono,
-                             FechaNotificacionSIVIGILA = n.FechaNotificacionSIVIGILA,
-                             PrimerNombre = n.PrimerNombre,
-                             SegundoNombre = n.SegundoNombre,
-                             PrimerApellido = n.PrimerApellido,
-                             SegundoApellido = n.SegundoApellido,
-                             TipoIdentificacionId = n.TipoIdentificacionId,
-                             NumeroIdentificacion = n.NumeroIdentificacion,
-                             FechaNacimiento = n.FechaNacimiento,
-                             MunicipioNacimientoId = n.MunicipioNacimientoId,
-                             SexoId = n.SexoId,
-                             TipoRegimenSSId = n.TipoRegimenSSId,
-                             EAPBId = n.EAPBId,
-                             EPSId = n.EPSId,
-                             IPSId = n.IPSId,
-                             GrupoPoblacionId = n.GrupoPoblacionId,
-                             EtniaId = n.EtniaId,
-                             EstadoIngresoEstrategiaId = n.EstadoIngresoEstrategiaId,
-                             FechaIngresoEstrategia = n.FechaIngresoEstrategia,
-                             OrigenReporteId = n.OrigenReporteId,
-                             FechaConsultaOrigenReporte = n.FechaConsultaOrigenReporte,
-                             TipoCancerId = n.TipoCancerId,
-                             FechaInicioSintomas = n.FechaInicioSintomas,
-                             FechaHospitalizacion = n.FechaHospitalizacion,
-                             FechaDefuncion = n.FechaDefuncion,
-                             MotivoDefuncion = n.MotivoDefuncion,
-                             FechaInicioTratamiento = n.FechaInicioTratamiento,
-                             Recaida = n.Recaida,
-                             CantidadRecaidas = n.CantidadRecaidas,
-                             FechaUltimaRecaida = n.FechaUltimaRecaida,
-                             TipoDiagnosticoId = n.TipoDiagnosticoId,
-                             DiagnosticoId = n.DiagnosticoId,
-                             FechaDiagnostico = n.FechaDiagnostico,
-                             MotivoNoDiagnosticoId = n.MotivoNoDiagnosticoId,
-                             MotivoNoDiagnosticoOtro = n.MotivoNoDiagnosticoOtro,
-                             FechaConsultaDiagnostico = n.FechaConsultaDiagnostico,
-                             DepartamentoTratamientoId = n.DepartamentoTratamientoId,
-                             IPSIdTratamiento = n.IPSIdTratamiento,
-                             PropietarioResidenciaActual = n.PropietarioResidenciaActual,
-                             PropietarioResidenciaActualOtro = n.PropietarioResidenciaActualOtro,
-                             TrasladoTieneCapacidadEconomica = n.TrasladoTieneCapacidadEconomica,
-                             TrasladoEAPBSuministroApoyo = n.TrasladoEAPBSuministroApoyo,
-                             TrasladosServiciosdeApoyoOportunos = n.TrasladosServiciosdeApoyoOportunos,
-                             TrasladosServiciosdeApoyoCobertura = n.TrasladosServiciosdeApoyoCobertura,
-                             TrasladosHaSolicitadoApoyoFundacion = n.TrasladosHaSolicitadoApoyoFundacion,
-                             TrasladosNombreFundacion = n.TrasladosNombreFundacion,
-                             TrasladosApoyoRecibidoxFundacion = n.TrasladosApoyoRecibidoxFundacion,
-                             DifAutorizaciondeMedicamentos = n.DifAutorizaciondeMedicamentos,
-                             DifEntregaMedicamentosLAP = n.DifEntregaMedicamentosLAP,
-                             DifEntregaMedicamentosNoLAP = n.DifEntregaMedicamentosNoLAP,
-                             DifAsignaciondeCitas = n.DifAsignaciondeCitas,
-                             DifHanCobradoCuotasoCopagos = n.DifHanCobradoCuotasoCopagos,
-                             DifAutorizacionProcedimientos = n.DifAutorizacionProcedimientos,
-                             DifRemisionInstitucionesEspecializadas = n.DifRemisionInstitucionesEspecializadas,
-                             DifMalaAtencionIPS = n.DifMalaAtencionIPS,
-                             DifMalaAtencionNombreIPSId = n.DifMalaAtencionNombreIPSId,
-                             DifFallasenMIPRES = n.DifFallasenMIPRES,
-                             DifFallaConvenioEAPBeIPSTratante = n.DifFallaConvenioEAPBeIPSTratante,
-                             CategoriaAlertaId = n.CategoriaAlertaId,
-                             SubcategoriaAlertaId = n.SubcategoriaAlertaId,
-                             TrasladosHaSidoTrasladadodeInstitucion = n.TrasladosHaSidoTrasladadodeInstitucion,
-                             TrasladosNumerodeTraslados = n.TrasladosNumerodeTraslados,
-                             TrasladosIPSId = n.TrasladosIPSId,
-                             TrasladosHaRecurridoAccionLegal = n.TrasladosHaRecurridoAccionLegal,
-                             TrasladosTipoAccionLegalId = n.TrasladosTipoAccionLegalId,
-                             TratamientoHaDejadodeAsistir = n.TratamientoHaDejadodeAsistir,
-                             TratamientoCuantoTiemposinAsistir = n.TratamientoCuantoTiemposinAsistir,
-                             TratamientoUnidadMedidaIdTiempoId = n.TratamientoUnidadMedidaIdTiempoId,
-                             TratamientoCausasInasistenciaId = n.TratamientoCausasInasistenciaId,
-                             TratamientoCausasInasistenciaOtra = n.TratamientoCausasInasistenciaOtra,
-                             TratamientoEstudiaActualmente = n.TratamientoEstudiaActualmente,
-                             TratamientoHaDejadodeAsistirColegio = n.TratamientoHaDejadodeAsistirColegio,
-                             TratamientoTiempoInasistenciaColegio = n.TratamientoTiempoInasistenciaColegio,
-                             TratamientoTiempoInasistenciaUnidadMedidaId = n.TratamientoTiempoInasistenciaUnidadMedidaId,
-                             TratamientoHaSidoInformadoClaramente = n.TratamientoHaSidoInformadoClaramente,
-                             TratamientoObservaciones = n.TratamientoObservaciones,
-                             CuidadorNombres = n.CuidadorNombres,
-                             CuidadorParentescoId = n.CuidadorParentescoId,
-                             CuidadorEmail = n.CuidadorEmail,
-                             CuidadorTelefono = n.CuidadorTelefono,
-                             SeguimientoLoDesea = n.SeguimientoLoDesea,
-                             SeguimientoMotivoNoLoDesea = n.SeguimientoMotivoNoLoDesea,
-                             OrigenReporteOtro = n.OrigenReporteOtro,
-                             PaisId = n.PaisId,
-                             TrasladosMotivoAccionLegal = n.TrasladosMotivoAccionLegal,
-                             TrasladosPropietarioResidenciaActualId = n.TrasladosPropietarioResidenciaActualId,
-                             TrasladosPropietarioResidenciaActualOtro = n.TrasladosPropietarioResidenciaActualOtro,
-                             TrasladosQuienAsumioCostosTraslado = n.TrasladosQuienAsumioCostosTraslado,
-                             TrasladosQuienAsumioCostosVivienda = n.TrasladosQuienAsumioCostosVivienda,
-                             DateCreated = n.DateCreated,
-                             DateUpdated = n.DateUpdated,
-                             DateDeleted = n.DateDeleted,
-                             CreatedByUserId = n.CreatedByUserId,
-                             UpdatedByUserId = n.UpdatedByUserId,
-                             IsDeleted = n.IsDeleted
-                         };
-
-            return result;
         }
 
         public List<VwAgentesAsignados> VwAgentesAsignados()
@@ -435,13 +315,13 @@ namespace Infra.Repositorios
 
         public DepuracionProtocoloResponse DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
         {
-            DepuracionProtocoloResponse response = new DepuracionProtocoloResponse();
+            DepuracionProtocoloResponse response = new();
 
-            List<DepuracionProtocolo> listaDepuracion = new List<DepuracionProtocolo>();
+            List<DepuracionProtocolo> listaDepuracion = new();
 
             for (int i = 0; i < request.Count; i++)
             {
-                DepuracionProtocolo depuracion = new DepuracionProtocolo()
+                DepuracionProtocolo depuracion = new()
                 {
                     Id = i,
                     DepuracionProtocoloRequest = request[i]
@@ -450,13 +330,13 @@ namespace Infra.Repositorios
             }
 
 
-            Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento = new();
+            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer = new();
+            Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion = new();
+            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new();
+            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new();
 
-            Dictionary<string, List<DepuracionProtocolo>> DfechaDefuncion = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DfechaDefuncion = new();
 
             foreach (DepuracionProtocolo r in listaDepuracion)
             {
@@ -518,7 +398,7 @@ namespace Infra.Repositorios
         private Dictionary<string, List<DepuracionProtocolo>> IdentificacionFallecidos(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
             Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion)
         {
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new();
 
             foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
             {
@@ -587,7 +467,7 @@ namespace Infra.Repositorios
             Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion,
             Dictionary<string, List<DepuracionProtocolo>> DFallecido)
         {
-            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new Dictionary<string, List<DepuracionProtocolo>>();
+            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new();
             foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
             {
                 if (!DFallecido.ContainsKey(par.Key))
