@@ -95,6 +95,7 @@ namespace Core.Modelos
         public int? TratamientoTiempoInasistenciaColegio { get; set; }
         public string? TratamientoTiempoInasistenciaUnidadMedidaId { get; set; }
         public bool? TratamientoHaSidoInformadoClaramente { get; set; }
+        public bool? TratamientoRequirioCambiodeCiudad { get; set; }
         public string? TratamientoObservaciones { get; set; }
         public string? CuidadorNombres { get; set; }
         public string? CuidadorParentescoId { get; set; }
