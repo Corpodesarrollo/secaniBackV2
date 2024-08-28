@@ -61,7 +61,7 @@
         public bool? TrasladoEAPBSuministroApoyo { get; set; }
         public bool? TrasladosServiciosdeApoyoOportunos { get; set; }
         public bool? TrasladosServiciosdeApoyoCobertura { get; set; }
-        public string? TrasladosHaSolicitadoApoyoFundacion { get; set; }
+        public bool? TrasladosHaSolicitadoApoyoFundacion { get; set; }
         public string? TrasladosNombreFundacion { get; set; }
         public string? TrasladosApoyoRecibidoxFundacion { get; set; }
         public bool? DifAutorizaciondeMedicamentos { get; set; }
