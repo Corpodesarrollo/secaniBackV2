@@ -5,7 +5,7 @@
         public bool HaDejadoTratamiento { get; set; }
         public int TiempoDejadoTratamiento { get; set; }
         public string? IdUnidadTiempoDejadoTratamiento { get; set; }
-        public int IdCausaInasistenciaTratamiento { get; set; }
+        public string IdCausaInasistenciaTratamiento { get; set; }
         public string OtraCausaDejadoTratamiento { get; set; }
         public bool EstudiaActualmente { get; set; }
         public bool HaDejadoEstudiar { get; set; }
