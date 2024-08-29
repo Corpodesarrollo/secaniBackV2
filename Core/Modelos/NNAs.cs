@@ -88,7 +88,7 @@ namespace Core.Modelos
         public bool? TratamientoHaDejadodeAsistir { get; set; }
         public int? TratamientoCuantoTiemposinAsistir { get; set; }
         public string? TratamientoUnidadMedidaIdTiempoId { get; set; }
-        public int? TratamientoCausasInasistenciaId { get; set; }
+        public string? TratamientoCausasInasistenciaId { get; set; }
         public string? TratamientoCausasInasistenciaOtra { get; set; }
         public bool? TratamientoEstudiaActualmente { get; set; }
         public bool? TratamientoHaDejadodeAsistirColegio { get; set; }
