@@ -8,6 +8,7 @@ namespace Core.Modelos
 {
     public class DepuracionManualProtocolo
     {
+        public int Id { get; set; }
         public string cod_eve { get; set; }
         public DateTime fec_not { get; set; }
         public int semana { get; set; }
