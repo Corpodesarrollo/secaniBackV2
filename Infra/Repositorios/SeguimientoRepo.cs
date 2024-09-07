@@ -52,21 +52,16 @@ namespace Infra.Repositorios
                 var result = await query.ToListAsync();
 
                 if (filtro == 1) //hoy
-                {
                     return result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).ToList();
-                }
+
                 else if (filtro == 2) //con alerta
-                {
                     return result.Where(x => x.Alertas.Count > 0).ToList();
-                }
+
                 else if (filtro == 3) //Todos
-                {
                     return result;
-                }
+
                 else if (filtro == 4) //Solicitados por Cuidador
-                {
                     return result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").ToList();
-                }
 
                 return result;
             }
@@ -88,7 +83,7 @@ namespace Infra.Repositorios
                     Todos = result.Count,
                     Hoy = result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).Count(),
                     ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
-                    SolicitadosPorCuidador = result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").Count()
+                    SolicitadosPorCuidador = result.Count(x => x.AsuntoUltimaActuacion.Equals("solicitado por cuidador", StringComparison.CurrentCultureIgnoreCase))
                 };
             }
             catch (Exception ex)
@@ -97,10 +92,10 @@ namespace Infra.Repositorios
             }
         }
 
-        public Seguimiento GetById(long id)
+        public Seguimiento? GetById(long id)
         {
 
-            return _context.Seguimientos.FirstOrDefault(s => s.Id == id);
+            return _context.Seguimientos?.FirstOrDefault(s => s.Id == id);
         }
 
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
