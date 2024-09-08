@@ -20,8 +20,8 @@ namespace Core.Interfaces.Repositorios
         public void ActualizarNNASeguimiento(NNASeguimientoRequest request);
 
        
-        public NNAs ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion);
-        public NNAs ConsultarNNAsById(long NNAId);
+        public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion);
+        public NNAResponse ConsultarNNAsById(long NNAId);
         public Task<DatosBasicosNNAResponse> ConsultarDatosBasicosNNAById(long NNAId, TablaParametricaService tablaParametricaService);
         public Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId, TablaParametricaService tablaParametricaService);
         

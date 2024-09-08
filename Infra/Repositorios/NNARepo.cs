@@ -30,7 +30,7 @@ namespace Infra.Repositorios
         {
             try
             {
-                var result = await _repository.GetByIdAsync(id) ?? throw new Exception("Entity not found");
+                var result = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Entity not found");
                 return result.Adapt<NNADto>();
             }
             catch (Exception ex)
@@ -45,7 +45,7 @@ namespace Infra.Repositorios
             var (success, response) = await _repository.AddAsync(entity);
             if (!success)
             {
-                throw new Exception("cannot add entity");
+                throw new KeyNotFoundException("cannot add entity");
             }
             return (success, response);
         }
@@ -55,7 +55,7 @@ namespace Infra.Repositorios
             var (success, response) = await _repository.UpdateAsync(entity);
             if (!success)
             {
-                throw new Exception("cannot update entity");
+                throw new KeyNotFoundException("cannot update entity");
             }
             return (success, response);
         }
@@ -67,9 +67,9 @@ namespace Infra.Repositorios
             return response;
         }
 
-        public NNAs ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
+        public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
-            var response = new NNAs();
+            var response = new NNAResponse();
 
             try
             {
@@ -77,7 +77,13 @@ namespace Infra.Repositorios
 
                 if (nnna != null)
                 {
-                    response = nnna;
+                    response = new NNAResponse()
+                    {
+                        NombreCompleto = string.Concat(nnna.PrimerNombre, " ", nnna.SegundoNombre, " ", nnna.PrimerApellido, " ", nnna.SegundoApellido),
+                        Diagnostico = "",
+                        FechaNacimiento = nnna.FechaNacimiento,
+                        Id = nnna.Id
+                    };
                 }
                 else
                 {
@@ -96,7 +102,7 @@ namespace Infra.Repositorios
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista = new();
+            List<FiltroNNA> lista;
 
             try
             {
@@ -112,44 +118,37 @@ namespace Infra.Repositorios
                     "EXEC dbo.SpConsultaNnaFiltro @Estado, @Agente, @Buscar, @Orden",
                     parameters
                 ).ToList();
-                if (results != null)
+
+                if (results.Any())
                 {
-                    if (results.Count() > 0)
-                    {
-                        response.Estado = true;
-                        response.Descripcion = "Consulta realizada con éxito.";
-                    }
-                    else
-                    {
-                        response.Estado = false;
-                        response.Descripcion = "No trajo datos en la consulta.";
-                    }
-
-                    foreach (var filtroNNA in results)
-                    {
-                        FiltroNNADto dto = new()
-                        {
-                            NoCaso = filtroNNA.NoCaso,
-                            NombreNNA = filtroNNA.NombreNNA,
-                            NoDocumento = filtroNNA.NoDocumento,
-                            UltimaActualizacion = filtroNNA.UltimaActualizacion,
-                            AgenteAsignado = filtroNNA.AgenteAsignado,
-                            EstadoId = filtroNNA.EstadoId,
-                            Estado = filtroNNA.Estado,
-                            EstadoDescripcion = filtroNNA.EstadoDescripcion,
-                            EstadoColorBG = filtroNNA.EstadoColorBG,
-                            EstadoColorText = filtroNNA.EstadoColorText
-                        };
-
-                        response.Datos.Add(dto);
-                    }
+                    response.Estado = true;
+                    response.Descripcion = "Consulta realizada con éxito.";
                 }
                 else
                 {
-                    response.Estado = true;
-                    response.Descripcion = "No trae información.";
-                    response.Datos = null;
+                    response.Estado = false;
+                    response.Descripcion = "No trajo datos en la consulta.";
                 }
+
+                foreach (var filtroNNA in results)
+                {
+                    FiltroNNADto dto = new()
+                    {
+                        NoCaso = filtroNNA.NoCaso,
+                        NombreNNA = filtroNNA.NombreNNA,
+                        NoDocumento = filtroNNA.NoDocumento,
+                        UltimaActualizacion = filtroNNA.UltimaActualizacion,
+                        AgenteAsignado = filtroNNA.AgenteAsignado,
+                        EstadoId = filtroNNA.EstadoId,
+                        Estado = filtroNNA.Estado,
+                        EstadoDescripcion = filtroNNA.EstadoDescripcion,
+                        EstadoColorBG = filtroNNA.EstadoColorBG,
+                        EstadoColorText = filtroNNA.EstadoColorText
+                    };
+
+                    response.Datos.Add(dto);
+                }
+
 
             }
             catch (Exception ex)
@@ -220,15 +219,21 @@ namespace Infra.Repositorios
 
 
 
-        public NNAs ConsultarNNAsById(long NNAId)
+        public NNAResponse ConsultarNNAsById(long NNAId)
         {
-            var response = new NNAs();
+            var response = new NNAResponse();
 
             try
             {
                 var nnna = (from nna in _context.NNAs
                             where nna.Id == NNAId
-                            select nna).FirstOrDefault();
+                            select new NNAResponse()
+                            {
+                                NombreCompleto = string.Concat(nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                Diagnostico = "",
+                                FechaNacimiento = nna.FechaNacimiento,
+                                Id = nna.Id
+                            }).FirstOrDefault();
 
                 if (nnna != null)
                 {

@@ -47,6 +47,7 @@ namespace Api.Controllers
 
 
         [HttpPost("ConsultarNNAFiltro")]
+        [ProducesResponseType(typeof(RespuestaResponse<FiltroNNADto>), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAFiltro(FiltroNNARequest request)
         {
             var response = _nNARepo.ConsultarNNAFiltro(request);
@@ -54,6 +55,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("ConsultarNNAsByTipoIdNumeroId/{tipoIdentificacionId}/{numeroIdentificacion}")]
+        [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
 
@@ -61,6 +63,7 @@ namespace Api.Controllers
             return Ok(response);
         }
         [HttpGet("ConsultarNNAsById/{NNAId}")]
+        [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAsById(long NNAId)
         {
 
@@ -81,6 +84,7 @@ namespace Api.Controllers
         * Muestra los agentes activos seguimiento
         */
         [HttpGet("VwAgentesAsignados")]
+        [ProducesResponseType(typeof(List<VwAgentesAsignados>), StatusCodes.Status200OK)]
         public IActionResult VwAgentesAsignados()
         {
 
@@ -108,6 +112,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("DepuracionProtocolo")]
+        [ProducesResponseType(typeof(DepuracionProtocoloResponse), StatusCodes.Status200OK)]
         public IActionResult DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
         {
             var response = _nNARepo.DepuracionProtocolo(request);
