@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Request
+﻿namespace Core.Request
 {
     public class EnviarOficioNotifcacionRequest
     {
         public int IdEntidad { get; set; }
-        public string Para { get; set; }
-        public string ConCopia { get; set; }
+        public string[] Para { get; set; }
+        public string[] ConCopia { get; set; }
         public string PlantillaId { get; set; }
         public string Asunto { get; set; }
         public string Mensaje { get; set; }
