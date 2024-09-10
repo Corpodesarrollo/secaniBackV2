@@ -5,6 +5,7 @@ using Core.Modelos;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Infra.Repositorios;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,6 @@ namespace Api.Controllers
         private INNAService _nNAService = service;
         private readonly TablaParametricaService tablaParametricaService=tablaParametrica;
 
-
         /**
         * NNA
         */
@@ -29,6 +29,7 @@ namespace Api.Controllers
             var response = await _nNARepo.GetById(id);
             return Ok(response);
         }
+
         [HttpPost("Crear")]
         public async Task<ActionResult<RespuestaResponse<NNADto>>> AddAsync(NNADto dto)
         {
@@ -43,8 +44,6 @@ namespace Api.Controllers
             var entity = dto.Adapt<NNAs>();
             return await _nNARepo.UpdateAsync(entity);
         }
-
-
 
         [HttpPost("ConsultarNNAFiltro")]
         [ProducesResponseType(typeof(RespuestaResponse<FiltroNNADto>), StatusCodes.Status200OK)]
@@ -62,6 +61,7 @@ namespace Api.Controllers
             var response = _nNARepo.ConsultarNNAsByTipoIdNumeroId(tipoIdentificacionId, numeroIdentificacion);
             return Ok(response);
         }
+
         [HttpGet("ConsultarNNAsById/{NNAId}")]
         [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAsById(long NNAId)
@@ -70,6 +70,7 @@ namespace Api.Controllers
             var response = _nNARepo.ConsultarNNAsById(NNAId);
             return Ok(response);
         }
+
         [HttpGet("DatosBasicosNNAById/{NNAId}")]
         public async Task<IActionResult> ConsultarDatosBasicosNNAById(long NNAId)
         {
@@ -78,7 +79,6 @@ namespace Api.Controllers
 
             return Ok(response);
         }
-        
 
         /**
         * Muestra los agentes activos seguimiento
@@ -92,7 +92,6 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-
         /**
         * Seguimiento
         */
@@ -102,7 +101,6 @@ namespace Api.Controllers
             _nNARepo.ActualizarNNASeguimiento(request);
             return Ok();
         }
-
 
         [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
         public async Task<IActionResult> SolicitudSeguimientoCuidador(long NNAId)
@@ -117,6 +115,30 @@ namespace Api.Controllers
         {
             var response = _nNARepo.DepuracionProtocolo(request);
             return Ok(response);
+        }
+
+        [HttpPost("SetResidenciaDiagnosticoTratamiento")]
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
+        {
+            _nNARepo.SetResidenciaDiagnosticoTratamiento(request);
+        }
+
+        [HttpPost("SetDiagnosticoTratamiento")]
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
+        {
+            _nNARepo.SetDiagnosticoTratamiento(request);
+        }
+
+        [HttpPost("SetDificultadesProceso")]
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            _nNARepo.SetDificultadesProceso(request);
+        }
+
+        [HttpPost("SetAdherenciaProceso")]
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            _nNARepo.SetAdherenciaProceso(request);
         }
     }
 }

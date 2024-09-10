@@ -29,6 +29,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetCntSeguimiento/{UsuarioId}")]
+ 
         public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string UsuarioId)
         {
 
@@ -36,6 +37,7 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
         [HttpGet("{id}")]
+ 
         public ActionResult<Seguimiento> GetById(long id)
         {
             var seguimiento = seguimientoRepo.GetById(id);
@@ -90,35 +92,10 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
-
         [HttpPost("SetEstadoDiagnosticoTratamiento")]
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
         {
             seguimientoRepo.SetEstadoDiagnosticoTratamiento(request);
-        }
-
-        [HttpPost("SetDiagnosticoTratamiento")]
-        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
-        {
-            seguimientoRepo.SetDiagnosticoTratamiento(request);
-        }
-
-        [HttpPost("SetResidenciaDiagnosticoTratamiento")]
-        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
-        {
-            seguimientoRepo.SetResidenciaDiagnosticoTratamiento(request);
-        }
-
-        [HttpPost("SetDificultadesProceso")]
-        public void SetDificultadesProceso(DificultadesProcesoRequest request)
-        {
-            seguimientoRepo.SetDificultadesProceso(request);
-        }
-
-        [HttpPost("SetAdherenciaProceso")]
-        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
-        {
-            seguimientoRepo.SetAdherenciaProceso(request);
         }
 
         [HttpGet("GetSeguimientosNNA")]
