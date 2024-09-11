@@ -13,7 +13,8 @@ namespace Core.Interfaces.Repositorios
         public Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
         public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request);
 
-        List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(string entidadId, int alertaSeguimientoId, int nnaId);
+
+        List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
         List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId);
     }
 }
