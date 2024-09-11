@@ -1,5 +1,6 @@
 ﻿using Core.Interfaces.Services.MSUsuariosyRoles;
 using MediatR;
+using System.Data;
 
 namespace Core.CQRS.MSUsuariosyRoles.Commands.User
 {
@@ -10,6 +11,8 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
         public string Identificacion { get; set; }
         public string ConfirmarIdentificacion { get; set; }
         public string Telefonos { get; set; } = "";
+        public string? EntidadId { get; set; }
+        public string Cargo { get; set; }
         public List<string> Roles { get; set; }
     }
 
@@ -22,7 +25,7 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
         }
         public async Task<int> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var result = await _identityService.CreateUserAsync(request.Email, request.Identificacion, request.Email, request.FullName, request.Roles, request.Telefonos);
+            var result = await _identityService.CreateUserAsync(request.Email, request.Identificacion, request.Email, request.FullName, request.Roles, request.Telefonos, request.EntidadId, request.Cargo);
             return result.isSucceed ? 1 : 0;
         }
     }

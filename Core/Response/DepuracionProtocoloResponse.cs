@@ -8,5 +8,10 @@ namespace Core.Response
 {
     public class DepuracionProtocoloResponse
     {
+        public int Nuevos {  get; set; }
+        public int Recaidas {  get; set; }
+        public int SegundasNeoplasias {  get; set; }
+
+        public string Estado {  get; set; }
     }
 }

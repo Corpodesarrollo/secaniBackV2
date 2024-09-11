@@ -117,5 +117,10 @@ namespace Infra
         public DbSet<TPEstadoIngresoEstrategia> tPEstadoIngresoEstrategia { get; set; }
         public DbSet<TPOrigenReporte> TPOrigenReporte { get; set; }
         public DbSet<TPCIE10> CIE10s { get; set; }
+
+        public DbSet<DepuracionManualProtocolo> DepuracionManualProtocolos { get; set; }
+        public DbSet<ReporteDepuracion> ReporteDepuracions { get; set; }
+
+        public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
     }
 }

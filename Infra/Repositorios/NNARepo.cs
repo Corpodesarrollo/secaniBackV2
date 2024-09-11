@@ -5,6 +5,8 @@ using Core.Modelos.Common;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Infra.Repositories.Common;
+using Mapster;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,138 +16,22 @@ namespace Infra.Repositorios
     public class NNARepo : INNARepo
     {
         private readonly ApplicationDbContext _context;
+        private readonly GenericRepository<NNAs> _repository;
+
 
         public NNARepo(ApplicationDbContext context)
         {
             _context = context;
-        }
-
-        private IQueryable<NNADto> SelectBase()
-        {
-            var result = from n in _context.NNAs
-                         select new NNADto
-                         {
-                             Id = n.Id,
-                             estadoId = n.estadoId,
-                             ResidenciaActualCategoriaId = n.ResidenciaActualCategoriaId,
-                             ResidenciaActualMunicipioId = n.ResidenciaActualMunicipioId,
-                             ResidenciaActualBarrio = n.ResidenciaActualBarrio,
-                             ResidenciaActualAreaId = n.ResidenciaActualAreaId,
-                             ResidenciaActualDireccion = n.ResidenciaActualDireccion,
-                             ResidenciaActualEstratoId = n.ResidenciaActualEstratoId,
-                             ResidenciaActualTelefono = n.ResidenciaActualTelefono,
-                             ResidenciaOrigenCategoriaId = n.ResidenciaOrigenCategoriaId,
-                             ResidenciaOrigenMunicipioId = n.ResidenciaOrigenMunicipioId,
-                             ResidenciaOrigenBarrio = n.ResidenciaOrigenBarrio,
-                             ResidenciaOrigenAreaId = n.ResidenciaOrigenAreaId,
-                             ResidenciaOrigenDireccion = n.ResidenciaOrigenDireccion,
-                             ResidenciaOrigenEstratoId = n.ResidenciaOrigenEstratoId,
-                             ResidenciaOrigenTelefono = n.ResidenciaOrigenTelefono,
-                             FechaNotificacionSIVIGILA = n.FechaNotificacionSIVIGILA,
-                             PrimerNombre = n.PrimerNombre,
-                             SegundoNombre = n.SegundoNombre,
-                             PrimerApellido = n.PrimerApellido,
-                             SegundoApellido = n.SegundoApellido,
-                             TipoIdentificacionId = n.TipoIdentificacionId,
-                             NumeroIdentificacion = n.NumeroIdentificacion,
-                             FechaNacimiento = n.FechaNacimiento,
-                             MunicipioNacimientoId = n.MunicipioNacimientoId,
-                             SexoId = n.SexoId,
-                             TipoRegimenSSId = n.TipoRegimenSSId,
-                             EAPBId = n.EAPBId,
-                             EPSId = n.EPSId,
-                             IPSId = n.IPSId,
-                             GrupoPoblacionId = n.GrupoPoblacionId,
-                             EtniaId = n.EtniaId,
-                             EstadoIngresoEstrategiaId = n.EstadoIngresoEstrategiaId,
-                             FechaIngresoEstrategia = n.FechaIngresoEstrategia,
-                             OrigenReporteId = n.OrigenReporteId,
-                             FechaConsultaOrigenReporte = n.FechaConsultaOrigenReporte,
-                             TipoCancerId = n.TipoCancerId,
-                             FechaInicioSintomas = n.FechaInicioSintomas,
-                             FechaHospitalizacion = n.FechaHospitalizacion,
-                             FechaDefuncion = n.FechaDefuncion,
-                             MotivoDefuncion = n.MotivoDefuncion,
-                             FechaInicioTratamiento = n.FechaInicioTratamiento,
-                             Recaida = n.Recaida,
-                             CantidadRecaidas = n.CantidadRecaidas,
-                             FechaUltimaRecaida = n.FechaUltimaRecaida,
-                             TipoDiagnosticoId = n.TipoDiagnosticoId,
-                             DiagnosticoId = n.DiagnosticoId,
-                             FechaDiagnostico = n.FechaDiagnostico,
-                             MotivoNoDiagnosticoId = n.MotivoNoDiagnosticoId,
-                             MotivoNoDiagnosticoOtro = n.MotivoNoDiagnosticoOtro,
-                             FechaConsultaDiagnostico = n.FechaConsultaDiagnostico,
-                             DepartamentoTratamientoId = n.DepartamentoTratamientoId,
-                             IPSIdTratamiento = n.IPSIdTratamiento,
-                             PropietarioResidenciaActual = n.PropietarioResidenciaActual,
-                             PropietarioResidenciaActualOtro = n.PropietarioResidenciaActualOtro,
-                             TrasladoTieneCapacidadEconomica = n.TrasladoTieneCapacidadEconomica,
-                             TrasladoEAPBSuministroApoyo = n.TrasladoEAPBSuministroApoyo,
-                             TrasladosServiciosdeApoyoOportunos = n.TrasladosServiciosdeApoyoOportunos,
-                             TrasladosServiciosdeApoyoCobertura = n.TrasladosServiciosdeApoyoCobertura,
-                             TrasladosHaSolicitadoApoyoFundacion = n.TrasladosHaSolicitadoApoyoFundacion,
-                             TrasladosNombreFundacion = n.TrasladosNombreFundacion,
-                             TrasladosApoyoRecibidoxFundacion = n.TrasladosApoyoRecibidoxFundacion,
-                             DifAutorizaciondeMedicamentos = n.DifAutorizaciondeMedicamentos,
-                             DifEntregaMedicamentosLAP = n.DifEntregaMedicamentosLAP,
-                             DifEntregaMedicamentosNoLAP = n.DifEntregaMedicamentosNoLAP,
-                             DifAsignaciondeCitas = n.DifAsignaciondeCitas,
-                             DifHanCobradoCuotasoCopagos = n.DifHanCobradoCuotasoCopagos,
-                             DifAutorizacionProcedimientos = n.DifAutorizacionProcedimientos,
-                             DifRemisionInstitucionesEspecializadas = n.DifRemisionInstitucionesEspecializadas,
-                             DifMalaAtencionIPS = n.DifMalaAtencionIPS,
-                             DifMalaAtencionNombreIPSId = n.DifMalaAtencionNombreIPSId,
-                             DifFallasenMIPRES = n.DifFallasenMIPRES,
-                             DifFallaConvenioEAPBeIPSTratante = n.DifFallaConvenioEAPBeIPSTratante,
-                             CategoriaAlertaId = n.CategoriaAlertaId,
-                             SubcategoriaAlertaId = n.SubcategoriaAlertaId,
-                             TrasladosHaSidoTrasladadodeInstitucion = n.TrasladosHaSidoTrasladadodeInstitucion,
-                             TrasladosNumerodeTraslados = n.TrasladosNumerodeTraslados,
-                             TrasladosIPSId = n.TrasladosIPSId,
-                             TrasladosHaRecurridoAccionLegal = n.TrasladosHaRecurridoAccionLegal,
-                             TrasladosTipoAccionLegalId = n.TrasladosTipoAccionLegalId,
-                             TratamientoHaDejadodeAsistir = n.TratamientoHaDejadodeAsistir,
-                             TratamientoCuantoTiemposinAsistir = n.TratamientoCuantoTiemposinAsistir,
-                             TratamientoUnidadMedidaIdTiempoId = n.TratamientoUnidadMedidaIdTiempoId,
-                             TratamientoCausasInasistenciaId = n.TratamientoCausasInasistenciaId,
-                             TratamientoCausasInasistenciaOtra = n.TratamientoCausasInasistenciaOtra,
-                             TratamientoEstudiaActualmente = n.TratamientoEstudiaActualmente,
-                             TratamientoHaDejadodeAsistirColegio = n.TratamientoHaDejadodeAsistirColegio,
-                             TratamientoTiempoInasistenciaColegio = n.TratamientoTiempoInasistenciaColegio,
-                             TratamientoTiempoInasistenciaUnidadMedidaId = n.TratamientoTiempoInasistenciaUnidadMedidaId,
-                             TratamientoHaSidoInformadoClaramente = n.TratamientoHaSidoInformadoClaramente,
-                             TratamientoObservaciones = n.TratamientoObservaciones,
-                             CuidadorNombres = n.CuidadorNombres,
-                             CuidadorParentescoId = n.CuidadorParentescoId,
-                             CuidadorEmail = n.CuidadorEmail,
-                             CuidadorTelefono = n.CuidadorTelefono,
-                             SeguimientoLoDesea = n.SeguimientoLoDesea,
-                             SeguimientoMotivoNoLoDesea = n.SeguimientoMotivoNoLoDesea,
-                             OrigenReporteOtro = n.OrigenReporteOtro,
-                             PaisId = n.PaisId,
-                             TrasladosMotivoAccionLegal = n.TrasladosMotivoAccionLegal,
-                             TrasladosPropietarioResidenciaActualId = n.TrasladosPropietarioResidenciaActualId,
-                             TrasladosPropietarioResidenciaActualOtro = n.TrasladosPropietarioResidenciaActualOtro,
-                             TrasladosQuienAsumioCostosTraslado = n.TrasladosQuienAsumioCostosTraslado,
-                             TrasladosQuienAsumioCostosVivienda = n.TrasladosQuienAsumioCostosVivienda,
-                             DateCreated = n.DateCreated,
-                             DateUpdated = n.DateUpdated,
-                             DateDeleted = n.DateDeleted,
-                             CreatedByUserId = n.CreatedByUserId,
-                             UpdatedByUserId = n.UpdatedByUserId,
-                             IsDeleted = n.IsDeleted
-                         };
-
-            return result;
+            GenericRepository<NNAs> repository = new(_context);
+            _repository = repository;
         }
 
         public async Task<NNADto?> GetById(long id)
         {
             try
             {
-                var result = await SelectBase().FirstOrDefaultAsync(x => x.Id == id);
-                return result;
+                var result = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Entity not found");
+                return result.Adapt<NNADto>();
             }
             catch (Exception ex)
             {
@@ -154,64 +40,24 @@ namespace Infra.Repositorios
             }
         }
 
-        public RespuestaResponse<ContactoNNA> CrearContactoNNA(ContactoNNA contactoNNA)
+        public async Task<(bool, NNAs)> AddAsync(NNAs entity)
         {
-            var response = new RespuestaResponse<ContactoNNA>();
-
-            try
+            var (success, response) = await _repository.AddAsync(entity);
+            if (!success)
             {
-                _context.Set<ContactoNNA>().Add(contactoNNA);
-                _context.SaveChangesAsync();
-                response.Estado = true;
-                response.Descripcion = "Contacto creado con éxito.";
-                response.Datos = null;  // Aquí puedes devolver el objeto creado si es necesario.
+                throw new KeyNotFoundException("cannot add entity");
             }
-            catch (Exception ex)
-            {
-                response.Estado = false;
-                response.Descripcion = $"Error al crear el contacto: {ex.Message}";
-                response.Datos = null;
-            }
-
-            return response;
+            return (success, response);
         }
 
-        public RespuestaResponse<ContactoNNA> ActualizarContactoNNA(ContactoNNA contactoNNA)
+        public async Task<(bool, NNAs)> UpdateAsync(NNAs entity)
         {
-            var response = new RespuestaResponse<ContactoNNA>();
-
-            try
+            var (success, response) = await _repository.UpdateAsync(entity);
+            if (!success)
             {
-                _context.Set<ContactoNNA>().Update(contactoNNA);
-                _context.SaveChangesAsync();
-                response.Estado = true;
-                response.Descripcion = "Contacto actualizado con éxito.";
-                response.Datos = null;  // Aquí puedes devolver el objeto creado si es necesario.
+                throw new KeyNotFoundException("cannot update entity");
             }
-            catch (Exception ex)
-            {
-                response.Estado = false;
-                response.Descripcion = $"Error al actualizar el contacto: {ex.Message}";
-                response.Datos = null;
-            }
-
-            return response;
-        }
-
-        public List<TPEstadoNNA> TpEstadosNNA()
-        {
-            var response = _context.TPEstadoNNA
-                                    .Select(e => new TPEstadoNNA
-                                    {
-                                        Id = e.Id,
-                                        Nombre = e.Nombre,
-                                        Descripcion = e.Descripcion,
-                                        ColorBG = e.ColorBG,
-                                        ColorText = e.ColorText
-                                    })
-                                    .ToList();
-
-            return response;
+            return (success, response);
         }
 
         public List<VwAgentesAsignados> VwAgentesAsignados()
@@ -221,42 +67,9 @@ namespace Infra.Repositorios
             return response;
         }
 
-        public RespuestaResponse<ContactoNNA> ObtenerContactoPorId(long NNAId)
+        public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
-            var response = new RespuestaResponse<ContactoNNA>();
-            List<ContactoNNA> li = new();
-
-            try
-            {
-                var contacto = _context.ContactoNNAs.Find(NNAId);
-
-                if (contacto != null)
-                {
-                    response.Estado = true;
-                    response.Descripcion = "Contacto obtenido con éxito.";
-                    li.Add(contacto);
-                    response.Datos = li;
-                }
-                else
-                {
-                    response.Estado = false;
-                    response.Descripcion = "No se encontró el contacto con el ID especificado.";
-                    response.Datos = null;
-                }
-            }
-            catch (Exception ex)
-            {
-                response.Estado = false;
-                response.Descripcion = $"Error al obtener el contacto: {ex.Message}";
-                response.Datos = null;
-            }
-
-            return response;
-        }
-
-        public NNAs ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
-        {
-            var response = new NNAs();
+            var response = new NNAResponse();
 
             try
             {
@@ -264,7 +77,13 @@ namespace Infra.Repositorios
 
                 if (nnna != null)
                 {
-                    response = nnna;
+                    response = new NNAResponse()
+                    {
+                        NombreCompleto = string.Concat(nnna.PrimerNombre, " ", nnna.SegundoNombre, " ", nnna.PrimerApellido, " ", nnna.SegundoApellido),
+                        Diagnostico = "",
+                        FechaNacimiento = nnna.FechaNacimiento,
+                        Id = nnna.Id
+                    };
                 }
                 else
                 {
@@ -283,7 +102,7 @@ namespace Infra.Repositorios
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista = new();
+            List<FiltroNNA> lista;
 
             try
             {
@@ -299,44 +118,37 @@ namespace Infra.Repositorios
                     "EXEC dbo.SpConsultaNnaFiltro @Estado, @Agente, @Buscar, @Orden",
                     parameters
                 ).ToList();
-                if (results != null)
+
+                if (results.Any())
                 {
-                    if (results.Count() > 0)
-                    {
-                        response.Estado = true;
-                        response.Descripcion = "Consulta realizada con éxito.";
-                    }
-                    else
-                    {
-                        response.Estado = false;
-                        response.Descripcion = "No trajo datos en la consulta.";
-                    }
-
-                    foreach (var filtroNNA in results)
-                    {
-                        FiltroNNADto dto = new()
-                        {
-                            NoCaso = filtroNNA.NoCaso,
-                            NombreNNA = filtroNNA.NombreNNA,
-                            NoDocumento = filtroNNA.NoDocumento,
-                            UltimaActualizacion = filtroNNA.UltimaActualizacion,
-                            AgenteAsignado = filtroNNA.AgenteAsignado,
-                            EstadoId = filtroNNA.EstadoId,
-                            Estado = filtroNNA.Estado,
-                            EstadoDescripcion = filtroNNA.EstadoDescripcion,
-                            EstadoColorBG = filtroNNA.EstadoColorBG,
-                            EstadoColorText = filtroNNA.EstadoColorText
-                        };
-
-                        response.Datos.Add(dto);
-                    }
+                    response.Estado = true;
+                    response.Descripcion = "Consulta realizada con éxito.";
                 }
                 else
                 {
-                    response.Estado = true;
-                    response.Descripcion = "No trae información.";
-                    response.Datos = null;
+                    response.Estado = false;
+                    response.Descripcion = "No trajo datos en la consulta.";
                 }
+
+                foreach (var filtroNNA in results)
+                {
+                    FiltroNNADto dto = new()
+                    {
+                        NoCaso = filtroNNA.NoCaso,
+                        NombreNNA = filtroNNA.NombreNNA,
+                        NoDocumento = filtroNNA.NoDocumento,
+                        UltimaActualizacion = filtroNNA.UltimaActualizacion,
+                        AgenteAsignado = filtroNNA.AgenteAsignado,
+                        EstadoId = filtroNNA.EstadoId,
+                        Estado = filtroNNA.Estado,
+                        EstadoDescripcion = filtroNNA.EstadoDescripcion,
+                        EstadoColorBG = filtroNNA.EstadoColorBG,
+                        EstadoColorText = filtroNNA.EstadoColorText
+                    };
+
+                    response.Datos.Add(dto);
+                }
+
 
             }
             catch (Exception ex)
@@ -407,256 +219,21 @@ namespace Infra.Repositorios
 
 
 
-        /**
-         * Lista de parametros
-        */
-        public List<TPTipoIdentificacionDto> GetTpTipoId()
+        public NNAResponse ConsultarNNAsById(long NNAId)
         {
-            List<TPTipoIdentificacionDto> list = new()
-            {
-                new TPTipoIdentificacionDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 3,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 4,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 5,
-                    Name = "NUI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 6,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPTipoIdentificacionDto> GetTPTipoIdentificacion()
-        {
-            List<TPTipoIdentificacionDto> list = new()
-            {
-                new TPTipoIdentificacionDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPTipoIdentificacionDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPRegimenAfiliacionDto> GetTPRegimenAfiliacion()
-        {
-            List<TPRegimenAfiliacionDto> list = new()
-            {
-                new TPRegimenAfiliacionDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPRegimenAfiliacionDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPParentescoDto> GetTPParentesco()
-        {
-            List<TPParentescoDto> list = new()
-            {
-                new TPParentescoDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPParentescoDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPPaisDto> GetTPPais()
-        {
-            List<TPPaisDto> list = new()
-            {
-                new TPPaisDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPPaisDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-        public List<TPDepartamentoDto> GetTPDepartamento(int PaisId)
-        {
-            List<TPDepartamentoDto> list = new()
-            {
-                new TPDepartamentoDto
-                {
-                    Id = 1,
-                    Name = "TI",
-                    PaisId = PaisId
-                },
-                new TPDepartamentoDto
-                {
-                    Id = 2,
-                    Name = "NUI",
-                    PaisId = PaisId
-                }
-            };
-            return list;
-        }
-
-        public List<TPCiudadDto> GetTPCiudad(int DepartamentoId)
-        {
-            List<TPCiudadDto> list = new()
-            {
-                new TPCiudadDto
-                {
-                    Id = 1,
-                    Name = "TI",
-                    DepartamentoId = DepartamentoId
-                },
-                new TPCiudadDto
-                {
-                    Id = 2,
-                    Name = "NUI",
-                    DepartamentoId = DepartamentoId
-                }
-            };
-            return list;
-        }
-        public List<TPOrigenReporteDto> GetTPOrigenReporte()
-        {
-            List<TPOrigenReporteDto> list = new()
-            {
-                new TPOrigenReporteDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPOrigenReporteDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPGrupoPoblacionalDto> GetGrupoPoblacional()
-        {
-            List<TPGrupoPoblacionalDto> list = new()
-            {
-                new TPGrupoPoblacionalDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPGrupoPoblacionalDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPEtniaDto> GetTPEtnia()
-        {
-            List<TPEtniaDto> list = new()
-            {
-                new TPEtniaDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPEtniaDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPEAPBDto> GetTPEAPB()
-        {
-            List<TPEAPBDto> list = new()
-            {
-                new TPEAPBDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPEAPBDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public List<TPEstadoIngresoEstrategiaDto> GetTPEstadoIngresoEstrategia()
-        {
-            List<TPEstadoIngresoEstrategiaDto> list = new()
-            {
-                new TPEstadoIngresoEstrategiaDto
-                {
-                    Id = 1,
-                    Name = "TI"
-                },
-                new TPEstadoIngresoEstrategiaDto
-                {
-                    Id = 2,
-                    Name = "NUI"
-                }
-            };
-            return list;
-        }
-
-        public NNAs ConsultarNNAsById(long NNAId)
-        {
-            var response = new NNAs();
+            var response = new NNAResponse();
 
             try
             {
                 var nnna = (from nna in _context.NNAs
                             where nna.Id == NNAId
-                            select nna).FirstOrDefault();
+                            select new NNAResponse()
+                            {
+                                NombreCompleto = string.Concat(nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                Diagnostico = "",
+                                FechaNacimiento = nna.FechaNacimiento,
+                                Id = nna.Id
+                            }).FirstOrDefault();
 
                 if (nnna != null)
                 {
@@ -743,371 +320,742 @@ namespace Infra.Repositorios
 
         public DepuracionProtocoloResponse DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
         {
+            int nuevos = 0;
+            int recaidas = 0;
+            int segundaNeoplasia = 0;
+            int duplicados = 0;
+            int ingresados = 0;
             DepuracionProtocoloResponse response = new DepuracionProtocoloResponse();
-
-            List<DepuracionProtocolo> listaDepuracion = new List<DepuracionProtocolo>();
-
-            for (int i = 0; i < request.Count; i++)
+            try
             {
-                DepuracionProtocolo depuracion = new DepuracionProtocolo()
+                Dictionary<string, List<DepuracionProtocolo>> dNNAProtocolo = new Dictionary<string, List<DepuracionProtocolo>>();
+
+                List<DepuracionProtocolo> listaDepuracion = new List<DepuracionProtocolo>();
+
+                for (int i = 0; i < request.Count; i++)
                 {
-                    Id = i,
-                    DepuracionProtocoloRequest = request[i]
+                    DepuracionProtocolo depuracion = new DepuracionProtocolo()
+                    {
+                        Id = i,
+                        DepuracionProtocoloRequest = request[i]
+                    };
+                    listaDepuracion.Add(depuracion);
+                }
+
+                // eliminar registros con ajuste 6 o d
+                for (int i = listaDepuracion.Count - 1; i >= 0; i--)
+                {
+                    if (listaDepuracion[i].DepuracionProtocoloRequest.ajuste == "6" || listaDepuracion[i].DepuracionProtocoloRequest.ajuste == "D")
+                    {
+                        listaDepuracion.RemoveAt(i);
+                    }
+                }
+
+                foreach (DepuracionProtocolo d in listaDepuracion)
+                {
+                    //por documento
+                    if (dNNAProtocolo.ContainsKey(d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide))
+                    {
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide].Add(d);
+                    }
+                    else
+                    {
+                        dNNAProtocolo.Add(d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide, new List<DepuracionProtocolo>());
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.tip_ide + "&" + d.DepuracionProtocoloRequest.num_ide].Add(d);
+                    }
+
+                    //por nombre 
+                    if (dNNAProtocolo.ContainsKey(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape))
+                    {
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+                    else
+                    {
+                        dNNAProtocolo.Add(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+
+                    //por nombre 
+                    if (dNNAProtocolo.ContainsKey(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape))
+                    {
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+                    else
+                    {
+                        dNNAProtocolo.Add(d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
+                        dNNAProtocolo[d.DepuracionProtocoloRequest.pri_nom + "&" + d.DepuracionProtocoloRequest.seg_nom + "&" + d.DepuracionProtocoloRequest.pri_ape + "&" + d.DepuracionProtocoloRequest.seg_ape].Add(d);
+                    }
+                }
+
+                bool fallecido;
+                int recorridoCaso2 = 0;
+                int recorridoCaso3 = 0;
+                bool tieneCancer1;
+                bool tieneCancer2;
+                bool tieneCancer3;
+                bool tieneCancer4;
+                bool tieneCancer13;
+                bool tieneCancer14;
+                DateTime fechaNotificacion;
+                Dictionary<int, List<DateTime?>> dTrazabilidad;
+                int cantidadMaxima = 0;
+                bool anioActual;
+                List<DepuracionProtocolo> depuracionManual;
+                List<DepuracionProtocolo> insertarNNa;
+
+
+                foreach (KeyValuePair<string, List<DepuracionProtocolo>> kvp in dNNAProtocolo)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        duplicados += 1;
+                    }
+                    else
+                    {
+                        ingresados += 1;
+                    }
+                }
+
+                foreach (KeyValuePair<string, List<DepuracionProtocolo>> kvp in dNNAProtocolo)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        //priorizar fallecidos
+                        fallecido = false;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.con_fin == "2")
+                            {
+                                fallecido = true;
+                            }
+                        }
+
+                        if (fallecido)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.con_fin != "2")
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        //recorrido del caso
+                        recorridoCaso2 = 0;
+                        recorridoCaso3 = 0;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.tip_cas == "2")
+                            {
+                                recorridoCaso2 = 2;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.ajuste == "3")
+                            {
+                                recorridoCaso3 = 3;
+                            }
+                        }
+
+                        if (recorridoCaso2 == 2)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.tip_cas != "2")
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+                        else if (recorridoCaso3 == 3)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.tip_cas != "3")
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        //caso oportuno
+                        fechaNotificacion = DateTime.Now;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not < fechaNotificacion)
+                            {
+                                fechaNotificacion = kvp.Value[i].DepuracionProtocoloRequest.fec_not;
+                            }
+                        }
+
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not != fechaNotificacion)
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                        }
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        dTrazabilidad = new Dictionary<int, List<DateTime?>>();
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            List<DateTime?> key = new List<DateTime?>();
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_initra != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_initra);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_tomadp != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_tomadp);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_res_dp != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_res_dp);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_tomadd != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_tomadd);
+                            }
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_res_dd != null)
+                            {
+                                key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_res_dd);
+                            }
+                            dTrazabilidad.Add(kvp.Value[i].Id, key);
+                        }
+
+                        cantidadMaxima = 0;
+                        foreach (KeyValuePair<int, List<DateTime?>> t in dTrazabilidad)
+                        {
+                            if (cantidadMaxima < t.Value.Count)
+                            {
+                                cantidadMaxima = t.Value.Count;
+                            }
+                        }
+
+                        List<DateTime?> date = null;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            dTrazabilidad.TryGetValue(kvp.Value[i].Id, out date);
+
+                            if (date.Count < cantidadMaxima)
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                        }
+                    }
+
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        //tipoCancer
+                        tieneCancer1 = false;
+                        tieneCancer2 = false;
+                        tieneCancer3 = false;
+                        tieneCancer4 = false;
+                        tieneCancer13 = false;
+                        tieneCancer14 = false;
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "1")
+                            {
+                                tieneCancer1 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "2")
+                            {
+                                tieneCancer2 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "3")
+                            {
+                                tieneCancer3 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "4")
+                            {
+                                tieneCancer4 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "13")
+                            {
+                                tieneCancer4 = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "14")
+                            {
+                                tieneCancer14 = true;
+                            }
+                        }
+
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (tieneCancer1 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "1")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer2 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "2")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer3 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "3")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer4 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "4")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer13 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "13")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                            else if (tieneCancer14 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "14")
+                            {
+                                kvp.Value.RemoveAt(i);
+                            }
+                        }
+                    }
+
+                    if (kvp.Value.Count > 1)
+                    {
+                        anioActual = false;
+
+                        for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                        {
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not.Year == DateTime.Now.Year)
+                            {
+                                anioActual = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.recaida == "1")
+                            {
+                                anioActual = true;
+                            }
+                            else if (kvp.Value[i].DepuracionProtocoloRequest.consx2_neo == "1")
+                            {
+                                anioActual = true;
+                            }
+                        }
+
+                        if (anioActual)
+                        {
+                            for (int i = kvp.Value.Count - 1; i >= 0; i--)
+                            {
+                                if (kvp.Value[i].DepuracionProtocoloRequest.fec_not.Year != DateTime.Now.Year)
+                                {
+                                    kvp.Value.RemoveAt(i);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                depuracionManual = new List<DepuracionProtocolo>();
+                insertarNNa = new List<DepuracionProtocolo>();
+                foreach (KeyValuePair<string, List<DepuracionProtocolo>> kvp in dNNAProtocolo)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        depuracionManual.AddRange(kvp.Value);
+                    }
+                    else
+                    {
+                        insertarNNa.AddRange(kvp.Value);
+                    }
+                }
+
+                List<NNAs> insertNNA = new List<NNAs>();
+                List<NNAs> updateNNA = new List<NNAs>();
+                DateTime fechaDefuncion;
+                foreach (DepuracionProtocolo d in insertarNNa)
+                {
+                    if (d.DepuracionProtocoloRequest.consx2_neo == "1")
+                    {
+                        segundaNeoplasia += 1;
+                    }
+                    else if (d.DepuracionProtocoloRequest.recaida == "1")
+                    {
+                        recaidas += 1;
+                    }
+                    else
+                    {
+                        nuevos += 1;
+                    }
+
+                    NNAs? nna = (from nnas in _context.NNAs
+                                 where nnas.NumeroIdentificacion == d.DepuracionProtocoloRequest.num_ide
+                                 select nnas).FirstOrDefault();
+
+                    if (nna != null)
+                    {
+                        if (d.DepuracionProtocoloRequest.consx2_neo == "1")
+                        {
+                            nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
+                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion))
+                            {
+                                nna.FechaDefuncion = fechaDefuncion;
+                            }
+                            nna.MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte;
+                            updateNNA.Add(nna);
+                        }
+                        else if (d.DepuracionProtocoloRequest.recaida == "1")
+                        {
+                            nna.Recaida = true;
+                            nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
+                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion))
+                            {
+                                nna.FechaDefuncion = fechaDefuncion;
+                            }
+                            nna.MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte;
+                            updateNNA.Add(nna);
+                        }
+                        else
+                        {
+                            depuracionManual.Add(d);
+                        }
+                    }
+                    else
+                    {
+                        fechaDefuncion = DateTime.MinValue;
+                        DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion);
+                        nna = new NNAs()
+                        {
+                            FechaNotificacionSIVIGILA = d.DepuracionProtocoloRequest.fec_not,
+                            EPSId = 0,//verificar de donde sale el id de la eps
+                            PrimerNombre = d.DepuracionProtocoloRequest.pri_nom,
+                            SegundoNombre = d.DepuracionProtocoloRequest.seg_nom,
+                            PrimerApellido = d.DepuracionProtocoloRequest.pri_ape,
+                            SegundoApellido = d.DepuracionProtocoloRequest.seg_ape,
+                            TipoIdentificacionId = d.DepuracionProtocoloRequest.tip_ide,
+                            NumeroIdentificacion = d.DepuracionProtocoloRequest.num_ide,
+                            SexoId = d.DepuracionProtocoloRequest.sexo,
+                            PaisId = d.DepuracionProtocoloRequest.cod_pais_r,
+                            ResidenciaOrigenMunicipioId = d.DepuracionProtocoloRequest.cod_mun_r,
+                            ResidenciaOrigenAreaId = d.DepuracionProtocoloRequest.area,
+                            ResidenciaOrigenBarrio = d.DepuracionProtocoloRequest.bar_ver,
+                            ResidenciaOrigenDireccion = d.DepuracionProtocoloRequest.dir_res,
+                            TipoRegimenSSId = d.DepuracionProtocoloRequest.tip_ss,
+                            EtniaId = d.DepuracionProtocoloRequest.per_etn,
+                            ResidenciaOrigenEstratoId = d.DepuracionProtocoloRequest.estrato,
+                            GrupoPoblacionId = "", //verificar como se asocia a un grupo poblacional
+                            FechaConsultaDiagnostico = d.DepuracionProtocoloRequest.fec_con,
+                            FechaInicioSintomas = d.DepuracionProtocoloRequest.ini_sin,
+                            FechaHospitalizacion = d.DepuracionProtocoloRequest.fec_hos,
+                            FechaDefuncion = (fechaDefuncion == DateTime.MinValue ? null : fechaDefuncion),
+                            ResidenciaOrigenTelefono = d.DepuracionProtocoloRequest.telefono,
+                            FechaNacimiento = d.DepuracionProtocoloRequest.fecha_nto,
+                            MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte,
+                            TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca,
+                            FechaInicioTratamiento = d.DepuracionProtocoloRequest.fec_initra,
+                            Recaida = (d.DepuracionProtocoloRequest.recaida == "1" ? true : false),
+                            FechaDiagnostico = d.DepuracionProtocoloRequest.fec_diag1a,
+                            CuidadorTelefono = d.DepuracionProtocoloRequest.tel_cont_2,
+                        };
+                        insertNNA.Add(nna);
+                    }
+                }
+
+                _context.NNAs.UpdateRange(updateNNA);
+
+                _context.NNAs.AddRange(insertNNA);
+
+                List<DepuracionManualProtocolo> depuracionProtocolos = new List<DepuracionManualProtocolo>();
+
+                foreach (DepuracionProtocolo d in depuracionManual)
+                {
+                    DepuracionManualProtocolo dep = new DepuracionManualProtocolo()
+                    {
+                        ajuste = d.DepuracionProtocoloRequest.ajuste,
+                        anio = d.DepuracionProtocoloRequest.anio,
+                        area = d.DepuracionProtocoloRequest.area,
+                        bar_ver = d.DepuracionProtocoloRequest.bar_ver,
+                        cbmte = d.DepuracionProtocoloRequest.cbmte,
+                        cen_pobla = d.DepuracionProtocoloRequest.cen_pobla,
+                        cer_def = d.DepuracionProtocoloRequest.cer_def,
+                        cod_ase = d.DepuracionProtocoloRequest.cod_ase,
+                        cod_dpto_o = d.DepuracionProtocoloRequest.cod_dpto_o,
+                        cod_dpto_r = d.DepuracionProtocoloRequest.cod_dpto_r,
+                        cod_eve = d.DepuracionProtocoloRequest.cod_eve,
+                        cod_mun_o = d.DepuracionProtocoloRequest.cod_mun_o,
+                        cod_mun_r = d.DepuracionProtocoloRequest.cod_mun_r,
+                        cod_pais_o = d.DepuracionProtocoloRequest.cod_pais_o,
+                        cod_pais_r = d.DepuracionProtocoloRequest.cod_pais_r,
+                        cod_pre = d.DepuracionProtocoloRequest.cod_pre,
+                        cod_sub = d.DepuracionProtocoloRequest.cod_sub,
+                        consx2_neo = d.DepuracionProtocoloRequest.consx2_neo,
+                        con_fin = d.DepuracionProtocoloRequest.con_fin,
+                        crit_dx_de = d.DepuracionProtocoloRequest.crit_dx_de,
+                        crit_dx_pr = d.DepuracionProtocoloRequest.crit_dx_pr,
+                        dir_res = d.DepuracionProtocoloRequest.dir_res,
+                        edad = d.DepuracionProtocoloRequest.edad,
+                        estrato = d.DepuracionProtocoloRequest.estrato,
+                        estrato_datos_complementarios = d.DepuracionProtocoloRequest.estrato_datos_complementarios,
+                        FechaHora = d.DepuracionProtocoloRequest.FechaHora,
+                        fecha_nto = d.DepuracionProtocoloRequest.fecha_nto,
+                        fec_aju = d.DepuracionProtocoloRequest.fec_aju,
+                        fec_arc_xl = d.DepuracionProtocoloRequest.fec_arc_xl,
+                        fec_con = d.DepuracionProtocoloRequest.fec_con,
+                        fec_def = d.DepuracionProtocoloRequest.fec_def,
+                        fec_diag1a = d.DepuracionProtocoloRequest.fec_diag1a,
+                        fec_hos = d.DepuracionProtocoloRequest.fec_hos,
+                        fec_res_dd = d.DepuracionProtocoloRequest.fec_res_dd,
+                        fec_initra = d.DepuracionProtocoloRequest.fec_initra,
+                        fec_not = d.DepuracionProtocoloRequest.fec_not,
+                        fec_res_dp = d.DepuracionProtocoloRequest.fec_res_dp,
+                        fec_tomadd = d.DepuracionProtocoloRequest.fec_tomadd,
+                        fec_tomadp = d.DepuracionProtocoloRequest.fec_tomadp,
+                        fm_fuerza = d.DepuracionProtocoloRequest.fm_fuerza,
+                        fm_grado = d.DepuracionProtocoloRequest.fm_grado,
+                        fm_unidad = d.DepuracionProtocoloRequest.fm_unidad,
+                        fuente = d.DepuracionProtocoloRequest.fuente,
+                        gp_carcela = d.DepuracionProtocoloRequest.gp_carcela,
+                        gp_desmovi = d.DepuracionProtocoloRequest.gp_desmovi,
+                        gp_desplaz = d.DepuracionProtocoloRequest.gp_desplaz,
+                        gp_discapa = d.DepuracionProtocoloRequest.gp_discapa,
+                        gp_gestan = d.DepuracionProtocoloRequest.gp_gestan,
+                        gp_indigen = d.DepuracionProtocoloRequest.gp_indigen,
+                        gp_mad_com = d.DepuracionProtocoloRequest.gp_mad_com,
+                        gp_migrant = d.DepuracionProtocoloRequest.gp_migrant,
+                        gp_otros = d.DepuracionProtocoloRequest.gp_otros,
+                        gp_pobicbf = d.DepuracionProtocoloRequest.gp_pobicbf,
+                        gp_psiquia = d.DepuracionProtocoloRequest.gp_psiquia,
+                        gp_vic_vio = d.DepuracionProtocoloRequest.gp_vic_vio,
+                        ini_sin = d.DepuracionProtocoloRequest.ini_sin,
+                        localidad = d.DepuracionProtocoloRequest.localidad,
+                        nacionali = d.DepuracionProtocoloRequest.nacionali,
+                        ndep_notif = d.DepuracionProtocoloRequest.ndep_notif,
+                        ndep_proce = d.DepuracionProtocoloRequest.ndep_proce,
+                        ndep_resi = d.DepuracionProtocoloRequest.ndep_resi,
+                        nit_upgd = d.DepuracionProtocoloRequest.nit_upgd,
+                        nmun_notif = d.DepuracionProtocoloRequest.nmun_notif,
+                        nmun_proce = d.DepuracionProtocoloRequest.nmun_proce,
+                        nmun_resi = d.DepuracionProtocoloRequest.nmun_resi,
+                        nombre_nacionalidad = d.DepuracionProtocoloRequest.nombre_nacionalidad,
+                        nom_dil_f = d.DepuracionProtocoloRequest.nom_dil_f,
+                        nom_eve = d.DepuracionProtocoloRequest.nom_eve,
+                        nom_grupo = d.DepuracionProtocoloRequest.nom_grupo,
+                        nom_oncolo = d.DepuracionProtocoloRequest.nom_oncolo,
+                        nom_upgd = d.DepuracionProtocoloRequest.nom_upgd,
+                        npais_proce = d.DepuracionProtocoloRequest.npais_proce,
+                        npais_resi = d.DepuracionProtocoloRequest.npais_proce,
+                        num_ide = d.DepuracionProtocoloRequest.num_ide,
+                        nuni_modif = d.DepuracionProtocoloRequest.nuni_modif,
+                        ocupacion = d.DepuracionProtocoloRequest.ocupacion,
+                        pac_hos = d.DepuracionProtocoloRequest.pac_hos,
+                        per_etn = d.DepuracionProtocoloRequest.per_etn,
+                        pri_ape = d.DepuracionProtocoloRequest.pri_ape,
+                        pri_nom = d.DepuracionProtocoloRequest.pri_nom,
+                        recaida = d.DepuracionProtocoloRequest.recaida,
+                        seg_ape = d.DepuracionProtocoloRequest.seg_ape,
+                        seg_nom = d.DepuracionProtocoloRequest.seg_nom,
+                        semana = d.DepuracionProtocoloRequest.semana,
+                        sem_ges = d.DepuracionProtocoloRequest.sem_ges,
+                        sexo = d.DepuracionProtocoloRequest.sexo,
+                        telefono = d.DepuracionProtocoloRequest.telefono,
+                        tel_cont_2 = d.DepuracionProtocoloRequest.tel_cont_2,
+                        tel_dil_f = d.DepuracionProtocoloRequest.tel_dil_f,
+                        tel_oncolo = d.DepuracionProtocoloRequest.tel_oncolo,
+                        tipo_ca = d.DepuracionProtocoloRequest.tipo_ca,
+                        tip_cas = d.DepuracionProtocoloRequest.tip_cas,
+                        tip_ide = d.DepuracionProtocoloRequest.tip_ide,
+                        tip_ss = d.DepuracionProtocoloRequest.tip_ss,
+                        uni_med = d.DepuracionProtocoloRequest.uni_med,
+                        uni_modif = d.DepuracionProtocoloRequest.uni_modif,
+                        vereda = d.DepuracionProtocoloRequest.vereda,
+                        version = d.DepuracionProtocoloRequest.version,
+                    };
+                    depuracionProtocolos.Add(dep);
+                }
+
+                _context.DepuracionManualProtocolos.AddRange(depuracionProtocolos);
+                _context.SaveChanges();
+
+                ReporteDepuracion reporte = new ReporteDepuracion()
+                {
+                    Estado = "Procesada",
+                    Fecha = DateOnly.FromDateTime(DateTime.Now),
+                    Hora = TimeOnly.FromDateTime(DateTime.Now),
+                    Recaidas = recaidas,
+                    RegistrosDuplicados = duplicados,
+                    RegistrosIngresados = ingresados,
+                    RegistrosNuevos = nuevos,
+                    SegundasNeoplasias = segundaNeoplasia
                 };
 
+                _context.ReporteDepuracions.AddRange(reporte);
+                _context.SaveChanges();
+
+                response.Nuevos = nuevos;
+                response.Recaidas = recaidas;
+                response.SegundasNeoplasias = segundaNeoplasia;
+                response.Estado = reporte.Estado;
             }
-
-
-            Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new Dictionary<string, List<DepuracionProtocolo>>();
-            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new Dictionary<string, List<DepuracionProtocolo>>();
-
-            Dictionary<string, List<DepuracionProtocolo>> DfechaDefuncion = new Dictionary<string, List<DepuracionProtocolo>>();
-
-            foreach (DepuracionProtocolo r in listaDepuracion)
+            catch (Exception ex)
             {
-                //mismo tipo y numero de identificacion
-                if (DTipoNumeroDocumento.ContainsKey(r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide))
+                ReporteDepuracion reporte = new ReporteDepuracion()
                 {
-                    DTipoNumeroDocumento[r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide].Add(r);
-                }
-                else
-                {
-                    DTipoNumeroDocumento.Add(r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide, new List<DepuracionProtocolo>());
-                    DTipoNumeroDocumento[r.DepuracionProtocoloRequest.tip_ide + " " + r.DepuracionProtocoloRequest.num_ide].Add(r);
-                }
+                    Estado = "Procesada",
+                    Fecha = DateOnly.FromDateTime(DateTime.Now),
+                    Hora = TimeOnly.FromDateTime(DateTime.Now),
+                    Recaidas = recaidas,
+                    RegistrosDuplicados = duplicados,
+                    RegistrosIngresados = ingresados,
+                    RegistrosNuevos = nuevos,
+                    SegundasNeoplasias = segundaNeoplasia
+                };
 
-                //mismo nombre y tipo de cancer 
-                if (DNombreTipoCancer.ContainsKey(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " "/*falta la columna de tipo de cancer*/))
-                {
-                    DNombreTipoCancer[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape].Add(r);
-                }
-                else
-                {
-                    DNombreTipoCancer.Add(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape, new List<DepuracionProtocolo>());
-                    DNombreTipoCancer[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape].Add(r);
-                }
+                _context.ReporteDepuracions.AddRange(reporte);
+                _context.SaveChanges();
 
-                //mismo nombre y fecha de notificacion
-                if (DNombreFechaNotificacion.ContainsKey(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not))
-                {
-                    DNombreFechaNotificacion[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not].Add(r);
-                }
-                else
-                {
-                    DNombreFechaNotificacion.Add(r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not, new List<DepuracionProtocolo>());
-                    DNombreFechaNotificacion[r.DepuracionProtocoloRequest.pri_nom + " " + r.DepuracionProtocoloRequest.seg_nom + " " + r.DepuracionProtocoloRequest.pri_ape + " " + r.DepuracionProtocoloRequest.seg_ape + " " + r.DepuracionProtocoloRequest.fec_not].Add(r);
-                }
+                response.Nuevos = nuevos;
+                response.Recaidas = recaidas;
+                response.SegundasNeoplasias = segundaNeoplasia;
+                response.Estado = reporte.Estado;
             }
-
-            //identificacion de fallecidos
-            DFallecido = this.IdentificacionFallecidos(DTipoNumeroDocumento, DNombreTipoCancer, DNombreFechaNotificacion);
-
-            //falta recorrido del caso
-
-            //mayor trazabilidad
-            DTrazabilidad = IdentificacionMayorTrazabilidad(DTipoNumeroDocumento, DNombreTipoCancer, DNombreFechaNotificacion, DFallecido);
-
-            //falta verificacion del tipo de cancer
-
-            //falta casos de años anteriores
-
-            //falta casos con diferentes ipos de cancer
-
-            //falta eliminacion de registros    
-
-            //caso mas oportuno es el ultimo
 
             return response;
         }
 
-        private Dictionary<string, List<DepuracionProtocolo>> IdentificacionFallecidos(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion)
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
         {
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido = new Dictionary<string, List<DepuracionProtocolo>>();
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
 
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
+            NNAs? nna = null;
+            if (seguimiento != null)
             {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_def != null &&
-                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
-                    {
-                        if (DFallecido.ContainsKey(par.Key))
-                        {
-                            DFallecido[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
-                            DFallecido[par.Key].Add(r);
-                        }
-                    }
-                }
+                nna = (from nn in _context.NNAs
+                       where nn.Id == seguimiento.NNAId
+                       select nn).FirstOrDefault();
             }
 
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreTipoCancer)
+            if (nna != null)
             {
-                foreach (DepuracionProtocolo r in par.Value)
-                {
-                    if (r.DepuracionProtocoloRequest.fec_def != null &&
-                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
-                    {
-                        if (DFallecido.ContainsKey(par.Key))
-                        {
-                            DFallecido[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
-                            DFallecido[par.Key].Add(r);
-                        }
-                    }
-                }
-            }
+                nna.ResidenciaOrigenMunicipioId = request.residenciaOrigen.IdMunicipio;
+                nna.ResidenciaOrigenBarrio = request.residenciaOrigen.Barrio;
+                nna.ResidenciaOrigenAreaId = request.residenciaOrigen.IdArea;
+                nna.ResidenciaOrigenDireccion = request.residenciaOrigen.Direccion;
+                nna.ResidenciaOrigenEstratoId = request.residenciaOrigen.IdEstrato;
+                nna.ResidenciaOrigenTelefono = request.residenciaOrigen.TelefonoFijo;
 
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreFechaNotificacion)
-            {
-                foreach (DepuracionProtocolo r in par.Value)
+                if (request.residenciaDestino != null)
                 {
-                    if (r.DepuracionProtocoloRequest.fec_def != null &&
-                        r.DepuracionProtocoloRequest.fec_def.Trim() != "-   -")
-                    {
-                        if (DFallecido.ContainsKey(par.Key))
-                        {
-                            DFallecido[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DFallecido.Add(par.Key, new List<DepuracionProtocolo>());
-                            DFallecido[par.Key].Add(r);
-                        }
-                    }
+                    nna.ResidenciaActualMunicipioId = request.residenciaDestino.IdMunicipio;
+                    nna.ResidenciaActualBarrio = request.residenciaDestino.Barrio;
+                    nna.ResidenciaActualAreaId = request.residenciaDestino.IdArea;
+                    nna.ResidenciaActualDireccion = request.residenciaDestino.Direccion;
+                    nna.ResidenciaActualEstratoId = request.residenciaDestino.IdEstrato;
+                    nna.ResidenciaActualTelefono = request.residenciaDestino.TelefonoFijo;
                 }
-            }
 
-            return DFallecido;
+                nna.TrasladoTieneCapacidadEconomica = request.CapacidadEconomicaTraslado;
+                nna.TrasladoEAPBSuministroApoyo = request.ServiciosSocialesEAPB;
+                nna.TrasladosServiciosdeApoyoOportunos = request.ServiciosSocialesEntregados;
+                nna.TrasladosServiciosdeApoyoCobertura = request.ServiciosSocialesCobertura;
+                nna.TrasladosHaSolicitadoApoyoFundacion = request.ApoyoRecibidoFundacion;
+                nna.TrasladosNombreFundacion = request.NombreFundacion;
+                nna.TrasladosPropietarioResidenciaActualId = request.IdTipoResidenciaActual;
+                nna.TrasladosQuienAsumioCostosTraslado = request.AsumeCostoTraslado;
+                nna.TrasladosQuienAsumioCostosVivienda = request.AsumeCostoVivienda;
+                _context.NNAs.Update(nna);
+                _context.SaveChanges();
+            }
         }
 
-        private Dictionary<string, List<DepuracionProtocolo>> IdentificacionMayorTrazabilidad(Dictionary<string, List<DepuracionProtocolo>> DTipoNumeroDocumento,
-            Dictionary<string, List<DepuracionProtocolo>> DNombreTipoCancer, Dictionary<string, List<DepuracionProtocolo>> DNombreFechaNotificacion,
-            Dictionary<string, List<DepuracionProtocolo>> DFallecido)
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
         {
-            Dictionary<string, List<DepuracionProtocolo>> DTrazabilidad = new Dictionary<string, List<DepuracionProtocolo>>();
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DTipoNumeroDocumento)
-            {
-                if (!DFallecido.ContainsKey(par.Key))
-                {
-                    foreach (DepuracionProtocolo r in par.Value)
-                    {
-                        if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                            && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                            && r.DepuracionProtocoloRequest.fec_tomadd != null)
-                        {
-                            if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
-                            {
-                                value.Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                        else if (r.DepuracionProtocoloRequest.fec_initra != null)
-                        {
-                            if (DTrazabilidad.ContainsKey(par.Key))
-                            {
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                            else
-                            {
-                                DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                                DTrazabilidad[par.Key].Add(r);
-                            }
-                        }
-                    }
-                }
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
 
-            }
-
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreTipoCancer)
+            if (seguimiento != null)
             {
-                foreach (DepuracionProtocolo r in par.Value)
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
                 {
-                    if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                           && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                        && r.DepuracionProtocoloRequest.fec_tomadd != null)
-                    {
-                        if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
-                        {
-                            value.Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
+
+                    nna.DiagnosticoId = request.IdDiagnostico;
+                    nna.FechaConsultaDiagnostico = request.FechaDiagnostico;
+                    nna.FechaConsultaOrigenReporte = request.FechaConsulta;
+                    nna.FechaInicioTratamiento = request.FechaInicioTratamiento;
+                    nna.IPSId = request.IdIPS;
+                    nna.Recaida = request.Recaidas;
+                    nna.CantidadRecaidas = request.NumeroRecaidas;
+                    nna.FechaUltimaRecaida = request.FechaUltimaRecaida;
+                    nna.MotivoNoDiagnosticoId = request.IdMotivoNoDiagnostico;
+                    nna.MotivoNoDiagnosticoOtro = request.RazonNoDiagnostico;
                 }
             }
+        }
 
-            foreach (KeyValuePair<string, List<DepuracionProtocolo>> par in DNombreFechaNotificacion)
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
             {
-                foreach (DepuracionProtocolo r in par.Value)
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
                 {
-                    if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                            && r.DepuracionProtocoloRequest.fec_tomadd != null && r.DepuracionProtocoloRequest.fec_res_dd != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null
-                        && r.DepuracionProtocoloRequest.fec_tomadd != null)
-                    {
-                        if (DTrazabilidad.TryGetValue(par.Key, out List<DepuracionProtocolo>? value))
-                        {
-                            value.Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null && r.DepuracionProtocoloRequest.fec_res_dp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null && r.DepuracionProtocoloRequest.fec_tomadp != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
-                    else if (r.DepuracionProtocoloRequest.fec_initra != null)
-                    {
-                        if (DTrazabilidad.ContainsKey(par.Key))
-                        {
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                        else
-                        {
-                            DTrazabilidad.Add(par.Key, new List<DepuracionProtocolo>());
-                            DTrazabilidad[par.Key].Add(r);
-                        }
-                    }
+                    nna.DifAutorizaciondeMedicamentos = request.AutorizacionMedicamento;
+                    nna.DifEntregaMedicamentosLAP = request.EntregaMedicamentoLAP;
+                    nna.DifEntregaMedicamentosNoLAP = request.EntregaMedicamentoNoLAP;
+                    nna.DifAsignaciondeCitas = request.AsignacionCitas;
+                    nna.DifHanCobradoCuotasoCopagos = request.CobradoCopagos;
+                    nna.DifAutorizacionProcedimientos = request.AutorizacionProcedimientos;
+                    nna.DifRemisionInstitucionesEspecializadas = request.RemisionEspecialistas;
+                    nna.DifMalaAtencionIPS = request.MalaAtencionIPS;
+                    nna.DifMalaAtencionNombreIPSId = request.IdMalaIPS;
+                    nna.DifFallasenMIPRES = request.FallasMIPRES;
+                    nna.DifFallaConvenioEAPBeIPSTratante = request.FallasConvenio;
+                    nna.CategoriaAlertaId = request.IdCategoriaAlerta;
+                    nna.SubcategoriaAlertaId = request.IdSubcategoriaAlerta;
+                    nna.TrasladosHaSidoTrasladadodeInstitucion = request.HaSidoTrasladado;
+                    nna.TrasladosNumerodeTraslados = request.NumeroTraslados;
+                    nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal;
+                    nna.TrasladosTipoAccionLegalId = request.IdTipoRecurso;
+                    nna.TrasladosMotivoAccionLegal = request.MotivoAccionLegal;
                 }
             }
+        }
 
-            return DTrazabilidad;
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+                    nna.TratamientoHaDejadodeAsistir = request.HaDejadoTratamiento;
+                    nna.TratamientoCuantoTiemposinAsistir = request.TiempoDejadoTratamiento;
+                    nna.TratamientoUnidadMedidaIdTiempoId = request.IdUnidadTiempoDejadoTratamiento;
+                    nna.TratamientoCausasInasistenciaId = request.IdCausaInasistenciaTratamiento;
+                    nna.TratamientoCausasInasistenciaOtra = request.OtraCausaDejadoTratamiento;
+                    nna.TratamientoEstudiaActualmente = request.EstudiaActualmente;
+                    nna.TratamientoHaDejadodeAsistirColegio = request.HaDejadoEstudiar;
+                    nna.TratamientoTiempoInasistenciaColegio = request.CuantoTiempoDejadoEstudiar;
+
+                }
+            }
         }
     }
 

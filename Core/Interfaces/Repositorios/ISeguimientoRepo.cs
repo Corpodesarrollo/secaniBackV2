@@ -18,10 +18,6 @@ namespace Core.Interfaces.Repositorios
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal);
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId);
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request);
-        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request);
-        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request);
-        public void SetDificultadesProceso(DificultadesProcesoRequest request);
-        public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
         public GetNNaParcialResponse GetNNaById(long id);
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
         Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);

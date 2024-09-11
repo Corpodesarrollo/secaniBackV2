@@ -61,7 +61,7 @@
         public bool? TrasladoEAPBSuministroApoyo { get; set; }
         public bool? TrasladosServiciosdeApoyoOportunos { get; set; }
         public bool? TrasladosServiciosdeApoyoCobertura { get; set; }
-        public string? TrasladosHaSolicitadoApoyoFundacion { get; set; }
+        public bool? TrasladosHaSolicitadoApoyoFundacion { get; set; }
         public string? TrasladosNombreFundacion { get; set; }
         public string? TrasladosApoyoRecibidoxFundacion { get; set; }
         public bool? DifAutorizaciondeMedicamentos { get; set; }
@@ -85,7 +85,7 @@
         public bool? TratamientoHaDejadodeAsistir { get; set; }
         public int? TratamientoCuantoTiemposinAsistir { get; set; }
         public string? TratamientoUnidadMedidaIdTiempoId { get; set; }
-        public int? TratamientoCausasInasistenciaId { get; set; }
+        public string? TratamientoCausasInasistenciaId { get; set; }
         public string? TratamientoCausasInasistenciaOtra { get; set; }
         public bool? TratamientoEstudiaActualmente { get; set; }
         public bool? TratamientoHaDejadodeAsistirColegio { get; set; }
@@ -94,7 +94,7 @@
         public bool? TratamientoHaSidoInformadoClaramente { get; set; }
         public string? TratamientoObservaciones { get; set; }
         public string? CuidadorNombres { get; set; }
-        public int? CuidadorParentescoId { get; set; }
+        public string? CuidadorParentescoId { get; set; }
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }
         public string? SeguimientoLoDesea { get; set; }
@@ -109,9 +109,10 @@
         public string? OrigenReporteOtro { get; set; }
         public string? PaisId { get; set; }
         public string? TrasladosMotivoAccionLegal { get; set; }
-        public int? TrasladosPropietarioResidenciaActualId { get; set; }
+        public string? TrasladosPropietarioResidenciaActualId { get; set; }
         public string? TrasladosPropietarioResidenciaActualOtro { get; set; }
         public string? TrasladosQuienAsumioCostosTraslado { get; set; }
         public string? TrasladosQuienAsumioCostosVivienda { get; set; }
+        public bool? TratamientoRequirioCambiodeCiudad { get; set; }
     }
 }

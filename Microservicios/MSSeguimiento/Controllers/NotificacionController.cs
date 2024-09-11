@@ -2,6 +2,7 @@
 using Core.request;
 using Core.Request;
 using Core.response;
+using Core.Response;
 using Infra.Repositorios;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,6 +45,18 @@ namespace MSSeguimiento.Api.Controllers
         public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
             notificacionRepo.EliminarNotificacion(request);
+        }
+
+        [HttpPost("EnviarOficioNotificacion")]
+        public async Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
+        {
+            return await notificacionRepo.EnviarOficioNotificacion(request);
+        }
+
+        [HttpPost("VerOficioNotificacion")]
+        public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request)
+        {
+            return notificacionRepo.VerOficioNotificacion(request);
         }
 
 

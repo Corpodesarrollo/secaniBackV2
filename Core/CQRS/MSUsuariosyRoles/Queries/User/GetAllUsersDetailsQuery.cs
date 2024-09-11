@@ -27,8 +27,12 @@ namespace Core.CQRS.MSUsuariosyRoles.Queries.User
             {
                 Id = x.id,
                 Email = x.email,
-                UserName = x.userName
-                //Roles = (IList<string>)_identityService.GetUserRolesAsync(x.id) // Converstion problem
+                UserName = x.userName,
+                FullName = x.fullName,
+                Telefonos = x.telefonos,
+                EntidadId = x.entidadId,
+                Cargo = x.cargo,
+                ActivoName = x.activoName
             }).ToList();
 
             foreach (var user in userDetails)

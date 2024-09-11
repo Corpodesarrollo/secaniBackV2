@@ -19,8 +19,8 @@ namespace Core.CQRS.MSUsuariosyRoles.Queries.User
         }
         public async Task<UserDetailsResponseDTO> Handle(GetUserDetailsByUserNameQuery request, CancellationToken cancellationToken)
         {
-            var (userId, fullName, userName, email, roles) = await _identityService.GetUserDetailsByUserNameAsync(request.UserName);
-            return new UserDetailsResponseDTO() { Id = userId, FullName = fullName, UserName = userName, Email = email, Roles = roles };
+            var (userId, fullName, userName, email, telefonos, entidadId, cargo, activoName, roles) = await _identityService.GetUserDetailsByUserNameAsync(request.UserName);
+            return new UserDetailsResponseDTO() { Id = userId, FullName = fullName, UserName = userName, Email = email, Telefonos = telefonos, EntidadId = entidadId, Cargo = cargo, ActivoName = activoName, Roles = roles };
         }
     }
 }

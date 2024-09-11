@@ -6,7 +6,7 @@ namespace Core.Modelos
     [Table("NotificacionesEntidad")]
     public class NotificacionEntidad : BaseEntity
     {
-        public string EntidadId { get; set; }
+        public long EntidadId { get; set; }
         public string Cierre { get; set; }
         public string CiudadEnvio { get; set; }
         public DateTime FechaEnvio { get; set; }

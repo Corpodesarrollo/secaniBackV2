@@ -25,7 +25,11 @@ namespace Core.CQRS.MSUsuariosyRoles.Queries.User
                 Id = x.id,
                 FullName = x.fullName,
                 UserName = x.userName,
-                Email = x.email
+                Email = x.email,
+                Telefonos = x.telefonos,
+                EntidadId = x.entidadId,
+                Cargo = x.cargo,
+                ActivoName = x.activoName
             }).ToList();
         }
     }

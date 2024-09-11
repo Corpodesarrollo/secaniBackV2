@@ -6,5 +6,6 @@
         public string Observaciones { get; set; }
         public int SeguimientoId { get; set; }
         public int EstadoId { get; set; }
+        public string Username {  get; set; }
     }
 }

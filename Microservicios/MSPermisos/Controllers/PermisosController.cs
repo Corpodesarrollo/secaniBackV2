@@ -24,12 +24,27 @@ namespace MSPermisos.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("Role/{roleid}")]
-        public async Task<IActionResult> GetAllByRoleId(string roleid)
+        [HttpGet("GetByRoleId/{id}")]
+        public async Task<IActionResult> GetByRoleId(string id)
         {
-            var result = await _service.GetAllByRoleIdAsync(roleid, cancellationToken: default);
+            var result = await _service.GetAllByRoleIdAsync(id, cancellationToken: default);
             return Ok(result);
         }
+
+        [HttpGet("GetByModuloId/{id}")]
+        public async Task<IActionResult> GetByModuloId(int id)
+        {
+            var result = await _service.GetAllByModuloIdAsync(id, cancellationToken: default);
+            return Ok(result);
+        }
+
+        [HttpGet("GetByRoleandModuloId/{roleId}/{moduloId}")]
+        public async Task<IActionResult> GetByRoleandModuloId(string roleId, int moduloId)
+        {
+            var result = await _service.GetAllByModuloandRoleAsync(roleId, moduloId, cancellationToken: default);
+            return Ok(result);
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> Add(PermisoRequestDTO dto)
