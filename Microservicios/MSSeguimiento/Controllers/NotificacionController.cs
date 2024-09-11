@@ -48,7 +48,7 @@ namespace MSSeguimiento.Api.Controllers
 
 
         [HttpGet("GetNotificacionEntidadCasos")]
-        public List<GetNotificacionesEntidadResponse> GetNotificacionEntidadCasos(int entidadId, int alertaSeguimientoId, int nnaId)
+        public List<GetNotificacionesEntidadResponse> GetNotificacionEntidadCasos(string entidadId, int alertaSeguimientoId, int nnaId)
         {
 
             List<GetNotificacionesEntidadResponse> response = notificacionRepo.RepoNotificacionEntidadCasos(entidadId, alertaSeguimientoId, nnaId);

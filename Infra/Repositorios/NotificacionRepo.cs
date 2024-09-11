@@ -150,7 +150,7 @@ namespace Infra.Repositories
         }
 
 
-        public List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(int entidadId, int alertaSeguimientoId, int nnaId)
+        public List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(string entidadId, int alertaSeguimientoId, int nnaId)
         {
             List<GetNotificacionesEntidadResponse> notificacionEntidad = (from ne in _context.NotificacionesEntidad
                                                                           where ne.EntidadId == entidadId

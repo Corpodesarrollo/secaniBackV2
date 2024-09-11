@@ -13,7 +13,7 @@ namespace MSSeguimiento.Api.Controllers
     [Route("[controller]")]
     public class SeguimientoController : ControllerBase
     {
-        private ISeguimientoRepo seguimientoRepo;
+        private readonly ISeguimientoRepo seguimientoRepo;
 
         public SeguimientoController(ISeguimientoRepo seguimiento)
         {

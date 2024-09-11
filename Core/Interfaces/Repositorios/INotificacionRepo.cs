@@ -10,7 +10,7 @@ namespace Core.Interfaces.Repositorios
         public string GenerarOficioNotificacion(OficioNotificacionRequest request);
         public void EliminarNotificacion(EliminarNotificacionRequest request);
 
-        List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(int entidadId, int alertaSeguimientoId, int nnaId);
+        List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(string entidadId, int alertaSeguimientoId, int nnaId);
         List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId);
     }
 }

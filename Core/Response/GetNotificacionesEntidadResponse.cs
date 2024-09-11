@@ -2,7 +2,7 @@
 {
     public class GetNotificacionesEntidadResponse
     {
-        public long EntidadId { get; set; }
+        public string EntidadId { get; set; }
         public string CiudadEnvio { get; set; }
         public DateTime FechaEnvio { get; set; }
         public long AlertaSeguimientoId { get; set; }
