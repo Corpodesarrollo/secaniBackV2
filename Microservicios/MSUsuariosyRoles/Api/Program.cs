@@ -52,13 +52,14 @@ builder.CustomConfigureServices();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", builder =>
-    {
-        builder
+    options.AddPolicy("CorsPolicy",
+        builder =>
+        {
+            _ = builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+            .AllowAnyHeader()
             .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
-    });
+            .AllowAnyMethod();
+        });
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

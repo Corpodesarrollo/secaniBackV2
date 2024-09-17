@@ -1,11 +1,10 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
+using Core.Modelos;
 using Core.Request;
 using Core.response;
 using Core.Response;
 using Microsoft.AspNetCore.Mvc;
-using Infra.Repositorios;
-using Core.Modelos;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -29,7 +28,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetCntSeguimiento/{UsuarioId}")]
- 
+
         public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string UsuarioId)
         {
 
@@ -37,7 +36,7 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
         [HttpGet("{id}")]
- 
+
         public ActionResult<Seguimiento> GetById(long id)
         {
             var seguimiento = seguimientoRepo.GetById(id);
@@ -98,7 +97,7 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo.SetEstadoDiagnosticoTratamiento(request);
         }
 
-        [HttpGet("GetSeguimientosNNA")]
+        [HttpGet("GetSeguimientosNNA/{idNNA}")]
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
 
