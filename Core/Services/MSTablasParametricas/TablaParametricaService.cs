@@ -1,5 +1,4 @@
 ﻿using Core.Modelos.Common;
-using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Core.Services.MSTablasParametricas
@@ -45,7 +44,7 @@ namespace Core.Services.MSTablasParametricas
             return entities;
         }
 
-        public async Task<List<TPExternalEntityBase>> GetBynomTREFCodigo(string nomTREF, string Codigo, CancellationToken cancellationToken)
+        public async Task<List<TPExternalEntityBase>> GetBynomTREFCodigo(string nomTREF, int? Codigo, CancellationToken cancellationToken)
         {
             var response = await _httpClient.GetAsync(_baseUrl + nomTREF + "/" + Codigo, cancellationToken);
             response.EnsureSuccessStatusCode();
@@ -151,7 +150,7 @@ namespace Core.Services.MSTablasParametricas
 
             var result = JsonDocument.Parse(responseBody);
             var items = result.RootElement.GetProperty("items");
-            IEnumerable <JsonElement> filterItems = new List<JsonElement>();
+            IEnumerable<JsonElement> filterItems = new List<JsonElement>();
 
             if (items.GetArrayLength() > 0)
             {

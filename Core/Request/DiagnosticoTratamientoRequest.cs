@@ -3,7 +3,7 @@
     public class DiagnosticoTratamientoRequest
     {
         public int IdSeguimiento { get; set; }
-        public string IdDiagnostico { get; set; }
+        public int? IdDiagnostico { get; set; }
         public DateTime? FechaConsulta { get; set; }
         public DateTime? FechaDiagnostico { get; set; }
         public DateTime? FechaInicioTratamiento { get; set; }

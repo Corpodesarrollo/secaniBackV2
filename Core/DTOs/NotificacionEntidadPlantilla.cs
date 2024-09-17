@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.DTOs
+﻿namespace Core.DTOs
 {
     public class NotificacionEntidadPlantilla
     {
@@ -23,7 +17,7 @@ namespace Core.DTOs
         public string SegundoApellidoNNA { get; set; }
         public string DocumentoNNA { get; set; }
         public int EdadNNA { get; set; }
-        public string DiagnosticoNNA { get; set; }
+        public int? DiagnosticoNNA { get; set; }
         public string TelefonoAcudienteNNA { get; set; }
         public string Cierre { get; set; }
         public string Firma { get; set; }
