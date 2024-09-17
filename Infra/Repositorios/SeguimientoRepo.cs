@@ -4,6 +4,7 @@ using Core.Modelos;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using Core.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios
@@ -91,6 +92,45 @@ namespace Infra.Repositorios
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id)
+        {
+            try
+            {
+                var result = await (from n in _context.NNAs
+                                    join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diag
+                                    from diagnostico in diag.DefaultIfEmpty()
+                                    where n.Id == id
+                                    select new SeguimientoDatosNNADto
+                                    {
+                                        NombreCompleto = string.Join(" ", n.PrimerNombre, n.SegundoNombre, n.PrimerApellido, n.SegundoApellido),
+                                        Diagnostico = diagnostico.Nombre,
+                                        FechaNacimiento = n.FechaNacimiento,
+                                        FechaIngresoEstrategia = n.FechaIngresoEstrategia,
+                                        FechaInicioSeguimiento = (from s in _context.Seguimientos
+                                                                  where s.NNAId == id
+                                                                  orderby s.Id descending
+                                                                  select s.FechaSeguimiento).FirstOrDefault(),
+                                        SeguimientosRealizados = (from s in _context.Seguimientos
+                                                                  where s.NNAId == id
+                                                                  select s).Count()
+                                    }).FirstOrDefaultAsync();
+
+                if (result != null)
+                {
+                    result.Edad = Funciones.CalcularEdad(result.FechaNacimiento);
+                    result.TiempoTranscurrido = Funciones.CalcularTiempoTrascurrido(result.FechaInicioSeguimiento!.Value);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+
 
         public Seguimiento? GetById(long id)
         {
@@ -298,7 +338,7 @@ namespace Infra.Repositorios
             return response;
         }
 
-        
+
 
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
         {
@@ -314,9 +354,9 @@ namespace Infra.Repositorios
             }
         }
 
-       
 
-       
+
+
 
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {

@@ -3,6 +3,7 @@ using Core.request;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using Infra.Repositorios;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -56,6 +57,23 @@ namespace MSSeguimiento.Api.Controllers
         public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request)
         {
             return notificacionRepo.VerOficioNotificacion(request);
+        }
+
+
+        [HttpGet("GetNotificacionEntidadCasos")]
+        public List<GetNotificacionesEntidadResponse> GetNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId)
+        {
+
+            List<GetNotificacionesEntidadResponse> response = notificacionRepo.RepoNotificacionEntidadCasos(entidadId, alertaSeguimientoId, nnaId);
+            return response;
+        }
+
+        [HttpGet("GetListaCasosNotificacion")]
+        public List<GetListaCasosResponse> GetListaCasosNotificacion(int eapbId, int epsId)
+        {
+
+            List<GetListaCasosResponse> response = notificacionRepo.RepoListaCasosNotificacion(eapbId, epsId);
+            return response;
         }
     }
 }
