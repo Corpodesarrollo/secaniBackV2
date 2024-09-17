@@ -35,8 +35,16 @@ namespace MSSeguimiento.Api.Controllers
             var response = await seguimientoRepo.GetCntSeguimiento(UsuarioId);
             return response;
         }
-        [HttpGet("{id}")]
 
+        [HttpGet("SeguimientoNNA/{IdNNA}")]
+        public async Task<SeguimientoDatosNNADto?> SeguimientoNNA(long IdNNA)
+        {
+
+            var response = await seguimientoRepo.SeguimientoNNA(IdNNA);
+            return response;
+        }
+
+        [HttpGet("{id}")]
         public ActionResult<Seguimiento> GetById(long id)
         {
             var seguimiento = seguimientoRepo.GetById(id);

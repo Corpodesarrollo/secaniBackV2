@@ -23,5 +23,6 @@ namespace Core.Interfaces.Repositorios
         Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);
         Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id);
         public string SetSeguimiento(SetSeguimientoRequest request);
+        Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id);
     }
 }
