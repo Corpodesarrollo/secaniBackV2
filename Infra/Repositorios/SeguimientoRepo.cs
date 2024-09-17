@@ -98,7 +98,7 @@ namespace Infra.Repositorios
             try
             {
                 var result = await (from n in _context.NNAs
-                                    join d in _context.CIE10s on n.DiagnosticoId equals d.Codigo into diag
+                                    join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diag
                                     from diagnostico in diag.DefaultIfEmpty()
                                     where n.Id == id
                                     select new SeguimientoDatosNNADto

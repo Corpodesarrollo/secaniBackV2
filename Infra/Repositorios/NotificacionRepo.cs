@@ -9,8 +9,6 @@ using PuppeteerSharp.Media;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
-using Infra.Repositorios;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositories
 {
@@ -212,7 +210,7 @@ namespace Infra.Repositories
                                          notificacionEntidadPlantilla.PrimerApellidoNNA, " ", notificacionEntidadPlantilla.SegundoApellidoNNA))
                                          .Replace("{{DocumentoNNA}}", notificacionEntidadPlantilla.DocumentoNNA)
                                          .Replace("{{EdadNNA}}", Convert.ToString(notificacionEntidadPlantilla.EdadNNA))
-                                         .Replace("{{DiagnosticoNNA}}", notificacionEntidadPlantilla.DiagnosticoNNA)
+                                         .Replace("{{DiagnosticoNNA}}", notificacionEntidadPlantilla.DiagnosticoNNA.ToString())
                                          .Replace("{{TelefonoAcudienteNNA}}", notificacionEntidadPlantilla.TelefonoAcudienteNNA)
                                          .Replace("{{Cierre}}", notificacionEntidadPlantilla.Cierre)
                                          .Replace("{{Firma}}", notificacionEntidadPlantilla.Firma);
@@ -329,11 +327,11 @@ namespace Infra.Repositories
                                                                           where ne.EntidadId == entidadId
                                                                           && ne.AlertaSeguimientoId == alertaSeguimientoId
                                                                           && ne.NNAId == nnaId
-                
+
                                                                           select new GetNotificacionesEntidadResponse()
                                                                           {
                                                                               EntidadId = ne.EntidadId,
-                                                                            
+
                                                                               CiudadEnvio = ne.CiudadEnvio,
                                                                               FechaEnvio = ne.FechaEnvio,
                                                                               AlertaSeguimientoId = ne.AlertaSeguimientoId,
@@ -345,10 +343,10 @@ namespace Infra.Repositories
                                                                               PlantillaId = ne.PlantillaId,
                                                                               Asunto = ne.Asunto,
                                                                               Mensaje = ne.Mensaje,
-                                                                            EnlaceParaRecibirRespuestas = ne.EnlaceParaRecibirRespuestas,
-                                                                            Comentario = ne.Comentario,
-                                                                            Firmajpg = ne.Firmajpg,
-                                                                            ArchivoAdjunto = ne.ArchivoAdjunto
+                                                                              EnlaceParaRecibirRespuestas = ne.EnlaceParaRecibirRespuestas,
+                                                                              Comentario = ne.Comentario,
+                                                                              Firmajpg = ne.Firmajpg,
+                                                                              ArchivoAdjunto = ne.ArchivoAdjunto
                                                                           }
                                                                           ).ToList();
 
@@ -356,29 +354,29 @@ namespace Infra.Repositories
         }
 
 
-        public List<GetListaCasosResponse> RepoListaCasosNotificacion( int eapbId, int epsId)
+        public List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId)
         {
-            List<GetListaCasosResponse> listaCasos =  (from n in _context.NNAs
-                                                         join s in _context.Seguimientos on n.Id equals s.NNAId
-                                                         join a in _context.AlertaSeguimientos on s.Id equals a.SeguimientoId
-                                                         
-                                                       where n.EAPBId == eapbId || n.EPSId == epsId
-                                                         group new { n, s, a } by new
-                                                         {
-                                                             NNAId = n.Id,
-                                                             n.FechaNotificacionSIVIGILA,
-                                                             n.EAPBId,
-                                                             Nombre = n.PrimerNombre + " " + n.SegundoNombre + " " + n.PrimerApellido + " " + n.SegundoApellido
-                                                         } into g
-                                                         select new
-                                                         {
-                                                             g.Key.NNAId,
-                                                             g.Key.FechaNotificacionSIVIGILA,
-                                                             g.Key.Nombre,
-                                                             g.Key.EAPBId,
-                                                             Seguimientos = g.Select(x => x.s).OrderByDescending(sg => sg.FechaSeguimiento).ToList(),  // Convertir a lista
-                                                             Estados = g.Select(x => x.a.EstadoId).Distinct()
-                                                         }).AsEnumerable() // Cambiar a evaluación en el cliente
+            List<GetListaCasosResponse> listaCasos = (from n in _context.NNAs
+                                                      join s in _context.Seguimientos on n.Id equals s.NNAId
+                                                      join a in _context.AlertaSeguimientos on s.Id equals a.SeguimientoId
+
+                                                      where n.EAPBId == eapbId || n.EPSId == epsId
+                                                      group new { n, s, a } by new
+                                                      {
+                                                          NNAId = n.Id,
+                                                          n.FechaNotificacionSIVIGILA,
+                                                          n.EAPBId,
+                                                          Nombre = n.PrimerNombre + " " + n.SegundoNombre + " " + n.PrimerApellido + " " + n.SegundoApellido
+                                                      } into g
+                                                      select new
+                                                      {
+                                                          g.Key.NNAId,
+                                                          g.Key.FechaNotificacionSIVIGILA,
+                                                          g.Key.Nombre,
+                                                          g.Key.EAPBId,
+                                                          Seguimientos = g.Select(x => x.s).OrderByDescending(sg => sg.FechaSeguimiento).ToList(),  // Convertir a lista
+                                                          Estados = g.Select(x => x.a.EstadoId).Distinct()
+                                                      }).AsEnumerable() // Cambiar a evaluación en el cliente
               .Select(g => new GetListaCasosResponse
               {
                   NNAId = g.NNAId,
