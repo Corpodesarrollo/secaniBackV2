@@ -122,5 +122,7 @@ namespace Infra
         public DbSet<ReporteDepuracion> ReporteDepuracions { get; set; }
 
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
+
+        public DbSet<Ausencias> Ausencias { get; set; }
     }
 }

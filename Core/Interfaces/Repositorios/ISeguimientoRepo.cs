@@ -14,7 +14,7 @@ namespace Core.Interfaces.Repositorios
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal);
         public int RepoSeguimientoActualizacionFecha(PutSeguimientoActualizacionFechaRequest request);
         public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request);
-        public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal);
+        public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal, string UsuarioId);
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal);
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId);
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request);
