@@ -15,13 +15,14 @@ builder.Services.AddSwaggerGen();
 
 builder.CustomConfigureServices();
 
-builder.Services.AddCors(p => p.AddPolicy("CorsPolicy", builder =>
+builder.Services.AddCors(options =>
 {
-    builder
-    .AllowAnyOrigin()
-    .AllowAnyMethod()
-    .AllowAnyHeader();
-}));
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials());
+});
 
 // Add Health Checks
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
@@ -43,7 +44,7 @@ app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.UseHttpsRedirection();
 
-app.UseCors("CorsPolicy");
+app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthorization();
 

@@ -30,7 +30,7 @@ namespace Infra.Repositorios
         {
             try
             {
-                var result = await _repository.GetByIdAsync(id) ?? throw new Exception("Entity not found");
+                var result = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Entity not found");
                 return result.Adapt<NNADto>();
             }
             catch (Exception ex)
@@ -45,7 +45,7 @@ namespace Infra.Repositorios
             var (success, response) = await _repository.AddAsync(entity);
             if (!success)
             {
-                throw new Exception("cannot add entity");
+                throw new KeyNotFoundException("cannot add entity");
             }
             return (success, response);
         }
@@ -55,7 +55,7 @@ namespace Infra.Repositorios
             var (success, response) = await _repository.UpdateAsync(entity);
             if (!success)
             {
-                throw new Exception("cannot update entity");
+                throw new KeyNotFoundException("cannot update entity");
             }
             return (success, response);
         }
@@ -67,9 +67,9 @@ namespace Infra.Repositorios
             return response;
         }
 
-        public NNAs ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
+        public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
-            var response = new NNAs();
+            var response = new NNAResponse();
 
             try
             {
@@ -77,7 +77,13 @@ namespace Infra.Repositorios
 
                 if (nnna != null)
                 {
-                    response = nnna;
+                    response = new NNAResponse()
+                    {
+                        NombreCompleto = string.Concat(nnna.PrimerNombre, " ", nnna.SegundoNombre, " ", nnna.PrimerApellido, " ", nnna.SegundoApellido),
+                        Diagnostico = "",
+                        FechaNacimiento = nnna.FechaNacimiento,
+                        Id = nnna.Id
+                    };
                 }
                 else
                 {
@@ -96,7 +102,7 @@ namespace Infra.Repositorios
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista = new();
+            List<FiltroNNA> lista;
 
             try
             {
@@ -112,44 +118,37 @@ namespace Infra.Repositorios
                     "EXEC dbo.SpConsultaNnaFiltro @Estado, @Agente, @Buscar, @Orden",
                     parameters
                 ).ToList();
-                if (results != null)
+
+                if (results.Any())
                 {
-                    if (results.Count() > 0)
-                    {
-                        response.Estado = true;
-                        response.Descripcion = "Consulta realizada con éxito.";
-                    }
-                    else
-                    {
-                        response.Estado = false;
-                        response.Descripcion = "No trajo datos en la consulta.";
-                    }
-
-                    foreach (var filtroNNA in results)
-                    {
-                        FiltroNNADto dto = new()
-                        {
-                            NoCaso = filtroNNA.NoCaso,
-                            NombreNNA = filtroNNA.NombreNNA,
-                            NoDocumento = filtroNNA.NoDocumento,
-                            UltimaActualizacion = filtroNNA.UltimaActualizacion,
-                            AgenteAsignado = filtroNNA.AgenteAsignado,
-                            EstadoId = filtroNNA.EstadoId,
-                            Estado = filtroNNA.Estado,
-                            EstadoDescripcion = filtroNNA.EstadoDescripcion,
-                            EstadoColorBG = filtroNNA.EstadoColorBG,
-                            EstadoColorText = filtroNNA.EstadoColorText
-                        };
-
-                        response.Datos.Add(dto);
-                    }
+                    response.Estado = true;
+                    response.Descripcion = "Consulta realizada con éxito.";
                 }
                 else
                 {
-                    response.Estado = true;
-                    response.Descripcion = "No trae información.";
-                    response.Datos = null;
+                    response.Estado = false;
+                    response.Descripcion = "No trajo datos en la consulta.";
                 }
+
+                foreach (var filtroNNA in results)
+                {
+                    FiltroNNADto dto = new()
+                    {
+                        NoCaso = filtroNNA.NoCaso,
+                        NombreNNA = filtroNNA.NombreNNA,
+                        NoDocumento = filtroNNA.NoDocumento,
+                        UltimaActualizacion = filtroNNA.UltimaActualizacion,
+                        AgenteAsignado = filtroNNA.AgenteAsignado,
+                        EstadoId = filtroNNA.EstadoId,
+                        Estado = filtroNNA.Estado,
+                        EstadoDescripcion = filtroNNA.EstadoDescripcion,
+                        EstadoColorBG = filtroNNA.EstadoColorBG,
+                        EstadoColorText = filtroNNA.EstadoColorText
+                    };
+
+                    response.Datos.Add(dto);
+                }
+
 
             }
             catch (Exception ex)
@@ -220,15 +219,21 @@ namespace Infra.Repositorios
 
 
 
-        public NNAs ConsultarNNAsById(long NNAId)
+        public NNAResponse ConsultarNNAsById(long NNAId)
         {
-            var response = new NNAs();
+            var response = new NNAResponse();
 
             try
             {
                 var nnna = (from nna in _context.NNAs
                             where nna.Id == NNAId
-                            select nna).FirstOrDefault();
+                            select new NNAResponse()
+                            {
+                                NombreCompleto = string.Concat(nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                Diagnostico = "",
+                                FechaNacimiento = nna.FechaNacimiento,
+                                Id = nna.Id
+                            }).FirstOrDefault();
 
                 if (nnna != null)
                 {
@@ -912,6 +917,145 @@ namespace Infra.Repositorios
             }
 
             return response;
+        }
+
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            NNAs? nna = null;
+            if (seguimiento != null)
+            {
+                nna = (from nn in _context.NNAs
+                       where nn.Id == seguimiento.NNAId
+                       select nn).FirstOrDefault();
+            }
+
+            if (nna != null)
+            {
+                nna.ResidenciaOrigenMunicipioId = request.residenciaOrigen.IdMunicipio;
+                nna.ResidenciaOrigenBarrio = request.residenciaOrigen.Barrio;
+                nna.ResidenciaOrigenAreaId = request.residenciaOrigen.IdArea;
+                nna.ResidenciaOrigenDireccion = request.residenciaOrigen.Direccion;
+                nna.ResidenciaOrigenEstratoId = request.residenciaOrigen.IdEstrato;
+                nna.ResidenciaOrigenTelefono = request.residenciaOrigen.TelefonoFijo;
+
+                if (request.residenciaDestino != null)
+                {
+                    nna.ResidenciaActualMunicipioId = request.residenciaDestino.IdMunicipio;
+                    nna.ResidenciaActualBarrio = request.residenciaDestino.Barrio;
+                    nna.ResidenciaActualAreaId = request.residenciaDestino.IdArea;
+                    nna.ResidenciaActualDireccion = request.residenciaDestino.Direccion;
+                    nna.ResidenciaActualEstratoId = request.residenciaDestino.IdEstrato;
+                    nna.ResidenciaActualTelefono = request.residenciaDestino.TelefonoFijo;
+                }
+
+                nna.TrasladoTieneCapacidadEconomica = request.CapacidadEconomicaTraslado;
+                nna.TrasladoEAPBSuministroApoyo = request.ServiciosSocialesEAPB;
+                nna.TrasladosServiciosdeApoyoOportunos = request.ServiciosSocialesEntregados;
+                nna.TrasladosServiciosdeApoyoCobertura = request.ServiciosSocialesCobertura;
+                nna.TrasladosHaSolicitadoApoyoFundacion = request.ApoyoRecibidoFundacion;
+                nna.TrasladosNombreFundacion = request.NombreFundacion;
+                nna.TrasladosPropietarioResidenciaActualId = request.IdTipoResidenciaActual;
+                nna.TrasladosQuienAsumioCostosTraslado = request.AsumeCostoTraslado;
+                nna.TrasladosQuienAsumioCostosVivienda = request.AsumeCostoVivienda;
+                _context.NNAs.Update(nna);
+                _context.SaveChanges();
+            }
+        }
+
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+
+                    nna.DiagnosticoId = request.IdDiagnostico;
+                    nna.FechaConsultaDiagnostico = request.FechaDiagnostico;
+                    nna.FechaConsultaOrigenReporte = request.FechaConsulta;
+                    nna.FechaInicioTratamiento = request.FechaInicioTratamiento;
+                    nna.IPSId = request.IdIPS;
+                    nna.Recaida = request.Recaidas;
+                    nna.CantidadRecaidas = request.NumeroRecaidas;
+                    nna.FechaUltimaRecaida = request.FechaUltimaRecaida;
+                    nna.MotivoNoDiagnosticoId = request.IdMotivoNoDiagnostico;
+                    nna.MotivoNoDiagnosticoOtro = request.RazonNoDiagnostico;
+                }
+            }
+        }
+
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+                    nna.DifAutorizaciondeMedicamentos = request.AutorizacionMedicamento;
+                    nna.DifEntregaMedicamentosLAP = request.EntregaMedicamentoLAP;
+                    nna.DifEntregaMedicamentosNoLAP = request.EntregaMedicamentoNoLAP;
+                    nna.DifAsignaciondeCitas = request.AsignacionCitas;
+                    nna.DifHanCobradoCuotasoCopagos = request.CobradoCopagos;
+                    nna.DifAutorizacionProcedimientos = request.AutorizacionProcedimientos;
+                    nna.DifRemisionInstitucionesEspecializadas = request.RemisionEspecialistas;
+                    nna.DifMalaAtencionIPS = request.MalaAtencionIPS;
+                    nna.DifMalaAtencionNombreIPSId = request.IdMalaIPS;
+                    nna.DifFallasenMIPRES = request.FallasMIPRES;
+                    nna.DifFallaConvenioEAPBeIPSTratante = request.FallasConvenio;
+                    nna.CategoriaAlertaId = request.IdCategoriaAlerta;
+                    nna.SubcategoriaAlertaId = request.IdSubcategoriaAlerta;
+                    nna.TrasladosHaSidoTrasladadodeInstitucion = request.HaSidoTrasladado;
+                    nna.TrasladosNumerodeTraslados = request.NumeroTraslados;
+                    nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal;
+                    nna.TrasladosTipoAccionLegalId = request.IdTipoRecurso;
+                    nna.TrasladosMotivoAccionLegal = request.MotivoAccionLegal;
+                }
+            }
+        }
+
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            Seguimiento? seguimiento = (from seg in _context.Seguimientos
+                                        where seg.Id == request.IdSeguimiento
+                                        select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                NNAs? nna = (from nn in _context.NNAs
+                             where nn.Id == seguimiento.NNAId
+                             select nn).FirstOrDefault();
+
+                if (nna != null)
+                {
+                    nna.TratamientoHaDejadodeAsistir = request.HaDejadoTratamiento;
+                    nna.TratamientoCuantoTiemposinAsistir = request.TiempoDejadoTratamiento;
+                    nna.TratamientoUnidadMedidaIdTiempoId = request.IdUnidadTiempoDejadoTratamiento;
+                    nna.TratamientoCausasInasistenciaId = request.IdCausaInasistenciaTratamiento;
+                    nna.TratamientoCausasInasistenciaOtra = request.OtraCausaDejadoTratamiento;
+                    nna.TratamientoEstudiaActualmente = request.EstudiaActualmente;
+                    nna.TratamientoHaDejadodeAsistirColegio = request.HaDejadoEstudiar;
+                    nna.TratamientoTiempoInasistenciaColegio = request.CuantoTiempoDejadoEstudiar;
+
+                }
+            }
         }
     }
 

@@ -12,5 +12,9 @@ namespace Core.Interfaces.Repositorios
         public void EliminarNotificacion(EliminarNotificacionRequest request);
         public Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
         public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request);
+
+
+        List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
+        List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId);
     }
 }

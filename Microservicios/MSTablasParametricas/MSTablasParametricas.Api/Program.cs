@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy",
         builder =>
         {
-            _ = builder.WithOrigins("http://localhost:4200", "http://localhost:4200")
+            _ = builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
             .AllowAnyHeader()
             .AllowAnyOrigin()
             .AllowAnyMethod();

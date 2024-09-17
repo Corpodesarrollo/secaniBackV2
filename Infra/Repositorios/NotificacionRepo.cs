@@ -1,14 +1,14 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using PuppeteerSharp;
+using PuppeteerSharp.Media;
+using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
-using System.Net;
-using Core.DTOs;
-using PuppeteerSharp.Media;
-using PuppeteerSharp;
 
 namespace Infra.Repositories
 {
@@ -29,11 +29,11 @@ namespace Infra.Repositories
                                                       where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
                                                       select new GetNotificacionResponse()
                                                       {
-                                                          IdNotificacion=un.Id,
+                                                          IdNotificacion = un.Id,
                                                           TextoNotificacion = string.Join("", "El Agente de seguimiento ", uOrigen.FullName ?? string.Empty,
                                                           " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A"),
                                                           FechaNotificacion = un.FechaNotificacion,
-                                                          URLNotificacion = un.Url==null?"":un.Url
+                                                          URLNotificacion = un.Url == null ? "" : un.Url
                                                       }).ToList();
 
             return response;
@@ -61,7 +61,7 @@ namespace Infra.Repositories
                                                         select ne).FirstOrDefault();
 
             Entidad? entidad = (from ent in _context.Entidades
-                                where  ent.Id == request.IdEntidad
+                                where ent.Id == request.IdEntidad
                                 select ent).FirstOrDefault();
 
             AlertaSeguimiento? alerta = (from als in _context.AlertaSeguimientos
@@ -69,8 +69,8 @@ namespace Infra.Repositories
                                          select als).FirstOrDefault();
 
             NNAs? nna = (from Tnna in _context.NNAs
-                        where Tnna.Id == request.IdNNA
-                        select Tnna).FirstOrDefault();
+                         where Tnna.Id == request.IdNNA
+                         select Tnna).FirstOrDefault();
 
             AspNetUsers? user = (from us in _context.AspNetUsers
                                  where us.UserName == request.UserName
@@ -139,7 +139,7 @@ namespace Infra.Repositories
         public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
             NotificacionesUsuario? notificacion = (from ne in _context.NotificacionesUsuarios
-                                                  where ne.Id == request.IdNotificacionUsuario
+                                                   where ne.Id == request.IdNotificacionUsuario
                                                    select ne).FirstOrDefault();
 
             if (notificacion != null)
@@ -188,7 +188,7 @@ namespace Infra.Repositories
 
             if (notificacionEntidadPlantilla != null)
             {
-                if(notificacionEntidadPlantilla.FechaNacimientoNNA != null)
+                if (notificacionEntidadPlantilla.FechaNacimientoNNA != null)
                 {
                     DateTime fechaNacimiento = notificacionEntidadPlantilla.FechaNacimientoNNA.Value;
                     notificacionEntidadPlantilla.EdadNNA = DateTime.Today.Year - fechaNacimiento.Year -
@@ -210,7 +210,7 @@ namespace Infra.Repositories
                                          notificacionEntidadPlantilla.PrimerApellidoNNA, " ", notificacionEntidadPlantilla.SegundoApellidoNNA))
                                          .Replace("{{DocumentoNNA}}", notificacionEntidadPlantilla.DocumentoNNA)
                                          .Replace("{{EdadNNA}}", Convert.ToString(notificacionEntidadPlantilla.EdadNNA))
-                                         .Replace("{{DiagnosticoNNA}}", notificacionEntidadPlantilla.DiagnosticoNNA)
+                                         .Replace("{{DiagnosticoNNA}}", notificacionEntidadPlantilla.DiagnosticoNNA.ToString())
                                          .Replace("{{TelefonoAcudienteNNA}}", notificacionEntidadPlantilla.TelefonoAcudienteNNA)
                                          .Replace("{{Cierre}}", notificacionEntidadPlantilla.Cierre)
                                          .Replace("{{Firma}}", notificacionEntidadPlantilla.Firma);
@@ -269,11 +269,13 @@ namespace Infra.Repositories
                     };
 
                     // Agregar destinatario
-                    mensaje.To.Add(request.Para);
-                    if (!string.IsNullOrEmpty(request.ConCopia))
-                    {
-                        mensaje.To.Add(request.ConCopia);
-                    }
+                    if (request.Para.Length > 0)
+                        foreach (var item in request.Para)
+                            mensaje.To.Add(item);
+
+                    if (request.ConCopia.Length > 0)
+                        foreach (var item in request.ConCopia)
+                            mensaje.CC.Add(item);
 
                     // Crear y agregar el archivo adjunto desde byte[]
                     using var ms = new MemoryStream(pdfBytes.ToArray());
@@ -317,5 +319,80 @@ namespace Infra.Repositories
             }
             return response;
         }
+
+
+        public List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId)
+        {
+            List<GetNotificacionesEntidadResponse> notificacionEntidad = (from ne in _context.NotificacionesEntidad
+                                                                          where ne.EntidadId == entidadId
+                                                                          && ne.AlertaSeguimientoId == alertaSeguimientoId
+                                                                          && ne.NNAId == nnaId
+
+                                                                          select new GetNotificacionesEntidadResponse()
+                                                                          {
+                                                                              EntidadId = ne.EntidadId,
+
+                                                                              CiudadEnvio = ne.CiudadEnvio,
+                                                                              FechaEnvio = ne.FechaEnvio,
+                                                                              AlertaSeguimientoId = ne.AlertaSeguimientoId,
+                                                                              NNAId = ne.NNAId,
+                                                                              Ciudad = ne.Ciudad,
+                                                                              EmailConfigurationId = ne.EmailConfigurationId,
+                                                                              EmailPara = ne.EmailPara,
+                                                                              EmailCC = ne.EmailCC,
+                                                                              PlantillaId = ne.PlantillaId,
+                                                                              Asunto = ne.Asunto,
+                                                                              Mensaje = ne.Mensaje,
+                                                                              EnlaceParaRecibirRespuestas = ne.EnlaceParaRecibirRespuestas,
+                                                                              Comentario = ne.Comentario,
+                                                                              Firmajpg = ne.Firmajpg,
+                                                                              ArchivoAdjunto = ne.ArchivoAdjunto
+                                                                          }
+                                                                          ).ToList();
+
+            return notificacionEntidad;
+        }
+
+
+        public List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId)
+        {
+            List<GetListaCasosResponse> listaCasos = (from n in _context.NNAs
+                                                      join s in _context.Seguimientos on n.Id equals s.NNAId
+                                                      join a in _context.AlertaSeguimientos on s.Id equals a.SeguimientoId
+
+                                                      where n.EAPBId == eapbId || n.EPSId == epsId
+                                                      group new { n, s, a } by new
+                                                      {
+                                                          NNAId = n.Id,
+                                                          n.FechaNotificacionSIVIGILA,
+                                                          n.EAPBId,
+                                                          Nombre = n.PrimerNombre + " " + n.SegundoNombre + " " + n.PrimerApellido + " " + n.SegundoApellido
+                                                      } into g
+                                                      select new
+                                                      {
+                                                          g.Key.NNAId,
+                                                          g.Key.FechaNotificacionSIVIGILA,
+                                                          g.Key.Nombre,
+                                                          g.Key.EAPBId,
+                                                          Seguimientos = g.Select(x => x.s).OrderByDescending(sg => sg.FechaSeguimiento).ToList(),  // Convertir a lista
+                                                          Estados = g.Select(x => x.a.EstadoId).Distinct()
+                                                      }).AsEnumerable() // Cambiar a evaluación en el cliente
+              .Select(g => new GetListaCasosResponse
+              {
+                  NNAId = g.NNAId,
+                  SeguimientoId = g.Seguimientos.FirstOrDefault().Id,
+                  FechaNotificacionSIVIGILA = g.FechaNotificacionSIVIGILA,
+                  Nombre = g.Nombre,
+                  EAPBId = g.EAPBId,
+                  ObservacionesSolicitante = g.Seguimientos.FirstOrDefault()?.ObservacionesSolicitante,
+                  EstadoAlertasIds = string.Join(",", g.Estados),
+                  EstadoSeguimientoId = g.Seguimientos.FirstOrDefault().EstadoId
+
+              }).ToList();
+            return listaCasos;
+        }
+
+
+
     }
 }

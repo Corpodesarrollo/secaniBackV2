@@ -5,6 +5,7 @@ using Core.Modelos;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Infra.Repositorios;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,6 @@ namespace Api.Controllers
         private INNAService _nNAService = service;
         private readonly TablaParametricaService tablaParametricaService=tablaParametrica;
 
-
         /**
         * NNA
         */
@@ -29,6 +29,7 @@ namespace Api.Controllers
             var response = await _nNARepo.GetById(id);
             return Ok(response);
         }
+
         [HttpPost("Crear")]
         public async Task<ActionResult<RespuestaResponse<NNADto>>> AddAsync(NNADto dto)
         {
@@ -44,9 +45,8 @@ namespace Api.Controllers
             return await _nNARepo.UpdateAsync(entity);
         }
 
-
-
         [HttpPost("ConsultarNNAFiltro")]
+        [ProducesResponseType(typeof(RespuestaResponse<FiltroNNADto>), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAFiltro(FiltroNNARequest request)
         {
             var response = _nNARepo.ConsultarNNAFiltro(request);
@@ -54,19 +54,23 @@ namespace Api.Controllers
         }
 
         [HttpGet("ConsultarNNAsByTipoIdNumeroId/{tipoIdentificacionId}/{numeroIdentificacion}")]
+        [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
 
             var response = _nNARepo.ConsultarNNAsByTipoIdNumeroId(tipoIdentificacionId, numeroIdentificacion);
             return Ok(response);
         }
+
         [HttpGet("ConsultarNNAsById/{NNAId}")]
+        [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
         public IActionResult ConsultarNNAsById(long NNAId)
         {
 
             var response = _nNARepo.ConsultarNNAsById(NNAId);
             return Ok(response);
         }
+
         [HttpGet("DatosBasicosNNAById/{NNAId}")]
         public async Task<IActionResult> ConsultarDatosBasicosNNAById(long NNAId)
         {
@@ -75,19 +79,18 @@ namespace Api.Controllers
 
             return Ok(response);
         }
-        
 
         /**
         * Muestra los agentes activos seguimiento
         */
         [HttpGet("VwAgentesAsignados")]
+        [ProducesResponseType(typeof(List<VwAgentesAsignados>), StatusCodes.Status200OK)]
         public IActionResult VwAgentesAsignados()
         {
 
             var response = _nNARepo.VwAgentesAsignados();
             return Ok(response);
         }
-
 
         /**
         * Seguimiento
@@ -99,7 +102,6 @@ namespace Api.Controllers
             return Ok();
         }
 
-
         [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
         public async Task<IActionResult> SolicitudSeguimientoCuidador(long NNAId)
         {
@@ -108,10 +110,35 @@ namespace Api.Controllers
         }
 
         [HttpPost("DepuracionProtocolo")]
+        [ProducesResponseType(typeof(DepuracionProtocoloResponse), StatusCodes.Status200OK)]
         public IActionResult DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
         {
             var response = _nNARepo.DepuracionProtocolo(request);
             return Ok(response);
+        }
+
+        [HttpPost("SetResidenciaDiagnosticoTratamiento")]
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
+        {
+            _nNARepo.SetResidenciaDiagnosticoTratamiento(request);
+        }
+
+        [HttpPost("SetDiagnosticoTratamiento")]
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
+        {
+            _nNARepo.SetDiagnosticoTratamiento(request);
+        }
+
+        [HttpPost("SetDificultadesProceso")]
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            _nNARepo.SetDificultadesProceso(request);
+        }
+
+        [HttpPost("SetAdherenciaProceso")]
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            _nNARepo.SetAdherenciaProceso(request);
         }
     }
 }
