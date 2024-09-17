@@ -271,24 +271,34 @@ namespace Infra.Repositorios
             return 1;
         }
 
-        public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal)
+        public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal, string UsuarioId)
         {
-            List<GetSeguimientoFestivoResponse> response = (from un in _context.TPFestivos
-                                                            where
-                                                                  un.Festivo >= FechaInicial
-                                                                  && un.Festivo <= FechaFinal
+            var festivos = from un in _context.TPFestivos
+                           where un.Festivo.Date >= FechaInicial.Date
+                                 && un.Festivo.Date <= FechaFinal.Date
+                           select new GetSeguimientoFestivoResponse
+                           {
+                               Festivo = un.Festivo.Date,
+                           };
 
-                                                            select new GetSeguimientoFestivoResponse()
-                                                            {
+            var ausencias = from a in _context.Ausencias
+                            where a.FechaAusencia.Date >= FechaInicial.Date
+                                  && a.FechaAusencia.Date <= FechaFinal.Date
+                                  && a.UsuarioId == UsuarioId
+                            select new GetSeguimientoFestivoResponse
+                            {
+                                Festivo = a.FechaAusencia.Date, // Coincide el formato de solo fecha
+                            };
 
-                                                                Festivo = un.Festivo,
+            // Hacemos la unión de los resultados de ambas consultas
+            var unionResult = festivos
+                             .Union(ausencias) // Une las dos listas
+                             .OrderBy(x => x.Festivo) // Ordenamos por fecha si es necesario
+                             .ToList();
 
-                                                            }).ToList();
-
-
-
-            return response;
+            return unionResult;
         }
+
 
         public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {

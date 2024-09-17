@@ -76,10 +76,10 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetSeguimientoFestivos")]
-        public List<GetSeguimientoFestivoResponse> GetSeguimientoFestivos(DateTime FechaInicial, DateTime FechaFinal)
+        public List<GetSeguimientoFestivoResponse> GetSeguimientoFestivos(DateTime FechaInicial, DateTime FechaFinal, string UsuarioId)
         {
 
-            List<GetSeguimientoFestivoResponse> response = seguimientoRepo.RepoSeguimientoFestivo(FechaInicial, FechaFinal);
+            List<GetSeguimientoFestivoResponse> response = seguimientoRepo.RepoSeguimientoFestivo(FechaInicial, FechaFinal, UsuarioId);
             return response;
         }
 
