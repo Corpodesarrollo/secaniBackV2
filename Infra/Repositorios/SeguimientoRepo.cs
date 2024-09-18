@@ -300,18 +300,17 @@ namespace Infra.Repositorios
         }
 
 
-        public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
+        public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId)
         {
             List<GetSeguimientoHorarioAgenteResponse> response = (from un in _context.HorarioLaboralAgente
                                                                   where
                                                                   un.UserId == UsuarioId
-                                                                       && un.Fecha >= FechaInicial
-                                                                       && un.Fecha <= FechaFinal
+                                                                       
 
                                                                   select new GetSeguimientoHorarioAgenteResponse()
                                                                   {
 
-                                                                      Fecha = un.Fecha,
+                                                                      Dia = un.Dia,
                                                                       HoraEntrada = un.HoraEntrada,
                                                                       HoraSalida = un.HoraSalida,
 

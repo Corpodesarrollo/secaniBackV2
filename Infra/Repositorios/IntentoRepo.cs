@@ -119,7 +119,8 @@ namespace Infra.Repositorios
         {
             List<GetContactoNNAIntentoResponse> response = (from c in _context.ContactoNNAs
                                                             join i in _context.Intentos on c.Id equals i.ContactoNNAId
-                                                            join t in _context.TPTipoFallaLLamada on i.TipoFallaIntentoId equals t.Id
+                                                            join t in _context.TPTipoFallaLLamada on i.TipoFallaIntentoId equals t.Id into tipoFallaJoin
+                                                            from tipoFalla in tipoFallaJoin.DefaultIfEmpty() 
                                                             where c.NNAId == NNAId
                                                             select new GetContactoNNAIntentoResponse
                                                             {
@@ -134,8 +135,10 @@ namespace Infra.Repositorios
                                                                 FechaIntento = i.FechaIntento,
                                                                 TipoResultadoIntentoId = i.TipoResultadoIntentoId,
                                                                 TipoFallaIntentoId = i.TipoFallaIntentoId,
-                                                                TipoFallaIntentoNombre = t.Nombre,
+                                                                TipoFallaIntentoNombre = (i.TipoFallaIntentoId == 0 || tipoFalla == null) ? "Sin Falla" : tipoFalla.Nombre,
                                                             }).ToList();
+
+
 
             return response;
         }
