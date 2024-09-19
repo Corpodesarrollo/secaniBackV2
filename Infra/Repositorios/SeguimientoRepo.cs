@@ -142,19 +142,18 @@ namespace Infra.Repositorios
         {
             List<GetSeguimientoResponse> response = (from un in _context.Seguimientos
                                                      join nna in _context.NNAs on un.NNAId equals nna.Id
-
+                                                     join ua in _context.UsuarioAsignados on new { un.Id, un.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }
                                                      join alerta in _context.AlertaSeguimientos on un.Id equals alerta.SeguimientoId into alertaGroup
                                                      from subAlerta in alertaGroup.DefaultIfEmpty()
-
                                                      where un.UsuarioId == UsuarioId
                                                            && un.FechaSeguimiento >= FechaInicial
                                                            && un.FechaSeguimiento <= FechaFinal
-                                                           && un.EstadoId != 3
+                                                        && un.EstadoId != 3 && ua.Activo
                                                      group subAlerta by new
                                                      {
                                                          un.Id,
                                                          un.NNAId,
-                                                         un.FechaSeguimiento,
+                                                         ua.FechaAsignacion, // Usando FechaAsignacion como FechaSeguimiento
                                                          un.EstadoId,
                                                          un.ContactoNNAId,
                                                          un.Telefono,
@@ -173,7 +172,7 @@ namespace Infra.Repositorios
                                                      {
                                                          Id = g.Key.Id,
                                                          NNAId = g.Key.NNAId,
-                                                         FechaSeguimiento = g.Key.FechaSeguimiento,
+                                                         FechaSeguimiento = g.Key.FechaAsignacion, // Ajustando la fecha de seguimiento
                                                          EstadoId = g.Key.EstadoId,
                                                          ContactoNNAId = g.Key.ContactoNNAId,
                                                          Telefono = g.Key.Telefono,
@@ -198,14 +197,14 @@ namespace Infra.Repositorios
         public int RepoSeguimientoActualizacionFecha(PutSeguimientoActualizacionFechaRequest request)
         {
 
-            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
+            var usuarioAsignado = _context.UsuarioAsignados.FirstOrDefault(s => s.SeguimientoId == request.Id);
 
-            if (seguimiento == null)
+            if (usuarioAsignado == null)
             {
                 return -1;
             }
 
-            seguimiento.FechaSeguimiento = request.FechaSeguimiento;
+            usuarioAsignado.FechaAsignacion = request.FechaSeguimiento;
 
             _context.SaveChanges();
             return 1;
@@ -213,22 +212,23 @@ namespace Infra.Repositorios
 
         public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
         {
-            var seguimientoOriginal = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
+            var UsuarioOriginal = _context.UsuarioAsignados.FirstOrDefault(s => s.SeguimientoId == request.Id);
 
-            if (seguimientoOriginal == null)
+            if (UsuarioOriginal == null)
             {
                 return -1;
             }
 
 
             DateTime hoy = DateTime.Now;
-            if (seguimientoOriginal.FechaSeguimiento < hoy)
+            if (UsuarioOriginal.FechaAsignacion < hoy)
             {
                 return -2;
             }
 
-            // Actualizar el EstadoId a cero
-            seguimientoOriginal.EstadoId = 3;
+            // Actualizar el EstadoId a falso
+            UsuarioOriginal.Activo = false;
+            UsuarioOriginal.Observaciones = request.ObservacionesSolicitante!;
 
             // Guardar los cambios en el seguimiento original
             _context.SaveChanges();
@@ -236,30 +236,20 @@ namespace Infra.Repositorios
             try
             {
 
-                var nuevoSeguimiento = new Seguimiento
+                var nuevoUsuarioAsignado = new UsuarioAsignado
                 {
-                    NNAId = seguimientoOriginal.NNAId,
-                    FechaSeguimiento = seguimientoOriginal.FechaSeguimiento,
-
-                    EstadoId = 1, // Valor inicial para el nuevo seguimiento (TODO: Definir por inexistencia de parametricas )
-
-                    ContactoNNAId = seguimientoOriginal.ContactoNNAId,
-                    Telefono = seguimientoOriginal.Telefono,
-
-                    UsuarioId = request.UsuarioId, // Cambiar el valor del UsuarioId
-
-                    SolicitanteId = seguimientoOriginal.SolicitanteId,
-                    FechaSolicitud = seguimientoOriginal.FechaSolicitud,
-                    TieneDiagnosticos = seguimientoOriginal.TieneDiagnosticos,
-
-                    ObservacionesSolicitante = seguimientoOriginal.ObservacionesSolicitante + " " + request.ObservacionesSolicitante, // Nuevas observaciones
-
+                    
+                    UsuarioId = request.UsuarioId,
+                    SeguimientoId = UsuarioOriginal.SeguimientoId,
+                    FechaAsignacion = UsuarioOriginal.FechaAsignacion,
+                    Activo = true,
                     DateCreated = DateTime.Now,
-                    CreatedByUserId = seguimientoOriginal.CreatedByUserId,
-                    IsDeleted = false
+                    CreatedByUserId = UsuarioOriginal.CreatedByUserId,
+                    Observaciones = "Creado por Reasignación"
+
                 };
 
-                _context.Seguimientos.Add(nuevoSeguimiento);
+                _context.UsuarioAsignados.Add(nuevoUsuarioAsignado);
                 _context.SaveChanges();
             }
             catch (Exception)
@@ -451,6 +441,24 @@ namespace Infra.Repositorios
                 return "Existe una error al almacenar el segumiento";
             }
 
+        }
+
+        public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request)
+        {
+
+            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
+
+            if (seguimiento == null)
+            {
+                return -1;
+            }
+            seguimiento.EstadoId = 3;
+            seguimiento.NombreRechazo = request.NombreRechazo;
+            seguimiento.ParentescoRechazo = request.ParentescoRechazo;
+            seguimiento.RazonesRechazo = request.RazonesRechazo;
+
+            _context.SaveChanges();
+            return 1;
         }
     }
 }

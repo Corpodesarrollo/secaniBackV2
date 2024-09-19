@@ -128,6 +128,12 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
+        [HttpPut("PutSeguimientoRechazo")]
+        public int PutSeguimientoRechazo(PutSeguimientoRechazoRequest request)
+        {
+            return seguimientoRepo.RepoSeguimientoRechazo(request);
+        }
+
     }
 
 
