@@ -2,7 +2,7 @@
 {
     public class SeguimientoDatosNNADto
     {
-        public int IdNNA { get; set; }
+        public long IdNNA { get; set; }
         public string? NombreCompleto { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public string? Edad { get; set; }
