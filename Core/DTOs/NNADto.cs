@@ -30,8 +30,11 @@
         public string? SexoId { get; set; }
         public string? TipoRegimenSSId { get; set; }
         public int? EAPBId { get; set; }
+        public string EAPBNombre {  get; set; }
         public int? EPSId { get; set; }
+        public string? EPSNombre { get; set; }
         public int? IPSId { get; set; }
+        public string? IPSNombre { get; set; }
         public string? GrupoPoblacionId { get; set; }
         public string? EtniaId { get; set; }
         public int? EstadoIngresoEstrategiaId { get; set; }

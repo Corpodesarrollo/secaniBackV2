@@ -31,7 +31,36 @@ namespace Infra.Repositorios
             try
             {
                 var result = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Entity not found");
-                return result.Adapt<NNADto>();
+
+                NNADto nNADto = result.Adapt<NNADto>();
+
+                Entidad? eps = (from ent in _context.Entidades
+                               where ent.Id == nNADto.EPSId
+                               select ent).FirstOrDefault();
+                if (eps != null)
+                {
+                    nNADto.EPSNombre = eps.Nombre;
+                }
+
+                Entidad? ips = (from ent in _context.Entidades
+                                where ent.Id == nNADto.IPSId
+                                select ent).FirstOrDefault();
+
+                if (ips != null)
+                {
+                    nNADto.IPSNombre = ips.Nombre;  
+                }
+
+                Entidad? eapb = (from ent in _context.Entidades
+                                where ent.Id == nNADto.EAPBId
+                                select ent).FirstOrDefault();
+
+                if (eapb != null)
+                {
+                    nNADto.EAPBNombre = eapb.Nombre;
+                }
+
+                return nNADto;
             }
             catch (Exception ex)
             {
