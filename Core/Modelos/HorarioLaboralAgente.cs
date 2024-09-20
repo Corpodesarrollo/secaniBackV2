@@ -11,7 +11,7 @@ namespace MSSeguimiento.Core.Modelos
         public string UserId { get; set; }
 
         [Required]
-        public DateTime Fecha { get; set; }
+        public int Dia { get; set; }
 
         [Required]
         public TimeSpan HoraEntrada { get; set; }

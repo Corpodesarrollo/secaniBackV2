@@ -76,18 +76,18 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetSeguimientoFestivos")]
-        public List<GetSeguimientoFestivoResponse> GetSeguimientoFestivos(DateTime FechaInicial, DateTime FechaFinal)
+        public List<GetSeguimientoFestivoResponse> GetSeguimientoFestivos(DateTime FechaInicial, DateTime FechaFinal, string UsuarioId)
         {
 
-            List<GetSeguimientoFestivoResponse> response = seguimientoRepo.RepoSeguimientoFestivo(FechaInicial, FechaFinal);
+            List<GetSeguimientoFestivoResponse> response = seguimientoRepo.RepoSeguimientoFestivo(FechaInicial, FechaFinal, UsuarioId);
             return response;
         }
 
         [HttpGet("GetSeguimientoHorarioAgente")]
-        public List<GetSeguimientoHorarioAgenteResponse> GetSeguimientoHorarioAgente(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
+        public List<GetSeguimientoHorarioAgenteResponse> GetSeguimientoHorarioAgente(string UsuarioId)
         {
 
-            List<GetSeguimientoHorarioAgenteResponse> response = seguimientoRepo.RepoSeguimientoHorarioAgente(UsuarioId, FechaInicial, FechaFinal);
+            List<GetSeguimientoHorarioAgenteResponse> response = seguimientoRepo.RepoSeguimientoHorarioAgente(UsuarioId);
             return response;
         }
 
@@ -126,6 +126,12 @@ namespace MSSeguimiento.Api.Controllers
             string response = seguimientoRepo.SetSeguimiento(request);
 
             return response;
+        }
+
+        [HttpPut("PutSeguimientoRechazo")]
+        public int PutSeguimientoRechazo(PutSeguimientoRechazoRequest request)
+        {
+            return seguimientoRepo.RepoSeguimientoRechazo(request);
         }
 
     }
