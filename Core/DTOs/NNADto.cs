@@ -51,7 +51,7 @@
         public int? CantidadRecaidas { get; set; }
         public DateTime? FechaUltimaRecaida { get; set; }
         public string? TipoDiagnosticoId { get; set; }
-        public string? DiagnosticoId { get; set; }
+        public int? DiagnosticoId { get; set; }
         public DateTime? FechaDiagnostico { get; set; }
         public string? MotivoNoDiagnosticoId { get; set; }
         public string? MotivoNoDiagnosticoOtro { get; set; }

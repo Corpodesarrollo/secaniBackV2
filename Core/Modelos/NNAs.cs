@@ -103,10 +103,10 @@ namespace Core.Modelos
         public string? CuidadorTelefono { get; set; }
         public string? SeguimientoLoDesea { get; set; }
         public string? SeguimientoMotivoNoLoDesea { get; set; }
-        public DateTime DateDeleted { get; set; }
-        public DateTime DateUpdated { get; set; }
-        public string CreatedByUserId { get; set; }
-        public DateTime DateCreated { get; set; }
+        public DateTime? DateDeleted { get; set; }
+        public DateTime? DateUpdated { get; set; }
+        public string? CreatedByUserId { get; set; }
+        public DateTime? DateCreated { get; set; }
         public string? DeletedByUserId { get; set; }
         public bool IsDeleted { get; set; }
         public string? UpdatedByUserId { get; set; }
