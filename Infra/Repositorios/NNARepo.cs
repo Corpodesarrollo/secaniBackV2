@@ -254,8 +254,6 @@ namespace Infra.Repositorios
             }
         }
 
-
-
         public NNAResponse ConsultarNNAsById(long NNAId)
         {
             var response = new NNAResponse();
@@ -1093,6 +1091,86 @@ namespace Infra.Repositorios
 
                 }
             }
+        }
+
+        public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        {
+            List<ConsultaCasosAbiertosResponse> response = new List<ConsultaCasosAbiertosResponse>();
+            List<ConsultaCasosAbiertosResponse> lista = new List<ConsultaCasosAbiertosResponse>();
+            List<int> estados = new List<int> { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
+
+            lista = (from seg in _context.Seguimientos
+                     join nna in _context.NNAs on seg.NNAId equals nna.Id
+                     where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
+                     select new ConsultaCasosAbiertosResponse()
+                     {
+                         AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
+                         Estado = seg.EstadoId,
+                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaUltimaActuacion = seg.UltimaActuacionFecha,
+                         Alertas = new List<AlertaSeguimientoResponse>(),
+                         SeguimientoId = seg.Id
+                     }).ToList();
+
+            foreach (ConsultaCasosAbiertosResponse r in lista)
+            {
+                List<AlertaSeguimientoResponse> alertas = (from al in _context.AlertaSeguimientos
+                                                           join alerta in _context.Alertas on al.AlertaId equals alerta.Id
+                                                           where al.SeguimientoId == r.SeguimientoId
+                                                           select new AlertaSeguimientoResponse()
+                                                           {
+                                                               AlertaId = al.AlertaId,
+                                                               EstadoId = al.EstadoId,
+                                                               NombreAlerta = alerta.Descripcion,
+                                                               Observaciones = al.Observaciones,
+                                                               SeguimientoId = al.SeguimientoId,
+                                                               UltimaFechaSeguimiento = al.UltimaFechaSeguimiento
+                                                           }).ToList();
+
+                r.Alertas = alertas;
+            }
+
+            if (request.Filtro == "HOY")
+            {
+                response = (from re in lista
+                            where re.FechaUltimaActuacion == DateTime.Now.Date
+                            select re).ToList();
+            }
+            else if (request.Filtro == "ALERTA")
+            {
+                foreach (ConsultaCasosAbiertosResponse r in lista)
+                {
+                    if (r.Alertas != null && r.Alertas.Any())
+                    {
+                        response.Add(r);
+                    }
+                }
+            }
+
+            return response;
+
+        }
+
+        public void AsignacionManual(AsignacionManualRequest request)
+        {
+            UsuarioAsignado usuarioAsignado;
+            List<UsuarioAsignado> usuarios = new List<UsuarioAsignado>();
+            foreach (int i in request.Segumientos)
+            {
+                usuarioAsignado = new UsuarioAsignado()
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = DateTime.Now,
+                    Observaciones = request.Motivo,
+                    SeguimientoId = i,
+                    UsuarioId = request.IdUsuario,
+                };
+                usuarios.Add(usuarioAsignado);
+            }
+
+            _context.UsuarioAsignados.AddRange(usuarios);
+            _context.SaveChanges();
         }
     }
 
