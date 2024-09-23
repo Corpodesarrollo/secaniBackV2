@@ -321,8 +321,6 @@ namespace Infra.Repositorios
             return response;
         }
 
-
-
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
         {
             Seguimiento? seguimiento = (from seg in _context.Seguimientos
@@ -336,10 +334,6 @@ namespace Infra.Repositorios
                 _context.SaveChanges();
             }
         }
-
-
-
-
 
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
@@ -453,6 +447,60 @@ namespace Infra.Repositorios
 
             _context.SaveChanges();
             return 1;
+        }
+
+        public void AsignacionAutomatica()
+        {
+            List<ConsultaCasosAbiertosResponse> lista;
+            List<int> estados = new List<int> { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
+            UsuarioAsignado usuarioAsignado;
+            List<UsuarioAsignado> usuarios = new List<UsuarioAsignado>();
+
+            lista = (from seg in _context.Seguimientos
+                     join nna in _context.NNAs on seg.NNAId equals nna.Id
+                     where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
+                     select new ConsultaCasosAbiertosResponse()
+                     {
+                         AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
+                         Estado = seg.EstadoId,
+                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaUltimaActuacion = seg.UltimaActuacionFecha,
+                         Alertas = new List<AlertaSeguimientoResponse>(),
+                         SeguimientoId = seg.Id
+                     }).ToList();
+
+            List<AspNetUsers> revisores = (from us in _context.AspNetUsers
+                                           select us).ToList();
+            
+            foreach(ConsultaCasosAbiertosResponse r in lista)
+            {
+                usuarioAsignado = new UsuarioAsignado()
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = DateTime.Now,
+                    Observaciones = "Asignacion automatica",
+                    SeguimientoId = r.SeguimientoId,
+                };
+                usuarios.Add(usuarioAsignado);
+            }
+
+            this.AsignarUsuarios(revisores, usuarios);
+
+            _context.UsuarioAsignados.AddRange(usuarios);
+            _context.SaveChanges();
+        }
+
+        private void AsignarUsuarios(List<AspNetUsers> usuarios, List<UsuarioAsignado> solicitudes)
+        {
+            int usuarioIndex = 0;
+            int totalUsuarios = usuarios.Count;
+
+            foreach (var solicitud in solicitudes)
+            {
+                solicitud.UsuarioId = usuarios[usuarioIndex].Id;  // Asignar el usuario
+                usuarioIndex = (usuarioIndex + 1) % totalUsuarios;  // Reinicia el índice si se alcanzan todos los usuarios
+            }
         }
     }
 }

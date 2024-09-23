@@ -134,6 +134,13 @@ namespace MSSeguimiento.Api.Controllers
             return seguimientoRepo.RepoSeguimientoRechazo(request);
         }
 
+        [HttpGet("AsignacionAutomatica")]
+        public int AsignacionAutomatica()
+        {
+            return seguimientoRepo.AsignacionAutomatica();
+        }
+
+
     }
 
 
