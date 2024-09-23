@@ -1,4 +1,5 @@
 using Core.Interfaces.Repositorios;
+using Core.Services.StorageService;
 using Infra.Repositories;
 using MSAuthentication.Api.Extensions;
 
@@ -13,6 +14,7 @@ builder.CustomConfigureServices();
 
 // Registrar IMemoryCache
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IStorageService, StorageService>();
 
 //Registro de Repos
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
