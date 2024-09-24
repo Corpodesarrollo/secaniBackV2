@@ -16,7 +16,7 @@ namespace Infra.Repositorios
         private IGeneralCOM _generalCOM;
         private Core.DTOs.Quartz _quartz;
 
-        public AsignacionAutomaticaJob(IServiceProvider serviceProvider,IOptionsSnapshot<Core.DTOs.Quartz> optQuartz)
+        public AsignacionAutomaticaJob(IServiceProvider serviceProvider,IOptions<Core.DTOs.Quartz> optQuartz)
         {
             _serviceProvider = serviceProvider;
             _quartz = optQuartz.Value;

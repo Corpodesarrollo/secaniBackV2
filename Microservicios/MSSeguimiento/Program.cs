@@ -34,24 +34,24 @@ builder.Services.AddCors(options =>
         });
 });
 
-//var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
-//// Register Quartz services
-//builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
-//builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
-//builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
+var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+// Register Quartz services
+builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
+builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
 
-//string? temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
+string? temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
 
-//// Register the jobs and triggers
-//builder.Services.AddSingleton<AsignacionAutomaticaJob>();
-//builder.Services.AddSingleton(new JobSchedule(
-//    jobType: typeof(AsignacionAutomaticaJob),
-//    cronExpression: temporizadorAsignacionAutomatica,
-//timeZone: timeZone));
+// Register the jobs and triggers
+builder.Services.AddSingleton<AsignacionAutomaticaJob>();
+builder.Services.AddSingleton(new JobSchedule(
+    jobType: typeof(AsignacionAutomaticaJob),
+    cronExpression: temporizadorAsignacionAutomatica,
+timeZone: timeZone));
 
-//builder.Services.AddHostedService<QuartzHostedService>();
+builder.Services.AddHostedService<QuartzHostedService>();
 
-//builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Quartz"));
+builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Quartz"));
 
 var app = builder.Build();
 
