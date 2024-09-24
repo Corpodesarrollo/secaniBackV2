@@ -135,9 +135,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("AsignacionAutomatica")]
-        public int AsignacionAutomatica()
+        public void AsignacionAutomatica()
         {
-            return seguimientoRepo.AsignacionAutomatica();
+            seguimientoRepo.AsignacionAutomatica();
         }
 
 
