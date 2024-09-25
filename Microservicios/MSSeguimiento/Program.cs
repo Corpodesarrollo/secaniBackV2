@@ -18,6 +18,7 @@ builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
+builder.Services.AddScoped<IDashboardRepo, DashboardRepo>();
 
 builder.Services.AddCors(options =>
 {

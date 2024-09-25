@@ -145,9 +145,9 @@ namespace Infra.Repositorios
                                                      join ua in _context.UsuarioAsignados on new { un.Id, un.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }
                                                      join alerta in _context.AlertaSeguimientos on un.Id equals alerta.SeguimientoId into alertaGroup
                                                      from subAlerta in alertaGroup.DefaultIfEmpty()
-                                                     where un.UsuarioId == UsuarioId
-                                                           && un.FechaSeguimiento >= FechaInicial
-                                                           && un.FechaSeguimiento <= FechaFinal
+                                                     where ua.UsuarioId == UsuarioId
+                                                           && ua.FechaAsignacion >= FechaInicial
+                                                           && ua.FechaAsignacion <= FechaFinal
                                                         && un.EstadoId != 3 && ua.Activo
                                                      group subAlerta by new
                                                      {
