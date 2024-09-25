@@ -14,11 +14,11 @@ namespace Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class NNAController(INNAService service,INNARepo nNARepo, TablaParametricaService tablaParametrica) : ControllerBase
+    public class NNAController(INNAService service, INNARepo nNARepo, TablaParametricaService tablaParametrica) : ControllerBase
     {
-        private INNARepo _nNARepo=nNARepo;
+        private INNARepo _nNARepo = nNARepo;
         private INNAService _nNAService = service;
-        private readonly TablaParametricaService tablaParametricaService=tablaParametrica;
+        private readonly TablaParametricaService tablaParametricaService = tablaParametrica;
 
         /**
         * NNA
@@ -139,6 +139,19 @@ namespace Api.Controllers
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
         {
             _nNARepo.SetAdherenciaProceso(request);
+        }
+
+        [HttpPost("CasosAbiertos")]
+        public IActionResult ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        {
+            var response = _nNARepo.ConsultaCasosAbiertos(request);
+            return Ok(response);
+        }
+
+        [HttpPost("AsignacionManual")]
+        public void AsignacionManual(AsignacionManualRequest request)
+        {
+            _nNARepo.AsignacionManual(request);
         }
     }
 }

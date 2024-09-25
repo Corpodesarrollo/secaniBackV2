@@ -12,6 +12,10 @@
             int meses = fechaActual.Month - fechaNacimiento.Value.Month;
             int dias = fechaActual.Day - fechaNacimiento.Value.Day;
 
+            años = años < 0 ? 0 : años;
+            meses = meses < 0 ? 0 : meses;
+            dias = dias < 0 ? 0 : dias;
+
             if (meses < 0 || (meses == 0 && dias < 0))
                 años--;
 
@@ -51,6 +55,7 @@
         public static string? CalcularTiempoTrascurrido(DateTime fechaInicio)
         {
             TimeSpan diferencia = DateTime.UtcNow - fechaInicio.ToUniversalTime();
+            diferencia = diferencia < TimeSpan.Zero ? TimeSpan.Zero : diferencia;
 
             int años = (int)(diferencia.Days / 365.25);
             int meses = (int)(diferencia.Days % 365.25 / 30.44);

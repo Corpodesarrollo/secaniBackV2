@@ -392,7 +392,20 @@ namespace Infra.Repositories
             return listaCasos;
         }
 
+        public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId)
+        {
+            List<NotificacionResponse> response = (from un in _context.Notificacions
+                                                   join ent in _context.Entidades on un.EntidadId equals ent.Id
+                                                   where un.AlertaSeguimientoId == AlertaId && !un.IsDeleted
+                                                   select new NotificacionResponse()
+                                                   {
+                                                       EntidadNotificada = ent.Nombre,
+                                                       FechaNotificacion = un.FechaNotificacion,
+                                                       FechaRespuesta = un.FechaRespuesta,
+                                                       Respuesta = un.RespuestaEntidad
+                                                   }).ToList();
 
-
+            return response;
+        }
     }
 }

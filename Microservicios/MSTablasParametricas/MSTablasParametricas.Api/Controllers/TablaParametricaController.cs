@@ -23,7 +23,7 @@ namespace MSTablasParametricas.Api.Controllers
         }
 
         [HttpGet("{NombreTabla}/{Codigo}")]
-        public async Task<ActionResult<List<TPExternalEntityBase>>> GetFilter(string NombreTabla, string Codigo, CancellationToken cancellationToken)
+        public async Task<ActionResult<List<TPExternalEntityBase>>> GetFilter(string NombreTabla, int Codigo, CancellationToken cancellationToken)
         {
             var result = await _service.GetBynomTREFCodigo(NombreTabla, Codigo, CancellationToken.None);
             return Ok(result);

@@ -23,6 +23,8 @@ namespace Core.Interfaces.Repositorios
         public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request);
         public void SetDificultadesProceso(DificultadesProcesoRequest request);
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request);
+        public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request);
+        public void AsignacionManual(AsignacionManualRequest request);
 
 
 

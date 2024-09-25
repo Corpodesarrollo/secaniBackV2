@@ -31,7 +31,36 @@ namespace Infra.Repositorios
             try
             {
                 var result = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Entity not found");
-                return result.Adapt<NNADto>();
+
+                NNADto nNADto = result.Adapt<NNADto>();
+
+                Entidad? eps = (from ent in _context.Entidades
+                               where ent.Id == nNADto.EPSId
+                               select ent).FirstOrDefault();
+                if (eps != null)
+                {
+                    nNADto.EPSNombre = eps.Nombre;
+                }
+
+                Entidad? ips = (from ent in _context.Entidades
+                                where ent.Id == nNADto.IPSId
+                                select ent).FirstOrDefault();
+
+                if (ips != null)
+                {
+                    nNADto.IPSNombre = ips.Nombre;  
+                }
+
+                Entidad? eapb = (from ent in _context.Entidades
+                                where ent.Id == nNADto.EAPBId
+                                select ent).FirstOrDefault();
+
+                if (eapb != null)
+                {
+                    nNADto.EAPBNombre = eapb.Nombre;
+                }
+
+                return nNADto;
             }
             catch (Exception ex)
             {
@@ -52,12 +81,21 @@ namespace Infra.Repositorios
 
         public async Task<(bool, NNAs)> UpdateAsync(NNAs entity)
         {
-            var (success, response) = await _repository.UpdateAsync(entity);
-            if (!success)
+            try
             {
-                throw new KeyNotFoundException("cannot update entity");
+                var (success, response) = await _repository.UpdateAsync(entity);
+                if (!success)
+                {
+                    throw new KeyNotFoundException("cannot update entity");
+                }
+                return (success, response);
             }
-            return (success, response);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+
         }
 
         public List<VwAgentesAsignados> VwAgentesAsignados()
@@ -102,7 +140,6 @@ namespace Infra.Repositorios
         {
             var response = new RespuestaResponse<FiltroNNADto>();
             response.Datos = new List<FiltroNNADto>();
-            List<FiltroNNA> lista;
 
             try
             {
@@ -217,8 +254,6 @@ namespace Infra.Repositorios
             }
         }
 
-
-
         public NNAResponse ConsultarNNAsById(long NNAId)
         {
             var response = new NNAResponse();
@@ -325,16 +360,16 @@ namespace Infra.Repositorios
             int segundaNeoplasia = 0;
             int duplicados = 0;
             int ingresados = 0;
-            DepuracionProtocoloResponse response = new DepuracionProtocoloResponse();
+            DepuracionProtocoloResponse response = new();
             try
             {
-                Dictionary<string, List<DepuracionProtocolo>> dNNAProtocolo = new Dictionary<string, List<DepuracionProtocolo>>();
+                Dictionary<string, List<DepuracionProtocolo>> dNNAProtocolo = new();
 
-                List<DepuracionProtocolo> listaDepuracion = new List<DepuracionProtocolo>();
+                List<DepuracionProtocolo> listaDepuracion = new();
 
                 for (int i = 0; i < request.Count; i++)
                 {
-                    DepuracionProtocolo depuracion = new DepuracionProtocolo()
+                    DepuracionProtocolo depuracion = new()
                     {
                         Id = i,
                         DepuracionProtocoloRequest = request[i]
@@ -508,7 +543,7 @@ namespace Infra.Repositorios
                         dTrazabilidad = new Dictionary<int, List<DateTime?>>();
                         for (int i = kvp.Value.Count - 1; i >= 0; i--)
                         {
-                            List<DateTime?> key = new List<DateTime?>();
+                            List<DateTime?> key = new();
                             if (kvp.Value[i].DepuracionProtocoloRequest.fec_initra != null)
                             {
                                 key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_initra);
@@ -667,8 +702,8 @@ namespace Infra.Repositorios
                     }
                 }
 
-                List<NNAs> insertNNA = new List<NNAs>();
-                List<NNAs> updateNNA = new List<NNAs>();
+                List<NNAs> insertNNA = new();
+                List<NNAs> updateNNA = new();
                 DateTime fechaDefuncion;
                 foreach (DepuracionProtocolo d in insertarNNa)
                 {
@@ -744,13 +779,13 @@ namespace Infra.Repositorios
                             FechaConsultaDiagnostico = d.DepuracionProtocoloRequest.fec_con,
                             FechaInicioSintomas = d.DepuracionProtocoloRequest.ini_sin,
                             FechaHospitalizacion = d.DepuracionProtocoloRequest.fec_hos,
-                            FechaDefuncion = (fechaDefuncion == DateTime.MinValue ? null : fechaDefuncion),
+                            FechaDefuncion = fechaDefuncion == DateTime.MinValue ? null : fechaDefuncion,
                             ResidenciaOrigenTelefono = d.DepuracionProtocoloRequest.telefono,
                             FechaNacimiento = d.DepuracionProtocoloRequest.fecha_nto,
                             MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte,
                             TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca,
                             FechaInicioTratamiento = d.DepuracionProtocoloRequest.fec_initra,
-                            Recaida = (d.DepuracionProtocoloRequest.recaida == "1" ? true : false),
+                            Recaida = d.DepuracionProtocoloRequest.recaida == "1" ? true : false,
                             FechaDiagnostico = d.DepuracionProtocoloRequest.fec_diag1a,
                             CuidadorTelefono = d.DepuracionProtocoloRequest.tel_cont_2,
                         };
@@ -762,11 +797,11 @@ namespace Infra.Repositorios
 
                 _context.NNAs.AddRange(insertNNA);
 
-                List<DepuracionManualProtocolo> depuracionProtocolos = new List<DepuracionManualProtocolo>();
+                List<DepuracionManualProtocolo> depuracionProtocolos = new();
 
                 foreach (DepuracionProtocolo d in depuracionManual)
                 {
-                    DepuracionManualProtocolo dep = new DepuracionManualProtocolo()
+                    DepuracionManualProtocolo dep = new()
                     {
                         ajuste = d.DepuracionProtocoloRequest.ajuste,
                         anio = d.DepuracionProtocoloRequest.anio,
@@ -873,7 +908,7 @@ namespace Infra.Repositorios
                 _context.DepuracionManualProtocolos.AddRange(depuracionProtocolos);
                 _context.SaveChanges();
 
-                ReporteDepuracion reporte = new ReporteDepuracion()
+                ReporteDepuracion reporte = new()
                 {
                     Estado = "Procesada",
                     Fecha = DateOnly.FromDateTime(DateTime.Now),
@@ -893,9 +928,9 @@ namespace Infra.Repositorios
                 response.SegundasNeoplasias = segundaNeoplasia;
                 response.Estado = reporte.Estado;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ReporteDepuracion reporte = new ReporteDepuracion()
+                ReporteDepuracion reporte = new()
                 {
                     Estado = "Procesada",
                     Fecha = DateOnly.FromDateTime(DateTime.Now),
@@ -1056,6 +1091,86 @@ namespace Infra.Repositorios
 
                 }
             }
+        }
+
+        public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        {
+            List<ConsultaCasosAbiertosResponse> response = new List<ConsultaCasosAbiertosResponse>();
+            List<ConsultaCasosAbiertosResponse> lista = new List<ConsultaCasosAbiertosResponse>();
+            List<int> estados = new List<int> { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
+
+            lista = (from seg in _context.Seguimientos
+                     join nna in _context.NNAs on seg.NNAId equals nna.Id
+                     where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
+                     select new ConsultaCasosAbiertosResponse()
+                     {
+                         AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
+                         Estado = seg.EstadoId,
+                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaUltimaActuacion = seg.UltimaActuacionFecha,
+                         Alertas = new List<AlertaSeguimientoResponse>(),
+                         SeguimientoId = seg.Id
+                     }).ToList();
+
+            foreach (ConsultaCasosAbiertosResponse r in lista)
+            {
+                List<AlertaSeguimientoResponse> alertas = (from al in _context.AlertaSeguimientos
+                                                           join alerta in _context.Alertas on al.AlertaId equals alerta.Id
+                                                           where al.SeguimientoId == r.SeguimientoId
+                                                           select new AlertaSeguimientoResponse()
+                                                           {
+                                                               AlertaId = al.AlertaId,
+                                                               EstadoId = al.EstadoId,
+                                                               NombreAlerta = alerta.Descripcion,
+                                                               Observaciones = al.Observaciones,
+                                                               SeguimientoId = al.SeguimientoId,
+                                                               UltimaFechaSeguimiento = al.UltimaFechaSeguimiento
+                                                           }).ToList();
+
+                r.Alertas = alertas;
+            }
+
+            if (request.Filtro == "HOY")
+            {
+                response = (from re in lista
+                            where re.FechaUltimaActuacion == DateTime.Now.Date
+                            select re).ToList();
+            }
+            else if (request.Filtro == "ALERTA")
+            {
+                foreach (ConsultaCasosAbiertosResponse r in lista)
+                {
+                    if (r.Alertas != null && r.Alertas.Any())
+                    {
+                        response.Add(r);
+                    }
+                }
+            }
+
+            return response;
+
+        }
+
+        public void AsignacionManual(AsignacionManualRequest request)
+        {
+            UsuarioAsignado usuarioAsignado;
+            List<UsuarioAsignado> usuarios = new List<UsuarioAsignado>();
+            foreach (int i in request.Segumientos)
+            {
+                usuarioAsignado = new UsuarioAsignado()
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = DateTime.Now,
+                    Observaciones = request.Motivo,
+                    SeguimientoId = i,
+                    UsuarioId = request.IdUsuario,
+                };
+                usuarios.Add(usuarioAsignado);
+            }
+
+            _context.UsuarioAsignados.AddRange(usuarios);
+            _context.SaveChanges();
         }
     }
 
