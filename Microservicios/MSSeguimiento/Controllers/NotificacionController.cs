@@ -29,6 +29,16 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
+        [HttpGet("GetNotificationAlerta/{alertaId}")]
+        public List<NotificacionResponse> GetNotificationsAlerta(long alertaId)
+        {
+            List<NotificacionResponse> response;
+
+            response = notificacionRepo.GetNotificacionAlerta(alertaId);
+
+            return response;
+        }
+
         [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
         public int GetNumeroNotifications(string agenteDestinoId)
         {

@@ -27,7 +27,7 @@ namespace Infra.Repositorios
                        SegundoNombre = n.SegundoNombre,
                        PrimerApellido = n.PrimerApellido,
                        SegundoApellido = n.SegundoApellido,
-                       FechaNotificacion = s.FechaSeguimiento,
+                       FechaNotificacion = n.FechaNotificacionSIVIGILA,
                        Estado = new TPEstadoNNADto()
                        {
                            Nombre = e.Nombre,
@@ -41,6 +41,7 @@ namespace Infra.Repositorios
                                   join a in _context.Alertas on als.AlertaId equals a.Id
                                   join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
                                   join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
+                                  where als.SeguimientoId == s.Id
                                   select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
                    };
         }
@@ -62,7 +63,7 @@ namespace Infra.Repositorios
                     return result;
 
                 else if (filtro == 4) //Solicitados por Cuidador
-                    return result.Where(x => x.AsuntoUltimaActuacion.ToLower() == "solicitado por cuidador").ToList();
+                    return result.Where(x => x.AsuntoUltimaActuacion?.ToLower() == "solicitado por cuidador").ToList();
 
                 return result;
             }
@@ -84,7 +85,7 @@ namespace Infra.Repositorios
                     Todos = result.Count,
                     Hoy = result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).Count(),
                     ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
-                    SolicitadosPorCuidador = result.Count(x => x.AsuntoUltimaActuacion.Equals("solicitado por cuidador", StringComparison.CurrentCultureIgnoreCase))
+                    SolicitadosPorCuidador = result.Count(x => x.AsuntoUltimaActuacion?.ToLower() == "solicitado por cuidador")
                 };
             }
             catch (Exception ex)
@@ -103,17 +104,13 @@ namespace Infra.Repositorios
                                     where n.Id == id
                                     select new SeguimientoDatosNNADto
                                     {
+                                        IdNNA = n.Id,
                                         NombreCompleto = string.Join(" ", n.PrimerNombre, n.SegundoNombre, n.PrimerApellido, n.SegundoApellido),
                                         Diagnostico = diagnostico.Nombre,
                                         FechaNacimiento = n.FechaNacimiento,
                                         FechaIngresoEstrategia = n.FechaIngresoEstrategia,
-                                        FechaInicioSeguimiento = (from s in _context.Seguimientos
-                                                                  where s.NNAId == id
-                                                                  orderby s.Id descending
-                                                                  select s.FechaSeguimiento).FirstOrDefault(),
-                                        SeguimientosRealizados = (from s in _context.Seguimientos
-                                                                  where s.NNAId == id
-                                                                  select s).Count()
+                                        FechaInicioSeguimiento = _context.Seguimientos.Where(s => s.NNAId == id).Select(s => s.FechaSeguimiento).FirstOrDefault(),
+                                        SeguimientosRealizados = _context.Seguimientos.Count(s => s.NNAId == id)
                                     }).FirstOrDefaultAsync();
 
                 if (result != null)
@@ -130,11 +127,8 @@ namespace Infra.Repositorios
             }
         }
 
-
-
         public Seguimiento? GetById(long id)
         {
-
             return _context.Seguimientos?.FirstOrDefault(s => s.Id == id);
         }
 
@@ -145,9 +139,9 @@ namespace Infra.Repositorios
                                                      join ua in _context.UsuarioAsignados on new { un.Id, un.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }
                                                      join alerta in _context.AlertaSeguimientos on un.Id equals alerta.SeguimientoId into alertaGroup
                                                      from subAlerta in alertaGroup.DefaultIfEmpty()
-                                                     where un.UsuarioId == UsuarioId
-                                                           && un.FechaSeguimiento >= FechaInicial
-                                                           && un.FechaSeguimiento <= FechaFinal
+                                                     where ua.UsuarioId == UsuarioId
+                                                           && ua.FechaAsignacion >= FechaInicial
+                                                           && ua.FechaAsignacion <= FechaFinal
                                                         && un.EstadoId != 3 && ua.Activo
                                                      group subAlerta by new
                                                      {
@@ -327,8 +321,6 @@ namespace Infra.Repositorios
             return response;
         }
 
-
-
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
         {
             Seguimiento? seguimiento = (from seg in _context.Seguimientos
@@ -342,10 +334,6 @@ namespace Infra.Repositorios
                 _context.SaveChanges();
             }
         }
-
-
-
-
 
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
@@ -459,6 +447,60 @@ namespace Infra.Repositorios
 
             _context.SaveChanges();
             return 1;
+        }
+
+        public void AsignacionAutomatica()
+        {
+            List<ConsultaCasosAbiertosResponse> lista;
+            List<int> estados = new List<int> { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
+            UsuarioAsignado usuarioAsignado;
+            List<UsuarioAsignado> usuarios = new List<UsuarioAsignado>();
+
+            lista = (from seg in _context.Seguimientos
+                     join nna in _context.NNAs on seg.NNAId equals nna.Id
+                     where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
+                     select new ConsultaCasosAbiertosResponse()
+                     {
+                         AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
+                         Estado = seg.EstadoId,
+                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaUltimaActuacion = seg.UltimaActuacionFecha,
+                         Alertas = new List<AlertaSeguimientoResponse>(),
+                         SeguimientoId = seg.Id
+                     }).ToList();
+
+            List<AspNetUsers> revisores = (from us in _context.AspNetUsers
+                                           select us).ToList();
+            
+            foreach(ConsultaCasosAbiertosResponse r in lista)
+            {
+                usuarioAsignado = new UsuarioAsignado()
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = DateTime.Now,
+                    Observaciones = "Asignacion automatica",
+                    SeguimientoId = r.SeguimientoId,
+                };
+                usuarios.Add(usuarioAsignado);
+            }
+
+            this.AsignarUsuarios(revisores, usuarios);
+
+            _context.UsuarioAsignados.AddRange(usuarios);
+            _context.SaveChanges();
+        }
+
+        private void AsignarUsuarios(List<AspNetUsers> usuarios, List<UsuarioAsignado> solicitudes)
+        {
+            int usuarioIndex = 0;
+            int totalUsuarios = usuarios.Count;
+
+            foreach (var solicitud in solicitudes)
+            {
+                solicitud.UsuarioId = usuarios[usuarioIndex].Id;  // Asignar el usuario
+                usuarioIndex = (usuarioIndex + 1) % totalUsuarios;  // Reinicia el índice si se alcanzan todos los usuarios
+            }
         }
     }
 }
