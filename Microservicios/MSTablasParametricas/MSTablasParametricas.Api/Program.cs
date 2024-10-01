@@ -16,6 +16,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
 builder.Services.AddTransient<ICategoriaAlertaRepository, CategoriaAlertaRepository>();
 builder.Services.AddTransient<ICategoriaAlertaService, CategoriaAlertaService>();
+builder.Services.AddScoped<INombreTablaParametricaService, NombresTablaParametricaService>();
+builder.Services.AddScoped<ITablaParametricaRepository, TablaParametricaRepository>();
 builder.Services.AddTransient<INNARepo, NNARepo>();
 
 // Add services to the container.

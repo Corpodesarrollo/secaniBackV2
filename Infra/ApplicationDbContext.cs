@@ -124,5 +124,6 @@ namespace Infra
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
 
         public DbSet<Ausencias> Ausencias { get; set; }
+        public DbSet<TablaParametrica> TablasParametricas { get; set; }
     }
 }
