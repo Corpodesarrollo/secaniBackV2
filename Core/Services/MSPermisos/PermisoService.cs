@@ -1,8 +1,8 @@
 ﻿using Core.DTOs.MSPermisos;
 using Core.Interfaces.Repositorios.MSPermisos;
 using Core.Modelos;
-using Microsoft.Extensions.Caching.Memory;
 using Mapster;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Core.Services.MSPermisos
 {
@@ -12,7 +12,7 @@ namespace Core.Services.MSPermisos
         private readonly IMemoryCache _cache = cache;
         private string cacheKey = "Funcionalidad";
         private MemoryCacheEntryOptions cacheEntryOptions =
-            new MemoryCacheEntryOptions
+            new()
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(120),
                 SlidingExpiration = TimeSpan.FromMinutes(30)
