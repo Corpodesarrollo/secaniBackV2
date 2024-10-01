@@ -70,6 +70,12 @@ namespace Infra
                 eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
             });
 
+            modelBuilder.Entity<BiStgDepartamento>()
+                .HasNoKey();
+
+            modelBuilder.Entity<BiStgMunicipio>()
+                .HasNoKey();
+
             // Configuración para `FiltroNNA`
             modelBuilder.Entity<FiltroNNA>(entity =>
             {
@@ -124,5 +130,11 @@ namespace Infra
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
 
         public DbSet<Ausencias> Ausencias { get; set; }
+
+        public DbSet<BiStgMunicipio> BiStgMunicipio { get; set; }
+
+        public DbSet<BiStgDepartamento> BiStgDepartamento { get; set; }
+
+
     }
 }
