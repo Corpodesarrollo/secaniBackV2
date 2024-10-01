@@ -3,7 +3,7 @@ using Core.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MSEntidad.Api.Controllers
+namespace MSAuthentication.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

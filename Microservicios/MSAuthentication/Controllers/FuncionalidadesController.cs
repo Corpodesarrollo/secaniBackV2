@@ -2,28 +2,19 @@
 using Core.Services.MSPermisos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MSPermisos.Api.Controllers
+namespace MSAuthentication.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ModulosController(IModuloService service) : ControllerBase
+    public class FuncionalidadesController(IFuncionalidadService service) : ControllerBase
     {
-        private readonly IModuloService _service = service;
+        private readonly IFuncionalidadService _service = service;
 
-        [HttpGet("GetAll")]
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var result = await _service.GetAllAsync(cancellationToken: default);
             return Ok(result);
-        }
-
-        [HttpGet("Modulos")]
-        public async Task<IActionResult> Modulos()
-        {
-            var result = await _service.GetAllAsync(cancellationToken: default);
-            var filteredResult = result.Where(x => !x.ModuloComponenteObjetoIdPadre.HasValue || x.ModuloComponenteObjetoIdPadre == 0);
-
-            return Ok(filteredResult);
         }
 
         [HttpGet("{id}")]
@@ -34,14 +25,14 @@ namespace MSPermisos.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(ModuloRequestDTO dto)
+        public async Task<IActionResult> Add(FuncionalidadRequestDTO dto)
         {
             var (success, response) = await _service.AddAsync(dto, cancellationToken: default);
             return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(ModuloResponseDTO dto)
+        public async Task<IActionResult> Update(FuncionalidadResponseDTO dto)
         {
             await _service.UpdateAsync(dto, cancellationToken: default);
             return NoContent();
@@ -55,6 +46,7 @@ namespace MSPermisos.Api.Controllers
             {
                 return NotFound();
             }
+
             await _service.DeleteAsync(entity, cancellationToken: default);
             return NoContent();
         }
