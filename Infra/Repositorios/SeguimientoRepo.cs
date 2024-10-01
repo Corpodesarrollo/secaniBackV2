@@ -362,6 +362,8 @@ namespace Infra.Repositorios
             {
                 alertas = (from alert in _context.AlertaSeguimientos
                            join al in _context.Alertas on alert.AlertaId equals al.Id
+                           join subal in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals subal.Id
+                           join catal in _context.TPCategoriaAlerta on subal.CategoriaAlertaId equals catal.Id
                            join ea in _context.TPEstadoAlerta on alert.EstadoId equals ea.Id
                            join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
                            where alert.SeguimientoId == seg.IdSeguimiento
@@ -372,7 +374,9 @@ namespace Infra.Repositorios
                                Observaciones = alert.Observaciones,
                                SeguimientoId = alert.SeguimientoId,
                                UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
-                               NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador
+                               NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador,
+                               SubcategoriaAlerta = subal.Indicador+". "+subal.SubCategoriaAlerta,
+                               CategoriaAlerta = catal.Id+". "+catal.Nombre
                            }).ToList();
 
                 seg.alertasSeguimientos = alertas;

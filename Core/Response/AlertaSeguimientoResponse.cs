@@ -14,5 +14,7 @@ namespace Core.Response
         public int EstadoId { get; set; }
         public DateTime UltimaFechaSeguimiento { get; set; }
         public string NombreAlerta {  get; set; }
+        public string CategoriaAlerta {  get; set; }
+        public string SubcategoriaAlerta { get; set; }
     }
 }
