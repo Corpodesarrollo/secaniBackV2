@@ -19,7 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.-Infra", "3.-Infra", "{FD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra", "Infra\Infra.csproj", "{743840ED-A3DD-43A0-A905-9CD7F031D444}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSTablasParametricas.Api", "Microservicios\MSTablasParametricas\MSTablasParametricas.Api\MSTablasParametricas.Api.csproj", "{16C3EB36-1780-43F6-BF05-64AF444336AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSTablasParametricas.Api", "Microservicios\MSTablasParametricas\MSTablasParametricas.Api.csproj", "{16C3EB36-1780-43F6-BF05-64AF444336AF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestsSecani", "Microservicios\UnitTests\TestsSecani\TestsSecani.csproj", "{3D05291C-052E-46B5-BF5D-69F8BD7F4AD1}"
 EndProject
