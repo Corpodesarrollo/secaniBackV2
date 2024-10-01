@@ -9,7 +9,7 @@
         public string Telefonos { get; set; }
         public string? EntidadId { get; set; }
         public string? Cargo { get; set; }
-        public string? ActivoName { get; set; }
+        public string? Estado { get; set; }
         public IList<string> Roles { get; set; }
     }
 }

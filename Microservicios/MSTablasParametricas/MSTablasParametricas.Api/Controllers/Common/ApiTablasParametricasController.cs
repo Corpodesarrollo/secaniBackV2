@@ -85,6 +85,56 @@ namespace MSTablasParametricas.Api.Controllers.Common
             return Ok(entity);
         }
 
+        [HttpGet("NombreTablas")]
+        public ActionResult GetAllTableNames()
+        {
+            // Obtener los nombres de las tablas del método GetTypesFromTableName
+            var tableNames = new List<string>
+            {
+                "categoriaalerta",
+                "causainasistencia",
+                "cie10",
+                "estadoalerta",
+                "estadoingresoestrategia",
+                "estadonna",
+                "estadoseguimiento",
+                "festivos",
+                "malaatencionips",
+                "motivocierresolicitud",
+                "origenreporte",
+                "razonessindiagnostico",
+                "subcategoriaalerta",
+                "tipofallallamada"
+            };
+
+            return Ok(tableNames);
+        }
+
+        [HttpGet("NombreTablasSISPRO")]
+        public ActionResult GetAllTableNamesSISPRO()
+        {
+            // Obtener los nombres de las tablas del método GetTypesFromTableName
+            var tableNames = new List<string>
+            {
+                "IPSCodHabilitacion",
+                "Departamento",
+                "Municipio",
+                "ZonaTerritorial",
+                "EstratoSocioeconomico",
+                "RIBATipoVivienda",
+                "UnidadMedida",
+                "APSTipoIdentificacion",
+                "APSRegimenAfiliacion",
+                "CodigoEAPByNit",
+                "EntidadTerritorial",
+                "GrupoEtnico",
+                "LCETipoPoblacionEspecial",
+                "RLCPDParentesco"
+            };
+
+            return Ok(tableNames);
+        }
+
         // Método para mapear el nombre de la tabla con los tipos correspondientes
         private (Type entityType, Type dtoType) GetTypesFromTableName(string tableName)
         {

@@ -10,11 +10,20 @@ namespace MSPermisos.Api.Controllers
     {
         private readonly IModuloService _service = service;
 
-        [HttpGet]
+        [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
             var result = await _service.GetAllAsync(cancellationToken: default);
             return Ok(result);
+        }
+
+        [HttpGet("Modulos")]
+        public async Task<IActionResult> Modulos()
+        {
+            var result = await _service.GetAllAsync(cancellationToken: default);
+            var filteredResult = result.Where(x => !x.ModuloComponenteObjetoIdPadre.HasValue || x.ModuloComponenteObjetoIdPadre == 0);
+
+            return Ok(filteredResult);
         }
 
         [HttpGet("{id}")]

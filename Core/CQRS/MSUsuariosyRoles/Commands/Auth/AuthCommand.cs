@@ -32,7 +32,7 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.Auth
                 throw new BadRequestException("Invalid username or password");
             }
 
-            var (userId, fullName, userName, email, telefonos, entidadId, cargo, activoName, roles) = await _identityService.GetUserDetailsAsync(await _identityService.GetUserIdAsync(request.UserName));
+            var (userId, fullName, userName, email, telefonos, entidadId, cargo, Estado, roles) = await _identityService.GetUserDetailsAsync(await _identityService.GetUserIdAsync(request.UserName));
 
             string token = _tokenGenerator.GenerateJWTToken((userId, userName, roles));
 

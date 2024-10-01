@@ -32,7 +32,7 @@ namespace Core.CQRS.MSUsuariosyRoles.Queries.User
                 Telefonos = x.telefonos,
                 EntidadId = x.entidadId,
                 Cargo = x.cargo,
-                ActivoName = x.activoName
+                Estado = x.Estado
             }).ToList();
 
             foreach (var user in userDetails)
