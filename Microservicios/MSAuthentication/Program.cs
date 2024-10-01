@@ -1,6 +1,7 @@
 using Core.Interfaces.Repositorios;
 using Core.Models;
 using Infra.Repositories;
+using Infra.Repositorios;
 using MSAuthentication.Api.Extensions;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
@@ -26,12 +27,13 @@ builder.CustomConfigureServices();
 
 //Registro de Repos
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
+builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+        builder => builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
@@ -39,10 +41,10 @@ builder.Services.AddCors(options =>
 
 WebApplication app = builder.Build();
 
+app.UseCors("AllowSpecificOrigin");
+
 app.UseCustomConfigure();
 app.UseCustomSwagger();
-
-app.UseCors("AllowSpecificOrigin");
 
 app.Run();
 
