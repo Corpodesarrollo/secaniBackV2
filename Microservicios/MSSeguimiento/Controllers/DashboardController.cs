@@ -111,6 +111,14 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
+        [HttpGet("GetCasosCriticos")]
+        public List<GetDashboardCasosCriticosResponse> GetCasosCriticos(DateTime FechaInicial, DateTime FechaFinal)
+        {
+
+            List<GetDashboardCasosCriticosResponse> response = _dashboardRepo.RepoDashboardCasosCriticos(FechaInicial, FechaFinal);
+            return response;
+        }
+
     }
 
 }

@@ -1,5 +1,3 @@
-using Core.Interfaces.Repositorios;
-using Infra.Repositories;
 using MSAuthentication.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,18 +12,6 @@ builder.CustomConfigureServices();
 // Registrar IMemoryCache
 builder.Services.AddMemoryCache();
 
-//Registro de Repos
-builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
-
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials());
-});
 
 var app = builder.Build();
 
