@@ -2,6 +2,7 @@
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
+using Core.Modelos.TablasParametricas;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
@@ -9,6 +10,7 @@ using Infra.Repositories.Common;
 using Mapster;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Threading;
 
 
 namespace Infra.Repositorios
@@ -17,6 +19,7 @@ namespace Infra.Repositorios
     {
         private readonly ApplicationDbContext _context;
         private readonly GenericRepository<NNAs> _repository;
+        private readonly GenericRepository<TPCIE10> _repositoryCie10;
 
 
         public NNARepo(ApplicationDbContext context)
@@ -24,6 +27,8 @@ namespace Infra.Repositorios
             _context = context;
             GenericRepository<NNAs> repository = new(_context);
             _repository = repository;
+            GenericRepository<TPCIE10> repositoryCie10 = new(_context);
+            _repositoryCie10 = repositoryCie10;
         }
 
         public async Task<NNADto?> GetById(long id)
@@ -306,11 +311,14 @@ namespace Infra.Repositorios
                                                            DiagnosticoId = nna.DiagnosticoId
                                                        }).FirstOrDefaultAsync();
 
-            List<TPExternalEntityBase> cie10 = await tablaParametricaService.GetBynomTREFCodigo("CIE10", response.DiagnosticoId, CancellationToken.None);
-
-            if (cie10 != null && cie10.Count > 0)
+            if (response.DiagnosticoId != null)
             {
-                response.Diagnostico = cie10[0].Nombre;
+               TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
+
+                if (cie10 != null)
+                {
+                    response.Diagnostico = cie10.Nombre;
+                }
             }
 
             return response;

@@ -402,7 +402,8 @@ namespace Infra.Repositories
                                                        EntidadNotificada = ent.Nombre,
                                                        FechaNotificacion = un.FechaNotificacion,
                                                        FechaRespuesta = un.FechaRespuesta,
-                                                       Respuesta = un.RespuestaEntidad
+                                                       Respuesta = un.RespuestaEntidad,
+                                                       AsuntoNotificacion = un.Asunto
                                                    }).ToList();
 
             return response;
