@@ -10,7 +10,7 @@ namespace Core.Modelos.Identity
         public string? EntidadId { get; set; }
         public string? Cargo { get; set; }
         public bool? Activo { get; set; }
-        public string? ActivoName { get; set; }
+        public string? Estado { get; set; }
 
     }
 }

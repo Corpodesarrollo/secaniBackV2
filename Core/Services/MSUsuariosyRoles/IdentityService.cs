@@ -55,7 +55,7 @@ namespace Core.Services.MSUsuariosyRoles
                 EntidadId = EntidadId,
                 Cargo = Cargo,
                 Activo = true,
-                ActivoName = "Activo"
+                Estado = "Activo"
             };
 
             //identificacion es el password
@@ -112,7 +112,7 @@ namespace Core.Services.MSUsuariosyRoles
             return result.Succeeded;
         }
 
-        public async Task<List<(string id, string fullName, string userName, string email, string telefonos, string entidadId, string cargo, string activoName)>> GetAllUsersAsync()
+        public async Task<List<(string id, string fullName, string userName, string email, string telefonos, string entidadId, string cargo, string Estado)>> GetAllUsersAsync()
         {
             var users = await _userManager.Users.Select(x => new
             {
@@ -123,10 +123,10 @@ namespace Core.Services.MSUsuariosyRoles
                 x.Telefonos,
                 x.EntidadId,
                 x.Cargo,
-                x.ActivoName
+                x.Estado
             }).ToListAsync();
 
-            return users.Select(user => (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.ActivoName)).ToList();
+            return users.Select(user => (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.Estado)).ToList();
         }
 
         public async Task<List<(string id, string roleName)>> GetRolesAsync()
@@ -140,7 +140,7 @@ namespace Core.Services.MSUsuariosyRoles
             return roles.Select(role => (role.Id, role.Name)).ToList();
         }
 
-        public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string activoName, IList<string> roles)> GetUserDetailsAsync(string userId)
+        public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string Estado, IList<string> roles)> GetUserDetailsAsync(string userId)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
@@ -148,10 +148,10 @@ namespace Core.Services.MSUsuariosyRoles
                 throw new NotFoundException("User not found");
             }
             var roles = await _userManager.GetRolesAsync(user);
-            return (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.ActivoName, roles);
+            return (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.Estado, roles);
         }
 
-        public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string activoName, IList<string> roles)> GetUserDetailsByUserNameAsync(string userName)
+        public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string Estado, IList<string> roles)> GetUserDetailsByUserNameAsync(string userName)
         {
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.UserName == userName);
             if (user == null)
@@ -159,7 +159,7 @@ namespace Core.Services.MSUsuariosyRoles
                 throw new NotFoundException("User not found");
             }
             var roles = await _userManager.GetRolesAsync(user);
-            return (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.ActivoName, roles);
+            return (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.Estado, roles);
         }
 
         public async Task<string> GetUserIdAsync(string userName)
@@ -219,7 +219,7 @@ namespace Core.Services.MSUsuariosyRoles
 
         }
 
-        public async Task<bool> UpdateUserProfile(string id, string fullName, string email, string Telefonos = "", string EntidadId = "", string Cargo = "", string ActivoName = "")
+        public async Task<bool> UpdateUserProfile(string id, string fullName, string email, string Telefonos = "", string EntidadId = "", string Cargo = "", string Estado = "")
         {
             var user = await _userManager.FindByIdAsync(id);
             user.FullName = fullName;
@@ -227,7 +227,7 @@ namespace Core.Services.MSUsuariosyRoles
             user.Telefonos = Telefonos;
             user.EntidadId = EntidadId;
             user.Cargo = Cargo;
-            user.ActivoName = ActivoName;
+            user.Estado = Estado;
             var result = await _userManager.UpdateAsync(user);
 
             return result.Succeeded;

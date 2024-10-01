@@ -32,7 +32,7 @@ namespace Core.Services
             contactoEntidad.Cargo = request.Cargo;
             contactoEntidad.Email = request.Email;
             contactoEntidad.Telefonos = request.Telefonos;
-            contactoEntidad.ActivoName = request.ActivoName;
+            contactoEntidad.Estado = request.Estado;
 
             var result = await _repository.UpdateAsync(contactoEntidad);
             return result.Adapt<(bool, ContactoEntidadResponse)>();
