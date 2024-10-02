@@ -1,11 +1,12 @@
 ﻿using Core.Modelos;
 using Core.Modelos.TablasParametricas;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Core.Modelos;
 
 namespace Infra
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
             : base(dbContextOptions)
