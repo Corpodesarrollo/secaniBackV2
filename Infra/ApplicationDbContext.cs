@@ -130,6 +130,11 @@ namespace Infra
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
 
         public DbSet<Ausencias> Ausencias { get; set; }
-        public DbSet<TablaParametrica> TablasParametricas { get; set; }
+
+        public DbSet<BiStgMunicipio> BiStgMunicipio { get; set; }
+
+        public DbSet<BiStgDepartamento> BiStgDepartamento { get; set; }
+
+
     }
 }
