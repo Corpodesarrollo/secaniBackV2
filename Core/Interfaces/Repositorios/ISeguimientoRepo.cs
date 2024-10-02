@@ -26,5 +26,7 @@ namespace Core.Interfaces.Repositorios
         Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id);
         public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request);
         public void AsignacionAutomatica();
+        public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request);
+        public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
     }
 }

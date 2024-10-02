@@ -135,6 +135,10 @@ namespace Infra
 
         public DbSet<BiStgDepartamento> BiStgDepartamento { get; set; }
 
+        public DbSet<PlantillaCorreo> PlantillaCorreos { get; set; }
+
+        public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
+
 
     }
 }
