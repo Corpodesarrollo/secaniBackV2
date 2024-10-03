@@ -3,6 +3,7 @@ using Core.Request;
 using Core.response;
 using Core.Modelos;
 using MSAuthentication.Core.DTOs;
+using Core.Response;
 
 
 namespace Infra.Repositorios
@@ -284,7 +285,7 @@ namespace Infra.Repositorios
                     s => s.Id,                        // Clave externa en Seguimientos
                     u => u.SeguimientoId,             // Clave en UsuarioAsignados
                     (s, u) => new { u.UsuarioId, u.FechaAsignacion })    // Proyección
-                .Join(_context.AspNetUsers,
+                .Join(_context.Users,
                     u => u.UsuarioId,                 // Clave externa en UsuarioAsignados
                     a => a.Id,                        // Clave en AspNetUsers
                     (u, a) => new { a.FullName, u.FechaAsignacion })      // Proyección final
@@ -299,6 +300,47 @@ namespace Infra.Repositorios
 
             return response;
         }
+
+
+
+        public List<GetDashboardCasosCriticosResponse> RepoDashboardCasosCriticos(DateTime fechaInicio, DateTime fechaFin)
+        {
+            var response = (from n in _context.NNAs
+                          join c in _context.CIE10s on n.DiagnosticoId equals c.Id
+                          join e in _context.Entidades on (int)n.EPSId equals e.Id
+                          join s in _context.Seguimientos on n.Id equals s.NNAId
+                          join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
+                          join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
+
+                            from bm1 in _context.BiStgMunicipio.Where(bm1 => bm1.COD_MUNICIPIO == n.ResidenciaActualMunicipioId).DefaultIfEmpty()
+                          from bd1 in _context.BiStgDepartamento.Where(bd1 => bd1.COD_DPTO == bm1.COD_DPTO).DefaultIfEmpty()
+                          from bm2 in _context.BiStgMunicipio.Where(bm2 => bm2.COD_MUNICIPIO == n.ResidenciaOrigenMunicipioId).DefaultIfEmpty()
+                          from bd2 in _context.BiStgDepartamento.Where(bd2 => bd2.COD_DPTO == bm2.COD_DPTO).DefaultIfEmpty()
+                          where s.FechaSeguimiento >= fechaInicio && s.FechaSeguimiento <= fechaFin
+                            orderby als.AlertaId, s.FechaSeguimiento
+                          select new GetDashboardCasosCriticosResponse
+                          {
+                              AlertaId = als.AlertaId,
+                              PrimerNombre = n.PrimerNombre,
+                              SegundoNombre = n.SegundoNombre,
+                              PrimerApellido = n.PrimerApellido,
+                              SegundoApellido = n.SegundoApellido,
+                              FechaNacimiento = n.FechaNacimiento,
+                              Diagnostico = c.Nombre,
+                              DepartamentoActual = bd1.NOM_DPTO ?? bd2.NOM_DPTO,  // Usamos COALESCE para elegir el primero no nulo
+                              MunicipioActual = bm1.Municipio ?? bm2.Municipio,    // Igual para Municipio
+                              DepartamentoOrigen = bd2.NOM_DPTO,
+                              MunicipioOrigen = bm2.Municipio,
+                              FechaNotificacionSIVIGILA = n.FechaNotificacionSIVIGILA,
+                              Entidad = e.Nombre,
+                              FechaSeguimiento = s.FechaSeguimiento,
+                              AgenteSeguimiento = ua.UsuarioId
+                          }).Distinct().ToList();
+
+
+            return response;
+        }
+
 
 
 

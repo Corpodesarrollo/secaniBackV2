@@ -1,11 +1,14 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Utilities;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Infra.Repositorios
 {
@@ -307,9 +310,9 @@ namespace Infra.Repositorios
 
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
         {
-            var response = (from ur in _context.AspNetUserRoles
-                            join r in _context.AspNetRoles on ur.RoleId equals r.Id
-                            join u in _context.AspNetUsers on ur.UserId equals u.Id
+            var response = (from ur in _context.UserRoles
+                            join r in _context.Roles on ur.RoleId equals r.Id
+                            join u in _context.Users on ur.UserId equals u.Id
                             where r.Name.Contains("Agentes de seguimiento")
                             && u.Id != UsuarioId
                             select new GetSeguimientoAgentesResponse
@@ -473,7 +476,7 @@ namespace Infra.Repositorios
                          SeguimientoId = seg.Id
                      }).ToList();
 
-            List<AspNetUsers> revisores = (from us in _context.AspNetUsers
+            List<ApplicationUser> revisores = (from us in _context.Users
                                            select us).ToList();
             
             foreach(ConsultaCasosAbiertosResponse r in lista)
@@ -495,7 +498,7 @@ namespace Infra.Repositorios
             _context.SaveChanges();
         }
 
-        private void AsignarUsuarios(List<AspNetUsers> usuarios, List<UsuarioAsignado> solicitudes)
+        private void AsignarUsuarios(List<ApplicationUser> usuarios, List<UsuarioAsignado> solicitudes)
         {
             int usuarioIndex = 0;
             int totalUsuarios = usuarios.Count;
@@ -504,6 +507,119 @@ namespace Infra.Repositorios
             {
                 solicitud.UsuarioId = usuarios[usuarioIndex].Id;  // Asignar el usuario
                 usuarioIndex = (usuarioIndex + 1) % totalUsuarios;  // Reinicia el índice si se alcanzan todos los usuarios
+            }
+        }
+
+        public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)
+        {
+            try
+            {
+                PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
+                                                    where p.Id == request.Id
+                                                    select p).FirstOrDefault();
+
+                if (plantillaCorreo == null)
+                {
+                    plantillaCorreo = new PlantillaCorreo()
+                    {
+                        Id = request.Id,
+                        Asunto = request.Asunto,
+                        Cierre = request.Cierre,
+                        Estado = request.Estado,
+                        FechaCreacion = DateTime.Now,
+                        Firmante = request.Firmante,
+                        Mensaje = request.Mensaje,
+                        Nombre = request.Nombre,
+                        TipoPlantilla = request.TipoPlantilla
+                    };
+
+                    _context.PlantillaCorreos.Add(plantillaCorreo);
+                    _context.SaveChanges();
+
+                    HistoricoPlantilla historicoPlantilla = new HistoricoPlantilla()
+                    {
+                        Transaccion = "Creacion",
+                        Comentario = request.Comentario,
+                        FechaCreacion = DateTime.Now,
+                        UsuarioOrigen = request.IdUsuario,
+                        UsuarioRol = request.Rol
+                    };
+
+                    _context.HistoricosPlantilla.Add(historicoPlantilla);
+                    _context.SaveChanges();
+
+                    return "Plantilla creada exitosamente";
+                }
+                else
+                {
+                    plantillaCorreo.Asunto = request.Asunto;
+                    plantillaCorreo.Cierre = request.Cierre;
+                    plantillaCorreo.Estado = request.Estado;
+                    plantillaCorreo.Firmante = request.Firmante;
+                    plantillaCorreo.Mensaje = request.Mensaje;
+                    plantillaCorreo.Nombre = request.Nombre;
+                    plantillaCorreo.TipoPlantilla = request.TipoPlantilla;
+
+                    _context.PlantillaCorreos.Update(plantillaCorreo);
+                    _context.SaveChanges();
+
+                    HistoricoPlantilla historicoPlantilla = new HistoricoPlantilla()
+                    {
+                        Transaccion = "Modificacion",
+                        Comentario = request.Comentario,
+                        FechaCreacion = DateTime.Now,
+                        UsuarioOrigen = request.IdUsuario,
+                        UsuarioRol = request.Rol
+                    };
+
+                    _context.HistoricosPlantilla.Add(historicoPlantilla);
+                    _context.SaveChanges();
+
+                    return "Plantilla modificada exitosamente";
+                }
+            }
+            catch (Exception e)
+            {
+                return "Se presento un problema en el proceso";
+            }
+           
+        }
+
+        public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest request)
+        {
+            try
+            {
+                PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
+                                                    where p.Id == request.Id
+                                                    select p).FirstOrDefault();
+
+                if (plantillaCorreo != null)
+                {
+                    _context.PlantillaCorreos.Remove(plantillaCorreo);
+                    _context.SaveChanges();
+
+                    HistoricoPlantilla historicoPlantilla = new HistoricoPlantilla()
+                    {
+                        Transaccion = "Eliminacion",
+                        Comentario = request.Comentario,
+                        FechaCreacion = DateTime.Now,
+                        UsuarioOrigen = request.IdUsuario,
+                        UsuarioRol = request.Rol
+                    };
+
+                    _context.HistoricosPlantilla.Add(historicoPlantilla);
+                    _context.SaveChanges();
+
+                    return "Registro Eliminado Correctamente";
+                }
+                else
+                {
+                    return "El Id indicado no existe";
+                }
+            }
+            catch (Exception)
+            {
+                return "Se presento un problema en el proceso";
             }
         }
     }

@@ -82,6 +82,7 @@ namespace Infra.Repositories.Common
 
         public async Task<(bool, T)> AddAsync(T entity)
         {
+            await _context.Set<T>().AddAsync(entity);
             try {
                 await _context.AddAsync<T>(entity);
                 var result = await _context.SaveChangesAsync(); 
