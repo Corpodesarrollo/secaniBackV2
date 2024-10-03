@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Core.Request;
+using Core.Modelos.Identity;
 
 namespace TestsSecani
 {
@@ -31,7 +32,7 @@ namespace TestsSecani
         public void GetNotificacionUsuario_ReturnLista()
         {
             // Inicializar datos de prueba
-            Context.AspNetUsers.Add(new AspNetUsers { Id = "prueba4", FullName = "Giovanny Romero", Telefonos = "" });
+            Context.Users.Add(new ApplicationUser { Id = "prueba4", FullName = "Giovanny Romero", Telefonos = "" });
 
             Context.NotificacionesUsuarios.Add(new NotificacionesUsuario
             {
@@ -53,7 +54,7 @@ namespace TestsSecani
         [Fact]
         public void GetNumeroNotificacionUsuario_ReturnUno()
         {
-            Context.AspNetUsers.Add(new AspNetUsers { Id = "prueba3", FullName = "Giovanny Romero", Telefonos = "" });
+            Context.Users.Add(new ApplicationUser { Id = "prueba3", FullName = "Giovanny Romero", Telefonos = "" });
 
             Context.NotificacionesUsuarios.Add(new NotificacionesUsuario
             {

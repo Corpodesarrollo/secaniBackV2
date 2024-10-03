@@ -29,7 +29,7 @@ namespace TestsSecani
         [Fact]
         public void CrearAlerta_Exitoso()
         {
-            Context.AspNetUsers.Add(new AspNetUsers { Id = "prueba1", FullName = "Giovanny Romero", Telefonos = "", UserName = "user.externo@yopmail.com" });
+            Context.Users.Add(new Core.Modelos.Identity.ApplicationUser { Id = "prueba1", FullName = "Giovanny Romero", Telefonos = "", UserName = "user.externo@yopmail.com" });
 
             Context.SaveChanges();
             // Inicializar datos de prueba
@@ -49,7 +49,7 @@ namespace TestsSecani
         [Fact]
         public void GestionarAlerta_Exitoso()
         {
-            Context.AspNetUsers.Add(new AspNetUsers { Id = "prueba2", FullName = "Giovanny Romero", Telefonos = "", UserName = "user.externo@yopmail.com" });
+            Context.Users.Add(new Core.Modelos.Identity.ApplicationUser { Id = "prueba2", FullName = "Giovanny Romero", Telefonos = "", UserName = "user.externo@yopmail.com" });
 
             Context.SaveChanges();
             // Inicializar datos de prueba
