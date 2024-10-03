@@ -1,6 +1,7 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -309,9 +310,9 @@ namespace Infra.Repositorios
 
         public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
         {
-            var response = (from ur in _context.AspNetUserRoles
-                            join r in _context.AspNetRoles on ur.RoleId equals r.Id
-                            join u in _context.AspNetUsers on ur.UserId equals u.Id
+            var response = (from ur in _context.UserRoles
+                            join r in _context.Roles on ur.RoleId equals r.Id
+                            join u in _context.Users on ur.UserId equals u.Id
                             where r.Name.Contains("Agentes de seguimiento")
                             && u.Id != UsuarioId
                             select new GetSeguimientoAgentesResponse
@@ -475,7 +476,7 @@ namespace Infra.Repositorios
                          SeguimientoId = seg.Id
                      }).ToList();
 
-            List<AspNetUsers> revisores = (from us in _context.AspNetUsers
+            List<ApplicationUser> revisores = (from us in _context.Users
                                            select us).ToList();
             
             foreach(ConsultaCasosAbiertosResponse r in lista)
@@ -497,7 +498,7 @@ namespace Infra.Repositorios
             _context.SaveChanges();
         }
 
-        private void AsignarUsuarios(List<AspNetUsers> usuarios, List<UsuarioAsignado> solicitudes)
+        private void AsignarUsuarios(List<ApplicationUser> usuarios, List<UsuarioAsignado> solicitudes)
         {
             int usuarioIndex = 0;
             int totalUsuarios = usuarios.Count;
