@@ -27,6 +27,7 @@ namespace Infra.Repositories
         {
             _context = context;
             _cache = cache;
+            _repository = repository;
         }
 
         public List<GetVwMenuResponse> MenuXRolId(GetVwMenuRequest request, CancellationToken cancellationToken)
