@@ -1,9 +1,8 @@
 ﻿using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.MSTablasParametricas;
-using Core.Modelos.TablasParametricas;
 using Core.Modelos;
+using Core.Modelos.TablasParametricas;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.AccessControl;
 
 namespace MSTablasParametricas.Api.Controllers.Common
 {
