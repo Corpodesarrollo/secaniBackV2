@@ -9,8 +9,23 @@ using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
+using SISPRO.TRV.General;
+using SISPRO.TRV.Web.MVCCore.Helpers;
+using SISPRO.TRV.Web.MVCCore.StartupExtensions;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
+
+ReadConfig.FixLoadAppSettings(builder.Configuration);
+
+builder.Services.AddCustomConfigureServicesPreviousMvc();
+builder
+    .Services
+    .AddCustomMvcControllers()
+    .AddJsonOptions();
+
+builder.Services.AddCustomSwagger();
+
+builder.Services.AddCustomAuthentication(true);
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
@@ -22,20 +37,15 @@ builder.Services.AddTransient<INNARepo, NNARepo>();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
             ));
-builder.Services.AddControllers();
 
 builder.Services.AddHttpClient<TablaParametricaService>();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
         builder =>
         {
-            _ = builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+            _ = builder.WithOrigins("http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
             .AllowAnyHeader()
             .AllowAnyOrigin()
             .AllowAnyMethod();
@@ -44,22 +54,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
+app.UseCors("AllowSpecificOrigin");
 
-app.UseSwagger();
-app.UseSwaggerUI();
-
-app.UseCors("CorsPolicy");
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
+app.UseCustomConfigure();
+app.UseCustomSwagger();
 
 app.Run();

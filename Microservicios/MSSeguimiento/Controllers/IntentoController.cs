@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Core.Interfaces.Repositorios;
+﻿using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
-using Core.Modelos;
-using Infra.Repositorios;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class IntentoController : ControllerBase
     {

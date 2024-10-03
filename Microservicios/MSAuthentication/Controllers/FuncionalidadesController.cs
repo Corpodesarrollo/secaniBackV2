@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSAuthentication.Api.Controllers
 {
     [Route("api/[controller]")]
+    //[Authorize]
     [ApiController]
     public class FuncionalidadesController(IFuncionalidadService service) : ControllerBase
     {

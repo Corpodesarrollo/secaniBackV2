@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSAuthentication.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("api/[controller]")]
     public sealed class ContactoEntidadController(IContactoEntidadService service, IValidator<ContactoEntidadRequest> validator) : ControllerBase
     {

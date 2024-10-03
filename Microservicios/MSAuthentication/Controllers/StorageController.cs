@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSAuthentication.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class StorageController(IStorageService service) : ControllerBase
     {

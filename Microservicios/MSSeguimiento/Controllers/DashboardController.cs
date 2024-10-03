@@ -1,13 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Core.Interfaces.Repositorios;
-using Core.Request;
+﻿using Core.Interfaces.Repositorios;
 using Core.response;
-using Core.Modelos;
-using Infra.Repositorios;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class DashboardController : ControllerBase
     {
@@ -18,9 +16,9 @@ namespace MSSeguimiento.Api.Controllers
             _dashboardRepo = dashboardRepo;
         }
 
-        
+
         [HttpGet("GetTotalCasos")]
-        public GetTotalDashboardResponse GetTotalCasos(DateTime FechaInicial, DateTime FechaFinal, string? EntidadId )
+        public GetTotalDashboardResponse GetTotalCasos(DateTime FechaInicial, DateTime FechaFinal, string? EntidadId)
         {
 
             GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardTotalCasos(FechaInicial, FechaFinal, EntidadId!);

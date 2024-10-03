@@ -1,4 +1,5 @@
 ﻿using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,7 @@ using MSSeguimiento.Core.Modelos;
 
 namespace Infra
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
             : base(dbContextOptions)

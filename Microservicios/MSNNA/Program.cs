@@ -4,19 +4,28 @@ using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
-using Infra;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
-using Microsoft.EntityFrameworkCore;
 using MSNNA.Api.Extensions;
+using SISPRO.TRV.General;
+using SISPRO.TRV.Web.MVCCore.Helpers;
+using SISPRO.TRV.Web.MVCCore.StartupExtensions;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+ReadConfig.FixLoadAppSettings(builder.Configuration);
 
+builder.Services.AddCustomConfigureServicesPreviousMvc();
+builder
+    .Services
+    .AddCustomMvcControllers()
+    .AddJsonOptions();
+
+builder.Services.AddCustomSwagger();
+
+builder.Services.AddCustomAuthentication(true);
+
+// Registro de los servicios
 builder.CustomConfigureServices();
 
 //Registro de Repos
@@ -35,50 +44,20 @@ builder.Services.AddScoped<INNAService, NNAService>();
 builder.Services.AddTransient<INNAService, NNAService>();
 
 
-// Add services to the container.
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
-            ));
-builder.Services.AddControllers();
-
-builder.Services.AddHttpClient<TablaParametricaService>();
-
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+        builder => builder.WithOrigins("http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
 
-builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
-{
-    policy.AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowAnyOrigin();
-}));
-
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
-app.UseHttpsRedirection();
+WebApplication app = builder.Build();
 
 app.UseCors("AllowSpecificOrigin");
 
-app.UseAuthorization();
-
-app.MapControllers();
+app.UseCustomConfigure();
+app.UseCustomSwagger();
 
 app.Run();
