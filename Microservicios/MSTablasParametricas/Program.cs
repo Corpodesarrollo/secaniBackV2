@@ -17,6 +17,8 @@ builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>)
 builder.Services.AddTransient<ICategoriaAlertaRepository, CategoriaAlertaRepository>();
 builder.Services.AddTransient<ICategoriaAlertaService, CategoriaAlertaService>();
 builder.Services.AddTransient<INNARepo, NNARepo>();
+builder.Services.AddScoped<INombreTablaParametricaService, NombresTablaParametricaService>();
+builder.Services.AddScoped<ITablaParametricaRepository, TablaParametricaRepository>();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),

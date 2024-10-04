@@ -141,6 +141,7 @@ namespace Infra
         public DbSet<PlantillaCorreo> PlantillaCorreos { get; set; }
 
         public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
+        public DbSet<TablaParametrica> TablasParametricas { get; set; }
 
 
     }
