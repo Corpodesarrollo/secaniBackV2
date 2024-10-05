@@ -1,11 +1,13 @@
 ﻿using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Core.Modelos;
 
 namespace Infra
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
             : base(dbContextOptions)
@@ -50,6 +52,10 @@ namespace Infra
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configurar las entidades de identidad
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+
             // Configurar la vista VwMenu como una entidad sin clave
             modelBuilder.Entity<VwMenuModel>(eb =>
             {
@@ -90,7 +96,6 @@ namespace Infra
         public DbSet<Seguimiento> Seguimientos { get; set; }
         public DbSet<UsuarioAsignado> UsuarioAsignados { get; set; }
         public DbSet<NotificacionesUsuario> NotificacionesUsuarios { get; set; }
-        public DbSet<AspNetUsers> AspNetUsers { get; set; }
         public DbSet<NotificacionEntidad> NotificacionesEntidad { get; set; }
         public DbSet<Entidad> Entidades { get; set; }
         public DbSet<NNAs> NNAs { get; set; }
@@ -102,8 +107,6 @@ namespace Infra
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
         public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
-        public DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
-        public DbSet<AspNetRoles> AspNetRoles { get; set; }
         public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
         public DbSet<Permisos> TPermisos { get; set; }
         public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
@@ -134,6 +137,11 @@ namespace Infra
         public DbSet<BiStgMunicipio> BiStgMunicipio { get; set; }
 
         public DbSet<BiStgDepartamento> BiStgDepartamento { get; set; }
+
+        public DbSet<PlantillaCorreo> PlantillaCorreos { get; set; }
+
+        public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
+        public DbSet<TablaParametrica> TablasParametricas { get; set; }
 
 
     }

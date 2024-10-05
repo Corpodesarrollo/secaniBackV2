@@ -370,7 +370,7 @@ namespace Infra.Repositorios
                     s => s.Id,                        // Clave externa en Seguimientos
                     u => u.SeguimientoId,             // Clave en UsuarioAsignados
                     (s, u) => new { u.UsuarioId, u.FechaAsignacion })    // Proyección
-                .Join(_context.AspNetUsers,
+                .Join(_context.Users,
                     u => u.UsuarioId,                 // Clave externa en UsuarioAsignados
                     a => a.Id,                        // Clave en AspNetUsers
                     (u, a) => new { a.FullName, u.FechaAsignacion })      // Proyección final

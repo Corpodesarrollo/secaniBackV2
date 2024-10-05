@@ -1,6 +1,7 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -24,8 +25,8 @@ namespace Infra.Repositories
         public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId)
         {
             List<GetNotificacionResponse> response = (from un in _context.NotificacionesUsuarios
-                                                      join uDestino in _context.AspNetUsers on un.AgenteDestinoId equals uDestino.Id
-                                                      join uOrigen in _context.AspNetUsers on un.AgenteOrigenId equals uOrigen.Id
+                                                      join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
+                                                      join uOrigen in _context.Users on un.AgenteOrigenId equals uOrigen.Id
                                                       where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
                                                       select new GetNotificacionResponse()
                                                       {
@@ -42,8 +43,8 @@ namespace Infra.Repositories
         public int GetNumeroNotificacionUsuario(string AgenteDestinoId)
         {
             List<GetNotificacionResponse> response = (from un in _context.NotificacionesUsuarios
-                                                      join uDestino in _context.AspNetUsers on un.AgenteDestinoId equals uDestino.Id
-                                                      join uOrigen in _context.AspNetUsers on un.AgenteDestinoId equals uOrigen.Id
+                                                      join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
+                                                      join uOrigen in _context.Users on un.AgenteDestinoId equals uOrigen.Id
                                                       where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
                                                       select new GetNotificacionResponse()
                                                       {
@@ -72,7 +73,7 @@ namespace Infra.Repositories
                          where Tnna.Id == request.IdNNA
                          select Tnna).FirstOrDefault();
 
-            AspNetUsers? user = (from us in _context.AspNetUsers
+            ApplicationUser? user = (from us in _context.Users
                                  where us.UserName == request.UserName
                                  select us).FirstOrDefault();
 

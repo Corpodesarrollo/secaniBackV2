@@ -28,7 +28,6 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetCntSeguimiento/{UsuarioId}")]
-
         public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string UsuarioId)
         {
 
@@ -140,7 +139,21 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo.AsignacionAutomatica();
         }
 
+        [HttpPost("CrearPlantillaCorreo")]
+        public IActionResult CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)
+        {
+            var response = seguimientoRepo.CrearPlantillaCorreo(request);
 
+            return Ok(response);
+        }
+
+        [HttpPost("EliminarPlantillaCorreo")]
+        public IActionResult EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest request)
+        {
+            var response = seguimientoRepo.EliminarPlantillaCorreo(request);
+
+            return Ok(response);
+        }
     }
 
 
