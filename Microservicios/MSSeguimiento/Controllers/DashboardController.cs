@@ -20,10 +20,10 @@ namespace MSSeguimiento.Api.Controllers
 
         
         [HttpGet("GetTotalCasos")]
-        public GetTotalDashboardResponse GetTotalCasos(DateTime FechaInicial, DateTime FechaFinal, string? EntidadId )
+        public GetTotalDashboardResponse GetTotalCasos(DateTime FechaInicial, DateTime FechaFinal )
         {
 
-            GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardTotalCasos(FechaInicial, FechaFinal, EntidadId!);
+            GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardTotalCasos(FechaInicial, FechaFinal);
             return response;
         }
 
@@ -112,10 +112,59 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetCasosCriticos")]
-        public List<GetDashboardCasosCriticosResponse> GetCasosCriticos(DateTime FechaInicial, DateTime FechaFinal)
+        public List<GetDashboardCasosCriticosResponse> GetCasosCriticos(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
 
-            List<GetDashboardCasosCriticosResponse> response = _dashboardRepo.RepoDashboardCasosCriticos(FechaInicial, FechaFinal);
+            List<GetDashboardCasosCriticosResponse> response = _dashboardRepo.RepoDashboardCasosCriticos(FechaInicial, FechaFinal, UsuarioID);
+            return response;
+        }
+
+        [HttpGet("GetTotalSeguimientosCuidador")]
+        public GetTotalDashboardResponse GetTotalSeguimientosCuidador(DateTime FechaInicial, DateTime FechaFinal)
+        {
+
+            GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardTotalSeguimientosCuidador(FechaInicial, FechaFinal);
+            return response;
+        }
+
+        [HttpGet("GetRegistrosPropios")]
+        public GetTotalDashboardResponse GetRegistrosPropios(DateTime FechaInicial, DateTime FechaFinal, int EntidadId)
+        {
+
+            GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardRegistrosPropios(FechaInicial, FechaFinal, EntidadId);
+            return response;
+        }
+
+        [HttpGet("GetTotalAlertasEAPB")]
+        public GetTotalDashboardResponse GetTotalAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int EntidadId)
+        {
+
+            GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardTotalAlertasEAPB(FechaInicial, FechaFinal, EntidadId);
+            return response;
+        }
+
+        [HttpGet("GetEstadosAlertasEAPB")]
+        public List<GetDashboardEstadoResponse> GetEstadosAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int EntidadId)
+        {
+
+            List<GetDashboardEstadoResponse> response = _dashboardRepo.RepoDashboardAlertasEAPB(FechaInicial, FechaFinal, EntidadId!);
+            return response;
+        }
+
+
+        [HttpGet("GetTiposCasos")]
+        public GetDashboardTipoCasosResponse GetTiposCasos(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
+        {
+
+            GetDashboardTipoCasosResponse response = _dashboardRepo.RepoDashboardTipoCasos(FechaInicial, FechaFinal, EntidadId!);
+            return response;
+        }
+
+        [HttpGet("GetCasosCriticosEAPB")]
+        public List<GetDashboardCasosCriticosEapbResponse> GetCasosCriticosEAPB( int EntidadId)
+        {
+
+            List<GetDashboardCasosCriticosEapbResponse> response = _dashboardRepo.RepoDashboardCasosCriticosEAPB( EntidadId!);
             return response;
         }
 
