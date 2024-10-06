@@ -28,5 +28,7 @@ namespace Core.Interfaces.Repositorios
         public void AsignacionAutomatica();
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request);
         public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
+        public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo();
+        public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id);
     }
 }

@@ -622,5 +622,39 @@ namespace Infra.Repositorios
                 return "Se presento un problema en el proceso";
             }
         }
+
+        public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo()
+        {
+            List<ConsultarPlantillaResponse> response = (from p in _context.PlantillaCorreos
+                                                select new ConsultarPlantillaResponse()
+                                                {
+                                                    Id = p.Id,
+                                                    Asunto = p.Asunto,
+                                                    Cierre = p.Cierre,
+                                                    Estado = p.Estado,
+                                                    FechaCreacion = p.FechaCreacion,
+                                                    Firmante = p.Firmante,
+                                                    Mensaje = p.Mensaje,
+                                                    Nombre = p.Nombre,
+                                                    TipoPlantilla = p.TipoPlantilla
+                                                }).ToList();
+
+            return response;
+        }
+
+        public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id)
+        {
+            List<HistoricoPlantillaCorreoResponse> response = (from h in _context.HistoricosPlantilla
+                                                               select new HistoricoPlantillaCorreoResponse()
+                                                               {
+                                                                   Id = h.Id,
+                                                                   FechaCreacion = h.FechaCreacion,
+                                                                   Comentario = h.Comentario,
+                                                                   Transaccion = h.Transaccion,
+                                                                   UsuarioOrigen = h.UsuarioOrigen,
+                                                                   UsuarioRol = h.UsuarioRol
+                                                               }).ToList();
+            return response;
+        }
     }
 }

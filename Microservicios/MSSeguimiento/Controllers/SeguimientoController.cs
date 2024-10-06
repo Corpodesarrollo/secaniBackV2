@@ -154,10 +154,23 @@ namespace MSSeguimiento.Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet("ConsultarPlantillaCorreo")]
+        public IActionResult ConsultarPlantillaCorreo()
+        {
+            var response = seguimientoRepo.ConsultarPlantillasCorreo();
+
+            return Ok(response);
+        }
+
+        [HttpGet("HistoricoPlantillaCorreo/{id}")]
+        public IActionResult HistoricoPlantillaCorreo(string id)
+        {
+            var response = seguimientoRepo.HistoricoPlantillaCorreo(id);
+
+            return Ok(response);
+        }
     }
-
-
-
 }
 
 
