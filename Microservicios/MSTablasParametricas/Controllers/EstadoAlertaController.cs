@@ -8,6 +8,7 @@ namespace MSTablasParametricas.Api.Controllers
 {
 
     [Route("api/[controller]")]
+    //[Authorize]
     [ApiController]
     public class EstadoAlertaController : GenericController<TPEstadoAlerta, GenericTPDTO>
     {

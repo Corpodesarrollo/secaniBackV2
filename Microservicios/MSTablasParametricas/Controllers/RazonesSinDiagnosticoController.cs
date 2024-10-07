@@ -7,6 +7,7 @@ using MSTablasParametricas.Api.Controllers.Common;
 namespace MSTablasParametricas.Api.Controllers
 {
     [Route("api/[controller]")]
+    //[Authorize]
     [ApiController]
     public class RazonesSinDiagnosticoController : GenericController<TPRazonesSinDiagnostico, GenericTPDTO>
     {

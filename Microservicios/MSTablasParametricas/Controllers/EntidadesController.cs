@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSTablasParametricas.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("api/[controller]")]
     public class EntidadesController : ControllerBase
     {
