@@ -9,7 +9,7 @@ namespace Infra.Repositorios
     {
         public async Task<UserDto?> GetUser(User data)
         {
-            var user = await db.AspNetUsers.FirstOrDefaultAsync(x => x.Alias == data.Alias);
+            var user = await db.ApplicationUser.FirstOrDefaultAsync(x => x.Alias == data.Alias);
             if (user == null)
                 return null;
 
