@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSTablasParametricas.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("api/[controller]")]
+    [AutoValidateAntiforgeryToken]
     public class TablaParametricaController : ControllerBase
     {
         private readonly TablaParametricaService _service;

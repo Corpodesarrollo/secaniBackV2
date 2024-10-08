@@ -8,6 +8,7 @@ namespace MSTablasParametricas.Api.Controllers
 {
 
     [Route("api/[controller]")]
+    //[Authorize]
     [ApiController]
     public class FestivosController : GenericController<TPFestivos, FestivoDTO>
     {

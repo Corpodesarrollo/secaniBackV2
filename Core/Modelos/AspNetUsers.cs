@@ -1,5 +1,4 @@
-﻿using MSSeguimiento.Core.Modelos;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Core.Modelos
 {
@@ -7,6 +6,8 @@ namespace Core.Modelos
     public class AspNetUsers
     {
         public string Id { get; set; }
+
+        public string? Alias { get; set; }
         public string? FullName { get; set; }
         public string Telefonos { get; set; }
         public int EstadoUsuarioId { get; set; }

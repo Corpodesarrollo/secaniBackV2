@@ -1,23 +1,20 @@
 using Core.DTOs;
 using Core.Interfaces;
-using Core.Interfaces.Repositorios;
-using Core.Modelos;
-using Core.Request;
 using Core.Response;
-using Core.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class ContactoNNAsController(IContactoNNAService service) : ControllerBase
     {
         private IContactoNNAService _service = service;
 
 
-         // Consulta
+        // Consulta
         [HttpGet("Obtener/{id}")]
         public async Task<ActionResult<RespuestaResponse<ContactoNNADto>>> ContactoNNAGetById(long id)
         {

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSAuthentication.Api.Controllers
 {
     [Route("api/[controller]")]
+    //[Authorize]
     [ApiController]
     // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     //[Authorize(Roles = "Admin, Management")]

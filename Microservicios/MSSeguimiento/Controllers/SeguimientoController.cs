@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class SeguimientoController : ControllerBase
     {

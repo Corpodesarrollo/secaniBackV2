@@ -1,14 +1,13 @@
 ﻿using Core.Interfaces.Repositorios;
-using Core.request;
 using Core.Request;
 using Core.response;
 using Core.Response;
-using Infra.Repositorios;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class NotificacionController : ControllerBase
     {

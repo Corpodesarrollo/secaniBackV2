@@ -5,7 +5,6 @@ using Core.Modelos;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
-using Infra.Repositorios;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class NNAController(INNAService service, INNARepo nNARepo, TablaParametricaService tablaParametrica) : ControllerBase
     {
