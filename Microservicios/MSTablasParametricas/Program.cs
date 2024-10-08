@@ -23,6 +23,8 @@ builder
     .AddCustomMvcControllers()
     .AddJsonOptions();
 
+builder.Services.AddControllersWithViews();
+
 builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
@@ -47,7 +49,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy",
         builder =>
         {
-            _ = builder.WithOrigins("http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+            _ = builder.WithOrigins("http://192.168.110.11:8140", "http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
             .AllowAnyHeader()
             .AllowAnyOrigin()
             .AllowAnyMethod();
