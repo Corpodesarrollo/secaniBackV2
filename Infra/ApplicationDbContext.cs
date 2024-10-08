@@ -142,7 +142,7 @@ namespace Infra
 
         public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
         public DbSet<TablaParametrica> TablasParametricas { get; set; }
-
+        public DbSet<AspNetUsers> AspNetUsers { get; set; }
 
     }
 }
