@@ -8,7 +8,6 @@ using Core.Modelos.Identity;
 using Core.Services.MSUsuariosyRoles;
 using Core.Validators.MSPermisos;
 using Infra;
-using Infra.MSUsuariosyRoles;
 using Infra.Repositories;
 using Infra.Repositorios.MSPermisos;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
@@ -33,7 +32,7 @@ namespace MSAuthentication.Api.Extensions
 
             // Agregar soporte para la identidad y la autenticación
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
             builder.Services.Configure<IdentityOptions>(options =>
