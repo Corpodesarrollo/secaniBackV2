@@ -9,10 +9,15 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
+# Copia el archivo nuget.config a la ubicación predeterminada de NuGet
+COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
+
 COPY ["Microservicios/MSSeguimiento/MSSeguimiento.Api.csproj", "Microservicios/MSSeguimiento/"]
 COPY ["Core/Core.csproj", "Core/"]
 COPY ["Infra/Infra.csproj", "Infra/"]
-RUN dotnet restore "./Microservicios/MSSeguimiento/MSSeguimiento.Api.csproj"
+RUN dotnet restore "./Microservicios/MSSeguimiento/MSSeguimiento.Api.csproj" --configfile /root/.nuget/NuGet/nuget.config --disable-parallel --ignore-failed-sources --force --no-cache
+
 COPY . .
 WORKDIR "/src/Microservicios/MSSeguimiento"
 RUN dotnet build "./MSSeguimiento.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
