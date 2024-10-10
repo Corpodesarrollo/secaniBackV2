@@ -36,6 +36,8 @@ builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
 builder.Services.AddTransient<IContactoNNARepo, ContactoNNARepo>();
 builder.Services.AddScoped<IContactoNNAService, ContactoNNAService>();
 builder.Services.AddTransient<IContactoNNAService, ContactoNNAService>();
+builder.Services.AddScoped<TablaParametricaService>();
+
 
 
 builder.Services.AddScoped<INNARepo, NNARepo>();
@@ -43,6 +45,7 @@ builder.Services.AddTransient<INNARepo, NNARepo>();
 builder.Services.AddScoped<INNAService, NNAService>();
 builder.Services.AddTransient<INNAService, NNAService>();
 
+builder.Services.AddHttpClient<TablaParametricaService>();
 
 builder.Services.AddCors(options =>
 {
