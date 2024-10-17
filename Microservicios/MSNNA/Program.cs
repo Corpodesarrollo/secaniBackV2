@@ -10,6 +10,7 @@ using MSNNA.Api.Extensions;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
+using System.Text.Json;
 
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
@@ -19,7 +20,10 @@ builder.Services.AddCustomConfigureServicesPreviousMvc();
 builder
     .Services
     .AddCustomMvcControllers()
-    .AddJsonOptions();
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 builder.Services.AddCustomSwagger();
 

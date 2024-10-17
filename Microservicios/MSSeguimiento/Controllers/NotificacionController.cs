@@ -1,4 +1,5 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -66,6 +67,12 @@ namespace MSSeguimiento.Api.Controllers
         public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request)
         {
             return notificacionRepo.VerOficioNotificacion(request);
+        }
+
+        [HttpPost("NotificacionRespuesta")]
+        public async Task<bool?> NotificacionRespuesta([FromForm] NotificacionRespuestaDto data)
+        {
+            return await notificacionRepo.NotificacionRespuesta(data);
         }
 
 

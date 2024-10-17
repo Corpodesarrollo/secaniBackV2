@@ -143,6 +143,8 @@ namespace Infra
         public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
         public DbSet<TablaParametrica> TablasParametricas { get; set; }
         public DbSet<ApplicationUser> ApplicationUser { get; set; }
+        public DbSet<Adjuntos> Adjuntos { get; set; }
+        public DbSet<NotificacionRespuesta> NotificacionRespuesta { get; set; }
 
     }
 }

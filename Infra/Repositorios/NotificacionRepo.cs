@@ -5,6 +5,7 @@ using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using Core.Services.StorageService;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
 using System.Net;
@@ -16,10 +17,14 @@ namespace Infra.Repositories
     public class NotificacionRepo : INotificacionRepo
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAdjuntosRepo _adjuntosRepo;
+        private readonly IStorageService _storageService;
 
-        public NotificacionRepo(ApplicationDbContext context)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService)
         {
             _context = context;
+            _adjuntosRepo = adjuntosRepo;
+            _storageService = storageService;
         }
 
         public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId)
@@ -74,8 +79,8 @@ namespace Infra.Repositories
                          select Tnna).FirstOrDefault();
 
             ApplicationUser? user = (from us in _context.Users
-                                 where us.UserName == request.UserName
-                                 select us).FirstOrDefault();
+                                     where us.UserName == request.UserName
+                                     select us).FirstOrDefault();
 
             if (user == null)
             {
@@ -319,6 +324,50 @@ namespace Infra.Repositories
                 response = new VerOficioNotificacionResponse();
             }
             return response;
+        }
+
+        public async Task<bool?> NotificacionRespuesta(NotificacionRespuestaDto data)
+        {
+            // crear la notificacion de respuesta
+            NotificacionRespuesta entityNotificacion = new()
+            {
+                Cargo = data.Cargo,
+                Correo = data.Correo,
+                Entidad = data.Entidad,
+                NombreFuncionario = data.NombreFuncionario,
+                Respuesta = data.Respuesta,
+                Telefono = data.Telefono
+            };
+
+            _context.NotificacionRespuesta.Add(entityNotificacion);
+            await _context.SaveChangesAsync();
+
+            var id = entityNotificacion.Id;
+            // cargar el adjunto con adjuntorepo
+            if (data.Archivo != null)
+            {
+                var ext = Path.GetExtension(data.Archivo.FileName);
+                var nameFile = $"adjunto-{id}.{ext}";
+                AdjuntosDto adjunto = new()
+                {
+                    NombreArchivo = nameFile,
+                    Descripcion = "",
+                    Url = $"NotificacionRespuesta/{nameFile}",
+                };
+
+                var idAdjunto = await _adjuntosRepo.AddAdjunto(adjunto);
+
+                entityNotificacion.IdAdjunto = idAdjunto;
+                await _context.SaveChangesAsync();
+
+                // guardar adjunto en storage account
+                using var stream = new MemoryStream();
+                await data.Archivo.CopyToAsync(stream);
+                var fileByte = stream.ToArray();
+                await _storageService.UploadFileAsync(fileByte, nameFile);
+            }
+
+            return true;
         }
 
 

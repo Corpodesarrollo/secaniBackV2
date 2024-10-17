@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers.Common
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class GenericController<T1, T2> : ControllerBase where T1 : class where T2 : class
     {

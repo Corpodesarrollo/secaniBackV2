@@ -4,6 +4,7 @@ using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Modelos.Identity;
 using Core.Services.MSUsuariosyRoles;
+using Core.Services.StorageService;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositorios;
@@ -18,6 +19,7 @@ using Quartz.Spi;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
+using System.Text.Json;
 
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
@@ -27,7 +29,10 @@ builder.Services.AddCustomConfigureServicesPreviousMvc();
 builder
     .Services
     .AddCustomMvcControllers()
-    .AddJsonOptions();
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 builder.Services.AddCustomSwagger();
 
@@ -44,8 +49,10 @@ builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
 builder.Services.AddScoped<IDashboardRepo, DashboardRepo>();
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
+builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
-var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
 // Register Quartz services
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
 builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
@@ -54,11 +61,11 @@ builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
 var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
 
 // Register the jobs and triggers
-builder.Services.AddSingleton<AsignacionAutomaticaJob>();
-builder.Services.AddSingleton(new JobSchedule(
-    jobType: typeof(AsignacionAutomaticaJob),
-    cronExpression: temporizadorAsignacionAutomatica,
-timeZone: timeZone));
+//builder.Services.AddSingleton<AsignacionAutomaticaJob>();
+//builder.Services.AddSingleton(new JobSchedule(
+//    jobType: typeof(AsignacionAutomaticaJob),
+//    cronExpression: temporizadorAsignacionAutomatica,
+//timeZone: timeZone));
 
 builder.Services.AddHostedService<QuartzHostedService>();
 
