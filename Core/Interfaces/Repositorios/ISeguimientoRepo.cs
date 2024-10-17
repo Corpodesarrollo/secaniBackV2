@@ -30,5 +30,6 @@ namespace Core.Interfaces.Repositorios
         public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
         public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo();
         public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id);
+        public ExportarDetalleSeguimientoResponse ExportarDetalleSeguimiento(long id);
     }
 }

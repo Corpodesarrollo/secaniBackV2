@@ -8,13 +8,22 @@ using Core.Response;
 using Core.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static System.Net.Mime.MediaTypeNames;
+using System.Reflection.Metadata;
+using System.Xml.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using PuppeteerSharp.Cdp;
+using PdfSharp.Pdf;
+using PdfSharp.Drawing;
+using System.Buffers.Text;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Infra.Repositorios
 {
-    public class SeguimientoRepo(ApplicationDbContext context) : ISeguimientoRepo
+    public class SeguimientoRepo(ApplicationDbContext context, IWebHostEnvironment env) : ISeguimientoRepo
     {
         private readonly ApplicationDbContext _context = context;
+        private readonly IWebHostEnvironment _env = env;
 
         private IQueryable<SeguimientoDto> GetSelect(string id)
         {
@@ -235,7 +244,7 @@ namespace Infra.Repositorios
 
                 var nuevoUsuarioAsignado = new UsuarioAsignado
                 {
-                    
+
                     UsuarioId = request.UsuarioId,
                     SeguimientoId = UsuarioOriginal.SeguimientoId,
                     FechaAsignacion = UsuarioOriginal.FechaAsignacion,
@@ -292,7 +301,7 @@ namespace Infra.Repositorios
             List<GetSeguimientoHorarioAgenteResponse> response = (from un in _context.HorarioLaboralAgente
                                                                   where
                                                                   un.UserId == UsuarioId
-                                                                       
+
 
                                                                   select new GetSeguimientoHorarioAgenteResponse()
                                                                   {
@@ -378,8 +387,8 @@ namespace Infra.Repositorios
                                SeguimientoId = alert.SeguimientoId,
                                UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
                                NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador,
-                               SubcategoriaAlerta = subal.Indicador+". "+subal.SubCategoriaAlerta,
-                               CategoriaAlerta = catal.Id+". "+catal.Nombre
+                               SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
+                               CategoriaAlerta = catal.Id + ". " + catal.Nombre
                            }).ToList();
 
                 seg.alertasSeguimientos = alertas;
@@ -477,9 +486,9 @@ namespace Infra.Repositorios
                      }).ToList();
 
             List<ApplicationUser> revisores = (from us in _context.Users
-                                           select us).ToList();
-            
-            foreach(ConsultaCasosAbiertosResponse r in lista)
+                                               select us).ToList();
+
+            foreach (ConsultaCasosAbiertosResponse r in lista)
             {
                 usuarioAsignado = new UsuarioAsignado()
                 {
@@ -582,7 +591,7 @@ namespace Infra.Repositorios
             {
                 return "Se presento un problema en el proceso";
             }
-           
+
         }
 
         public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest request)
@@ -626,18 +635,18 @@ namespace Infra.Repositorios
         public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo()
         {
             List<ConsultarPlantillaResponse> response = (from p in _context.PlantillaCorreos
-                                                select new ConsultarPlantillaResponse()
-                                                {
-                                                    Id = p.Id,
-                                                    Asunto = p.Asunto,
-                                                    Cierre = p.Cierre,
-                                                    Estado = p.Estado,
-                                                    FechaCreacion = p.FechaCreacion,
-                                                    Firmante = p.Firmante,
-                                                    Mensaje = p.Mensaje,
-                                                    Nombre = p.Nombre,
-                                                    TipoPlantilla = p.TipoPlantilla
-                                                }).ToList();
+                                                         select new ConsultarPlantillaResponse()
+                                                         {
+                                                             Id = p.Id,
+                                                             Asunto = p.Asunto,
+                                                             Cierre = p.Cierre,
+                                                             Estado = p.Estado,
+                                                             FechaCreacion = p.FechaCreacion,
+                                                             Firmante = p.Firmante,
+                                                             Mensaje = p.Mensaje,
+                                                             Nombre = p.Nombre,
+                                                             TipoPlantilla = p.TipoPlantilla
+                                                         }).ToList();
 
             return response;
         }
@@ -654,6 +663,143 @@ namespace Infra.Repositorios
                                                                    UsuarioOrigen = h.UsuarioOrigen,
                                                                    UsuarioRol = h.UsuarioRol
                                                                }).ToList();
+            return response;
+        }
+
+        public ExportarDetalleSeguimientoResponse ExportarDetalleSeguimiento(long id)
+        {
+            ExportarDetalleSeguimientoResponse response = new ExportarDetalleSeguimientoResponse();
+            try
+            {
+                ExportarDetalleSeguimientoDto? seguimiento = (from seg in _context.Seguimientos
+                                                             join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                              join c in _context.CIE10s on nna.DiagnosticoId equals c.Id
+                                                              where seg.Id == id
+                                                              select new ExportarDetalleSeguimientoDto()
+                                                               {
+                                                                   Nombre = nna.PrimerNombre+" "+nna.SegundoApellido+" "+nna.PrimerApellido+" "+nna.SegundoApellido,
+                                                                   FechaNacimiento = nna.FechaNacimiento,
+                                                                   Diagnostico = c.Nombre,
+                                                                   FechaSeguimiento = seg.FechaSeguimiento,
+                                                                   Id = seg.Id
+                                                               }).FirstOrDefault();
+
+                int edad = 0;
+                if (seguimiento.FechaNacimiento != null) {
+                    edad = DateTime.Now.Year - seguimiento.FechaNacimiento.Value.Year;
+
+                    // Ajustar si la fecha de inicio no ha cumplido el mismo día/mes en el año final
+                    if (DateTime.Now < seguimiento.FechaNacimiento.Value.AddYears(edad))
+                    {
+                        edad--;
+                    }
+                }
+
+                if(seguimiento!= null)
+                {
+                    using (MemoryStream memoryStream = new MemoryStream())
+                    {
+                        // Crear un documento PDF
+                        PdfDocument document = new PdfDocument();
+                        document.Info.Title = "Detalle de Seguimiento";
+
+                        // Crear una página
+                        PdfPage page = document.AddPage();
+                        XGraphics gfx = XGraphics.FromPdfPage(page);
+
+                        // Definir fuentes con estilos (Regular y Bold)
+                        XFont titleFont = new XFont("Arial", 16);  // Para el título
+                        XFont headerFont = new XFont("Arial", 12, XFontStyleEx.Bold); // Para encabezados en negrita
+                        XFont textFont = new XFont("Arial", 10); // Para el texto regular
+                        XFont headerSectionFont = new XFont("Arial", 9, XFontStyleEx.Bold); // Para encabezados en negrita
+
+                        // Margen superior
+                        double yPoint = 40;
+
+                        // Incluir imagen 1 desde wwwroot (por ejemplo, logo o imagen de cabecera)
+                        string imagePath1 = Path.Combine(_env.WebRootPath, "secani.png");
+                        if (System.IO.File.Exists(imagePath1))
+                        {
+                            XImage image1 = XImage.FromFile(imagePath1);
+                            gfx.DrawImage(image1, 50, 50, 250, 35); // Ajustar la posición y el tamaño
+                            yPoint += 70; // Ajustar el espacio después de la imagen
+                        }
+
+                        // Incluir imagen 2 desde wwwroot (otra imagen relacionada con el seguimiento)
+                        string imagePath2 = Path.Combine(_env.WebRootPath, "minsalud.png");
+                        if (File.Exists(imagePath2))
+                        {
+                            XImage image2 = XImage.FromFile(imagePath2);
+                            gfx.DrawImage(image2, page.Width-100, 45, 50, 50); // Ajustar la posición y el tamaño
+                        }
+
+                        // Información personal (datos básicos)
+                        gfx.DrawString(seguimiento.Nombre, headerFont, XBrushes.Black, new XPoint(50, yPoint));
+                        gfx.DrawString("Fecha generación: " + DateTime.Now.ToString("dd/MM/yyyy"), textFont, XBrushes.Black, new XPoint(400, yPoint));
+                        yPoint += 12;
+                        gfx.DrawString("Edad: "+(edad==0?"":edad), textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 12;
+                        gfx.DrawString("Diagnóstico: "+seguimiento.Diagnostico, textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 12;
+                        gfx.DrawString("Fecha inicio seguimiento: "+(seguimiento.FechaSeguimiento==null?"":seguimiento.FechaSeguimiento.Value.ToString("dd/MM/yyyy")), textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 50;
+
+                        // Datos Básicos
+                        gfx.DrawString("Datos básicos", headerSectionFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        double xPoint = 50;
+                        double sectionHeight = 12;
+                        // Definir un borde
+                        XPen borderPen = new XPen(XColors.Black, 1); // Línea negra de 1 punto
+                        gfx.DrawRectangle(borderPen, xPoint - 10, yPoint - 10, (page.Width - 50)/2, sectionHeight);
+                        gfx.DrawRectangle(borderPen, page.Width/2, yPoint - 10, (page.Width - 50) / 2, sectionHeight);
+                        gfx.DrawString("Fecha de notificación del SIVIGILA: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Sexo: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Tipo de identificación: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Número de identificación: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Fecha de nacimiento: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 30;
+
+                        // Información del tratamiento
+                        gfx.DrawString("Información del Tratamiento", headerFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Diagnóstico: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Fecha de consulta: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Fecha de diagnóstico: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 20;
+                        gfx.DrawString("Fecha de inicio de tratamiento: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        yPoint += 30;
+
+                        // Guardar el documento en el MemoryStream
+                        document.Save(memoryStream, false);
+
+                        // Convertir el MemoryStream a un arreglo de bytes
+                        byte[] pdfBytes = memoryStream.ToArray();
+
+                        // Convertir el arreglo de bytes a una cadena Base64
+
+                        response.Base64 = Convert.ToBase64String(pdfBytes);
+                        response.Nombre = "Detalle de seguimiento " + seguimiento.Id+".pdf";
+
+                        string outputPath = "C:\\Users\\Giroco\\Documents\\DetalleSeguimiento.pdf"; // Ruta de salida para el archivo PDF
+                        using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                        {
+                            memoryStream.WriteTo(fileStream);
+                        }
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                response.Nombre = "Ha ocurrido un error";
+            }
+
             return response;
         }
     }

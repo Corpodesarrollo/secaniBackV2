@@ -14,10 +14,12 @@ namespace MSSeguimiento.Api.Controllers
     public class SeguimientoController : ControllerBase
     {
         private readonly ISeguimientoRepo seguimientoRepo;
+        private readonly IWebHostEnvironment _env;
 
-        public SeguimientoController(ISeguimientoRepo seguimiento)
+        public SeguimientoController(ISeguimientoRepo seguimiento, IWebHostEnvironment env)
         {
             seguimientoRepo = seguimiento;
+            _env = env;
         }
 
         [HttpGet("GetAllByIdUser/{UsuarioId}/{filtro}")]
@@ -169,6 +171,13 @@ namespace MSSeguimiento.Api.Controllers
         {
             var response = seguimientoRepo.HistoricoPlantillaCorreo(id);
 
+            return Ok(response);
+        }
+
+        [HttpGet("ExportarDetalleSeguimiento/{id}")]
+        public IActionResult ExportarDetalleSeguimiento(long id)
+        {
+            var response = seguimientoRepo.ExportarDetalleSeguimiento(id);
             return Ok(response);
         }
     }

@@ -87,5 +87,6 @@ app.UseCors("AllowSpecificOrigin");
 
 app.UseCustomConfigure();
 app.UseCustomSwagger();
+app.UseStaticFiles();
 
 app.Run();
