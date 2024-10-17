@@ -56,6 +56,7 @@ builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
 
+builder.Services.AddScoped<IGenericService<TPEstadoSeguimiento, GenericTPDTO>, GenericService<TPEstadoSeguimiento, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO>, GenericService<TPEstadoIngresoEstrategia, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPOrigenReporte, GenericTPDTO>, GenericService<TPOrigenReporte, GenericTPDTO>>();
 
