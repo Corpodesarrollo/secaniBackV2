@@ -5,6 +5,7 @@ using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
+using Core.Modelos;
 using Core.Modelos.TablasParametricas;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
@@ -60,6 +61,15 @@ builder.Services.AddScoped<IGenericService<TPEstadoSeguimiento, GenericTPDTO>, G
 builder.Services.AddScoped<IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO>, GenericService<TPEstadoIngresoEstrategia, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPOrigenReporte, GenericTPDTO>, GenericService<TPOrigenReporte, GenericTPDTO>>();
 
+builder.Services.AddScoped<IGenericService<TPCausaInasistencia, GenericTPDTO>, GenericService<TPCausaInasistencia, GenericTPDTO>>();
+builder.Services.AddScoped<IGenericService<TPCIE10, CIE10DTO>, GenericService<TPCIE10, CIE10DTO>>();
+builder.Services.AddScoped<IGenericService<TPEstadoAlerta, GenericTPDTO>, GenericService<TPEstadoAlerta, GenericTPDTO>>();
+builder.Services.AddScoped<IGenericService<TPEstadoNNA, GenericTPDTO>, GenericService<TPEstadoNNA, GenericTPDTO>>();
+builder.Services.AddScoped<IFestivoService, FestivoService>();
+builder.Services.AddScoped<IGenericService<TPMalaAtencionIPS, GenericTPDTO>, GenericService<TPMalaAtencionIPS, GenericTPDTO>>();
+builder.Services.AddScoped<IGenericService<TPRazonesSinDiagnostico, GenericTPDTO>, GenericService<TPRazonesSinDiagnostico, GenericTPDTO>>();
+builder.Services.AddScoped<IGenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>, GenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>>();
+builder.Services.AddScoped<IGenericService<TPTipoFallaLlamada, GenericTPDTO>, GenericService<TPTipoFallaLlamada, GenericTPDTO>>();
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
