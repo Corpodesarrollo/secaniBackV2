@@ -1,9 +1,13 @@
 ﻿using Core.Modelos;
+using Core.Modelos.Identity;
+using Core.Modelos.TablasParametricas;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MSSeguimiento.Core.Modelos;
 
 namespace Infra
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
             : base(dbContextOptions)
@@ -48,6 +52,10 @@ namespace Infra
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configurar las entidades de identidad
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+
             // Configurar la vista VwMenu como una entidad sin clave
             modelBuilder.Entity<VwMenuModel>(eb =>
             {
@@ -67,12 +75,12 @@ namespace Infra
                 eb.HasNoKey();
                 eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
             });
-            
-            modelBuilder.Entity<NNAs>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                // Configuración adicional
-            });
+
+            modelBuilder.Entity<BiStgDepartamento>()
+                .HasNoKey();
+
+            modelBuilder.Entity<BiStgMunicipio>()
+                .HasNoKey();
 
             // Configuración para `FiltroNNA`
             modelBuilder.Entity<FiltroNNA>(entity =>
@@ -88,7 +96,6 @@ namespace Infra
         public DbSet<Seguimiento> Seguimientos { get; set; }
         public DbSet<UsuarioAsignado> UsuarioAsignados { get; set; }
         public DbSet<NotificacionesUsuario> NotificacionesUsuarios { get; set; }
-        public DbSet<AspNetUsers> AspNetUsers { get; set; }
         public DbSet<NotificacionEntidad> NotificacionesEntidad { get; set; }
         public DbSet<Entidad> Entidades { get; set; }
         public DbSet<NNAs> NNAs { get; set; }
@@ -97,10 +104,47 @@ namespace Infra
         public DbSet<ContactoEntidad> ContactoEntidades { get; set; }
         public DbSet<VwMenuModel> VwMenu { get; set; }
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
-
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
+        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
+        public DbSet<Permisos> TPermisos { get; set; }
+        public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
+        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto { get; set; }
+        public DbSet<TPFestivos> TPFestivos { get; set; }
+        public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
+        public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
+        public DbSet<TPCategoriaAlerta> TPCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoSeguimiento> TPEstadoSeguimiento { get; set; }
 
-        public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<TPRazonesSinDiagnostico> TPRazonesSinDiagnostico { get; set; }
+        public DbSet<TPMotivoCierreSolicitud> TPMotivoCierreSolicitud { get; set; }
+        public DbSet<TPTipoFallaLlamada> TPTipoFallaLlamada { get; set; }
+        public DbSet<TPMalaAtencionIPS> TPMalaAtencionIPS { get; set; }
+        public DbSet<TPCausaInasistencia> tPCausaInasistencia { get; set; }
+        public DbSet<TPEstadoIngresoEstrategia> tPEstadoIngresoEstrategia { get; set; }
+        public DbSet<TPOrigenReporte> TPOrigenReporte { get; set; }
+        public DbSet<TPCIE10> CIE10s { get; set; }
+
+        public DbSet<DepuracionManualProtocolo> DepuracionManualProtocolos { get; set; }
+        public DbSet<ReporteDepuracion> ReporteDepuracions { get; set; }
+
+        public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
+
+        public DbSet<Ausencias> Ausencias { get; set; }
+
+        public DbSet<BiStgMunicipio> BiStgMunicipio { get; set; }
+
+        public DbSet<BiStgDepartamento> BiStgDepartamento { get; set; }
+
+        public DbSet<PlantillaCorreo> PlantillaCorreos { get; set; }
+
+        public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
+        public DbSet<TablaParametrica> TablasParametricas { get; set; }
+        public DbSet<ApplicationUser> ApplicationUser { get; set; }
+        public DbSet<Adjuntos> Adjuntos { get; set; }
+        public DbSet<NotificacionRespuesta> NotificacionRespuesta { get; set; }
+
     }
 }

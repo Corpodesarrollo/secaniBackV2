@@ -13,7 +13,7 @@ namespace Core.Interfaces
 
         //Commands
         Task<(bool, ContactoEntidadResponse)> AddAsync(ContactoEntidadRequest entity, CancellationToken cancellationToken);
-        Task<(bool, ContactoEntidadResponse)> UpdateAsync(ContactoEntidadResponse entity, CancellationToken cancellationToken);
+        Task<(bool, ContactoEntidadResponse)> UpdateAsync(long id, ContactoEntidadRequest entity, CancellationToken cancellationToken);
         Task<bool> DeleteAsync(ContactoEntidadResponse entity, CancellationToken cancellationToken);
         Task<bool> DeleteAsync(long id, CancellationToken cancellationToken);
     }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class AlertaController : ControllerBase
     {
@@ -17,9 +18,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("CrearAlertaSeguimiento")]
-        public string CrearAlerta([FromHeader(Name = "Authorization")] string token, [FromBody] CrearAlertaSeguimientoRequest request)
+        public string CrearAlerta([FromBody] CrearAlertaSeguimientoRequest request)
         {
-            return alertaRepo.CrearAlertaSeguimiento(token,request);
+            return alertaRepo.CrearAlertaSeguimiento(request);
         }
 
         [HttpPost("GestionarAlerta")]

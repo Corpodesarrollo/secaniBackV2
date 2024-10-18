@@ -1,45 +1,99 @@
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Base;
+using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
+using Core.Interfaces.Services.MSUsuariosyRoles;
+using Core.Modelos.Identity;
+using Core.Services.MSUsuariosyRoles;
+using Core.Services.StorageService;
+using Infra;
 using Infra.Repositories;
 using Infra.Repositorios;
+using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
+using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Api.Extensions;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
+using SISPRO.TRV.General;
+using SISPRO.TRV.Web.MVCCore.Helpers;
+using SISPRO.TRV.Web.MVCCore.StartupExtensions;
+using System.Text.Json;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
-// Add services to the container.
+ReadConfig.FixLoadAppSettings(builder.Configuration);
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddCustomConfigureServicesPreviousMvc();
+builder
+    .Services
+    .AddCustomMvcControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
+builder.Services.AddCustomSwagger();
+
+builder.Services.AddCustomAuthentication(true);
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
+// Registro de los servicios
 builder.CustomConfigureServices();
 
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
-builder.Services.AddScoped<ISeguimientoRepo,SeguimientoRepo>();
+builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
+builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
+builder.Services.AddScoped<IDashboardRepo, DashboardRepo>();
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
+builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
-builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
+// Register Quartz services
+builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
+builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
+
+var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
+
+// Register the jobs and triggers
+//builder.Services.AddSingleton<AsignacionAutomaticaJob>();
+//builder.Services.AddSingleton(new JobSchedule(
+//    jobType: typeof(AsignacionAutomaticaJob),
+//    cronExpression: temporizadorAsignacionAutomatica,
+//timeZone: timeZone));
+
+builder.Services.AddHostedService<QuartzHostedService>();
+
+builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Quartz"));
+
+builder.Services.AddCors(options =>
 {
-    policy.AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowAnyOrigin();
-}));
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder.WithOrigins("http://192.168.110.11:8140", "http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials());
+});
 
-var app = builder.Build();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
+builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
 
-app.UseCors("CorsPolicy");
+WebApplication app = builder.Build();
 
-app.UseHttpsRedirection();
+app.UseCors("AllowSpecificOrigin");
 
-app.UseAuthorization();
-
-app.MapControllers();
+app.UseCustomConfigure();
+app.UseCustomSwagger();
+app.UseStaticFiles();
 
 app.Run();

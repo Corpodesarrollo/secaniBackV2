@@ -1,69 +1,90 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Core.DTOs;
+﻿using Core.DTOs;
+using Core.Interfaces;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
+using Core.Response;
+using Core.Services.MSTablasParametricas;
+using Mapster;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
-    public class NNAController : ControllerBase
+    public class NNAController(INNAService service, INNARepo nNARepo, TablaParametricaService tablaParametrica) : ControllerBase
     {
-        private INNARepo _nNARepo;
+        private INNARepo _nNARepo = nNARepo;
+        private INNAService _nNAService = service;
+        private readonly TablaParametricaService tablaParametricaService = tablaParametrica;
 
-        public NNAController(INNARepo nNARepo)
+        /**
+        * NNA
+        */
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(long id)
         {
-            _nNARepo= nNARepo;
-        }
-
-        [HttpPost("ContactoNNACrear")]
-        public IActionResult ContactoNNACrear(ContactoNNARequest request)
-        {
-            var contactoNNA = new ContactoNNA();
-            contactoNNA.Nombres = request.Nombres;
-            contactoNNA.ParentescoId = request.ParentescoId;
-            contactoNNA.Email = request.Email;
-            contactoNNA.Telefonos = request.Telefonos;
-            contactoNNA.TelefnosInactivos = request.TelefnosInactivos;
-
-            var response = _nNARepo.CrearContactoNNA(contactoNNA);
-            return Ok(response); 
-        }
-
-        [HttpPut("ContactoNNAActualizar")]
-        public IActionResult ContactoNNAActualizar(ContactoNNARequest request)
-        {
-            var contactoNNA = new ContactoNNA();
-            contactoNNA.Nombres= request.Nombres;
-            contactoNNA.ParentescoId = request.ParentescoId;
-            contactoNNA.Email = request.Email;
-            contactoNNA.Telefonos = request.Telefonos;
-            contactoNNA.TelefnosInactivos = request.TelefnosInactivos;
-
-            var response = _nNARepo.ActualizarContactoNNA(contactoNNA);
+            var response = await _nNARepo.GetById(id);
             return Ok(response);
         }
 
-        [HttpGet("ContactoNNAGetById/{id}")]
-        public IActionResult ContactoNNAGetById(long id)
+        [HttpPost("Crear")]
+        public async Task<ActionResult<RespuestaResponse<NNADto>>> AddAsync(NNADto dto)
+        {
+            return await _nNAService.AddAsync(dto);
+        }
+
+        [HttpPut("Actualizar")]
+        public async Task<(bool, NNAs)> UpdateAsync(NNADto dto)
         {
 
-            var response = _nNARepo.ObtenerContactoPorId(id);
+            // Mapear NNADto a NNAs
+            var entity = dto.Adapt<NNAs>();
+            return await _nNARepo.UpdateAsync(entity);
+        }
+
+        [HttpPost("ConsultarNNAFiltro")]
+        [ProducesResponseType(typeof(RespuestaResponse<FiltroNNADto>), StatusCodes.Status200OK)]
+        public IActionResult ConsultarNNAFiltro(FiltroNNARequest request)
+        {
+            var response = _nNARepo.ConsultarNNAFiltro(request);
             return Ok(response.Datos);
         }
 
-        [HttpGet("TpEstadosNNA")]
-        public IActionResult TpEstadosNNA()
+        [HttpGet("ConsultarNNAsByTipoIdNumeroId/{tipoIdentificacionId}/{numeroIdentificacion}")]
+        [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
+        public IActionResult ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
 
-            var response = _nNARepo.TpEstadosNNA();
+            var response = _nNARepo.ConsultarNNAsByTipoIdNumeroId(tipoIdentificacionId, numeroIdentificacion);
             return Ok(response);
         }
 
+        [HttpGet("ConsultarNNAsById/{NNAId}")]
+        [ProducesResponseType(typeof(NNAResponse), StatusCodes.Status200OK)]
+        public IActionResult ConsultarNNAsById(long NNAId)
+        {
+
+            var response = _nNARepo.ConsultarNNAsById(NNAId);
+            return Ok(response);
+        }
+
+        [HttpGet("DatosBasicosNNAById/{NNAId}")]
+        public async Task<IActionResult> ConsultarDatosBasicosNNAById(long NNAId)
+        {
+
+            var response = await _nNARepo.ConsultarDatosBasicosNNAById(NNAId, tablaParametricaService);
+
+            return Ok(response);
+        }
+
+        /**
+        * Muestra los agentes activos seguimiento
+        */
         [HttpGet("VwAgentesAsignados")]
+        [ProducesResponseType(typeof(List<VwAgentesAsignados>), StatusCodes.Status200OK)]
         public IActionResult VwAgentesAsignados()
         {
 
@@ -71,18 +92,66 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("ConsultarNNAFiltro")]
-        public IActionResult ConsultarNNAFiltro(FiltroNNARequest request)
-        {
-            var response = _nNARepo.ConsultarNNAFiltro(request);
-            return Ok(response.Datos);
-        }
-
+        /**
+        * Seguimiento
+        */
         [HttpPost("ActualizarNNASeguimiento")]
         public IActionResult ActualizarNNASeguimiento(NNASeguimientoRequest request)
         {
             _nNARepo.ActualizarNNASeguimiento(request);
             return Ok();
+        }
+
+        [HttpGet("SolicitudSeguimientoCuidador/{NNAId}")]
+        public async Task<IActionResult> SolicitudSeguimientoCuidador(long NNAId)
+        {
+            var response = await _nNARepo.SolicitudSeguimientoCuidador(NNAId, tablaParametricaService);
+            return Ok(response);
+        }
+
+        [HttpPost("DepuracionProtocolo")]
+        [ProducesResponseType(typeof(DepuracionProtocoloResponse), StatusCodes.Status200OK)]
+        public IActionResult DepuracionProtocolo(List<DepuracionProtocoloRequest> request)
+        {
+            var response = _nNARepo.DepuracionProtocolo(request);
+            return Ok(response);
+        }
+
+        [HttpPost("SetResidenciaDiagnosticoTratamiento")]
+        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
+        {
+            _nNARepo.SetResidenciaDiagnosticoTratamiento(request);
+        }
+
+        [HttpPost("SetDiagnosticoTratamiento")]
+        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
+        {
+            _nNARepo.SetDiagnosticoTratamiento(request);
+        }
+
+        [HttpPost("SetDificultadesProceso")]
+        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        {
+            _nNARepo.SetDificultadesProceso(request);
+        }
+
+        [HttpPost("SetAdherenciaProceso")]
+        public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
+        {
+            _nNARepo.SetAdherenciaProceso(request);
+        }
+
+        [HttpPost("CasosAbiertos")]
+        public IActionResult ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        {
+            var response = _nNARepo.ConsultaCasosAbiertos(request);
+            return Ok(response);
+        }
+
+        [HttpPost("AsignacionManual")]
+        public void AsignacionManual(AsignacionManualRequest request)
+        {
+            _nNARepo.AsignacionManual(request);
         }
     }
 }

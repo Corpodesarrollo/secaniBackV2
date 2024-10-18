@@ -1,12 +1,14 @@
-﻿using Core.Interfaces.Repositorios;
-using Core.request;
+﻿using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
+using Core.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("[controller]")]
     public class NotificacionController : ControllerBase
     {
@@ -17,20 +19,30 @@ namespace MSSeguimiento.Api.Controllers
             notificacionRepo = notificacion;
         }
 
-        [HttpPost("GetNotification")]
-        public List<GetNotificacionResponse> GetNotifications(GetNotificacionRequest request)
+        [HttpGet("GetNotification/{agenteDestinoId}")]
+        public List<GetNotificacionResponse> GetNotifications(string agenteDestinoId)
         {
             List<GetNotificacionResponse> response;
 
-            response = notificacionRepo.GetNotificacionUsuario(request.AgenteDestinoId);
+            response = notificacionRepo.GetNotificacionUsuario(agenteDestinoId);
 
             return response;
         }
 
-        [HttpPost("GetNumeroNotification")]
-        public int GetNumeroNotifications(GetNotificacionRequest request)
+        [HttpGet("GetNotificationAlerta/{alertaId}")]
+        public List<NotificacionResponse> GetNotificationsAlerta(long alertaId)
         {
-            return notificacionRepo.GetNumeroNotificacionUsuario(request.AgenteDestinoId);
+            List<NotificacionResponse> response;
+
+            response = notificacionRepo.GetNotificacionAlerta(alertaId);
+
+            return response;
+        }
+
+        [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
+        public int GetNumeroNotifications(string agenteDestinoId)
+        {
+            return notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
         }
 
         [HttpPost("OficioNotificacion")]
@@ -43,6 +55,41 @@ namespace MSSeguimiento.Api.Controllers
         public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
             notificacionRepo.EliminarNotificacion(request);
+        }
+
+        [HttpPost("EnviarOficioNotificacion")]
+        public async Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
+        {
+            return await notificacionRepo.EnviarOficioNotificacion(request);
+        }
+
+        [HttpPost("VerOficioNotificacion")]
+        public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request)
+        {
+            return notificacionRepo.VerOficioNotificacion(request);
+        }
+
+        [HttpPost("NotificacionRespuesta")]
+        public async Task<bool?> NotificacionRespuesta([FromForm] NotificacionRespuestaDto data)
+        {
+            return await notificacionRepo.NotificacionRespuesta(data);
+        }
+
+
+        [HttpGet("GetNotificacionEntidadCasos")]
+        public List<GetNotificacionesEntidadResponse> GetNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId)
+        {
+
+            List<GetNotificacionesEntidadResponse> response = notificacionRepo.RepoNotificacionEntidadCasos(entidadId, alertaSeguimientoId, nnaId);
+            return response;
+        }
+
+        [HttpGet("GetListaCasosNotificacion")]
+        public List<GetListaCasosResponse> GetListaCasosNotificacion(int eapbId, int epsId)
+        {
+
+            List<GetListaCasosResponse> response = notificacionRepo.RepoListaCasosNotificacion(eapbId, epsId);
+            return response;
         }
     }
 }

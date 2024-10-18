@@ -8,8 +8,8 @@ namespace Core.Response
 {
     public class RespuestaResponse<T>
     {
-        public bool? Estado;
-        public string? Descripcion;
-        public List<T>? Datos;
+        public bool? Estado { get; set; } = false;
+        public string? Descripcion { get; set; } = "";
+        public List<T>? Datos { get; set; } = new List<T>();
     }
 }

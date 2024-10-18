@@ -1,51 +1,70 @@
+using Core.Interfaces;
+using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.Common;
+using Core.Services;
+using Core.Services.MSTablasParametricas;
+using Infra.Repositories.Common;
 using Infra.Repositorios;
 using MSNNA.Api.Extensions;
+using SISPRO.TRV.General;
+using SISPRO.TRV.Web.MVCCore.Helpers;
+using SISPRO.TRV.Web.MVCCore.StartupExtensions;
+using System.Text.Json;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+ReadConfig.FixLoadAppSettings(builder.Configuration);
 
+builder.Services.AddCustomConfigureServicesPreviousMvc();
+builder
+    .Services
+    .AddCustomMvcControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
+builder.Services.AddCustomSwagger();
+
+builder.Services.AddCustomAuthentication(true);
+
+// Registro de los servicios
 builder.CustomConfigureServices();
 
 //Registro de Repos
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+
+builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
+builder.Services.AddTransient<IContactoNNARepo, ContactoNNARepo>();
+builder.Services.AddScoped<IContactoNNAService, ContactoNNAService>();
+builder.Services.AddTransient<IContactoNNAService, ContactoNNAService>();
+builder.Services.AddScoped<TablaParametricaService>();
+
+
+
 builder.Services.AddScoped<INNARepo, NNARepo>();
+builder.Services.AddTransient<INNARepo, NNARepo>();
+builder.Services.AddScoped<INNAService, NNAService>();
+builder.Services.AddTransient<INNAService, NNAService>();
+
+builder.Services.AddHttpClient<TablaParametricaService>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:4200")
+        builder => builder.WithOrigins("http://192.168.110.11:8140", "http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
 
-builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
-{
-    policy.AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowAnyOrigin();
-}));
-
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
+WebApplication app = builder.Build();
 
 app.UseCors("AllowSpecificOrigin");
 
-app.UseAuthorization();
-
-app.MapControllers();
+app.UseCustomConfigure();
+app.UseCustomSwagger();
 
 app.Run();
