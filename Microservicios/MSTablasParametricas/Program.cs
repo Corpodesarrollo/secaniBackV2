@@ -15,6 +15,7 @@ using FluentValidation;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositories.Common;
+using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IGenericService<TPCIE10, CIE10DTO>, GenericService<TP
 builder.Services.AddScoped<IGenericService<TPEstadoAlerta, GenericTPDTO>, GenericService<TPEstadoAlerta, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPEstadoNNA, GenericTPDTO>, GenericService<TPEstadoNNA, GenericTPDTO>>();
 builder.Services.AddScoped<IFestivoService, FestivoService>();
+builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
 builder.Services.AddScoped<IGenericService<TPMalaAtencionIPS, GenericTPDTO>, GenericService<TPMalaAtencionIPS, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPRazonesSinDiagnostico, GenericTPDTO>, GenericService<TPRazonesSinDiagnostico, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>, GenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>>();
