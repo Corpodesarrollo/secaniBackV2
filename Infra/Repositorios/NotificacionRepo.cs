@@ -347,7 +347,7 @@ namespace Infra.Repositories
             if (data.Archivo != null)
             {
                 var ext = Path.GetExtension(data.Archivo.FileName);
-                var nameFile = $"adjunto-{id}.{ext}";
+                var nameFile = $"adjunto-{id}{ext}";
                 AdjuntosDto adjunto = new()
                 {
                     NombreArchivo = nameFile,

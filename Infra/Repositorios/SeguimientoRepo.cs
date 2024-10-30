@@ -6,17 +6,10 @@ using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Utilities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
-using System.Reflection.Metadata;
-using System.Xml.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using PuppeteerSharp.Cdp;
-using PdfSharp.Pdf;
-using PdfSharp.Drawing;
-using System.Buffers.Text;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
 
 namespace Infra.Repositorios
 {
@@ -99,6 +92,18 @@ namespace Infra.Repositorios
                     ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
                     SolicitadosPorCuidador = result.Count(x => x.AsuntoUltimaActuacion?.ToLower() == "solicitado por cuidador")
                 };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<long> GetCntSeguimientoByNNA(long id)
+        {
+            try
+            {
+                return await _context.Seguimientos.CountAsync(x => x.NNAId == id);
             }
             catch (Exception ex)
             {
@@ -468,9 +473,9 @@ namespace Infra.Repositorios
         public void AsignacionAutomatica()
         {
             List<ConsultaCasosAbiertosResponse> lista;
-            List<int> estados = new List<int> { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
+            List<int> estados = new() { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
             UsuarioAsignado usuarioAsignado;
-            List<UsuarioAsignado> usuarios = new List<UsuarioAsignado>();
+            List<UsuarioAsignado> usuarios = new();
 
             lista = (from seg in _context.Seguimientos
                      join nna in _context.NNAs on seg.NNAId equals nna.Id
@@ -545,7 +550,7 @@ namespace Infra.Repositorios
                     _context.PlantillaCorreos.Add(plantillaCorreo);
                     _context.SaveChanges();
 
-                    HistoricoPlantilla historicoPlantilla = new HistoricoPlantilla()
+                    HistoricoPlantilla historicoPlantilla = new()
                     {
                         Transaccion = "Creacion",
                         Comentario = request.Comentario,
@@ -572,7 +577,7 @@ namespace Infra.Repositorios
                     _context.PlantillaCorreos.Update(plantillaCorreo);
                     _context.SaveChanges();
 
-                    HistoricoPlantilla historicoPlantilla = new HistoricoPlantilla()
+                    HistoricoPlantilla historicoPlantilla = new()
                     {
                         Transaccion = "Modificacion",
                         Comentario = request.Comentario,
@@ -587,7 +592,7 @@ namespace Infra.Repositorios
                     return "Plantilla modificada exitosamente";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return "Se presento un problema en el proceso";
             }
@@ -607,7 +612,7 @@ namespace Infra.Repositorios
                     _context.PlantillaCorreos.Remove(plantillaCorreo);
                     _context.SaveChanges();
 
-                    HistoricoPlantilla historicoPlantilla = new HistoricoPlantilla()
+                    HistoricoPlantilla historicoPlantilla = new()
                     {
                         Transaccion = "Eliminacion",
                         Comentario = request.Comentario,
@@ -668,24 +673,25 @@ namespace Infra.Repositorios
 
         public ExportarDetalleSeguimientoResponse ExportarDetalleSeguimiento(long id)
         {
-            ExportarDetalleSeguimientoResponse response = new ExportarDetalleSeguimientoResponse();
+            ExportarDetalleSeguimientoResponse response = new();
             try
             {
                 ExportarDetalleSeguimientoDto? seguimiento = (from seg in _context.Seguimientos
-                                                             join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                              join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                               join c in _context.CIE10s on nna.DiagnosticoId equals c.Id
                                                               where seg.Id == id
                                                               select new ExportarDetalleSeguimientoDto()
-                                                               {
-                                                                   Nombre = nna.PrimerNombre+" "+nna.SegundoApellido+" "+nna.PrimerApellido+" "+nna.SegundoApellido,
-                                                                   FechaNacimiento = nna.FechaNacimiento,
-                                                                   Diagnostico = c.Nombre,
-                                                                   FechaSeguimiento = seg.FechaSeguimiento,
-                                                                   Id = seg.Id
-                                                               }).FirstOrDefault();
+                                                              {
+                                                                  Nombre = nna.PrimerNombre + " " + nna.SegundoApellido + " " + nna.PrimerApellido + " " + nna.SegundoApellido,
+                                                                  FechaNacimiento = nna.FechaNacimiento,
+                                                                  Diagnostico = c.Nombre,
+                                                                  FechaSeguimiento = seg.FechaSeguimiento,
+                                                                  Id = seg.Id
+                                                              }).FirstOrDefault();
 
                 int edad = 0;
-                if (seguimiento.FechaNacimiento != null) {
+                if (seguimiento.FechaNacimiento != null)
+                {
                     edad = DateTime.Now.Year - seguimiento.FechaNacimiento.Value.Year;
 
                     // Ajustar si la fecha de inicio no ha cumplido el mismo día/mes en el año final
@@ -695,12 +701,12 @@ namespace Infra.Repositorios
                     }
                 }
 
-                if(seguimiento!= null)
+                if (seguimiento != null)
                 {
-                    using (MemoryStream memoryStream = new MemoryStream())
+                    using (MemoryStream memoryStream = new())
                     {
                         // Crear un documento PDF
-                        PdfDocument document = new PdfDocument();
+                        PdfDocument document = new();
                         document.Info.Title = "Detalle de Seguimiento";
 
                         // Crear una página
@@ -708,10 +714,10 @@ namespace Infra.Repositorios
                         XGraphics gfx = XGraphics.FromPdfPage(page);
 
                         // Definir fuentes con estilos (Regular y Bold)
-                        XFont titleFont = new XFont("Arial", 16);  // Para el título
-                        XFont headerFont = new XFont("Arial", 12, XFontStyleEx.Bold); // Para encabezados en negrita
-                        XFont textFont = new XFont("Arial", 10); // Para el texto regular
-                        XFont headerSectionFont = new XFont("Arial", 9, XFontStyleEx.Bold); // Para encabezados en negrita
+                        XFont titleFont = new("Arial", 16);  // Para el título
+                        XFont headerFont = new("Arial", 12, XFontStyleEx.Bold); // Para encabezados en negrita
+                        XFont textFont = new("Arial", 10); // Para el texto regular
+                        XFont headerSectionFont = new("Arial", 9, XFontStyleEx.Bold); // Para encabezados en negrita
 
                         // Margen superior
                         double yPoint = 40;
@@ -730,18 +736,18 @@ namespace Infra.Repositorios
                         if (File.Exists(imagePath2))
                         {
                             XImage image2 = XImage.FromFile(imagePath2);
-                            gfx.DrawImage(image2, page.Width-100, 45, 50, 50); // Ajustar la posición y el tamaño
+                            gfx.DrawImage(image2, page.Width - 100, 45, 50, 50); // Ajustar la posición y el tamaño
                         }
 
                         // Información personal (datos básicos)
                         gfx.DrawString(seguimiento.Nombre, headerFont, XBrushes.Black, new XPoint(50, yPoint));
                         gfx.DrawString("Fecha generación: " + DateTime.Now.ToString("dd/MM/yyyy"), textFont, XBrushes.Black, new XPoint(400, yPoint));
                         yPoint += 12;
-                        gfx.DrawString("Edad: "+(edad==0?"":edad), textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        gfx.DrawString("Edad: " + (edad == 0 ? "" : edad), textFont, XBrushes.Black, new XPoint(50, yPoint));
                         yPoint += 12;
-                        gfx.DrawString("Diagnóstico: "+seguimiento.Diagnostico, textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        gfx.DrawString("Diagnóstico: " + seguimiento.Diagnostico, textFont, XBrushes.Black, new XPoint(50, yPoint));
                         yPoint += 12;
-                        gfx.DrawString("Fecha inicio seguimiento: "+(seguimiento.FechaSeguimiento==null?"":seguimiento.FechaSeguimiento.Value.ToString("dd/MM/yyyy")), textFont, XBrushes.Black, new XPoint(50, yPoint));
+                        gfx.DrawString("Fecha inicio seguimiento: " + (seguimiento.FechaSeguimiento == null ? "" : seguimiento.FechaSeguimiento.Value.ToString("dd/MM/yyyy")), textFont, XBrushes.Black, new XPoint(50, yPoint));
                         yPoint += 50;
 
                         // Datos Básicos
@@ -750,9 +756,9 @@ namespace Infra.Repositorios
                         double xPoint = 50;
                         double sectionHeight = 12;
                         // Definir un borde
-                        XPen borderPen = new XPen(XColors.Black, 1); // Línea negra de 1 punto
-                        gfx.DrawRectangle(borderPen, xPoint - 10, yPoint - 10, (page.Width - 50)/2, sectionHeight);
-                        gfx.DrawRectangle(borderPen, page.Width/2, yPoint - 10, (page.Width - 50) / 2, sectionHeight);
+                        XPen borderPen = new(XColors.Black, 1); // Línea negra de 1 punto
+                        gfx.DrawRectangle(borderPen, xPoint - 10, yPoint - 10, (page.Width - 50) / 2, sectionHeight);
+                        gfx.DrawRectangle(borderPen, page.Width / 2, yPoint - 10, (page.Width - 50) / 2, sectionHeight);
                         gfx.DrawString("Fecha de notificación del SIVIGILA: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
                         yPoint += 20;
                         gfx.DrawString("Sexo: ", textFont, XBrushes.Black, new XPoint(50, yPoint));
@@ -785,17 +791,17 @@ namespace Infra.Repositorios
                         // Convertir el arreglo de bytes a una cadena Base64
 
                         response.Base64 = Convert.ToBase64String(pdfBytes);
-                        response.Nombre = "Detalle de seguimiento " + seguimiento.Id+".pdf";
+                        response.Nombre = "Detalle de seguimiento " + seguimiento.Id + ".pdf";
 
                         string outputPath = "C:\\Users\\Giroco\\Documents\\DetalleSeguimiento.pdf"; // Ruta de salida para el archivo PDF
-                        using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+                        using (FileStream fileStream = new(outputPath, FileMode.Create, FileAccess.Write))
                         {
                             memoryStream.WriteTo(fileStream);
                         }
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception)
             {
                 response.Nombre = "Ha ocurrido un error";
             }

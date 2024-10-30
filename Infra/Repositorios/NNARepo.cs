@@ -10,7 +10,6 @@ using Infra.Repositories.Common;
 using Mapster;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
 
 
 namespace Infra.Repositorios
@@ -40,8 +39,8 @@ namespace Infra.Repositorios
                 NNADto nNADto = result.Adapt<NNADto>();
 
                 Entidad? eps = (from ent in _context.Entidades
-                               where ent.Id == nNADto.EPSId
-                               select ent).FirstOrDefault();
+                                where ent.Id == nNADto.EPSId
+                                select ent).FirstOrDefault();
                 if (eps != null)
                 {
                     nNADto.EPSNombre = eps.Nombre;
@@ -53,12 +52,12 @@ namespace Infra.Repositorios
 
                 if (ips != null)
                 {
-                    nNADto.IPSNombre = ips.Nombre;  
+                    nNADto.IPSNombre = ips.Nombre;
                 }
 
                 Entidad? eapb = (from ent in _context.Entidades
-                                where ent.Id == nNADto.EAPBId
-                                select ent).FirstOrDefault();
+                                 where ent.Id == nNADto.EAPBId
+                                 select ent).FirstOrDefault();
 
                 if (eapb != null)
                 {
@@ -313,7 +312,7 @@ namespace Infra.Repositorios
 
             if (response.DiagnosticoId != null)
             {
-               TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
+                TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
 
                 if (cie10 != null)
                 {
@@ -1103,9 +1102,9 @@ namespace Infra.Repositorios
 
         public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request)
         {
-            List<ConsultaCasosAbiertosResponse> response = new List<ConsultaCasosAbiertosResponse>();
-            List<ConsultaCasosAbiertosResponse> lista = new List<ConsultaCasosAbiertosResponse>();
-            List<int> estados = new List<int> { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
+            List<ConsultaCasosAbiertosResponse> response = new();
+            List<ConsultaCasosAbiertosResponse> lista = new();
+            List<int> estados = new() { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
 
             lista = (from seg in _context.Seguimientos
                      join nna in _context.NNAs on seg.NNAId equals nna.Id
@@ -1162,7 +1161,7 @@ namespace Infra.Repositorios
         public void AsignacionManual(AsignacionManualRequest request)
         {
             UsuarioAsignado usuarioAsignado;
-            List<UsuarioAsignado> usuarios = new List<UsuarioAsignado>();
+            List<UsuarioAsignado> usuarios = new();
             foreach (int i in request.Segumientos)
             {
                 usuarioAsignado = new UsuarioAsignado()
