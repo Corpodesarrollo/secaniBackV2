@@ -1,12 +1,16 @@
 using Core.CQRS.MSUsuariosyRoles.Commands.User;
+using Core.Interfaces;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.MSPermisos;
 using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Base;
 using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Modelos.Identity;
+using Core.Services;
 using Core.Services.MSUsuariosyRoles;
+using Core.Validators;
 using Core.Validators.MSPermisos;
+using FluentValidation;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositorios.MSPermisos;
@@ -41,8 +45,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 
 //Registro de Repos
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<IContactoEntidadRepository, ContactoEntidadRepository>();
+builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignUsersRoleCommandHandler).Assembly));
 

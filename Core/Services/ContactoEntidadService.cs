@@ -64,6 +64,12 @@ namespace Core.Services
             return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
         }
 
+        public async Task<IEnumerable<ContactoEntidadResponse>> GetAllByEntidadAsync(string id, CancellationToken cancellationToken)
+        {
+            var result = await _repository.GetAllContactosEntidadByEntidadId(id, cancellationToken);
+            return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
+        }
+
         public async Task<ContactoEntidadResponse> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             var result = await _repository.GetByIdAsync(id, cancellationToken);

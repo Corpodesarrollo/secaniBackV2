@@ -36,6 +36,13 @@ namespace MSAuthentication.Api.Controllers
             return Ok(await _mediator.Send(new GetUserQuery()));
         }
 
+        [HttpGet("GetAllByEntidadId/{entidadId}")]
+        [ProducesDefaultResponseType(typeof(List<UserResponseDTO>))]
+        public async Task<IActionResult> GetAllUsersByEntidadIdAsync(string entidadId)
+        {
+            return Ok(await _mediator.Send(new GetAllUsersByEntidadIdDetailsQuery()));
+        }
+
         [HttpDelete("Delete/{userId}")]
         [ProducesDefaultResponseType(typeof(int))]
         public async Task<IActionResult> DeleteUser(string userId)

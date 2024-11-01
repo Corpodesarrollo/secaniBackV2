@@ -9,6 +9,7 @@ namespace Core.Interfaces
         Task<ContactoEntidadResponse> GetByIdAsync(long id, CancellationToken cancellationToken);
         Task<ContactoEntidadResponse> GetByEmailAsync(string email, CancellationToken cancellationToken);
         Task<IEnumerable<ContactoEntidadResponse>> GetAllAsync(CancellationToken cancellationToken);
+        Task<IEnumerable<ContactoEntidadResponse>> GetAllByEntidadAsync(string id, CancellationToken cancellationToken);
         Task<(int totalRegistros, IEnumerable<ContactoEntidadResponse> registros)> GetByPageAsync(int pageIndex, int pageSize, string search, bool Ascending, PropertyInfo propertyInfo);
 
         //Commands

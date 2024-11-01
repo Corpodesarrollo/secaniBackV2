@@ -12,6 +12,7 @@
         Task<bool> DeleteUserAsync(string userId);
         Task<bool> IsUniqueUserName(string userName);
         Task<List<(string id, string fullName, string userName, string email, string telefonos, string entidadId, string cargo, string Estado)>> GetAllUsersAsync();
+        Task<List<(string id, string fullName, string userName, string email, string telefonos, string entidadId, string cargo, string Estado)>> GetAllUsersByEntidadIdAsync(string id);
         Task<bool> UpdateUserProfile(string id, string fullName, string email, string Telefonos = "", string EntidadId = "", string Cargo = "", string Estado = "");
 
         // Role Section

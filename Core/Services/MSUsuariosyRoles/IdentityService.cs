@@ -129,6 +129,25 @@ namespace Core.Services.MSUsuariosyRoles
             return users.Select(user => (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.Estado)).ToList();
         }
 
+        public async Task<List<(string id, string fullName, string userName, string email, string telefonos, string entidadId, string cargo, string Estado)>> GetAllUsersByEntidadIdAsync(string id)
+        {
+            var users = await _userManager.Users
+                .Where(x => x.EntidadId == id)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.FullName,
+                    x.UserName,
+                    x.Email,
+                    x.Telefonos,
+                    x.EntidadId,
+                    x.Cargo,
+                    x.Estado
+                }).ToListAsync();
+
+            return users.Select(user => (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.Estado)).ToList();
+        }
+
         public async Task<List<(string id, string roleName)>> GetRolesAsync()
         {
             var roles = await _roleManager.Roles.Select(x => new

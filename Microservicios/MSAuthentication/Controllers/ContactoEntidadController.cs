@@ -29,6 +29,19 @@ namespace MSAuthentication.Api.Controllers
         }
 
         /// <summary>
+        /// Gets all of the ContactoEntidads by Entidad.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The collection of ContactoEntidad    .</returns>
+        [HttpGet("EntidadId/{id}")]
+        [ProducesResponseType(typeof(List<ContactoEntidadResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetContactosEntidadesByEntidadId(string id, CancellationToken cancellationToken)
+        {
+            var ContactoEntidads = await _service.GetAllByEntidadAsync(id, cancellationToken);
+            return Ok(ContactoEntidads);
+        }
+
+        /// <summary>
         /// Gets the ContactoEntidad with the specified identifier, if it exists.
         /// </summary>
         /// <param name="Id">The ContactoEntidad identifier.</param>

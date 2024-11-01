@@ -16,6 +16,12 @@ namespace Infra.Repositories
             return await _context.ContactoEntidades.Where(x => !x.IsDeleted).ToListAsync();
         }
 
+        public async Task<List<ContactoEntidad>> GetAllContactosEntidadByEntidadId(string entidadId, CancellationToken cancellationToken)
+        {
+            return await _context.ContactoEntidades.Where(x => x.EntidadId == entidadId).ToListAsync();
+        }
+
+
         public async Task<ContactoEntidad> GetContactoEntidadByEmail(string email, CancellationToken cancellationToken)
         {
             return await _context.ContactoEntidades.FirstOrDefaultAsync(x => x.Email == email);

@@ -8,5 +8,6 @@ namespace Core.Interfaces.Repositorios
         public Task<ContactoEntidad> GetContactoEntidadByEmail(string email, CancellationToken cancellationToken);
         public Task<ContactoEntidad> GetContactoEntidadById(long id, CancellationToken cancellationToken);
         public Task<List<ContactoEntidad>> GetAllContactosEntidad(CancellationToken cancellationToken);
+        public Task<List<ContactoEntidad>> GetAllContactosEntidadByEntidadId(string id, CancellationToken cancellationToken);
     }
 }
