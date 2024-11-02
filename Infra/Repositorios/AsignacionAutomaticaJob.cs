@@ -2,11 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Quartz;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infra.Repositorios
 {
@@ -16,11 +11,12 @@ namespace Infra.Repositorios
         private IGeneralCOM _generalCOM;
         private Core.DTOs.Quartz _quartz;
 
-        public AsignacionAutomaticaJob(IServiceProvider serviceProvider,IOptions<Core.DTOs.Quartz> optQuartz)
+        public AsignacionAutomaticaJob(IServiceProvider serviceProvider, IOptions<Core.DTOs.Quartz> optQuartz)
         {
             _serviceProvider = serviceProvider;
             _quartz = optQuartz.Value;
         }
+
         public Task Execute(IJobExecutionContext context)
         {
             using (var scope = _serviceProvider.CreateScope())

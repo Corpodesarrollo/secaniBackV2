@@ -1,4 +1,5 @@
-﻿using Core.Request;
+﻿using Core.DTOs;
+using Core.Request;
 using Core.response;
 using Core.Response;
 
@@ -15,5 +16,6 @@ namespace Core.Interfaces.Repositorios
         List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
         List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId);
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId);
+        Task<bool?> NotificacionRespuesta(NotificacionRespuestaDto data);
     }
 }

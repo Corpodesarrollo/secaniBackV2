@@ -7,7 +7,7 @@ namespace MSAuthentication.Api.Controllers
 {
     [ApiController]
     //[Authorize]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public sealed class ContactoEntidadController(IContactoEntidadService service, IValidator<ContactoEntidadRequest> validator) : ControllerBase
     {
         private readonly IContactoEntidadService _service = service;

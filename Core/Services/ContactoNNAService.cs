@@ -4,7 +4,6 @@ using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
 using Core.Response;
-using Mapster;
 
 namespace Core.Services
 {
@@ -51,7 +50,6 @@ namespace Core.Services
                 var response = GenericRespuestaResponse.Response<ContactoNNADto>(false, message, null);
                 return response;
             }
-
         }
 
         public async Task<RespuestaResponse<ContactoNNADto>> ContactoNNAActualizar(ContactoNNADto dto)

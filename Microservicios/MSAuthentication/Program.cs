@@ -1,4 +1,5 @@
 using Core.CQRS.MSUsuariosyRoles.Commands.User;
+using Core.DTOs;
 using Core.Interfaces;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.MSPermisos;
@@ -9,9 +10,11 @@ using Core.Modelos.Identity;
 using Core.Services;
 using Core.Services.MSPermisos;
 using Core.Services.MSUsuariosyRoles;
+using Core.Services.StorageService;
 using Core.Validators;
 using Core.Validators.MSPermisos;
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositorios.MSPermisos;
@@ -19,9 +22,11 @@ using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MSAuthentication.Api.Middleware;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
+using System.Text.Json;
 
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
@@ -31,7 +36,10 @@ builder.Services.AddCustomConfigureServicesPreviousMvc();
 builder
     .Services
     .AddCustomMvcControllers()
-    .AddJsonOptions();
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 builder.Services.AddCustomSwagger();
 
@@ -45,16 +53,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 ));
 
 //Registro de Repos
-builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<IFuncionalidadService, FuncionalidadService>();
 builder.Services.AddScoped<IContactoEntidadRepository, ContactoEntidadRepository>();
-builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
 builder.Services.AddScoped<IModuloService, ModuloService>();
-
-builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
-
+builder.Services.AddScoped<IModuloRepository, ModuloRepository>();
+builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();
+builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignUsersRoleCommandHandler).Assembly));
+
+builder.Services.AddTransient<IValidator<ContactoEntidadRequest>, ContactoEntidadRequestValidator>();
+builder.Services.AddFluentValidationAutoValidation();
 
 var _key = builder.Configuration["Jwt:Key"];
 var _issuer = builder.Configuration["Jwt:Issuer"];
@@ -85,7 +97,7 @@ builder.Services.AddCors(options =>
 WebApplication app = builder.Build();
 
 app.UseCors("AllowSpecificOrigin");
-
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCustomConfigure();
 app.UseCustomSwagger();
 

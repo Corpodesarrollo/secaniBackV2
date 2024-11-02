@@ -8,10 +8,15 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
+# Copia el archivo nuget.config a la ubicación predeterminada de NuGet
+COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
+
 COPY ["Microservicios/MSTablasParametricas/MSTablasParametricas.Api.csproj", "Microservicios/MSTablasParametricas/"]
 COPY ["Core/Core.csproj", "Core/"]
 COPY ["Infra/Infra.csproj", "Infra/"]
-RUN dotnet restore "./Microservicios/MSTablasParametricas/MSTablasParametricas.Api.csproj"
+RUN dotnet restore "./Microservicios/MSTablasParametricas/MSTablasParametricas.Api.csproj" --configfile /root/.nuget/NuGet/nuget.config --disable-parallel --ignore-failed-sources --force --no-cache
+
 COPY . .
 WORKDIR "/src/Microservicios/MSTablasParametricas"
 RUN dotnet build "./MSTablasParametricas.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build

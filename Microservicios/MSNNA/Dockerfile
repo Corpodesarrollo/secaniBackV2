@@ -9,10 +9,15 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
+# Copia el archivo nuget.config a la ubicación predeterminada de NuGet
+COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
+
 COPY ["Microservicios/MSNNA/MSNNA.Api.csproj", "Microservicios/MSNNA/"]
 COPY ["Infra/Infra.csproj", "Infra/"]
 COPY ["Core/Core.csproj", "Core/"]
-RUN dotnet restore "./Microservicios/MSNNA/MSNNA.Api.csproj"
+RUN dotnet restore "./Microservicios/MSNNA/MSNNA.Api.csproj" --configfile /root/.nuget/NuGet/nuget.config --disable-parallel --ignore-failed-sources --force --no-cache
+
 COPY . .
 WORKDIR "/src/Microservicios/MSNNA"
 RUN dotnet build "./MSNNA.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
