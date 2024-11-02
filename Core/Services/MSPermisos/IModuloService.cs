@@ -1,4 +1,5 @@
 ﻿using Core.DTOs.MSPermisos;
+using Core.Modelos;
 
 namespace Core.Services.MSPermisos
 {
@@ -7,6 +8,8 @@ namespace Core.Services.MSPermisos
         //Queries
         Task<ModuloResponseDTO> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<IEnumerable<ModuloResponseDTO>> GetAllAsync(CancellationToken cancellationToken);
+        Task<IList<ModuloResponseDTO>> GetModulos(CancellationToken cancellationToken);
+        Task<IList<ModuloResponseDTO>> GetModulosByPadreId(int PadreId, CancellationToken cancellationToken);
 
         //Commands
         Task<(bool, ModuloResponseDTO)> AddAsync(ModuloRequestDTO entity, CancellationToken cancellationToken);

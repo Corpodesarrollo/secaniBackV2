@@ -45,6 +45,18 @@ namespace Core.Services.MSPermisos
             return entity.Adapt<ModuloResponseDTO>();
         }
 
+        public async Task<IList<ModuloResponseDTO>> GetModulos(CancellationToken cancellationToken)
+        {
+            var items = await _repository.GetModulos(cancellationToken);
+            return items.Adapt<IList<ModuloResponseDTO>>();
+        }
+
+        public async Task<IList<ModuloResponseDTO>> GetModulosByPadreId(int PadreId, CancellationToken cancellationToken)
+        {
+            var items = await _repository.GetModulosByPadreId(PadreId, cancellationToken);
+            return items.Adapt<IList<ModuloResponseDTO>>();
+        }
+
         public async Task<(bool, ModuloResponseDTO)> UpdateAsync(ModuloResponseDTO entity, CancellationToken cancellationToken)
         {
             var newEntity = await _repository.GetByIdAsync(entity.Id, cancellationToken);

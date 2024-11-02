@@ -18,16 +18,21 @@ namespace MSAuthentication.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("Modulos")]
+        [HttpGet]
         public async Task<IActionResult> Modulos()
         {
-            var result = await _service.GetAllAsync(cancellationToken: default);
-            var filteredResult = result.Where(x => !x.ModuloComponenteObjetoIdPadre.HasValue || x.ModuloComponenteObjetoIdPadre == 0);
-
-            return Ok(filteredResult);
+            var result = await _service.GetModulos(cancellationToken: default);
+            return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{PadreId}")]
+        public async Task<IActionResult> ModulosByPadreId(int PadreId)
+        {
+            var result = await _service.GetModulosByPadreId(PadreId, cancellationToken: default);
+            return Ok(result);
+        }
+
+        [HttpGet("GetById/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id, cancellationToken: default);

@@ -7,6 +7,7 @@ using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Modelos.Identity;
 using Core.Services;
+using Core.Services.MSPermisos;
 using Core.Services.MSUsuariosyRoles;
 using Core.Validators;
 using Core.Validators.MSPermisos;
@@ -49,6 +50,7 @@ builder.Services.AddScoped<IContactoEntidadRepository, ContactoEntidadRepository
 builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
+builder.Services.AddScoped<IModuloService, ModuloService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
 
