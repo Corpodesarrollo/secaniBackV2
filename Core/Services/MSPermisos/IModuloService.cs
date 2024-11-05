@@ -6,6 +6,7 @@ namespace Core.Services.MSPermisos
     {
         //Queries
         Task<ModuloResponseDTO> GetByIdAsync(int id, CancellationToken cancellationToken);
+        Task<IEnumerable<ModuloResponseDTO>> GetAllByIdPadreAsync(int idPadre, CancellationToken cancellationToken);
         Task<IEnumerable<ModuloResponseDTO>> GetAllAsync(CancellationToken cancellationToken);
 
         //Commands

@@ -39,6 +39,20 @@ namespace Core.Services.MSPermisos
 
         }
 
+        public async Task<IEnumerable<ModuloResponseDTO>> GetAllByIdPadreAsync(int idPadre, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var entities = await _repository.GetAllByIdPadreAsync(idPadre, cancellationToken);
+                return entities.Adapt<IEnumerable<ModuloResponseDTO>>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+        }
+
         public async Task<ModuloResponseDTO> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
