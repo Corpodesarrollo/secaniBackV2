@@ -39,7 +39,6 @@ builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>)
 builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
 builder.Services.AddTransient<IContactoNNARepo, ContactoNNARepo>();
 builder.Services.AddScoped<IContactoNNAService, ContactoNNAService>();
-builder.Services.AddTransient<IContactoNNAService, ContactoNNAService>();
 builder.Services.AddScoped<TablaParametricaService>();
 
 

@@ -1,3 +1,4 @@
+using Core.DTOs;
 using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
@@ -65,7 +66,7 @@ builder.Services.AddScoped<IGenericService<TPOrigenReporte, GenericTPDTO>, Gener
 builder.Services.AddScoped<IGenericService<TPCausaInasistencia, GenericTPDTO>, GenericService<TPCausaInasistencia, GenericTPDTO>>();
 builder.Services.AddScoped<IGenericService<TPCIE10, CIE10DTO>, GenericService<TPCIE10, CIE10DTO>>();
 builder.Services.AddScoped<IGenericService<TPEstadoAlerta, GenericTPDTO>, GenericService<TPEstadoAlerta, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPEstadoNNA, GenericTPDTO>, GenericService<TPEstadoNNA, GenericTPDTO>>();
+builder.Services.AddScoped<IGenericService<TPEstadoNNA, TPEstadoNNADto>, GenericService<TPEstadoNNA, TPEstadoNNADto>>();
 builder.Services.AddScoped<IFestivoService, FestivoService>();
 builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
 builder.Services.AddScoped<IGenericService<TPMalaAtencionIPS, GenericTPDTO>, GenericService<TPMalaAtencionIPS, GenericTPDTO>>();

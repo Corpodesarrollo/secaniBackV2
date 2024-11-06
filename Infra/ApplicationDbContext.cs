@@ -1,4 +1,5 @@
-﻿using Core.Modelos;
+﻿using Core.Interfaces.Repositorios.Common;
+using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -16,13 +17,16 @@ namespace Infra
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var entries = ChangeTracker.Entries<ContactoEntidad>();
+            ChangeTracker.DetectChanges();
+            var entries = ChangeTracker.Entries()
+                                       .Where(e => e.Entity is IBaseEntity); // Filtrar solo las entidades auditable
 
             foreach (var entry in entries)
             {
+                var entity = (IBaseEntity)entry.Entity;
+
                 if (entry.State == EntityState.Added)
                 {
-                    var entity = entry.Entity;
                     entity.DateCreated = DateTime.UtcNow;
                     entity.CreatedByUserId = "1";
                     entity.IsDeleted = false;
@@ -30,17 +34,16 @@ namespace Infra
 
                 if (entry.State == EntityState.Modified)
                 {
-                    var entity = entry.Entity;
                     entity.DateUpdated = DateTime.UtcNow;
                     entity.UpdatedByUserId = "2";
                 }
 
                 if (entry.State == EntityState.Deleted)
                 {
-                    var entity = entry.Entity;
                     entity.DateDeleted = DateTime.UtcNow;
                     entity.DeletedByUserId = "3";
                     entity.IsDeleted = true;
+                    entry.State = EntityState.Modified; // Para evitar eliminación física
                 }
             }
 
