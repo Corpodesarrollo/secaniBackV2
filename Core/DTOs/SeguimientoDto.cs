@@ -19,6 +19,7 @@
         public TPEstadoNNADto? Estado { get; set; }
         public string? AsuntoUltimaActuacion { get; set; }
         public DateTime? FechaUltimaActuacion { get; set; }
+        public DateTime? FechaSeguimiento { get; set; }
         public List<AlertaSeguimientoDto>? Alertas { get; set; }
     }
 }

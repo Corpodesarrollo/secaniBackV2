@@ -33,6 +33,7 @@ namespace Infra.Repositorios
                        PrimerApellido = n.PrimerApellido,
                        SegundoApellido = n.SegundoApellido,
                        FechaNotificacion = n.FechaNotificacionSIVIGILA,
+                       FechaSeguimiento = s.FechaSeguimiento,
                        Estado = new TPEstadoNNADto()
                        {
                            Nombre = e.Nombre,
@@ -59,7 +60,7 @@ namespace Infra.Repositorios
                 var result = await query.ToListAsync();
 
                 if (filtro == 1) //hoy
-                    return result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).ToList();
+                    return result.Where(x => x.FechaSeguimiento?.Date == DateTime.Now.Date).ToList();
 
                 else if (filtro == 2) //con alerta
                     return result.Where(x => x.Alertas.Count > 0).ToList();
@@ -88,7 +89,7 @@ namespace Infra.Repositorios
                 return new SeguimientoCntFiltrosDto
                 {
                     Todos = result.Count,
-                    Hoy = result.Where(x => x.FechaNotificacion?.Date == DateTime.Now.Date).Count(),
+                    Hoy = result.Where(x => x.FechaSeguimiento?.Date == DateTime.Now.Date).Count(),
                     ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
                     SolicitadosPorCuidador = result.Count(x => x.AsuntoUltimaActuacion?.ToLower() == "solicitado por cuidador")
                 };
