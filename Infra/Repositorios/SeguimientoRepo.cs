@@ -460,6 +460,8 @@ namespace Infra.Repositorios
             seguimiento.NombreRechazo = request.NombreRechazo;
             seguimiento.ParentescoRechazo = request.ParentescoRechazo;
             seguimiento.RazonesRechazo = request.RazonesRechazo;
+            seguimiento.TelefnosInactivos = seguimiento.TelefnosInactivos + seguimiento.Telefono;
+            seguimiento.Telefono = "";
 
             _context.SaveChanges();
             return 1;
