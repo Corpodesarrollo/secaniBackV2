@@ -105,11 +105,11 @@ namespace Infra.Repositorios
                                 Nombres = grouped.Key.Nombres,
                                 ParentescoId = grouped.Key.ParentescoId,
                                 Email = grouped.Key.Email,
-                                Telefonos = grouped.Key.Telefonos,
-                                TelefnosInactivos = grouped.Key.TelefnosInactivos,
+                                Telefonos = grouped.Key.Telefonos.ToString(), 
+                                TelefnosInactivos = grouped.Key.TelefnosInactivos.ToString(), 
                                 Cuidador = grouped.Key.Cuidador,
-                                TipoResultadoIntento1 = grouped.Count(i => i != null && i.TipoResultadoIntentoId == 1),
-                                TipoResultadoIntento2 = grouped.Count(i => i != null && i.TipoResultadoIntentoId == 2)
+                                TipoResultadoIntento1 = grouped.Count(i => i != null && i.TipoResultadoIntentoId == 1).ToString(),
+                                TipoResultadoIntento2 = grouped.Count(i => i != null && i.TipoResultadoIntentoId == 2).ToString()
                             }).ToList();
 
             return response;

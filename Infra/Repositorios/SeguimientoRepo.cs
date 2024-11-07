@@ -467,6 +467,15 @@ namespace Infra.Repositorios
             seguimiento.ParentescoRechazo = request.ParentescoRechazo;
             seguimiento.RazonesRechazo = request.RazonesRechazo;
 
+            var contactonna = _context.ContactoNNAs.FirstOrDefault(s => s.Id == seguimiento.ContactoNNAId);
+            if (contactonna == null)
+            {
+                return -1;
+            }
+
+            contactonna.TelefnosInactivos = contactonna.TelefnosInactivos + ' ' + contactonna.Telefonos;
+            contactonna.Telefonos = "";
+
             _context.SaveChanges();
             return 1;
         }
