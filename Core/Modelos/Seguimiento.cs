@@ -9,7 +9,6 @@ namespace Core.Modelos
         public int EstadoId { get; set; }
         public long ContactoNNAId { get; set; }
         public string? Telefono { get; set; }
-        public string? TelefnosInactivos { get; set; }
         public string? UsuarioId { get; set; }
         public long? SolicitanteId { get; set; }
         public DateTime FechaSolicitud { get; set; }
