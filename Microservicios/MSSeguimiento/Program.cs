@@ -5,6 +5,8 @@ using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Modelos.Identity;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.StorageService;
+using DinkToPdf.Contracts;
+using DinkToPdf;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositorios;
@@ -13,6 +15,7 @@ using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Api.Extensions;
+using PdfSharp.Charting;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
@@ -87,6 +90,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
 builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 WebApplication app = builder.Build();
 
