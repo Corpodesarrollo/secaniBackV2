@@ -1,4 +1,5 @@
-﻿using Core.DTOs;
+﻿using ClosedXML.Excel;
+using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
@@ -8,8 +9,12 @@ using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Infra.Repositories.Common;
 using Mapster;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.IO;
 
 
 namespace Infra.Repositorios
@@ -1179,6 +1184,433 @@ namespace Infra.Repositorios
             _context.UsuarioAsignados.AddRange(usuarios);
             _context.SaveChanges();
         }
-    }
 
+        public async Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file)
+        {
+            List<DepuracionProtocoloRequest> DepuracionRequest = new List<DepuracionProtocoloRequest>();
+            DepuracionProtocoloResponse response;
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("Archivo no proporcionado o está vacío.");
+            }
+
+            var data = new List<List<string>>();
+
+            // Lee el archivo Excel desde el IFormFile
+            
+            try
+            {
+                using (var stream = new MemoryStream())
+                {
+                    await file.CopyToAsync(stream);
+                    string[] fileName = file.FileName.Split('.');
+                    if (fileName[1].ToLower() == "xls" || fileName[1].ToLower() == "xlsx")
+                    {
+                        using (var workbook = new XLWorkbook(stream))
+                        {
+                            var worksheet = workbook.Worksheet(1); // Selecciona la primera hoja
+                            var firstRow = worksheet.FirstRowUsed();
+                            var lastRow = worksheet.LastRowUsed();
+
+                            var headers = new List<string>();
+
+                            // Leer encabezados (primera fila)
+                            foreach (var cell in firstRow.CellsUsed())
+                            {
+                                headers.Add(cell.GetString());
+                            }
+
+                            // Recorrer las filas restantes
+                            for (int row = firstRow.RowNumber() + 1; row <= lastRow.RowNumber(); row++)
+                            {
+                                DepuracionProtocoloRequest depuracion = new DepuracionProtocoloRequest();
+                                var rowData = new Dictionary<string, string>();
+                                var currentRow = worksheet.Row(row);
+
+                                depuracion.cod_eve = currentRow.Cell(1).GetValue<string>();
+                                DateTime fec_not = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(2).GetValue<string>(), out fec_not);
+                                if (fec_not != DateTime.MinValue)
+                                {
+                                    depuracion.fec_not = fec_not;
+                                }
+
+                                depuracion.semana = currentRow.Cell(3).GetValue<int>();
+                                depuracion.anio = currentRow.Cell(4).GetValue<int>();
+                                depuracion.cod_pre = currentRow.Cell(5).GetValue<string>();
+                                depuracion.cod_sub = currentRow.Cell(6).GetValue<string>();
+                                depuracion.pri_nom = currentRow.Cell(7).GetValue<string>();
+                                depuracion.seg_nom = currentRow.Cell(8).GetValue<string>();
+                                depuracion.pri_ape = currentRow.Cell(9).GetValue<string>();
+                                depuracion.seg_ape = currentRow.Cell(10).GetValue<string>();
+                                depuracion.tip_ide = currentRow.Cell(11).GetValue<string>();
+                                depuracion.num_ide = currentRow.Cell(12).GetValue<string>();
+                                depuracion.edad = currentRow.Cell(13).GetValue<int>();
+                                depuracion.uni_med = currentRow.Cell(14).GetValue<string>();
+                                depuracion.nacionali = currentRow.Cell(15).GetValue<string>();
+                                depuracion.nombre_nacionalidad = currentRow.Cell(16).GetValue<string>();
+                                depuracion.sexo = currentRow.Cell(17).GetValue<string>();
+                                depuracion.cod_pais_o = currentRow.Cell(18).GetValue<string>();
+                                depuracion.cod_dpto_o = currentRow.Cell(19).GetValue<string>();
+                                depuracion.cod_mun_o = currentRow.Cell(20).GetValue<string>();
+                                depuracion.area = currentRow.Cell(21).GetValue<string>();
+                                depuracion.localidad = currentRow.Cell(22).GetValue<string>();
+                                depuracion.cen_pobla = currentRow.Cell(23).GetValue<string>();
+                                depuracion.vereda = currentRow.Cell(24).GetValue<string>();
+                                depuracion.bar_ver = currentRow.Cell(25).GetValue<string>();
+                                depuracion.dir_res = currentRow.Cell(26).GetValue<string>();
+                                depuracion.ocupacion = currentRow.Cell(27).GetValue<string>();
+                                depuracion.tip_ss = currentRow.Cell(28).GetValue<string>();
+                                depuracion.cod_ase = currentRow.Cell(29).GetValue<string>();
+                                depuracion.per_etn = currentRow.Cell(30).GetValue<string>();
+                                depuracion.nom_grupo = currentRow.Cell(31).GetValue<string>();
+                                depuracion.estrato = currentRow.Cell(32).GetValue<string>();
+                                depuracion.gp_discapa = currentRow.Cell(33).GetValue<string>();
+                                depuracion.gp_desplaz = currentRow.Cell(34).GetValue<string>();
+                                depuracion.gp_migrant = currentRow.Cell(35).GetValue<string>();
+                                depuracion.gp_carcela = currentRow.Cell(36).GetValue<string>();
+                                depuracion.gp_gestan = currentRow.Cell(37).GetValue<string>();
+                                depuracion.sem_ges = currentRow.Cell(38).GetValue<string>();
+                                depuracion.gp_indigen = currentRow.Cell(39).GetValue<string>();
+                                depuracion.gp_pobicbf = currentRow.Cell(40).GetValue<string>();
+                                depuracion.gp_mad_com = currentRow.Cell(41).GetValue<string>();
+                                depuracion.gp_desmovi = currentRow.Cell(42).GetValue<string>();
+                                depuracion.gp_psiquia = currentRow.Cell(43).GetValue<string>();
+                                depuracion.gp_vic_vio = currentRow.Cell(44).GetValue<string>();
+                                depuracion.gp_otros = currentRow.Cell(45).GetValue<string>();
+                                depuracion.fuente = currentRow.Cell(46).GetValue<string>();
+                                depuracion.cod_pais_r = currentRow.Cell(47).GetValue<string>();
+                                depuracion.cod_dpto_r = currentRow.Cell(48).GetValue<string>();
+                                depuracion.cod_mun_r = currentRow.Cell(49).GetValue<string>();
+                                DateTime fec_con = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(50).GetValue<string>(), out fec_con);
+                                if (fec_not != DateTime.MinValue)
+                                {
+                                    depuracion.fec_con = fec_con;
+                                }
+                                DateTime ini_sin = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(51).GetValue<string>(), out ini_sin);
+                                if (ini_sin != DateTime.MinValue)
+                                {
+                                    depuracion.ini_sin = ini_sin;
+                                }
+                                depuracion.tip_cas = currentRow.Cell(52).GetValue<string>();
+                                depuracion.pac_hos = currentRow.Cell(53).GetValue<string>();
+                                DateTime fec_hos = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(54).GetValue<string>(), out fec_hos);
+                                if (fec_hos != DateTime.MinValue)
+                                {
+                                    depuracion.fec_hos = fec_hos;
+                                }
+                                depuracion.con_fin = currentRow.Cell(55).GetValue<String>();
+                                depuracion.fec_def = currentRow.Cell(56).GetValue<string>();
+                                depuracion.ajuste = currentRow.Cell(57).GetValue<string>();
+                                depuracion.telefono = currentRow.Cell(58).GetValue<string>();
+                                DateTime fecha_nto = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(59).GetValue<string>(), out fecha_nto);
+                                if (fecha_nto != DateTime.MinValue)
+                                {
+                                    depuracion.fecha_nto = fecha_nto;
+                                }
+                                depuracion.cer_def = currentRow.Cell(60).GetValue<string>();
+                                depuracion.cbmte = currentRow.Cell(61).GetValue<string>();
+                                depuracion.uni_modif = currentRow.Cell(62).GetValue<string>();
+                                depuracion.nuni_modif = currentRow.Cell(63).GetValue<string>();
+                                DateTime fec_arc_xl = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(64).GetValue<string>(), out fec_arc_xl);
+                                if (fec_arc_xl != DateTime.MinValue)
+                                {
+                                    depuracion.fec_arc_xl = fec_arc_xl;
+                                }
+                                depuracion.nom_dil_f = currentRow.Cell(65).GetValue<string>();
+                                depuracion.tel_dil_f = currentRow.Cell(66).GetValue<string>();
+                                DateTime fec_aju = DateTime.MinValue;
+                                DateTime.TryParse(currentRow.Cell(67).GetValue<string>(), out fec_aju);
+                                if (fec_aju != DateTime.MinValue)
+                                {
+                                    depuracion.fec_aju = fec_aju;
+                                }
+                                depuracion.nit_upgd = currentRow.Cell(68).GetValue<string>();
+                                depuracion.fm_fuerza = currentRow.Cell(69).GetValue<string>();
+                                depuracion.fm_unidad = currentRow.Cell(70).GetValue<string>();
+                                depuracion.fm_grado = currentRow.Cell(71).GetValue<string>();
+                                depuracion.version = currentRow.Cell(72).GetValue<string>();
+                                depuracion.tipo_ca = currentRow.Cell(73).GetValue<string>();
+                                DateTime fec_initra;
+                                DateTime.TryParse(currentRow.Cell(74).GetValue<string>(), out fec_initra);
+                                if (fec_initra != DateTime.MinValue)
+                                {
+                                    depuracion.fec_initra = fec_initra;
+                                }
+                                depuracion.consx2_neo = currentRow.Cell(75).GetValue<string>();
+                                depuracion.recaida = currentRow.Cell(76).GetValue<string>();
+                                DateTime fec_diag1a;
+                                DateTime.TryParse(currentRow.Cell(77).GetValue<string>(), out fec_diag1a);
+                                if (fec_diag1a != DateTime.MinValue)
+                                {
+                                    depuracion.fec_diag1a = fec_diag1a;
+                                }
+                                depuracion.crit_dx_pr = currentRow.Cell(78).GetValue<string>();
+                                DateTime fec_tomadp;
+                                DateTime.TryParse(currentRow.Cell(79).GetValue<string>(), out fec_tomadp);
+                                if (fec_tomadp != DateTime.MinValue)
+                                {
+                                    depuracion.fec_tomadp = fec_tomadp;
+                                }
+                                DateTime fec_res_dp;
+                                DateTime.TryParse(currentRow.Cell(80).GetValue<string>(), out fec_res_dp);
+                                if (fec_res_dp != DateTime.MinValue)
+                                {
+                                    depuracion.fec_res_dp = fec_res_dp;
+                                }
+                                depuracion.crit_dx_de = currentRow.Cell(81).GetValue<string>();
+                                DateTime fec_tomadd;
+                                DateTime.TryParse(currentRow.Cell(82).GetValue<string>(), out fec_tomadd);
+                                if (fec_tomadd != DateTime.MinValue)
+                                {
+                                    depuracion.fec_tomadd = fec_tomadd;
+                                }
+                                DateTime fec_res_dd;
+                                DateTime.TryParse(currentRow.Cell(83).GetValue<string>(), out fec_res_dd);
+                                if (fec_tomadd != DateTime.MinValue)
+                                {
+                                    depuracion.fec_res_dd = fec_res_dd;
+                                }
+                                depuracion.nom_oncolo = currentRow.Cell(84).GetValue<string>();
+                                depuracion.tel_oncolo = currentRow.Cell(85).GetValue<string>();
+                                depuracion.tel_cont_2 = currentRow.Cell(86).GetValue<string>();
+                                depuracion.estrato_datos_complementarios = currentRow.Cell(87).GetValue<string>();
+                                depuracion.nom_eve = currentRow.Cell(88).GetValue<string>();
+                                depuracion.nom_upgd = currentRow.Cell(89).GetValue<string>();
+                                depuracion.npais_proce = currentRow.Cell(90).GetValue<string>();
+                                depuracion.ndep_proce = currentRow.Cell(91).GetValue<string>();
+                                depuracion.nmun_proce = currentRow.Cell(92).GetValue<string>();
+                                depuracion.npais_proce = currentRow.Cell(93).GetValue<string>();
+                                depuracion.ndep_resi = currentRow.Cell(94).GetValue<string>();
+                                depuracion.nmun_resi = currentRow.Cell(95).GetValue<string>();
+                                depuracion.ndep_notif = currentRow.Cell(96).GetValue<string>();
+                                depuracion.nmun_notif = currentRow.Cell(97).GetValue<string>();
+                                DateTime FechaHora;
+                                DateTime.TryParse(currentRow.Cell(98).GetValue<string>(), out FechaHora);
+                                if (FechaHora != DateTime.MinValue)
+                                {
+                                    depuracion.FechaHora = FechaHora;
+                                }
+
+                                DepuracionRequest.Add(depuracion);
+                            }
+                        }
+                    }
+                    else if (fileName[1].ToLower() == "csv")
+                    {
+                        var registros = new List<DepuracionProtocoloRequest>();
+
+                        // Configurar el stream para leer desde el principio
+                        stream.Seek(0, SeekOrigin.Begin);
+
+                        using var reader = new StreamReader(stream);
+                        string? line;
+                        int lineNumber = 0;
+
+
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            // Saltar encabezado
+                            if (lineNumber == 0)
+                            {
+                                lineNumber++;
+                                continue;
+                            }
+
+                            // Dividir la línea en columnas usando coma como separador
+                            var columns = line.Split(',');
+                            DepuracionProtocoloRequest depuracion = new DepuracionProtocoloRequest();
+                            // Crear un objeto con las posiciones respectivas
+                            depuracion.cod_eve = columns[0];
+                            DateTime fec_not = DateTime.MinValue;
+                            DateTime.TryParse(columns[1], out fec_not);
+                            if (fec_not != DateTime.MinValue)
+                            {
+                                depuracion.fec_not = fec_not;
+                            }
+
+                            depuracion.semana = int.Parse(columns[2]);
+                            depuracion.anio = int.Parse(columns[3]);
+                            depuracion.cod_pre = columns[4];
+                            depuracion.cod_sub = columns[5];
+                            depuracion.pri_nom = columns[6];
+                            depuracion.seg_nom = columns[7];
+                            depuracion.pri_ape = columns[8];
+                            depuracion.seg_ape = columns[9];
+                            depuracion.tip_ide = columns[10];
+                            depuracion.num_ide = columns[11];
+                            depuracion.edad = Int32.Parse(columns[12]);
+                            depuracion.uni_med = columns[13];
+                            depuracion.nacionali = columns[14];
+                            depuracion.nombre_nacionalidad = columns[15];
+                            depuracion.sexo = columns[16];
+                            depuracion.cod_pais_o = columns[17];
+                            depuracion.cod_dpto_o = columns[18];
+                            depuracion.cod_mun_o = columns[19];
+                            depuracion.area = columns[20];
+                            depuracion.localidad = columns[21];
+                            depuracion.cen_pobla = columns[22];
+                            depuracion.vereda = columns[23];
+                            depuracion.bar_ver = columns[24];
+                            depuracion.dir_res = columns[25];
+                            depuracion.ocupacion = columns[26];
+                            depuracion.tip_ss = columns[27];
+                            depuracion.cod_ase = columns[28];
+                            depuracion.per_etn = columns[29];
+                            depuracion.nom_grupo = columns[30];
+                            depuracion.estrato = columns[31];
+                            depuracion.gp_discapa = columns[32];
+                            depuracion.gp_desplaz = columns[33];
+                            depuracion.gp_migrant = columns[34];
+                            depuracion.gp_carcela = columns[35];
+                            depuracion.gp_gestan = columns[36];
+                            depuracion.sem_ges = columns[37];
+                            depuracion.gp_indigen = columns[38];
+                            depuracion.gp_pobicbf = columns[39];
+                            depuracion.gp_mad_com = columns[40];
+                            depuracion.gp_desmovi = columns[41];
+                            depuracion.gp_psiquia = columns[42];
+                            depuracion.gp_vic_vio = columns[43];
+                            depuracion.gp_otros = columns[44];
+                            depuracion.fuente = columns[45];
+                            depuracion.cod_pais_r = columns[46];
+                            depuracion.cod_dpto_r = columns[47];
+                            depuracion.cod_mun_r = columns[48];
+                            DateTime fec_con = DateTime.MinValue;
+                            DateTime.TryParse(columns[49], out fec_con);
+                            if (fec_not != DateTime.MinValue)
+                            {
+                                depuracion.fec_con = fec_con;
+                            }
+                            DateTime ini_sin = DateTime.MinValue;
+                            DateTime.TryParse(columns[50], out ini_sin);
+                            if (ini_sin != DateTime.MinValue)
+                            {
+                                depuracion.ini_sin = ini_sin;
+                            }
+                            depuracion.tip_cas = columns[51];
+                            depuracion.pac_hos = columns[52];
+                            DateTime fec_hos = DateTime.MinValue;
+                            DateTime.TryParse(columns[53], out fec_hos);
+                            if (fec_hos != DateTime.MinValue)
+                            {
+                                depuracion.fec_hos = fec_hos;
+                            }
+                            depuracion.con_fin = columns[54];
+                            depuracion.fec_def = columns[55];
+                            depuracion.ajuste = columns[56];
+                            depuracion.telefono = columns[57];
+                            DateTime fecha_nto = DateTime.MinValue;
+                            DateTime.TryParse(columns[58], out fecha_nto);
+                            if (fecha_nto != DateTime.MinValue)
+                            {
+                                depuracion.fecha_nto = fecha_nto;
+                            }
+                            depuracion.cer_def = columns[59];
+                            depuracion.cbmte = columns[60];
+                            depuracion.uni_modif = columns[61];
+                            depuracion.nuni_modif = columns[62];
+                            DateTime fec_arc_xl = DateTime.MinValue;
+                            DateTime.TryParse(columns[63], out fec_arc_xl);
+                            if (fec_arc_xl != DateTime.MinValue)
+                            {
+                                depuracion.fec_arc_xl = fec_arc_xl;
+                            }
+                            depuracion.nom_dil_f = columns[64];
+                            depuracion.tel_dil_f = columns[65];
+                            DateTime fec_aju = DateTime.MinValue;
+                            DateTime.TryParse(columns[66], out fec_aju);
+                            if (fec_aju != DateTime.MinValue)
+                            {
+                                depuracion.fec_aju = fec_aju;
+                            }
+                            depuracion.nit_upgd = columns[67];
+                            depuracion.fm_fuerza = columns[68];
+                            depuracion.fm_unidad = columns[69];
+                            depuracion.fm_grado = columns[70];
+                            depuracion.version = columns[71];
+                            depuracion.tipo_ca = columns[72];
+                            DateTime fec_initra;
+                            DateTime.TryParse(columns[73], out fec_initra);
+                            if (fec_initra != DateTime.MinValue)
+                            {
+                                depuracion.fec_initra = fec_initra;
+                            }
+                            depuracion.consx2_neo = columns[74];
+                            depuracion.recaida = columns[75];
+                            DateTime fec_diag1a;
+                            DateTime.TryParse(columns[76], out fec_diag1a);
+                            if (fec_diag1a != DateTime.MinValue)
+                            {
+                                depuracion.fec_diag1a = fec_diag1a;
+                            }
+                            depuracion.crit_dx_pr = columns[77];
+                            DateTime fec_tomadp;
+                            DateTime.TryParse(columns[78], out fec_tomadp);
+                            if (fec_tomadp != DateTime.MinValue)
+                            {
+                                depuracion.fec_tomadp = fec_tomadp;
+                            }
+                            DateTime fec_res_dp;
+                            DateTime.TryParse(columns[79], out fec_res_dp);
+                            if (fec_res_dp != DateTime.MinValue)
+                            {
+                                depuracion.fec_res_dp = fec_res_dp;
+                            }
+                            depuracion.crit_dx_de = columns[80];
+                            DateTime fec_tomadd;
+                            DateTime.TryParse(columns[81], out fec_tomadd);
+                            if (fec_tomadd != DateTime.MinValue)
+                            {
+                                depuracion.fec_tomadd = fec_tomadd;
+                            }
+                            DateTime fec_res_dd;
+                            DateTime.TryParse(columns[82], out fec_res_dd);
+                            if (fec_tomadd != DateTime.MinValue)
+                            {
+                                depuracion.fec_res_dd = fec_res_dd;
+                            }
+                            depuracion.nom_oncolo = columns[83];
+                            depuracion.tel_oncolo = columns[84];
+                            depuracion.tel_cont_2 = columns[85];
+                            depuracion.estrato_datos_complementarios = columns[86];
+                            depuracion.nom_eve = columns[87];
+                            depuracion.nom_upgd = columns[88];
+                            depuracion.npais_proce = columns[89];
+                            depuracion.ndep_proce = columns[90];
+                            depuracion.nmun_proce = columns[91];
+                            depuracion.npais_proce = columns[92];
+                            depuracion.ndep_resi = columns[93];
+                            depuracion.nmun_resi = columns[94];
+                            depuracion.ndep_notif = columns[95];
+                            depuracion.nmun_notif = columns[96];
+                            DateTime FechaHora;
+                            DateTime.TryParse(columns[97], out FechaHora);
+                            if (FechaHora != DateTime.MinValue)
+                            {
+                                depuracion.FechaHora = FechaHora;
+                            }
+
+                            DepuracionRequest.Add(depuracion);
+                        }
+                    }
+
+                }
+                response = this.DepuracionProtocolo(DepuracionRequest);
+            }
+            catch (Exception ex)
+            {
+                response = new DepuracionProtocoloResponse() {
+                    Estado = $"Ocurrió un error al procesar el archivo: {ex.Message}"
+                };
+            }
+
+            return response;
+        }
+    }
 }

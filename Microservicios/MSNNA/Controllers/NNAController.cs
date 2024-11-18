@@ -7,6 +7,7 @@ using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
 
 namespace Api.Controllers
@@ -152,6 +153,13 @@ namespace Api.Controllers
         public void AsignacionManual(AsignacionManualRequest request)
         {
             _nNARepo.AsignacionManual(request);
+        }
+
+        [HttpPost("CargarArchivoNNA")]
+        public IActionResult CargarArchivoNNA(IFormFile file)
+        {
+            var response = _nNARepo.CargarArchivoNNA(file);
+            return Ok(response);
         }
     }
 }
