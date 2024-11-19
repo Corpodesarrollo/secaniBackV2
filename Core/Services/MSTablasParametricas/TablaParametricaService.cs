@@ -219,7 +219,7 @@ namespace Core.Services.MSTablasParametricas
 
         private string DeleteGuionKey(string key)
         {
-            return key.Replace("-", "");
+            return key;
         }
 
         public async Task<TPEntidadExterna> GetEntidadById(string CodigoEntidad, CancellationToken cancellationToken)
