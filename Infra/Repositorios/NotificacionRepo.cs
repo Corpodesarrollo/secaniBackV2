@@ -458,5 +458,102 @@ namespace Infra.Repositories
 
             return response;
         }
+
+        public async Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos)
+        {
+            if (Body != null)
+            {
+                // Configuración de Puppeteer (si es necesario)
+                await new BrowserFetcher().DownloadAsync();
+
+                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                {
+                    Headless = true
+                });
+
+                await using var page = await browser.NewPageAsync();
+                await page.SetContentAsync(Body);
+                await browser.CloseAsync();
+
+                // Obtener configuraciones de correo
+                List<EmailConfiguration> emailConfigurations = _context.EmailConfigurations.ToList();
+
+                if (emailConfigurations.Count > 0)
+                {
+                    EmailConfiguration emailConfiguration = emailConfigurations[0];
+                    using SmtpClient clienteSmtp = new(emailConfiguration.SmtpServer)
+                    {
+                        Port = 587, // Puerto SMTP
+                        Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
+                        EnableSsl = emailConfiguration.EnableSsl // Habilitar SSL
+                    };
+
+                    // Creación del mensaje de correo
+                    MailMessage mensaje = new()
+                    {
+                        From = new MailAddress(emailConfiguration.UserName),
+                        Subject = Asunto,
+                        Body = Body,
+                        IsBodyHtml = true // Cambia a true si el cuerpo del correo es HTML
+                    };
+
+                    // Agregar destinatarios
+                    if (Para.Length > 0)
+                    {
+                        foreach (var item in Para)
+                        {
+                            mensaje.To.Add(item);
+                        }
+                    }
+
+                    // Agregar destinatarios en copia
+                    if (ConCopia.Length > 0)
+                    {
+                        foreach (var item in ConCopia)
+                        {
+                            mensaje.CC.Add(item);
+                        }
+                    }
+
+                    // Agregar adjuntos si hay
+                    if (Adjuntos != null && Adjuntos.Length > 0)
+                    {
+                        foreach (var archivo in Adjuntos)
+                        {
+                            if (File.Exists(archivo))
+                            {
+                                Attachment adjunto = new Attachment(archivo);
+                                mensaje.Attachments.Add(adjunto);
+                            }
+                        }
+                    }
+
+                    // Enviar el correo
+                    await clienteSmtp.SendMailAsync(mensaje);
+                }
+
+                return "Correo enviado satisfactoriamente";
+            }
+            else
+            {
+                return "Cuerpo de mensaje vacío";
+            }
+        }
+
+        /*public async Task<string> NotificacionReporteSivigila()
+        {
+
+            string Asunto = "NNA con evento 115 pendiente por reportar en SIVIGILA - 1°\r\nNotificación. ";
+            string Body = "Cordial saludo,\r\n\r\nLa ley 1388 de 2010 y ley 2026 del 2020 definió las medidas para\r\nhacer efectiva la protección del derecho fundamental a la salud de\r\nlos menores de 18 años con diagnóstico o presunción de cáncer, y \r\ndeclaró su atención integral como prioritaria, garantizando el acceso\r\nefectivo a los servicios de salud oncopediátrica y el fortalecimiento al apoyo social que recibe esta población. \r\n\r\nEn este sentido, el siguiente reporte es debido a que el NNA\r\nrelacionado en el adjunto no se encuentra reportado en el SIVIGILA\r\ny presenta diagnóstico o sospecha de cáncer.\r\n\r\nFavor gestionar su reporte por la plataforma y notificar por medio de\r\nSECÁNI una vez sea exitoso el reporte.\r\n\r\nsecani.minsalud.gov.co/eapb/nna-pendiente-reportar \r\n\r\nAdjunto Oficio de notificación ";
+
+            string[] Para = { "ingjuanmanuelrivera@hotmail.com", "c.jmrivera@sic.gov.co" };
+            string[] ConCopia = Array.Empty<string>();
+            string[] Adjuntos = Array.Empty<string>();
+
+            string resultado =  await this.PlantillaCorreo(Para, ConCopia!, Asunto, Body, Adjuntos);
+            return resultado;
+        }
+        */
+
     }
 }

@@ -4,6 +4,8 @@
     {
 
         public long AlertaId { get; set; }
+        public int? SubcategoriaId { get; set; }
+        public char? Alias { get; set; }
         public string? PrimerNombre { get; set; }
         public string? SegundoNombre { get; set; }
         public string? PrimerApellido { get; set; }

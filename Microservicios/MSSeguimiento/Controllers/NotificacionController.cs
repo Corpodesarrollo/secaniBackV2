@@ -91,5 +91,48 @@ namespace MSSeguimiento.Api.Controllers
             List<GetListaCasosResponse> response = notificacionRepo.RepoListaCasosNotificacion(eapbId, epsId);
             return response;
         }
+
+
+        [HttpPost("EnviarCorreo")]
+        public async Task<IActionResult> EnviarCorreo( [FromBody] CorreoRequest correoRequest)
+        {
+            if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
+            {
+                return BadRequest("El cuerpo del mensaje no puede estar vacío");
+            }
+
+            string resultado = await notificacionRepo.PlantillaCorreo(
+                correoRequest.Para,
+                correoRequest.ConCopia,
+                correoRequest.Asunto,
+                correoRequest.Body,
+                correoRequest.Adjuntos
+            );
+
+            return Ok(new { mensaje = resultado });
+        }
+
+        [HttpPost("NotificacionReporteSivigila")]
+        public async Task<IActionResult> NotificacionReporteSivigila([FromBody] CorreoRequest correoRequest)
+        {
+            if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
+            {
+                return BadRequest("El cuerpo del mensaje no puede estar vacío");
+            }
+
+           // string resultado = notificacionRepo.NotificacionReporteSivigila();
+
+            return Ok(new { mensaje = "resultado" });
+        }
+
     }
+}
+
+public class CorreoRequest
+{
+    public string[] Para { get; set; }
+    public string[] ConCopia { get; set; }
+    public string Asunto { get; set; }
+    public string Body { get; set; }
+    public string[] Adjuntos { get; set; }
 }
