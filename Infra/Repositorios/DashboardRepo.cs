@@ -5,6 +5,7 @@ using Core.Modelos;
 using MSAuthentication.Core.DTOs;
 using Core.Response;
 using System.Runtime.Intrinsics.X86;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 
 namespace Infra.Repositorios
@@ -299,10 +300,12 @@ namespace Infra.Repositorios
                     na => na.Id,                        // Clave en NNAs (desde el join anterior)
                     s => s.NNAId,                       // Clave en Seguimientos
                     (na, s) => new { na.TipoFallaIntentoId, s.Id })  // Proyección
+
                 .Join(_context.UsuarioAsignados,
                     s => s.Id,                          // Clave en Seguimientos (desde el join anterior)
                     u => u.SeguimientoId,               // Clave en UsuarioAsignados
                     (s, u) => new { s.TipoFallaIntentoId, u.UsuarioId, u.FechaAsignacion })  // Proyección final
+
                 .Where(x => (string.IsNullOrEmpty(UsuarioID) || x.UsuarioId == UsuarioID)
                             && x.FechaAsignacion >= FechaInicial
                             && x.FechaAsignacion <= FechaFinal)
@@ -319,11 +322,26 @@ namespace Infra.Repositorios
 
         public List<GetDashboardFechaTotalResponse> RepoDashboardAsignadosPorFecha(DateTime fechaInicial, DateTime fechaFinal, string UsuarioID)
         {
+           
             var response = _context.UsuarioAsignados
-                .Where(u => (string.IsNullOrEmpty(UsuarioID) || u.UsuarioId == UsuarioID) &&
-                            u.FechaAsignacion >= fechaInicial &&
-                            u.FechaAsignacion <= fechaFinal)
-                .GroupBy(u => u.FechaAsignacion.Date) // Agrupar por fecha
+                .Where(ua => ua.UsuarioId == UsuarioID &&
+                             ua.FechaAsignacion >= fechaInicial &&
+                             ua.FechaAsignacion <= fechaFinal)
+                .Join(
+                    _context.Seguimientos
+                        .Join(
+                            _context.Seguimientos
+                                .GroupBy(s => s.NNAId)
+                                .Select(g => new { NNAId = g.Key, Id = g.Max(s => s.Id) }),
+                            s1 => s1.Id,
+                            s2 => s2.Id,
+                            (s1, s2) => s1
+                        ),
+                    ua => ua.SeguimientoId,
+                    s1 => s1.Id,
+                    (ua, s1) => ua
+                )
+                .GroupBy(ua => ua.FechaAsignacion.Date)
                 .Select(g => new GetDashboardFechaTotalResponse
                 {
                     FechaAsignacion = g.Key,
@@ -332,6 +350,8 @@ namespace Infra.Repositorios
                 .ToList();
 
             return response;
+
+        
         }
 
 
@@ -396,6 +416,16 @@ namespace Infra.Repositorios
                           join s in _context.Seguimientos on n.Id equals s.NNAId
                           join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
                           join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
+                          join alt in _context.Alertas on als.AlertaId equals alt.Id
+                            join s1 in
+                                          (from s1 in _context.Seguimientos
+                                           join s2 in
+                                               (from s in _context.Seguimientos
+                                                group s by s.NNAId into g
+                                                select new { NNAId = g.Key, Id = g.Max(x => x.Id) })
+                                           on s1.Id equals s2.Id
+                                           select s1)
+                                      on ua.SeguimientoId equals s1.Id
 
                             from bm1 in _context.BiStgMunicipio.Where(bm1 => bm1.COD_MUNICIPIO == n.ResidenciaActualMunicipioId).DefaultIfEmpty()
                           from bd1 in _context.BiStgDepartamento.Where(bd1 => bd1.COD_DPTO == bm1.COD_DPTO).DefaultIfEmpty()
@@ -406,6 +436,8 @@ namespace Infra.Repositorios
                           select new GetDashboardCasosCriticosResponse
                           {
                               AlertaId = als.AlertaId,
+                              SubcategoriaId = alt.SubcategoriaId,
+                              Alias = alt.Alias,
                               PrimerNombre = n.PrimerNombre,
                               SegundoNombre = n.SegundoNombre,
                               PrimerApellido = n.PrimerApellido,

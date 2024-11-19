@@ -17,5 +17,8 @@ namespace Core.Interfaces.Repositorios
         List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId);
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId);
         Task<bool?> NotificacionRespuesta(NotificacionRespuestaDto data);
+
+        public  Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos);
+        //string NotificacionReporteSivigila();
     }
 }
