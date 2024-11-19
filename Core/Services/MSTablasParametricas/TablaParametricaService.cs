@@ -122,7 +122,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
+                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -162,7 +162,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
+                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -202,7 +202,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
+                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -215,6 +215,11 @@ namespace Core.Services.MSTablasParametricas
             }
 
             return entities;
+        }
+
+        private string DeleteGuionKey(string key)
+        {
+            return key.Replace("-", "");
         }
 
         public async Task<TPEntidadExterna> GetEntidadById(string CodigoEntidad, CancellationToken cancellationToken)
@@ -238,7 +243,7 @@ namespace Core.Services.MSTablasParametricas
 
             var entidad = new TPEntidadExterna()
             {
-                Codigo = item.GetProperty("codigo").GetString(),
+                Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                 Nombre = item.GetProperty("nombre").GetString(),
                 Descripcion = item.GetProperty("descripcion").GetString(),
                 NITConCode = item.GetProperty("extra_V").GetString(),
