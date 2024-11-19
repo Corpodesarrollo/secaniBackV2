@@ -7,6 +7,7 @@ using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 
 namespace Api.Controllers
@@ -152,6 +153,17 @@ namespace Api.Controllers
         public void AsignacionManual(AsignacionManualRequest request)
         {
             _nNARepo.AsignacionManual(request);
+        }
+
+        /**
+        * LogRequest - Nueva función para recibir y mostrar el request en la terminal
+        */
+        [HttpPost("LogRequest")]
+        public IActionResult LogRequest([FromBody] NNADto request)
+        {
+            Console.WriteLine("Received Request:");
+            Console.WriteLine(JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true }));
+            return Ok("Request logged in terminal");
         }
     }
 }
