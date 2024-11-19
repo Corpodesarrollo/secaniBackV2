@@ -3,6 +3,7 @@ using Core.Modelos;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Microsoft.AspNetCore.Http;
 
 namespace Core.Interfaces.Repositorios
 {
@@ -25,8 +26,7 @@ namespace Core.Interfaces.Repositorios
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request);
         public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request);
         public void AsignacionManual(AsignacionManualRequest request);
-
-
+        public Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file);
 
     }
 }
