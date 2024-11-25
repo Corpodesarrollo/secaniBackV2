@@ -10,6 +10,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Core.Request;
 using Core.Modelos.Identity;
+using Core.Interfaces.Repositorios;
+using Core.Services.StorageService;
+using NSubstitute;
 
 namespace TestsSecani
 {
@@ -17,15 +20,19 @@ namespace TestsSecani
     {
         private readonly NotificacionRepo NotificacionRepo;
         private readonly ApplicationDbContext Context;
+        private IAdjuntosRepo adjuntosRepo;
+        private IStorageService storageService;
 
         public NotificationRepoTest()
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
+            adjuntosRepo = Substitute.For<IAdjuntosRepo>();
+            storageService = Substitute.For<IStorageService>();
 
             Context = new ApplicationDbContext(options);
-            NotificacionRepo = new NotificacionRepo(Context);
+            NotificacionRepo = new NotificacionRepo(Context,adjuntosRepo,storageService);
         }
 
         [Fact]

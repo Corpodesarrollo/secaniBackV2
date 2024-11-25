@@ -20,6 +20,7 @@ namespace Infra.Repositories.Common
                 result = result.Include(includeTable);
             return result;
         }
+
         public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
         {
             return await _context.Set<T>().FirstOrDefaultAsync(predicate);
@@ -82,14 +83,17 @@ namespace Infra.Repositories.Common
 
         public async Task<(bool, T)> AddAsync(T entity)
         {
-            try {
+            try
+            {
                 await _context.Set<T>().AddAsync(entity);
-                var result = await _context.SaveChangesAsync(); 
+                var result = await _context.SaveChangesAsync();
                 return (result > 0, entity);
-            } catch (Exception ex) {
-            Console.WriteLine(ex.Message);
             }
-           
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
             return (false, null);
         }
 

@@ -10,7 +10,7 @@
         public string? Telefonos { get; set; }
         public string? TelefnosInactivos { get; set; }
         public bool Cuidador { get; set; }
-        public int TipoResultadoIntento1 { get; set; }
-        public int TipoResultadoIntento2 { get; set; }
+        public string? TipoResultadoIntento1 { get; set; }
+        public string? TipoResultadoIntento2 { get; set; }
     }
 }

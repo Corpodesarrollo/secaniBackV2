@@ -1,13 +1,9 @@
-using Core.DTOs;
-using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
-using Core.Modelos;
-using Core.Modelos.TablasParametricas;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.StorageService;
@@ -54,25 +50,16 @@ builder.Services.AddScoped<INombreTablaParametricaService, NombresTablaParametri
 builder.Services.AddScoped<ITablaParametricaRepository, TablaParametricaRepository>();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+
 builder.Services.AddScoped<IContactoEntidadRepository, ContactoEntidadRepository>();
 builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
-
-builder.Services.AddScoped<IGenericService<TPEstadoSeguimiento, GenericTPDTO>, GenericService<TPEstadoSeguimiento, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO>, GenericService<TPEstadoIngresoEstrategia, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPOrigenReporte, GenericTPDTO>, GenericService<TPOrigenReporte, GenericTPDTO>>();
-
-builder.Services.AddScoped<IGenericService<TPCausaInasistencia, GenericTPDTO>, GenericService<TPCausaInasistencia, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPCIE10, CIE10DTO>, GenericService<TPCIE10, CIE10DTO>>();
-builder.Services.AddScoped<IGenericService<TPEstadoAlerta, GenericTPDTO>, GenericService<TPEstadoAlerta, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPEstadoNNA, TPEstadoNNADto>, GenericService<TPEstadoNNA, TPEstadoNNADto>>();
 builder.Services.AddScoped<IFestivoService, FestivoService>();
 builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
-builder.Services.AddScoped<IGenericService<TPMalaAtencionIPS, GenericTPDTO>, GenericService<TPMalaAtencionIPS, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPRazonesSinDiagnostico, GenericTPDTO>, GenericService<TPRazonesSinDiagnostico, GenericTPDTO>>();
-builder.Services.AddScoped<IGenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>, GenericService<TPSubCategoriaAlerta, SubCategoriaAlertaDTO>>();
-builder.Services.AddScoped<IGenericService<TPTipoFallaLlamada, GenericTPDTO>, GenericService<TPTipoFallaLlamada, GenericTPDTO>>();
+builder.Services.AddScoped<ITPParentescos, TPParentescosRepo>();
+
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)

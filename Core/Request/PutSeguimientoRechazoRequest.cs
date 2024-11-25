@@ -7,6 +7,5 @@
         public string? ParentescoRechazo { get; set; }
         public string? RazonesRechazo { get; set; }
 
-
     }
 }

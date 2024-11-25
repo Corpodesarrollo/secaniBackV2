@@ -7,7 +7,7 @@ using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
 
 namespace Api.Controllers
@@ -155,15 +155,11 @@ namespace Api.Controllers
             _nNARepo.AsignacionManual(request);
         }
 
-        /**
-        * LogRequest - Nueva función para recibir y mostrar el request en la terminal
-        */
-        [HttpPost("LogRequest")]
-        public IActionResult LogRequest([FromBody] NNADto request)
+        [HttpPost("CargarArchivoNNA")]
+        public IActionResult CargarArchivoNNA(IFormFile file)
         {
-            Console.WriteLine("Received Request:");
-            Console.WriteLine(JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true }));
-            return Ok("Request logged in terminal");
+            var response = _nNARepo.CargarArchivoNNA(file);
+            return Ok(response);
         }
     }
 }

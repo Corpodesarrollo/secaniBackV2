@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Infra.Repositorios;
 using Core.response;
 using Core.Response;
+using Microsoft.AspNetCore.Hosting;
+using NSubstitute;
 
 namespace TestsSecani
 {
@@ -16,6 +18,7 @@ namespace TestsSecani
     {
         private readonly SeguimientoRepo SeguimientoRepo;
         private readonly ApplicationDbContext Context;
+        private IWebHostEnvironment env;
 
         public SeguimientoRepoTest()
         {
@@ -23,8 +26,10 @@ namespace TestsSecani
             .UseInMemoryDatabase(databaseName: "Test")
             .Options;
 
+            env = Substitute.For<IWebHostEnvironment>();    
+
             Context = new ApplicationDbContext(options);
-            SeguimientoRepo = new SeguimientoRepo(Context);
+            SeguimientoRepo = new SeguimientoRepo(Context,env);
         }
 
         [Fact]

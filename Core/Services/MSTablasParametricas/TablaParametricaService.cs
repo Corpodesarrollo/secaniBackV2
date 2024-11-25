@@ -72,6 +72,34 @@ namespace Core.Services.MSTablasParametricas
             return entities;
         }
 
+        public async Task<List<TPExternalEntityBase>> GetBynomTREFStringCodigo(string nomTREF, string? Codigo, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrl + nomTREF + "/" + Codigo, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            var entities = new List<TPExternalEntityBase>();
+            foreach (var item in items.EnumerateArray())
+            {
+                entities.Add(new TPExternalEntityBase
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString()
+                });
+            }
+
+            return entities;
+        }
+
         public async Task<List<TPExternalEntityBase>> GetMunicipiosByDepto(string CodigoDepto, CancellationToken cancellationToken)
         {
             var response = await _httpClient.GetAsync(_baseUrlMunicipios, cancellationToken);
@@ -122,7 +150,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
+                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -162,7 +190,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
+                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -202,7 +230,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
+                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -215,6 +243,11 @@ namespace Core.Services.MSTablasParametricas
             }
 
             return entities;
+        }
+
+        private string DeleteGuionKey(string key)
+        {
+            return key;
         }
 
         public async Task<TPEntidadExterna> GetEntidadById(string CodigoEntidad, CancellationToken cancellationToken)
@@ -238,7 +271,7 @@ namespace Core.Services.MSTablasParametricas
 
             var entidad = new TPEntidadExterna()
             {
-                Codigo = item.GetProperty("codigo").GetString(),
+                Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
                 Nombre = item.GetProperty("nombre").GetString(),
                 Descripcion = item.GetProperty("descripcion").GetString(),
                 NITConCode = item.GetProperty("extra_V").GetString(),

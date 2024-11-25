@@ -148,6 +148,7 @@ namespace Infra
         public DbSet<ApplicationUser> ApplicationUser { get; set; }
         public DbSet<Adjuntos> Adjuntos { get; set; }
         public DbSet<NotificacionRespuesta> NotificacionRespuesta { get; set; }
+        public DbSet<TPParentescos> TPParentescos { get; set; }
 
     }
 }
