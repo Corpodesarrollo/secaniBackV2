@@ -24,6 +24,9 @@ namespace Infra.Repositorios
         public async Task<RespuestaResponse<ContactoNNADto>> Obtener(long id)
         {
             var contactoNNA = await _repository.GetByIdAsync(id);
+            if (contactoNNA == null)
+                return GenericRespuestaResponse.Response<ContactoNNADto>(false, "Contacto no encontrado", null);
+
             var dto1 = GenericMapper.Map<ContactoNNA, ContactoNNADto>(contactoNNA);
             var response = GenericRespuestaResponse.Response(dto1.Id > 0, dto1.Id > 0 ? "Datos generados" : "Error al generar datos", dto1);
             return response;
@@ -31,9 +34,24 @@ namespace Infra.Repositorios
 
         public async Task<RespuestaResponse<List<ContactoNNADto>>> ObtenerByNNAId(long NNAId)
         {
-            var contactoNNA = await _repository.FindAllAsync(x => x.NNAId == NNAId);
-            var dto1 = GenericMapper.Map<List<ContactoNNA>, List<ContactoNNADto>>(contactoNNA.ToList());
-            var response = GenericRespuestaResponse.ResponseAll(dto1.Count() > 0, dto1.Count() > 0 ? "Datos generados" : "Error al generar datos", dto1);
+            var contactoNNA = await (from c in _context.ContactoNNAs
+                                     join p in _context.TPParentescos on c.ParentescoId equals p.Id
+                                     where c.NNAId == NNAId
+                                     select new ContactoNNADto
+                                     {
+                                         Id = c.Id,
+                                         NNAId = c.NNAId,
+                                         Nombres = c.Nombres,
+                                         ParentescoId = c.ParentescoId,
+                                         Parentesco = p.Nombre,
+                                         Email = c.Email,
+                                         Telefonos = c.Telefonos,
+                                         TelefnosInactivos = c.TelefnosInactivos,
+                                         Cuidador = c.Cuidador
+                                     }).ToListAsync();
+
+
+            var response = GenericRespuestaResponse.ResponseAll(contactoNNA.Count() > 0, contactoNNA.Count() > 0 ? "Datos generados" : "Error al generar datos", contactoNNA);
             return response;
         }
 

@@ -58,6 +58,7 @@ builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
 builder.Services.AddScoped<IFestivoService, FestivoService>();
 builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
+builder.Services.AddScoped<ITPParentescos, TPParentescosRepo>();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),

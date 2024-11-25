@@ -1,15 +1,21 @@
 ﻿using Core.DTOs;
-using Core.Interfaces.MSTablasParametricas;
-using Core.Modelos;
+using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using MSTablasParametricas.Api.Controllers.Common;
 
 namespace MSTablasParametricas.Api.Controllers
 {
     [Route("[controller]")]
     //[Authorize]
     [ApiController]
-    public class ParentescosController(IGenericService<TPParentescos, TPParentescosDto> service) : GenericController<TPParentescos, TPParentescosDto>(service)
+    public class ParentescosController(ITPParentescos service) : Controller
     {
+        private ITPParentescos _service = service;
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TPParentescosDto>>> GetAll(CancellationToken cancellationToken)
+        {
+            var entities = await _service.GetAllAsync();
+            return Ok(entities);
+        }
     }
 }

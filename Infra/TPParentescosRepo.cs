@@ -1,10 +1,16 @@
-﻿using Core.Interfaces.Repositorios;
-using Core.Modelos;
-using Infra.Repositories.Common;
+﻿using Core.DTOs;
+using Core.Interfaces;
+using Mapster;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infra
 {
-    public class TPParentescosRepo(ApplicationDbContext _context) : GenericRepository<ContactoNNA>(_context), IContactoNNARepository
+    public class TPParentescosRepo(ApplicationDbContext _context) : ITPParentescos
     {
+        public async Task<IEnumerable<TPParentescosDto>> GetAllAsync()
+        {
+            var response = await _context.TPParentescos.ToListAsync();
+            return response.Adapt<IEnumerable<TPParentescosDto>>();
+        }
     }
 }
