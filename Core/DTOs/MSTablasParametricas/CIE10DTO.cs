@@ -12,5 +12,8 @@ namespace Core.DTOs.MSTablasParametricas
         public string Nombre { get; set; }
         public string? Codigo { get; set; }
         public string? Descripcion { get; set; }
+        public DateTime? FechaCreacion { get; set; }
+        public int Orden { get; set; } = 0;
+        public bool Activo { get; set; } = true;
     }
 }
