@@ -15,20 +15,25 @@ namespace Core.DTOs.Reportes
         public DateTime? FechaNacimiento { get; set; }
         public int Edad { get; set; } //calculado
         public string? SexoId { get; set; }
+        public string Sexo { get; set; } //calculado
         public string? TipoIdentificacionId { get; set; }
+        public string? TipoIdentificacion { get; set; }
         public string? NumeroIdentificacion { get; set; }
         public DateTime? FechaNotificacionSIVIGILA { get; set; }
         public int? OrigenReporteId { get; set; }
         public string OrigenReporte { get; set; } //calculado
         public string? PaisId { get; set; }
+        public string? Pais { get; set; }   
         public string? EtniaId { get; set; }
+        public string? Etnia { get; set; }
         public string? MunicipioNacimientoId { get; set; }
         public string DepartamentoNacimiento { get; set; } //calculado
         public string MunicipioNacimiento { get; set; } //calculado
         public string? GrupoPoblacionId { get; set; }
+        public string? GrupoPoblacion { get; set; }
         public string? ResidenciaOrigenMunicipioId { get; set; }
-        public string DepartamentoProcedencia { get; set; } //calculado
-        public string MunicipioProcedencia { get; set; } //calculado
+        public string ResidenciaOrigenDepartamento { get; set; } //calculado
+        public string ResidenciaOrigenMunicipio { get; set; } //calculado
         public string? ResidenciaOrigenBarrio { get; set; }
         public string? ResidenciaOrigenAreaId { get; set; }
         public string AreaProcedencia { get; set; } //calculado
@@ -42,14 +47,17 @@ namespace Core.DTOs.Reportes
         public string EstadoIngresoEstrategia { get; set; } //calculado
         public DateTime? FechaIngresoEstrategia { get; set; }
         public string? TipoRegimenSSId { get; set; }
+        public string? TipoRegimenSS { get; set; }
         public int? EPSId { get; set; }
         public string EPS { get; set; } //calculado
         public int? IPSId { get; set; }
         public string IPS { get; set; } //calculado
         public string? CuidadorNombres { get; set; }
         public string? CuidadorParentescoId { get; set; }
+        public string? CuidadorParentesco { get; set; }
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }
+        public string? TipoSeguimiento { get; set; }
 
 
         //Otros datos NNA
