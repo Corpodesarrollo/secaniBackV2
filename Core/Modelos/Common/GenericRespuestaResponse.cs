@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Core.Response;
-using Microsoft.Identity.Client;
 
 namespace Core.Modelos.Common
 {
@@ -11,19 +6,19 @@ namespace Core.Modelos.Common
     {
         public static RespuestaResponse<TSource> Response<TSource>(bool success, string descripcion, TSource tDto)
         {
-            RespuestaResponse<TSource> response = new RespuestaResponse<TSource>();
+            RespuestaResponse<TSource> response = new();
             response.Estado = success;
             response.Descripcion = descripcion;
-            response.Datos = new List<TSource> { tDto };
+            response.Datos = tDto;
             return response;
         }
 
-        public static RespuestaResponse<TSource> ResponseAll<TSource>(bool success, string descripcion, List<TSource> tDto)
+        public static RespuestaResponse<TSource> ResponseAll<TSource>(bool success, string descripcion, TSource tDto)
         {
-            RespuestaResponse<TSource> response = new RespuestaResponse<TSource>();
+            RespuestaResponse<TSource> response = new();
             response.Estado = success;
             response.Descripcion = descripcion;
-            response.Datos =  tDto ;
+            response.Datos = tDto;
             return response;
         }
     }

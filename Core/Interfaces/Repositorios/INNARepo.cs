@@ -12,7 +12,7 @@ namespace Core.Interfaces.Repositorios
         Task<NNADto?> GetById(long id);
         Task<(bool, NNAs)> AddAsync(NNAs dto);
         Task<(bool, NNAs)> UpdateAsync(NNAs entity);
-        public RespuestaResponse<FiltroNNADto> ConsultarNNAFiltro(FiltroNNARequest entrada);
+        public RespuestaResponse<List<FiltroNNADto>> ConsultarNNAFiltro(FiltroNNARequest entrada);
         public List<VwAgentesAsignados> VwAgentesAsignados();
         public void ActualizarNNASeguimiento(NNASeguimientoRequest request);
         public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion);
