@@ -28,8 +28,8 @@ namespace Infra.Repositorios
 
             return from q in query
                    join s in _context.Seguimientos on q.id equals s.Id
-                   join e in _context.TPEstadoNNA on s.EstadoId equals e.Id
                    join n in _context.NNAs on s.NNAId equals n.Id
+                   join e in _context.TPEstadoNNA on n.estadoId equals e.Id
                    select new SeguimientoDto()
                    {
                        Id = s.Id,

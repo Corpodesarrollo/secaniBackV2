@@ -150,5 +150,7 @@ namespace Infra
         public DbSet<NotificacionRespuesta> NotificacionRespuesta { get; set; }
         public DbSet<TPParentescos> TPParentescos { get; set; }
 
+        public DbSet<ReportesSIVIGILA> ReportesSIVIGILA { get; set; }
+
     }
 }
