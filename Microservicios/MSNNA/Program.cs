@@ -4,6 +4,7 @@ using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
+using Core.Services.StorageService;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
 using MSNNA.Api.Extensions;
@@ -40,6 +41,7 @@ builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
 builder.Services.AddScoped<TablaParametricaService>();
 
 builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
 builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddTransient<INNARepo, NNARepo>();

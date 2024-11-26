@@ -2,6 +2,7 @@
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
+using Core.Services.StorageService;
 using Infra.Repositories.Common;
 
 namespace Infra.Repositorios
@@ -10,12 +11,14 @@ namespace Infra.Repositorios
     {
         private readonly ApplicationDbContext _context;
         private readonly GenericRepository<ReportesSIVIGILA> _repository;
+        private readonly IStorageService _storageService;
 
-        public ReportesSIVIGILARepo(ApplicationDbContext context)
+        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService)
         {
             _context = context;
             GenericRepository<ReportesSIVIGILA> repository = new(_context);
             _repository = repository;
+            _storageService = storageService;
         }
 
         public async Task<IEnumerable<ReportesSIVIGILADto>> GetAll(CancellationToken cancellationToken)
@@ -46,6 +49,16 @@ namespace Infra.Repositorios
         {
             var entity = GenericMapper.Map<ReportesSIVIGILADto, ReportesSIVIGILA>(data);
             var (success, response) = await _repository.AddAsync(entity);
+
+            if (success)
+            {
+                if (data.EvidenciaDiagnostico != null)
+                    await _storageService.UploadFileAsync(data.EvidenciaDiagnostico?.FileBytes, $"RS-EvidenciaDiagnostico-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaDiagnostico.Extension}", true);
+
+                if (data.EvidenciaParentesco != null)
+                    await _storageService.UploadFileAsync(data.EvidenciaParentesco?.FileBytes, $"RS-EvidenciaParentesco-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaParentesco.Extension}", true);
+            }
+
             return (success, response);
         }
 

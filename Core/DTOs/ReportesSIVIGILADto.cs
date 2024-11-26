@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Core.Request;
+using System.ComponentModel.DataAnnotations;
 
 namespace Core.DTOs
 {
@@ -33,5 +34,9 @@ namespace Core.DTOs
         public int Aseguradora { get; set; }
         public string? DepartamentoProcedenciaId { get; set; }
         public string? MunicipioProcedenciaId { get; set; }
+
+        // Archivos adjuntos
+        public UploadFileRequest? EvidenciaDiagnostico { get; set; }
+        public UploadFileRequest? EvidenciaParentesco { get; set; }
     }
 }
