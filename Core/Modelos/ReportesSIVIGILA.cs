@@ -4,6 +4,8 @@ namespace Core.Modelos
 {
     public class ReportesSIVIGILA : BaseEntity
     {
+        public string? TipoIdentificacionId { get; set; }
+        public string? NumeroIdentificacion { get; set; }
         public string? PrimerNombre { get; set; }
         public string? SegundoNombre { get; set; }
         public string? PrimerApellido { get; set; }
