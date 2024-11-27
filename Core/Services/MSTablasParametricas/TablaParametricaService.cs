@@ -150,7 +150,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
+                    Codigo = item.GetProperty("codigo").GetString(),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -190,7 +190,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
+                    Codigo = item.GetProperty("codigo").GetString(),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -230,7 +230,7 @@ namespace Core.Services.MSTablasParametricas
             {
                 entities.Add(new TPEntidadExterna
                 {
-                    Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
+                    Codigo = item.GetProperty("codigo").GetString(),
                     Nombre = item.GetProperty("nombre").GetString(),
                     Descripcion = item.GetProperty("descripcion").GetString(),
                     NITConCode = item.GetProperty("extra_V").GetString(),
@@ -243,11 +243,6 @@ namespace Core.Services.MSTablasParametricas
             }
 
             return entities;
-        }
-
-        private string DeleteGuionKey(string key)
-        {
-            return key;
         }
 
         public async Task<TPEntidadExterna> GetEntidadById(string CodigoEntidad, CancellationToken cancellationToken)
@@ -271,7 +266,7 @@ namespace Core.Services.MSTablasParametricas
 
             var entidad = new TPEntidadExterna()
             {
-                Codigo = DeleteGuionKey(item.GetProperty("codigo").GetString()),
+                Codigo = item.GetProperty("codigo").GetString(),
                 Nombre = item.GetProperty("nombre").GetString(),
                 Descripcion = item.GetProperty("descripcion").GetString(),
                 NITConCode = item.GetProperty("extra_V").GetString(),
@@ -283,6 +278,46 @@ namespace Core.Services.MSTablasParametricas
             };
 
             return entidad;
+        }
+
+        public async Task<TPEntidadExterna> GetEntidadByNit(string NitEntidad, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            TPEntidadExterna entity = null;
+            foreach (var item in items.EnumerateArray())
+            {
+                var NITConCode = item.GetProperty("extra_V").GetString();
+                var NITSinCode = item.GetProperty("extra_III").GetString();
+
+                if (NITConCode.Equals(NitEntidad) || NITSinCode.Equals(NitEntidad))
+                {
+                    entity = new TPEntidadExterna
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString(),
+                        NITConCode = NITConCode,
+                        NITSinCode = NITSinCode,
+                        DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                        CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                        CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                        Email = item.GetProperty("extra_X").GetString(),
+                    };
+                    break;
+                }
+            }
+            return entity;
         }
     }
 }
