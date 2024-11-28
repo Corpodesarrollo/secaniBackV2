@@ -18,7 +18,7 @@ namespace Infra.Repositorios.Reportes
             var fechaFinDateOnly = DateOnly.FromDateTime(FechaFin);
 
             // Filtro de datos
-            var reportesFiltrados = await _context.ReporteDepuracions
+            var reportesFiltrados = await _context.ReporteDepuracion
                 .Where(r => r.Fecha >= fechaInicioDateOnly && r.Fecha <= fechaFinDateOnly)
                 .ToListAsync();
 
