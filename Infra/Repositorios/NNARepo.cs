@@ -932,7 +932,7 @@ namespace Infra.Repositorios
                     SegundasNeoplasias = segundaNeoplasia
                 };
 
-                _context.ReporteDepuracions.AddRange(reporte);
+                _context.ReporteDepuracion.AddRange(reporte);
                 _context.SaveChanges();
 
                 response.Nuevos = nuevos;
@@ -954,7 +954,7 @@ namespace Infra.Repositorios
                     SegundasNeoplasias = segundaNeoplasia
                 };
 
-                _context.ReporteDepuracions.AddRange(reporte);
+                _context.ReporteDepuracion.AddRange(reporte);
                 _context.SaveChanges();
 
                 response.Nuevos = nuevos;
