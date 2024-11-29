@@ -71,6 +71,8 @@ builder.Services.AddScoped<IReporteDepuracionRepository, ReporteDepuracionReposi
 builder.Services.AddScoped<IReporteDepuracionService, ReporteDepuracionService>();
 builder.Services.AddScoped<IReporteDinamicoNNARepository, ReporteDinamicoNNARepository>();
 builder.Services.AddScoped<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
+builder.Services.AddScoped<IReporteDinamicoSeguimientoRepository, ReporteDinamicoSeguimientoRepository>();
+builder.Services.AddScoped<IReporteDinamicoSeguimientoService, ReporteDinamicoSeguimientoService>();
 builder.Services.AddScoped<TablaParametricaService>();
 builder.Services.AddHttpClient();
 
