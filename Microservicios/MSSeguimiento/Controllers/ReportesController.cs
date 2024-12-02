@@ -1,0 +1,37 @@
+﻿using Core.DTOs.Reportes;
+using Core.Interfaces.Services.Reportes;
+using Microsoft.AspNetCore.Mvc;
+
+namespace MSSeguimiento.Api.Controllers
+{
+    [ApiController]
+    //[Authorize]
+    [Route("[controller]")]
+    public class ReportesController(
+        IReporteDepuracionService depuracionService, 
+        IReporteDinamicoNNAService dinamicoNNAService,
+        IReporteDinamicoSeguimientoService dinamicoSeguimientoService) : ControllerBase
+    {
+        private readonly IReporteDepuracionService _depuracionService = depuracionService;
+        private readonly IReporteDinamicoNNAService _dinamicoNNAService = dinamicoNNAService;
+        private readonly IReporteDinamicoSeguimientoService _dinamicoSeguimientoService = dinamicoSeguimientoService;
+
+        [HttpGet("EstadoDepuracion")]
+        public async Task<List<ReporteDepuracionDTO>> ReporteDepuracion(DateTime FechaInicial, DateTime FechaFinal)
+        {
+            return await _depuracionService.GetReporteDepuraciones(FechaInicial, FechaFinal);
+        }
+
+        [HttpGet("ReporteDinamicoNNA")]
+        public async Task<List<ReporteDinamicoNNADTO>> ReporteDinamicoNNA(DateTime FechaInicial, DateTime FechaFinal)
+        {
+            return await _dinamicoNNAService.GetReporteDinamicoNNAAsync(FechaInicial, FechaFinal, cancellationToken: default);
+        }
+
+        [HttpGet("ReporteDinamicoSeguimiento")]
+        public async Task<List<ReporteDinamicoSeguimientoDTO>> ReporteDinamicoSeguimiento(DateTime FechaInicial, DateTime FechaFinal)
+        {
+            return await _dinamicoSeguimientoService.GetReporteDinamicoSeguimientoAsync(FechaInicial, FechaFinal, cancellationToken: default);
+        }
+    }
+}
