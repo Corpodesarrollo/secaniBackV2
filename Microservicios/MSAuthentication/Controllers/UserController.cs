@@ -101,6 +101,5 @@ namespace MSAuthentication.Api.Controllers
                 return BadRequest();
             }
         }
-
     }
 }
