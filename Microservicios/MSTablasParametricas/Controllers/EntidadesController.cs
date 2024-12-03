@@ -43,5 +43,12 @@ namespace MSTablasParametricas.Api.Controllers
             var result = await _service.GetEntidadById(Codigo, CancellationToken.None);
             return Ok(result);
         }
+
+        [HttpGet("EntidadByNit/{Nit}")]
+        public async Task<ActionResult<TPEntidadExterna>> GetEntidadByNit(string Nit, CancellationToken cancellationToken)
+        {
+            var result = await _service.GetEntidadByNit(Nit, CancellationToken.None);
+            return Ok(result);
+        }
     }
 }

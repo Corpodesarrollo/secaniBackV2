@@ -1,20 +1,15 @@
 ﻿using Core.DTOs;
-using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Identity;
-using Core.Modelos.TablasParametricas;
 using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Utilities;
 using iText.Html2pdf;
 using iText.Kernel.Exceptions;
-using iText.Kernel.Pdf;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Services.Common;
 
 namespace Infra.Repositorios
 {
@@ -25,14 +20,20 @@ namespace Infra.Repositorios
 
         private IQueryable<SeguimientoDto> GetSelect(string id)
         {
-            return from s in _context.Seguimientos
-                   join e in _context.TPEstadoNNA on s.EstadoId equals e.Id
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        where s.UsuarioId == id
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+            return from q in query
+                   join s in _context.Seguimientos on q.id equals s.Id
                    join n in _context.NNAs on s.NNAId equals n.Id
-                   where s.UsuarioId == id
+                   join e in _context.TPEstadoNNA on n.estadoId equals e.Id
                    select new SeguimientoDto()
                    {
                        Id = s.Id,
-                       NoCaso = n.Id,
+                       NoCaso = s.NNAId,
                        PrimerNombre = n.PrimerNombre,
                        SegundoNombre = n.SegundoNombre,
                        PrimerApellido = n.PrimerApellido,
@@ -688,7 +689,7 @@ namespace Infra.Repositorios
 
         public async Task<ExportarDetalleSeguimientoResponse> ExportarDetalleSeguimiento(long id)
         {
-            ExportarDetalleSeguimientoResponse response = new ExportarDetalleSeguimientoResponse();
+            ExportarDetalleSeguimientoResponse response = new();
             try
             {
                 ExportarDetalleSeguimientoDto? seguimiento = (from seg in _context.Seguimientos
@@ -731,7 +732,7 @@ namespace Infra.Repositorios
                                                                   direccionResidencia = nna.ResidenciaOrigenDireccion,
                                                                   estratoResidencia = nna.ResidenciaOrigenEstratoId,
                                                                   telefonoResidencia = nna.ResidenciaOrigenTelefono,
-                                                                  requirioTrasladarse = (nna.ResidenciaOrigenDireccion != nna.ResidenciaActualDireccion),
+                                                                  requirioTrasladarse = nna.ResidenciaOrigenDireccion != nna.ResidenciaActualDireccion,
                                                                   departamentoResidenciaActual = nna.ResidenciaActualMunicipioId,
                                                                   municipioResidenciaActual = nna.ResidenciaActualMunicipioId,
                                                                   barrioResidenciaActual = nna.ResidenciaActualBarrio,
@@ -902,11 +903,11 @@ namespace Infra.Repositorios
                     }
                 }
             }
-            catch (PdfException e)
+            catch (PdfException)
             {
                 response.Nombre = "Ha ocurrido un error";
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 response.Nombre = "Ha ocurrido un error";
             }

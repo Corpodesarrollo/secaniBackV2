@@ -4,6 +4,7 @@ using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
+using Core.Services.StorageService;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
 using MSNNA.Api.Extensions;
@@ -37,16 +38,16 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
 
 builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
-builder.Services.AddTransient<IContactoNNARepo, ContactoNNARepo>();
-builder.Services.AddScoped<IContactoNNAService, ContactoNNAService>();
 builder.Services.AddScoped<TablaParametricaService>();
 
-
+builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
 builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddTransient<INNARepo, NNARepo>();
 builder.Services.AddScoped<INNAService, NNAService>();
 builder.Services.AddTransient<INNAService, NNAService>();
+builder.Services.AddScoped<ICuidadorRepo, CuidadorRepo>();
 
 builder.Services.AddHttpClient<TablaParametricaService>();
 

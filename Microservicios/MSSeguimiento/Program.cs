@@ -1,17 +1,26 @@
+using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Base;
 using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
+using Core.Interfaces.Repositorios.Reportes;
 using Core.Interfaces.Services.MSUsuariosyRoles;
+using Core.Interfaces.Services.Reportes;
 using Core.Modelos.Identity;
+using Core.Modelos.TablasParametricas;
+using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
+using Core.Services.Reportes;
 using Core.Services.StorageService;
 using DinkToPdf.Contracts;
 using DinkToPdf;
 using Infra;
 using Infra.Repositories;
+using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
+using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Api.Extensions;
@@ -47,6 +56,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 // Registro de los servicios
 builder.CustomConfigureServices();
 
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+builder.Services.AddScoped<IGenericRepository<TPCIE10>, GenericRepository<TPCIE10>>();
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
@@ -55,6 +67,14 @@ builder.Services.AddScoped<IDashboardRepo, DashboardRepo>();
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<IReporteDepuracionRepository, ReporteDepuracionRepository>();
+builder.Services.AddScoped<IReporteDepuracionService, ReporteDepuracionService>();
+builder.Services.AddScoped<IReporteDinamicoNNARepository, ReporteDinamicoNNARepository>();
+builder.Services.AddScoped<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
+builder.Services.AddScoped<IReporteDinamicoSeguimientoRepository, ReporteDinamicoSeguimientoRepository>();
+builder.Services.AddScoped<IReporteDinamicoSeguimientoService, ReporteDinamicoSeguimientoService>();
+builder.Services.AddScoped<TablaParametricaService>();
+builder.Services.AddHttpClient();
 
 // Register Quartz services
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();

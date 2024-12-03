@@ -131,7 +131,7 @@ namespace Infra
         public DbSet<TPCIE10> CIE10s { get; set; }
 
         public DbSet<DepuracionManualProtocolo> DepuracionManualProtocolos { get; set; }
-        public DbSet<ReporteDepuracion> ReporteDepuracions { get; set; }
+        public DbSet<ReporteDepuracion> ReporteDepuracion { get; set; }
 
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
 
@@ -148,6 +148,9 @@ namespace Infra
         public DbSet<ApplicationUser> ApplicationUser { get; set; }
         public DbSet<Adjuntos> Adjuntos { get; set; }
         public DbSet<NotificacionRespuesta> NotificacionRespuesta { get; set; }
+        public DbSet<TPParentescos> TPParentescos { get; set; }
+
+        public DbSet<ReportesSIVIGILA> ReportesSIVIGILA { get; set; }
 
     }
 }

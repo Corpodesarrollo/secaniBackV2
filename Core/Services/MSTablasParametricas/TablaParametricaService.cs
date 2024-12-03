@@ -72,6 +72,34 @@ namespace Core.Services.MSTablasParametricas
             return entities;
         }
 
+        public async Task<List<TPExternalEntityBase>> GetBynomTREFStringCodigo(string nomTREF, string? Codigo, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrl + nomTREF + "/" + Codigo, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            var entities = new List<TPExternalEntityBase>();
+            foreach (var item in items.EnumerateArray())
+            {
+                entities.Add(new TPExternalEntityBase
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString()
+                });
+            }
+
+            return entities;
+        }
+
         public async Task<List<TPExternalEntityBase>> GetMunicipiosByDepto(string CodigoDepto, CancellationToken cancellationToken)
         {
             var response = await _httpClient.GetAsync(_baseUrlMunicipios, cancellationToken);
@@ -250,6 +278,46 @@ namespace Core.Services.MSTablasParametricas
             };
 
             return entidad;
+        }
+
+        public async Task<TPEntidadExterna> GetEntidadByNit(string NitEntidad, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            TPEntidadExterna entity = null;
+            foreach (var item in items.EnumerateArray())
+            {
+                var NITConCode = item.GetProperty("extra_V").GetString();
+                var NITSinCode = item.GetProperty("extra_III").GetString();
+
+                if (NITConCode.Equals(NitEntidad) || NITSinCode.Equals(NitEntidad))
+                {
+                    entity = new TPEntidadExterna
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString(),
+                        NITConCode = NITConCode,
+                        NITSinCode = NITSinCode,
+                        DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                        CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                        CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                        Email = item.GetProperty("extra_X").GetString(),
+                    };
+                    break;
+                }
+            }
+            return entity;
         }
     }
 }

@@ -145,9 +145,9 @@ namespace Infra.Repositorios
             return response;
         }
 
-        public RespuestaResponse<FiltroNNADto> ConsultarNNAFiltro(FiltroNNARequest entrada)
+        public RespuestaResponse<List<FiltroNNADto>> ConsultarNNAFiltro(FiltroNNARequest entrada)
         {
-            var response = new RespuestaResponse<FiltroNNADto>();
+            var response = new RespuestaResponse<List<FiltroNNADto>>();
             response.Datos = new List<FiltroNNADto>();
 
             try
@@ -932,7 +932,7 @@ namespace Infra.Repositorios
                     SegundasNeoplasias = segundaNeoplasia
                 };
 
-                _context.ReporteDepuracions.AddRange(reporte);
+                _context.ReporteDepuracion.AddRange(reporte);
                 _context.SaveChanges();
 
                 response.Nuevos = nuevos;
@@ -954,7 +954,7 @@ namespace Infra.Repositorios
                     SegundasNeoplasias = segundaNeoplasia
                 };
 
-                _context.ReporteDepuracions.AddRange(reporte);
+                _context.ReporteDepuracion.AddRange(reporte);
                 _context.SaveChanges();
 
                 response.Nuevos = nuevos;

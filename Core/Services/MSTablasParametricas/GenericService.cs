@@ -16,6 +16,8 @@ namespace Core.Services.MSTablasParametricas
         public async Task<T2> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+                return null;
             return entity.Adapt<T2>();
         }
 

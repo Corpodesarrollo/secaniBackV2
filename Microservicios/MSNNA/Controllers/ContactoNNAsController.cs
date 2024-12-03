@@ -1,5 +1,5 @@
 using Core.DTOs;
-using Core.Interfaces;
+using Core.Interfaces.Repositorios;
 using Core.Response;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +9,9 @@ namespace Api.Controllers
     [ApiController]
     //[Authorize]
     [Route("[controller]")]
-    public class ContactoNNAsController(IContactoNNAService service) : ControllerBase
+    public class ContactoNNAsController(IContactoNNARepo service) : ControllerBase
     {
-        private IContactoNNAService _service = service;
-
+        private IContactoNNARepo _service = service;
 
         // Consulta
         [HttpGet("Obtener/{id}")]
@@ -29,23 +28,19 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-
-        //Operacion
-        [HttpPost("Crear")]
-        public async Task<ActionResult<RespuestaResponse<ContactoNNADto>>> ContactoNNACrear(ContactoNNADto dto)
+        // Operaciones
+        [HttpPost]
+        public async Task<ActionResult<RespuestaResponse<ContactoNNADto>>> ContactoNNACreate(ContactoNNADto dto)
         {
             var response = await _service.CrearContactoNNA(dto);
             return Ok(response);
         }
 
-        [HttpPut("Actualizar")]
-        public async Task<ActionResult<RespuestaResponse<ContactoNNADto>>> ContactoNNAActualizar(ContactoNNADto dto)
+        [HttpPut]
+        public async Task<ActionResult<RespuestaResponse<ContactoNNADto>>> ContactoNNAUpdate(ContactoNNADto dto)
         {
             var response = await _service.ContactoNNAActualizar(dto);
             return Ok(response);
         }
-
-
-
     }
 }

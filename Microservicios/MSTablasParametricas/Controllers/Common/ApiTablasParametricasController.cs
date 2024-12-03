@@ -53,7 +53,7 @@ namespace MSTablasParametricas.Api.Controllers.Common
 
         // Método para obtener un registro específico por Id
         [HttpGet("{tableName}/{id}")]
-        public async Task<ActionResult> GetById(string tableName, int id, CancellationToken cancellationToken)
+        public async Task<ActionResult> GetById(string tableName, long id, CancellationToken cancellationToken)
         {
             var (entityType, dtoType) = GetTypesFromTableName(tableName);
 
@@ -69,7 +69,7 @@ namespace MSTablasParametricas.Api.Controllers.Common
                 return NotFound($"Service for table {tableName} not found.");
             }
 
-            var getByIdMethod = serviceType.GetMethod("GetByIdAsync", new[] { typeof(int), typeof(CancellationToken) });
+            var getByIdMethod = serviceType.GetMethod("GetByIdAsync", new[] { typeof(long), typeof(CancellationToken) });
             var task = (Task)getByIdMethod.Invoke(service, new object[] { id, cancellationToken });
             await task.ConfigureAwait(false);
 
