@@ -6,6 +6,7 @@ using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Services.StorageService;
+using Org.BouncyCastle.Utilities.IO;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
 using System.Net;
@@ -538,6 +539,132 @@ namespace Infra.Repositories
             {
                 return "Cuerpo de mensaje vacío";
             }
+        }
+
+        public static string ReplaceHtmlPlaceholders(string html, Dictionary<string, string> replacements)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                throw new ArgumentException("El texto HTML no puede estar vacío o ser nulo.", nameof(html));
+
+            if (replacements == null || replacements.Count == 0)
+                return html; // Si no hay reemplazos, retorna el HTML original.
+
+            foreach (var replacement in replacements)
+            {
+                // Reemplaza todas las ocurrencias del índice con su valor correspondiente.
+                html = html.Replace(replacement.Key, replacement.Value);
+            }
+
+            return html;
+        }
+
+        public async Task<MemoryStream> GenerarPdf(string htmlContent) 
+        {
+            await new BrowserFetcher().DownloadAsync();
+
+            await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+            {
+                Headless = true
+            });
+
+            await using var page = await browser.NewPageAsync();
+            await page.SetContentAsync(htmlContent);
+
+            var pdfStream = await page.PdfStreamAsync(new PdfOptions
+            {
+                Format = PaperFormat.Letter,
+                PrintBackground = true,
+                MarginOptions = new MarginOptions
+                {
+                    Top = "1cm",
+                    Right = "1cm",
+                    Bottom = "1cm",
+                    Left = "1cm"
+                }
+            });
+
+            await browser.CloseAsync();
+
+            pdfStream.Position = 0;
+            var pdfBytes = new MemoryStream();
+            await pdfStream.CopyToAsync(pdfBytes);
+            pdfBytes.Position = 0;
+
+            var ms = new MemoryStream(pdfBytes.ToArray());
+            return ms;
+        }
+
+
+        public static string PlantillaNotificacionSolicitudSeguimiento()
+        {
+            string emailBody = $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Notificación de Seguimiento</title>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f9f9f9;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background: #ffffff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    }}
+                    .header {{
+                        text-align: center;
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: #333333;
+                        margin-bottom: 20px;
+                    }}
+                    .content {{
+                        color: #555555;
+                    }}
+                    .highlight {{
+                        font-weight: bold;
+                        color: #000000;
+                    }}
+                    .footer {{
+                        margin-top: 20px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #888888;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>Notificación de Seguimiento</div>
+                    <div class='content'>
+                        <p>Cordial saludo,</p>
+                        <p>
+                            Se le informa que <span class='highlight'>{{cuidadorNombre}}</span> es un cuidador y acaba de solicitar el seguimiento del NNA:
+                        </p>
+                        <ul>
+                            <li><strong>Nombre:</strong> {{nnaNombre}}</li>
+                            <li><strong>Tipo de Identificación:</strong> {{nnaTipoIdentificacion}}</li>
+                            <li><strong>Número de Identificación:</strong> {{nnaNumeroIdentificacion}}</li>
+                        </ul>
+                        <p>Favor gestionar el seguimiento.</p>
+                    </div>
+                    <div class='footer'>
+                        Este es un mensaje generado automáticamente. Por favor, no responda a este correo.
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            return emailBody;
         }
 
         /*public async Task<string> NotificacionReporteSivigila()
