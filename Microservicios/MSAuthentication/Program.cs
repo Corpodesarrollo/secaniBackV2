@@ -65,6 +65,11 @@ builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();
 builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignUsersRoleCommandHandler).Assembly));
 
+builder.Services.AddHttpClient<Client>(client =>
+{
+    client.BaseAddress = new Uri("https://web.sispropreprod.gov.co/interoperabilidad/maestropersona/");
+});
+
 builder.Services.AddTransient<IValidator<ContactoEntidadRequest>, ContactoEntidadRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
