@@ -1,4 +1,5 @@
-﻿using Core.Modelos.Common;
+﻿using Core.DTOs;
+using Core.Modelos.Common;
 using System.Net;
 using System.Net.Mail;
 
@@ -48,5 +49,53 @@ namespace Core.Modelos
 
             smtpClient.Send(mailMessage);
         }
+
+        public void SendEmail(string[] toEmail, string[]? toCC, string[]? toCCO, string subject, string body, AttachmentFileDto[]? attachment)
+        {
+            try
+            {
+                using MailMessage email = new()
+                {
+                    From = new(UserName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true,
+                };
+
+                foreach (var item in toEmail)
+                    email.To.Add(item);
+
+                if (toCC != null)
+                    foreach (var item in toCC)
+                        email.CC.Add(item);
+
+                if (toCCO != null)
+                    foreach (var item in toCCO)
+                        email.Bcc.Add(item);
+
+                if (attachment != null && attachment.Length != 0)
+                    foreach (var item in attachment)
+                    {
+                        var file = item.File;
+                        byte[] bytes = file.ToArray();
+                        file.Close();
+                        email.Attachments.Add(new Attachment(new MemoryStream(bytes), $"{item.FileName}.{item.FileExtension}"));
+                    }
+
+                using var smtpClient = new SmtpClient(SmtpServer)
+                {
+                    Port = Port,
+                    Credentials = new NetworkCredential(UserName, Password),
+                    EnableSsl = EnableSsl,
+                };
+
+                smtpClient.Send(email);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
     }
 }

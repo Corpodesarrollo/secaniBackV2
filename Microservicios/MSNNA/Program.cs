@@ -47,6 +47,7 @@ builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddTransient<INNARepo, NNARepo>();
 builder.Services.AddScoped<INNAService, NNAService>();
 builder.Services.AddTransient<INNAService, NNAService>();
+builder.Services.AddScoped<ICuidadorRepo, CuidadorRepo>();
 
 builder.Services.AddHttpClient<TablaParametricaService>();
 
