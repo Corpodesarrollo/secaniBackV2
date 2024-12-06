@@ -196,8 +196,8 @@ namespace Infra.Repositorios
                                                          Telefono = g.Key.Telefono,
                                                          UsuarioId = g.Key.UsuarioId,
                                                          SolicitanteId = g.Key.SolicitanteId,
-                                                         FechaSolicitud = g.Key.FechaSolicitud,
-                                                         TieneDiagnosticos = g.Key.TieneDiagnosticos,
+                                                         FechaSolicitud = g.Key.FechaSolicitud ?? new(),
+                                                         TieneDiagnosticos = g.Key.TieneDiagnosticos ?? false,
                                                          ObservacionesSolicitante = g.Key.ObservacionesSolicitante,
                                                          PrimerNombre = g.Key.PrimerNombre,
                                                          SegundoNombre = g.Key.SegundoNombre,
@@ -366,7 +366,7 @@ namespace Infra.Repositorios
                                                          where seg.NNAId == idNNA
                                                          select new SeguimientoNNAResponse()
                                                          {
-                                                             FechaNotificacion = seg.FechaSolicitud,
+                                                             FechaNotificacion = seg.FechaSolicitud ?? new(),
                                                              FechaSeguimiento = seg.UltimaActuacionFecha,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
@@ -435,19 +435,26 @@ namespace Infra.Repositorios
         {
             try
             {
-                Seguimiento seguimiento = new();
-                seguimiento.NNAId = request.IdNNA;
-                seguimiento.FechaSeguimiento = request.FechaSeguimiento;
-                seguimiento.EstadoId = request.IdEstado;
-                seguimiento.ContactoNNAId = request.IdContactoNNA;
-                seguimiento.Telefono = request.Telefono;
-                seguimiento.UsuarioId = request.IdUsuario;
-                seguimiento.SolicitanteId = request.IdSolicitante;
-                seguimiento.ObservacionesSolicitante = request.ObservacionSolicitante;
-                seguimiento.CreatedByUserId = request.IdUsuarioCreacion;
-                seguimiento.DateCreated = DateTime.Now;
-
-                _context.Seguimientos.Add(seguimiento);
+                _context.Seguimientos.Add(new()
+                {
+                    NNAId = request.NNAId,
+                    FechaSeguimiento = request.FechaSeguimiento,
+                    EstadoId = request.EstadoId,
+                    ContactoNNAId = request.ContactoNNAId,
+                    Telefono = request.Telefono,
+                    UsuarioId = request.UsuarioId,
+                    SolicitanteId = request.SolicitanteId,
+                    FechaSolicitud = request.FechaSolicitud,
+                    TieneDiagnosticos = request.TieneDiagnosticos,
+                    ObservacionesSolicitante = request.ObservacionesSolicitante,
+                    ObservacionAgente = request.ObservacionAgente,
+                    UltimaActuacionAsunto = request.UltimaActuacionAsunto,
+                    UltimaActuacionFecha = request.UltimaActuacionFecha,
+                    NombreRechazo = request.NombreRechazo,
+                    ParentescoRechazo = request.ParentescoRechazo,
+                    RazonesRechazo = request.RazonesRechazo,
+                    CreatedByUserId = "1"
+                });
                 _context.SaveChanges();
 
                 return "Segumiento almacenado correctamente";
@@ -500,7 +507,7 @@ namespace Infra.Repositorios
                      {
                          AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
                          Estado = seg.EstadoId,
-                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaNotificacion = seg.FechaSolicitud ?? new(),
                          FechaUltimaActuacion = seg.UltimaActuacionFecha,
                          Alertas = new List<AlertaSeguimientoResponse>(),
                          SeguimientoId = seg.Id

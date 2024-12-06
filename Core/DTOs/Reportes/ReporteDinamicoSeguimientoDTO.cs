@@ -22,7 +22,7 @@
         public string Estado { get; set; } //calculado
         public DateTime? FechaConsultaDiagnostico { get; set; }
         public DateTime? FechaDiagnostico { get; set; }
-        public string? MotivoNoDiagnosticoId { get; set; }
+        public int? MotivoNoDiagnosticoId { get; set; }
         public string? MotivoNoDiagnostico { get; set; } //calculado
         public string? MotivoNoDiagnosticoOtro { get; set; }
         public DateTime? FechaInicioTratamiento { get; set; }
@@ -53,6 +53,6 @@
         public DateTime? FechaSeguimiento { get; set; } //Seguimiento
         public string? ObservacionesSolicitante { get; set; } //Seguimiento
         public string? ObservacionAgente { get; set; }  //Seguimiento
-       
+
     }
 }

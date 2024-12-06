@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Request
+﻿namespace Core.Request
 {
     public class SetSeguimientoRequest
     {
-        public int IdNNA {  get; set; }
+        public long NNAId { get; set; }
         public DateTime? FechaSeguimiento { get; set; }
-        public int IdEstado {  get; set; }
-        public int IdContactoNNA {  get; set; }
-        public string? Telefono {  get; set; }
-        public string IdUsuario {  get; set; }
-        public long? IdSolicitante {  get; set; }
-        public string? ObservacionSolicitante { get; set; }
-        public string? IdUsuarioCreacion {get; set; }
-
-
+        public int EstadoId { get; set; }
+        public long ContactoNNAId { get; set; }
+        public string? Telefono { get; set; }
+        public string? UsuarioId { get; set; }
+        public long SolicitanteId { get; set; }
+        public DateTime? FechaSolicitud { get; set; }
+        public bool? TieneDiagnosticos { get; set; }
+        public string? ObservacionesSolicitante { get; set; }
+        public string? ObservacionAgente { get; set; }
+        public string? UltimaActuacionAsunto { get; set; }
+        public DateTime? UltimaActuacionFecha { get; set; }
+        public string? NombreRechazo { get; set; }
+        public string? ParentescoRechazo { get; set; }
+        public string? RazonesRechazo { get; set; }
     }
 }

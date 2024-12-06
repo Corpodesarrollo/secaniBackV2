@@ -10,11 +10,8 @@ using Core.Services.MSTablasParametricas;
 using Infra.Repositories.Common;
 using Mapster;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
-using System.IO;
 
 
 namespace Infra.Repositorios
@@ -1118,7 +1115,7 @@ namespace Infra.Repositorios
                      {
                          AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
                          Estado = seg.EstadoId,
-                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaNotificacion = seg.FechaSolicitud ?? new(),
                          FechaUltimaActuacion = seg.UltimaActuacionFecha,
                          Alertas = new List<AlertaSeguimientoResponse>(),
                          SeguimientoId = seg.Id
@@ -1187,7 +1184,7 @@ namespace Infra.Repositorios
 
         public async Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file)
         {
-            List<DepuracionProtocoloRequest> DepuracionRequest = new List<DepuracionProtocoloRequest>();
+            List<DepuracionProtocoloRequest> DepuracionRequest = new();
             DepuracionProtocoloResponse response;
             if (file == null || file.Length == 0)
             {
@@ -1197,7 +1194,7 @@ namespace Infra.Repositorios
             var data = new List<List<string>>();
 
             // Lee el archivo Excel desde el IFormFile
-            
+
             try
             {
                 using (var stream = new MemoryStream())
@@ -1223,7 +1220,7 @@ namespace Infra.Repositorios
                             // Recorrer las filas restantes
                             for (int row = firstRow.RowNumber() + 1; row <= lastRow.RowNumber(); row++)
                             {
-                                DepuracionProtocoloRequest depuracion = new DepuracionProtocoloRequest();
+                                DepuracionProtocoloRequest depuracion = new();
                                 var rowData = new Dictionary<string, string>();
                                 var currentRow = worksheet.Row(row);
 
@@ -1424,7 +1421,7 @@ namespace Infra.Repositorios
 
                             // Dividir la línea en columnas usando coma como separador
                             var columns = line.Split(',');
-                            DepuracionProtocoloRequest depuracion = new DepuracionProtocoloRequest();
+                            DepuracionProtocoloRequest depuracion = new();
                             // Crear un objeto con las posiciones respectivas
                             depuracion.cod_eve = columns[0];
                             DateTime fec_not = DateTime.MinValue;
@@ -1605,7 +1602,8 @@ namespace Infra.Repositorios
             }
             catch (Exception ex)
             {
-                response = new DepuracionProtocoloResponse() {
+                response = new DepuracionProtocoloResponse()
+                {
                     Estado = $"Ocurrió un error al procesar el archivo: {ex.Message}"
                 };
             }
