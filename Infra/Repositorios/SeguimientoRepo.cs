@@ -54,7 +54,7 @@ namespace Infra.Repositorios
                                   join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
                                   join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
                                   where als.SeguimientoId == s.Id
-                                  select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                                  select new Core.DTOs.AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
                    };
         }
 
@@ -359,6 +359,53 @@ namespace Infra.Repositorios
             }
         }
 
+        public async Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA)
+        {
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                        where n.Id == idNNA
+                        select new SeguimientoDto()
+                        {
+                            Id = s.Id,
+                            NoCaso = s.NNAId,
+                            PrimerNombre = n.PrimerNombre,
+                            SegundoNombre = n.SegundoNombre,
+                            PrimerApellido = n.PrimerApellido,
+                            SegundoApellido = n.SegundoApellido,
+                            FechaNotificacion = s.FechaSolicitud,
+                            FechaSeguimiento = s.UltimaActuacionFecha,
+                            Observaciones = s.ObservacionAgente,
+                            EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
+                                                               join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                                                               join en in _context.Entidades on na.EntidadId equals en.Id
+                                                               where als.SeguimientoId == s.Id
+                                                               select en.Nombre).ToArray()),
+                            //FechaRespuesta = (from als in _context.RespuestaAlerta
+                            //                  join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                            //                  join en in _context.Entidades on na.EntidadId equals en.Id
+                            //                  where als.SeguimientoId == s.Id
+                            //                  select en.Nombre).ToArray(),
+                            Estado = new TPEstadoNNADto()
+                            {
+                                Nombre = e.Nombre,
+                                Descripcion = e.Descripcion,
+                                ColorBG = e.ColorBG,
+                                ColorText = e.ColorText
+                            },
+                            AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                            FechaUltimaActuacion = s.UltimaActuacionFecha,
+                            Alertas = (from als in _context.AlertaSeguimientos
+                                       join a in _context.Alertas on als.AlertaId equals a.Id
+                                       join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
+                                       join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
+                                       where als.SeguimientoId == s.Id
+                                       select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                        };
+
+            return await query.ToArrayAsync();
+        }
+
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
             List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
@@ -370,7 +417,7 @@ namespace Infra.Repositorios
                                                              FechaSeguimiento = seg.UltimaActuacionFecha,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
-                                                             Observacion = seg.ObservacionesSolicitante,
+                                                             Observacion = seg.ObservacionAgente,
                                                              FechaInicioSeguimiento = seg.FechaSeguimiento,
                                                              NNA = new NNAResponse()
                                                              {
@@ -397,7 +444,7 @@ namespace Infra.Repositorios
                                EstadoId = alert.EstadoId,
                                Observaciones = alert.Observaciones,
                                SeguimientoId = alert.SeguimientoId,
-                               UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
+                               UltimaFechaSeguimiento = (DateTime)alert.UltimaFechaSeguimiento,
                                NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador,
                                SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
                                CategoriaAlerta = catal.Id + ". " + catal.Nombre
@@ -431,11 +478,13 @@ namespace Infra.Repositorios
 
         }
 
-        public string SetSeguimiento(SetSeguimientoRequest request)
+        public async Task<string> SetSeguimiento(SetSeguimientoRequest request)
         {
             try
             {
-                _context.Seguimientos.Add(new()
+                var ultimaFechaSeguimiento = await _context.Seguimientos.Where(s => s.NNAId == request.NNAId).OrderByDescending(x => x.FechaSeguimiento).Select(s => s.FechaSeguimiento).FirstOrDefaultAsync();
+
+                var seguimiento = new Seguimiento()
                 {
                     NNAId = request.NNAId,
                     FechaSeguimiento = request.FechaSeguimiento,
@@ -454,16 +503,46 @@ namespace Infra.Repositorios
                     ParentescoRechazo = request.ParentescoRechazo,
                     RazonesRechazo = request.RazonesRechazo,
                     CreatedByUserId = "1"
-                });
-                _context.SaveChanges();
+                };
+                _context.Seguimientos.Add(seguimiento);
+                await _context.SaveChangesAsync();
+
+                if (request.Alertas != null)
+                {
+                    foreach (var item in request.Alertas)
+                    {
+                        var alerta = new Alerta()
+                        {
+                            SubcategoriaId = item,
+                            Descripcion = "Alerta generada por seguimiento",
+                            Alias = 'S',
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now
+                        };
+                        _context.Alertas.Add(alerta);
+                        await _context.SaveChangesAsync();
+
+                        var alertaSeguimiento = new AlertaSeguimiento()
+                        {
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now,
+                            EstadoId = 1,
+                            AlertaId = alerta.Id,
+                            SeguimientoId = seguimiento.Id,
+                            Observaciones = "Alerta generada por seguimiento",
+                            UltimaFechaSeguimiento = ultimaFechaSeguimiento
+                        };
+                        _context.AlertaSeguimientos.Add(alertaSeguimiento);
+                        await _context.SaveChangesAsync();
+                    }
+                }
 
                 return "Segumiento almacenado correctamente";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return "Existe una error al almacenar el segumiento";
+                throw new Exception(ex.Message);
             }
-
         }
 
         public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request)

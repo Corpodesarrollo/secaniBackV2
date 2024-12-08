@@ -23,9 +23,6 @@ namespace Core.Modelos
         public string Comentario { get; set; }
         public string Firmajpg { get; set; }
         public string ArchivoAdjunto { get; set; }
-        public virtual Entidad Entidad { get; set; }
-        public virtual AlertaSeguimiento AlertaSeguimiento { get; set; }
-        public virtual NNAs NNAs { get; set; }
         public string Membrete { get; set; }
 
     }

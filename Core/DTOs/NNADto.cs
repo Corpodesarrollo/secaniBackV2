@@ -117,5 +117,8 @@
         public string? TrasladosQuienAsumioCostosTraslado { get; set; }
         public string? TrasladosQuienAsumioCostosVivienda { get; set; }
         public bool? TratamientoRequirioCambiodeCiudad { get; set; }
+
+        //Contactos
+        public ContactoNNADto[]? Contactos { get; set; }
     }
 }

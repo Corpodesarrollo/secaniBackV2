@@ -23,6 +23,7 @@
     <PackageReference Include="SISPRO.TRV.General" Version="1.0.0.297" />
     <PackageReference Include="SISPRO.TRV.Web.MVCCore" Version="1.0.0.1374" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
+    <PackageReference Include="System.Net.Primitives" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>

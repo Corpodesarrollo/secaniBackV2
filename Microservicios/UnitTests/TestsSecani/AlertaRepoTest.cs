@@ -71,7 +71,7 @@ namespace TestsSecani
         [Fact]
         public void ConsultarAlertaSeguimiento_Exitoso()
         {
-            Context.AlertaSeguimientos.Add(new AlertaSeguimiento() { SeguimientoId = 11, AlertaId = 1, CreatedByUserId = "", Observaciones = "" });
+            Context.AlertaSeguimientos.Add(new AlertaSeguimientoDto() { SeguimientoId = 11, AlertaId = 1, CreatedByUserId = "", Observaciones = "" });
 
             Context.SaveChanges();
             // Inicializar datos de prueba
@@ -79,7 +79,7 @@ namespace TestsSecani
             {
                 IdSeguimiento = 11
             };
-            List<AlertaSeguimiento> response = AlertaRepo.ConsultarAlertaSeguimiento(request);
+            List<AlertaSeguimientoDto> response = AlertaRepo.ConsultarAlertaSeguimiento(request);
 
             Assert.NotNull(response);
             Assert.Equal(2, response.Count);
@@ -88,7 +88,7 @@ namespace TestsSecani
         [Fact]
         public void ConsultarAlertaEstados_Exitoso()
         {
-            Context.AlertaSeguimientos.Add(new AlertaSeguimiento() { SeguimientoId = 11, AlertaId = 1, CreatedByUserId = "", Observaciones = "", EstadoId = 1 });
+            Context.AlertaSeguimientos.Add(new AlertaSeguimientoDto() { SeguimientoId = 11, AlertaId = 1, CreatedByUserId = "", Observaciones = "", EstadoId = 1 });
 
             Context.SaveChanges();
             // Inicializar datos de prueba
@@ -96,7 +96,7 @@ namespace TestsSecani
             {
                 estados = [1]
             };
-            List<AlertaSeguimiento> response = AlertaRepo.ConsultarAlertaEstados(request);
+            List<AlertaSeguimientoDto> response = AlertaRepo.ConsultarAlertaEstados(request);
 
             Assert.NotNull(response);
             Assert.Single(response);
