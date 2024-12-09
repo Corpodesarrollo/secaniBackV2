@@ -10,11 +10,8 @@ using Core.Services.MSTablasParametricas;
 using Infra.Repositories.Common;
 using Mapster;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
-using System.IO;
 
 
 namespace Infra.Repositorios
@@ -298,34 +295,41 @@ namespace Infra.Repositorios
 
         public async Task<DatosBasicosNNAResponse>? ConsultarDatosBasicosNNAById(long NNAId, TablaParametricaService tablaParametricaService)
         {
-
-            Seguimiento? seguimiento = await (from seg in _context.Seguimientos
-                                              where seg.NNAId == NNAId
-                                              orderby seg.Id descending
-                                              select seg).FirstOrDefaultAsync();
-
-            DatosBasicosNNAResponse? response = await (from nna in _context.NNAs
-                                                       where nna.Id == NNAId
-                                                       select new DatosBasicosNNAResponse()
-                                                       {
-                                                           Diagnostico = "",
-                                                           FechaInicioSegumiento = seguimiento.FechaSeguimiento,
-                                                           FechaNacimiento = nna.FechaNacimiento,
-                                                           NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
-                                                           DiagnosticoId = nna.DiagnosticoId
-                                                       }).FirstOrDefaultAsync();
-
-            if (response.DiagnosticoId != null)
+            try
             {
-                TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
+                Seguimiento? seguimiento = await (from seg in _context.Seguimientos
+                                                  where seg.NNAId == NNAId
+                                                  orderby seg.Id descending
+                                                  select seg).FirstOrDefaultAsync();
 
-                if (cie10 != null)
+                DatosBasicosNNAResponse? response = await (from nna in _context.NNAs
+                                                           where nna.Id == NNAId
+                                                           select new DatosBasicosNNAResponse()
+                                                           {
+                                                               Diagnostico = "",
+                                                               FechaInicioSegumiento = seguimiento.FechaSeguimiento,
+                                                               FechaNacimiento = nna.FechaNacimiento,
+                                                               NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                                               DiagnosticoId = nna.DiagnosticoId
+                                                           }).FirstOrDefaultAsync();
+
+                if (response.DiagnosticoId != null)
                 {
-                    response.Diagnostico = cie10.Nombre;
-                }
-            }
+                    TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
 
-            return response;
+                    if (cie10 != null)
+                    {
+                        response.Diagnostico = cie10.Nombre;
+                    }
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
         }
 
         public async Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId, TablaParametricaService tablaParametricaService)
@@ -1118,7 +1122,7 @@ namespace Infra.Repositorios
                      {
                          AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
                          Estado = seg.EstadoId,
-                         FechaNotificacion = seg.FechaSolicitud,
+                         FechaNotificacion = seg.FechaSolicitud ?? new(),
                          FechaUltimaActuacion = seg.UltimaActuacionFecha,
                          Alertas = new List<AlertaSeguimientoResponse>(),
                          SeguimientoId = seg.Id
@@ -1136,7 +1140,7 @@ namespace Infra.Repositorios
                                                                NombreAlerta = alerta.Descripcion,
                                                                Observaciones = al.Observaciones,
                                                                SeguimientoId = al.SeguimientoId,
-                                                               UltimaFechaSeguimiento = al.UltimaFechaSeguimiento
+                                                               UltimaFechaSeguimiento = (DateTime)al.UltimaFechaSeguimiento
                                                            }).ToList();
 
                 r.Alertas = alertas;
@@ -1187,7 +1191,7 @@ namespace Infra.Repositorios
 
         public async Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file)
         {
-            List<DepuracionProtocoloRequest> DepuracionRequest = new List<DepuracionProtocoloRequest>();
+            List<DepuracionProtocoloRequest> DepuracionRequest = new();
             DepuracionProtocoloResponse response;
             if (file == null || file.Length == 0)
             {
@@ -1197,7 +1201,7 @@ namespace Infra.Repositorios
             var data = new List<List<string>>();
 
             // Lee el archivo Excel desde el IFormFile
-            
+
             try
             {
                 using (var stream = new MemoryStream())
@@ -1223,7 +1227,7 @@ namespace Infra.Repositorios
                             // Recorrer las filas restantes
                             for (int row = firstRow.RowNumber() + 1; row <= lastRow.RowNumber(); row++)
                             {
-                                DepuracionProtocoloRequest depuracion = new DepuracionProtocoloRequest();
+                                DepuracionProtocoloRequest depuracion = new();
                                 var rowData = new Dictionary<string, string>();
                                 var currentRow = worksheet.Row(row);
 
@@ -1424,7 +1428,7 @@ namespace Infra.Repositorios
 
                             // Dividir la línea en columnas usando coma como separador
                             var columns = line.Split(',');
-                            DepuracionProtocoloRequest depuracion = new DepuracionProtocoloRequest();
+                            DepuracionProtocoloRequest depuracion = new();
                             // Crear un objeto con las posiciones respectivas
                             depuracion.cod_eve = columns[0];
                             DateTime fec_not = DateTime.MinValue;
@@ -1605,7 +1609,8 @@ namespace Infra.Repositorios
             }
             catch (Exception ex)
             {
-                response = new DepuracionProtocoloResponse() {
+                response = new DepuracionProtocoloResponse()
+                {
                     Estado = $"Ocurrió un error al procesar el archivo: {ex.Message}"
                 };
             }

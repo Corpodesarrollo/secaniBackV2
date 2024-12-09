@@ -27,6 +27,5 @@ namespace Core.Interfaces.Repositorios
         public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request);
         public void AsignacionManual(AsignacionManualRequest request);
         public Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file);
-
     }
 }

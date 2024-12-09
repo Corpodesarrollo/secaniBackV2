@@ -60,9 +60,16 @@ namespace Infra.Repositorios
 
         public async Task<NotificacionEntidadDto> GetNotificacionEntidad(int idAlerta)
         {
-            var result = await db.NotificacionesEntidad.FirstOrDefaultAsync(x => x.AlertaSeguimientoId == idAlerta) ?? throw new Exception("Notificación no encontrada");
-            var data = GenericMapper.Map<NotificacionEntidad, NotificacionEntidadDto>(result);
-            return data;
+            try
+            {
+                var result = await db.NotificacionesEntidad.FirstOrDefaultAsync(x => x.AlertaSeguimientoId == idAlerta) ?? throw new Exception("Notificación no encontrada");
+                var data = GenericMapper.Map<NotificacionEntidad, NotificacionEntidadDto>(result);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

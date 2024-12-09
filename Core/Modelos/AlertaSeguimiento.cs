@@ -8,6 +8,6 @@ namespace Core.Modelos
         public long SeguimientoId { get; set; }
         public string? Observaciones { get; set; }
         public int EstadoId { get; set; }
-        public DateTime UltimaFechaSeguimiento { get; set; }
+        public DateTime? UltimaFechaSeguimiento { get; set; }
     }
 }
