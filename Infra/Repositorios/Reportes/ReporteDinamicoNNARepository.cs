@@ -1,9 +1,11 @@
-﻿using Core.DTOs.MSTablasParametricas;
+﻿using Core.DTOs;
+using Core.DTOs.MSTablasParametricas;
 using Core.DTOs.Reportes;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios.Reportes;
 using Core.Modelos.TablasParametricas;
 using Core.Services.MSTablasParametricas;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios.Reportes
@@ -36,6 +38,13 @@ namespace Infra.Repositorios.Reportes
             var estado = await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default);
 
             return estado?.Nombre ?? string.Empty;
+        }
+
+        public async Task<List<NNAReporteDTO>> GetNNAForReporteAsync(CancellationToken cancellationToken)
+        {
+            var nnas = await _context.NNAs
+                .ToListAsync(cancellationToken);
+            return nnas.Adapt<List<NNAReporteDTO>>();
         }
 
         public async Task<List<ReporteDinamicoNNADTO>> GetReporteDinamicoNNAAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken)
