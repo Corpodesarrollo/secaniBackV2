@@ -1,6 +1,8 @@
-﻿namespace Core.Modelos
+﻿using Core.Modelos.Common;
+
+namespace Core.Modelos
 {
-    public class ReporteInconsistenciaPersona
+    public class ReporteInconsistenciaPersona: BaseEntity
     {
         public long NNAId { get; set; }
         public DateTime FechaReporte { get; set; }
