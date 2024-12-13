@@ -1,8 +1,9 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Request;
-using MSAuthentication.Api.Utilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositories
 {
@@ -20,8 +21,8 @@ namespace Infra.Repositories
             try
             {
                 ApplicationUser? user = (from users in _context.Users
-                                     where users.UserName == request.Username
-                                     select users).FirstOrDefault();
+                                         where users.UserName == request.Username
+                                         select users).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -29,7 +30,7 @@ namespace Infra.Repositories
                 }
                 else
                 {
-                    AlertaSeguimiento alertaSeguimiento = new()
+                    var alertaSeguimiento = new AlertaSeguimiento()
                     {
                         CreatedByUserId = user.Id,
                         DateCreated = new DateTime(),
@@ -57,8 +58,8 @@ namespace Infra.Repositories
             try
             {
                 ApplicationUser? user = (from users in _context.Users
-                                     where users.UserName == request.UserName
-                                     select users).FirstOrDefault();
+                                         where users.UserName == request.UserName
+                                         select users).FirstOrDefault();
 
                 if (user == null)
                 {
@@ -113,6 +114,31 @@ namespace Infra.Repositories
             List<AlertaSeguimiento> response = (from aseg in _context.AlertaSeguimientos
                                                 where aseg.SeguimientoId == request.IdSeguimiento
                                                 select aseg).ToList();
+
+            return response;
+        }
+
+        public async Task<AlertaSeguimientoDto[]> ConsultarAlertasUltimoSeguimiento(int idNNA)
+        {
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        where n.Id == idNNA
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+
+            var response = await (from q in query
+                                  join ase in _context.AlertaSeguimientos on q.id equals ase.SeguimientoId
+                                  join a in _context.Alertas on ase.AlertaId equals a.Id
+                                  join ea in _context.TPEstadoAlerta on ase.EstadoId equals ea.Id
+                                  join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
+                                  where ea.Id == 1 || ea.Id == 3
+                                  select new AlertaSeguimientoDto
+                                  {
+                                      Id = ea.Id,
+                                      IdAlerta = sca.Id,
+                                      Nombre = sca.CategoriaAlertaId + "." + sca.Indicador
+                                  }).ToArrayAsync();
 
             return response;
         }

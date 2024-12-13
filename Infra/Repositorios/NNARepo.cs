@@ -295,34 +295,41 @@ namespace Infra.Repositorios
 
         public async Task<DatosBasicosNNAResponse>? ConsultarDatosBasicosNNAById(long NNAId, TablaParametricaService tablaParametricaService)
         {
-
-            Seguimiento? seguimiento = await (from seg in _context.Seguimientos
-                                              where seg.NNAId == NNAId
-                                              orderby seg.Id descending
-                                              select seg).FirstOrDefaultAsync();
-
-            DatosBasicosNNAResponse? response = await (from nna in _context.NNAs
-                                                       where nna.Id == NNAId
-                                                       select new DatosBasicosNNAResponse()
-                                                       {
-                                                           Diagnostico = "",
-                                                           FechaInicioSegumiento = seguimiento.FechaSeguimiento,
-                                                           FechaNacimiento = nna.FechaNacimiento,
-                                                           NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
-                                                           DiagnosticoId = nna.DiagnosticoId
-                                                       }).FirstOrDefaultAsync();
-
-            if (response.DiagnosticoId != null)
+            try
             {
-                TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
+                Seguimiento? seguimiento = await (from seg in _context.Seguimientos
+                                                  where seg.NNAId == NNAId
+                                                  orderby seg.Id descending
+                                                  select seg).FirstOrDefaultAsync();
 
-                if (cie10 != null)
+                DatosBasicosNNAResponse? response = await (from nna in _context.NNAs
+                                                           where nna.Id == NNAId
+                                                           select new DatosBasicosNNAResponse()
+                                                           {
+                                                               Diagnostico = "",
+                                                               FechaInicioSegumiento = seguimiento.FechaSeguimiento,
+                                                               FechaNacimiento = nna.FechaNacimiento,
+                                                               NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                                               DiagnosticoId = nna.DiagnosticoId
+                                                           }).FirstOrDefaultAsync();
+
+                if (response.DiagnosticoId != null)
                 {
-                    response.Diagnostico = cie10.Nombre;
-                }
-            }
+                    TPCIE10 cie10 = await _repositoryCie10.GetByIdAsync(response.DiagnosticoId.Value);
 
-            return response;
+                    if (cie10 != null)
+                    {
+                        response.Diagnostico = cie10.Nombre;
+                    }
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
         }
 
         public async Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId, TablaParametricaService tablaParametricaService)
@@ -1133,7 +1140,7 @@ namespace Infra.Repositorios
                                                                NombreAlerta = alerta.Descripcion,
                                                                Observaciones = al.Observaciones,
                                                                SeguimientoId = al.SeguimientoId,
-                                                               UltimaFechaSeguimiento = al.UltimaFechaSeguimiento
+                                                               UltimaFechaSeguimiento = (DateTime)al.UltimaFechaSeguimiento
                                                            }).ToList();
 
                 r.Alertas = alertas;

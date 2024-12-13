@@ -20,6 +20,9 @@
         public string? AsuntoUltimaActuacion { get; set; }
         public DateTime? FechaUltimaActuacion { get; set; }
         public DateTime? FechaSeguimiento { get; set; }
+        public DateTime? FechaRespuesta { get; set; }
         public List<AlertaSeguimientoDto>? Alertas { get; set; }
+        public string? Observaciones { get; set; }
+        public string? EntidadAlerta { get; set; }
     }
 }

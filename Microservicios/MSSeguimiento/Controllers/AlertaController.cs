@@ -1,4 +1,5 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +40,12 @@ namespace MSSeguimiento.Api.Controllers
         public List<AlertaSeguimiento> ConsultarAlertaEstados(ConsultarAlertasEstadosRequest request)
         {
             return alertaRepo.ConsultarAlertaEstados(request);
+        }
+
+        [HttpGet("ConsultarAlertasUltimoSeguimiento/{idNNA}")]
+        public async Task<AlertaSeguimientoDto[]> ConsultarAlertasUltimoSeguimiento(int idNNA)
+        {
+            return await alertaRepo.ConsultarAlertasUltimoSeguimiento(idNNA);
         }
     }
 }
