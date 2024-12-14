@@ -75,6 +75,8 @@ builder.Services.AddScoped<IReporteDinamicoNNARepository, ReporteDinamicoNNARepo
 builder.Services.AddScoped<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
 builder.Services.AddScoped<IReporteDinamicoSeguimientoRepository, ReporteDinamicoSeguimientoRepository>();
 builder.Services.AddScoped<IReporteDinamicoSeguimientoService, ReporteDinamicoSeguimientoService>();
+builder.Services.AddScoped<IReporteDetalleRegDepuradosRepository, ReporteDetalleRegDepuradosRepository>();
+builder.Services.AddScoped<IReporteDetalleRegDepuradosService, ReporteDetalleRegDepuradosService>();
 builder.Services.AddScoped<TablaParametricaService>();
 builder.Services.AddScoped<IEnviarRespuesta, EnviarRespuestaRepo>();
 builder.Services.AddScoped<IGestionarAlertas, GestionarAlertasRepo>();

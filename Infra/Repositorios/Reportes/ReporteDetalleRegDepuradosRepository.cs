@@ -1,23 +1,22 @@
-﻿using Core.DTOs;
-using Core.DTOs.MSTablasParametricas;
+﻿using Core.DTOs.MSTablasParametricas;
 using Core.DTOs.Reportes;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios.Reportes;
+using Core.Modelos;
 using Core.Modelos.TablasParametricas;
 using Core.Services.MSTablasParametricas;
-using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios.Reportes
 {
-    public class ReporteDinamicoNNARepository(
+    public class ReporteDetalleRegDepuradosRepository(
         ApplicationDbContext context,
         IGenericService<TPCIE10, CIE10DTO> diagnosticoService,
         IGenericService<TPOrigenReporte, GenericTPDTO> origenReporteService,
         TablaParametricaService tablaParametricaService,
         IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> estadoIngresoEstrategiaService,
         IGenericService<TPEstadoSeguimiento, GenericTPDTO> estadoSeguimientoService
-        ) : IReporteDinamicoNNARepository
+        ) : IReporteDetalleRegDepuradosRepository
     {
         private readonly ApplicationDbContext _context = context;
         private readonly IGenericService<TPCIE10, CIE10DTO> _diagnosticoService = diagnosticoService;
@@ -26,46 +25,55 @@ namespace Infra.Repositorios.Reportes
         private readonly IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> _estadoIngresoEstrategiaService = estadoIngresoEstrategiaService;
         private readonly IGenericService<TPEstadoSeguimiento, GenericTPDTO> _estadoSeguimientoService = estadoSeguimientoService;
 
-        private async Task<string> GetLastSeguimiento(long NNAId)
+        public async Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(DateTime fechaInicio, DateTime fechaFin, int TipoRegistro, CancellationToken cancellationToken)
         {
-            var seguimiento = await _context.Seguimientos
-                .Where(s => s.NNAId == NNAId)
-                .OrderByDescending(s => s.Id)
-                .FirstOrDefaultAsync();
-
-            if (seguimiento == null)
-                return string.Empty;
-            var estado = await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default);
-
-            return estado?.Nombre ?? string.Empty;
-        }
-
-        public async Task<List<NNAReporteDTO>> GetNNAForReporteAsync(CancellationToken cancellationToken)
-        {
-            var nnas = await _context.NNAs
-                .ToListAsync(cancellationToken);
-            return nnas.Adapt<List<NNAReporteDTO>>();
-        }
-
-        public async Task<List<ReporteDinamicoNNADTO>> GetReporteDinamicoNNAAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken)
-        {
-            var nnas = await _context.NNAs
-                .Where(nna => nna.FechaIngresoEstrategia >= fechaInicio && nna.FechaIngresoEstrategia <= fechaFin)
+            // Obtener los IdNNA desde ReporteDepuracionDetalle
+            var idNNAList = await _context.ReporteDepuracionDetalle
+                .Where(item =>
+                    (TipoRegistro < 1 || TipoRegistro > 4 || item.TipoRegistro == TipoRegistro) &&
+                    item.Fecha >= fechaInicio &&
+                    item.Fecha <= fechaFin)
+                .Select(item => item.IdNNA)
                 .ToListAsync(cancellationToken);
 
-            var reporte = new List<ReporteDinamicoNNADTO>();
+            // Verificar si la lista está vacía
+            List<NNAs> nnas;
+
+            if (idNNAList.Any())
+            {
+                // Si hay elementos en idNNAList, filtrar en la tabla NNAs
+                nnas = await _context.NNAs
+                    .Where(nna => idNNAList.Contains(nna.Id))
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                // Si idNNAList está vacía, devolver una lista vacía
+                nnas = new List<NNAs>();
+            }
+
+            var reporte = new List<ReporteDetalleRegDepuradosDTO>();
 
             foreach (var nna in nnas)
             {
                 try
                 {
-                    var dto = new ReporteDinamicoNNADTO
+                    var dto = new ReporteDetalleRegDepuradosDTO
                     {
                         Id = nna.Id,
+                        FechaNotificacion = nna.FechaNotificacionSIVIGILA,
+                        OrigenReporteId = nna.OrigenReporteId,
+                        OrigenReporte = nna.OrigenReporteId.HasValue
+                            ? (await _origenReporteService.GetByIdAsync(nna.OrigenReporteId ?? 0, cancellationToken))?.Nombre ?? nna.OrigenReporteId.ToString()
+                            : string.Empty,
                         PrimerNombre = nna.PrimerNombre,
                         SegundoNombre = nna.SegundoNombre,
                         PrimerApellido = nna.PrimerApellido,
                         SegundoApellido = nna.SegundoApellido,
+                        DiagnosticoId = nna.DiagnosticoId,
+                        Diagnostico = nna.DiagnosticoId.HasValue
+                            ? (await _diagnosticoService.GetByIdAsync(nna.DiagnosticoId ?? 0, cancellationToken))?.Nombre ?? nna.DiagnosticoId.ToString()
+                            : string.Empty,
                         FechaNacimiento = nna.FechaNacimiento,
                         Edad = nna.FechaNacimiento.HasValue
                             ? (int)((DateTime.Now - nna.FechaNacimiento.Value).TotalDays / 365.25)
@@ -85,15 +93,6 @@ namespace Infra.Repositorios.Reportes
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
                         NumeroIdentificacion = nna.NumeroIdentificacion,
-                        FechaNotificacionSIVIGILA = nna.FechaNotificacionSIVIGILA,
-                        DiagnosticoId = nna.DiagnosticoId,
-                        Diagnostico = nna.DiagnosticoId.HasValue
-                            ? (await _diagnosticoService.GetByIdAsync(nna.DiagnosticoId ?? 0, cancellationToken))?.Nombre ?? nna.DiagnosticoId.ToString()
-                            : string.Empty,
-                        OrigenReporteId = nna.OrigenReporteId,
-                        OrigenReporte = nna.OrigenReporteId.HasValue
-                            ? (await _origenReporteService.GetByIdAsync(nna.OrigenReporteId ?? 0, cancellationToken))?.Nombre ?? nna.OrigenReporteId.ToString()
-                            : string.Empty,
                         PaisId = nna.PaisId,
                         Pais = !string.IsNullOrEmpty(nna.PaisId)
                             ? (await _tablaParametricaService.GetBynomTREFStringCodigo(
@@ -117,7 +116,6 @@ namespace Infra.Repositorios.Reportes
                                     municipioId,
                                     cancellationToken))?.FirstOrDefault()?.Nombre
                                 : string.Empty,
-
                         DepartamentoNacimiento =
                             !string.IsNullOrEmpty(nna.MunicipioNacimientoId) &&
                             nna.MunicipioNacimientoId.Length >= 2 &&
@@ -127,7 +125,6 @@ namespace Infra.Repositorios.Reportes
                                     codigoDepartamento,
                                     cancellationToken))?.FirstOrDefault()?.Nombre
                                 : string.Empty,
-
                         GrupoPoblacionId = nna.GrupoPoblacionId,
                         GrupoPoblacion = !string.IsNullOrEmpty(nna.GrupoPoblacionId)
                             ? (await _tablaParametricaService.GetBynomTREFStringCodigo(
@@ -136,7 +133,7 @@ namespace Infra.Repositorios.Reportes
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
                         ResidenciaOrigenMunicipioId = nna.ResidenciaOrigenMunicipioId,
-                        ResidenciaOrigenDepartamento = 
+                        ResidenciaOrigenDepartamento =
                             !string.IsNullOrEmpty(nna.ResidenciaOrigenMunicipioId) &&
                             nna.ResidenciaOrigenMunicipioId.Length >= 2 &&
                             int.TryParse(nna.ResidenciaOrigenMunicipioId.Substring(0, 2), out int codigoDepartamento2)
@@ -163,24 +160,15 @@ namespace Infra.Repositorios.Reportes
                         ResidenciaOrigenDireccion = nna.ResidenciaOrigenDireccion,
                         ResidenciaOrigenEstratoId = nna.ResidenciaOrigenEstratoId,
                         ResidenciaActualTelefono = nna.ResidenciaActualTelefono,
-                        ResidenciaActualMunicipioId = nna.ResidenciaActualMunicipioId,
-                        DepartamentoResidenciaActual =
-                            !string.IsNullOrEmpty(nna.ResidenciaActualMunicipioId) &&
-                            nna.ResidenciaActualMunicipioId.Length >= 2 &&
-                            int.TryParse(nna.ResidenciaActualMunicipioId.Substring(0, 2), out int codigoDepartamento3)
+                        DepartamentoTratamientoId = nna.DepartamentoTratamientoId,
+                        DepartamentoTratamiento =
+                            !string.IsNullOrEmpty(nna.DepartamentoTratamientoId) && int.TryParse(nna.DepartamentoTratamientoId, out int departamentoId)
                                 ? (await _tablaParametricaService.GetBynomTREFCodigo(
                                     "Departamento",
-                                    codigoDepartamento3,
+                                    departamentoId,
                                     cancellationToken))?.FirstOrDefault()?.Nombre
                                 : string.Empty,
-                        MunicipioResidenciaActual =
-                            !string.IsNullOrEmpty(nna.ResidenciaActualMunicipioId) &&
-                            int.TryParse(nna.ResidenciaActualMunicipioId, out int municipioId3)
-                                ? (await _tablaParametricaService.GetBynomTREFCodigo(
-                                    "Municipio",
-                                    municipioId3,
-                                    cancellationToken))?.FirstOrDefault()?.Nombre
-                                : string.Empty,
+
                         EstadoIngresoEstrategiaId = nna.EstadoIngresoEstrategiaId,
                         EstadoIngresoEstrategia = nna.EstadoIngresoEstrategiaId.HasValue
                             ? (await _estadoIngresoEstrategiaService.GetByIdAsync(nna.EstadoIngresoEstrategiaId ?? 0, cancellationToken))?.Nombre ?? nna.EstadoIngresoEstrategiaId.ToString()
@@ -211,10 +199,8 @@ namespace Infra.Repositorios.Reportes
                             : string.Empty,
                         CuidadorEmail = nna.CuidadorEmail,
                         CuidadorTelefono = nna.CuidadorTelefono,
-                        TipoSeguimiento = await GetLastSeguimiento(nna.Id)
+                        Agente = await GetAgente(nna.Id)
                     };
-
-
                     reporte.Add(dto);
                 }
                 catch (Exception ex)
@@ -224,6 +210,19 @@ namespace Infra.Repositorios.Reportes
             }
 
             return reporte;
+        }
+        private async Task<string> GetAgente(long NNAId)
+        {
+            var seguimiento = await _context.Seguimientos
+                .Where(s => s.NNAId == NNAId)
+                .OrderByDescending(s => s.Id)
+                .FirstOrDefaultAsync();
+
+            if (seguimiento == null)
+                return string.Empty;
+            var estado = await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default);
+            return seguimiento.UsuarioId;
+            // return await _identityService.GetUserNameAsync(seguimiento.UsuarioId) ?? string.Empty;
         }
     }
 }
