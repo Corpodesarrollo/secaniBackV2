@@ -151,8 +151,6 @@ namespace Infra
         public DbSet<TPParentescos> TPParentescos { get; set; }
 
         public DbSet<ReportesSIVIGILA> ReportesSIVIGILA { get; set; }
-        public DbSet<ReporteInconsistenciaPersona> ReporteInconsistenciaPersonas { get; set; } 
-        public DbSet<ReporteDepuracionDetalle> ReporteDepuracionDetalle { get; set; }
 
     }
 }

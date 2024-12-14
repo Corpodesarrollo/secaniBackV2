@@ -30,36 +30,26 @@
 
             string a = años switch
             {
-                1 => $"{años} año",
-                > 1 => $"{años} años",
+                1 => $"{meses}año,",
+                > 1 => $"{meses}años,",
                 _ => ""
             };
 
             string m = meses switch
             {
-                1 => $"{meses} mes",
-                > 1 => $"{meses} meses",
+                1 => $"{dias}mes y",
+                > 1 => $"{dias}meses y",
                 _ => ""
             };
 
             string d = dias switch
             {
-                1 => $"{dias} día",
-                > 1 => $"{dias} días",
+                1 => $"{dias}día",
+                > 1 => $"{dias}días",
                 _ => ""
             };
 
-            var cadena = string.Empty;
-            if (años > 0)
-                cadena += a;
-
-            if (meses > 0)
-                cadena += string.IsNullOrEmpty(cadena) ? m : $", {m}";
-
-            if (dias > 0)
-                cadena += string.IsNullOrEmpty(cadena) ? d : $", {d}";
-
-            return cadena;
+            return $"{a} {m} {d}";
         }
 
         public static string? CalcularTiempoTrascurrido(DateTime fechaInicio)
@@ -75,49 +65,33 @@
 
             string a = años switch
             {
-                1 => $"{años} año",
-                > 1 => $"{años} años",
+                1 => $"{años}año,",
+                > 1 => $"{años}años,",
                 _ => ""
             };
 
             string m = meses switch
             {
-                1 => $"{meses} mes",
-                > 1 => $"{meses} meses",
+                1 => $"{meses}mes,",
+                > 1 => $"{meses}meses,",
                 _ => ""
             };
 
             string d = dias switch
             {
-                1 => $"{dias} día",
-                > 1 => $"{dias} días",
+                1 => $"{dias}día,",
+                > 1 => $"{dias}días,",
                 _ => ""
             };
 
             string h = horas switch
             {
-                1 => $"{horas} hora",
-                > 1 => $"{horas} horas",
+                1 => $"{horas}hora y",
+                > 1 => $"{horas}horas y",
                 _ => ""
             };
 
-            var cadena = string.Empty;
-            if (años > 0)
-                cadena += a;
-
-            if (meses > 0)
-                cadena += string.IsNullOrEmpty(cadena) ? m : $", {m}";
-
-            if (dias > 0)
-                cadena += string.IsNullOrEmpty(cadena) ? d : $", {d}";
-
-            if (horas > 0)
-                cadena += string.IsNullOrEmpty(cadena) ? h : $", {h}";
-
-            if (minutos > 0)
-                cadena += string.IsNullOrEmpty(cadena) ? "" : $" y {minutos} min";
-
-            return cadena;
+            return $"{a} {m} {d} {h} {minutos}min";
         }
     }
 }
