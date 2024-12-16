@@ -25,11 +25,12 @@ namespace Infra.Repositorios.Reportes
         private readonly IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> _estadoIngresoEstrategiaService = estadoIngresoEstrategiaService;
         private readonly IGenericService<TPEstadoSeguimiento, GenericTPDTO> _estadoSeguimientoService = estadoSeguimientoService;
 
-        public async Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(int TipoRegistro, CancellationToken cancellationToken)
+        public async Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(int IdReporteDepuracion, int TipoRegistro, CancellationToken cancellationToken)
         {
             // Obtener los IdNNA desde ReporteDepuracionDetalle
             var idNNAList = await _context.ReporteDepuracionDetalle
                 .Where(item =>
+                    item.IdReporteDepuracion == IdReporteDepuracion &&
                     (TipoRegistro < 1 || TipoRegistro > 4 || item.TipoRegistro == TipoRegistro))
                 .Select(item => item.IdNNA)
                 .ToListAsync(cancellationToken);

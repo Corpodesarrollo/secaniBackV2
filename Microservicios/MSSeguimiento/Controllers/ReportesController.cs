@@ -18,12 +18,6 @@ namespace MSSeguimiento.Api.Controllers
         private readonly IReporteDinamicoSeguimientoService _dinamicoSeguimientoService = dinamicoSeguimientoService;
         private readonly IReporteDetalleRegDepuradosService _reporteDepuradosService = reporteDepuradosService;
 
-        [HttpGet("EstadoDepuracion")]
-        public async Task<List<ReporteDepuracionDTO>> ReporteDepuracion(DateTime FechaInicial, DateTime FechaFinal)
-        {
-            return await _depuracionService.GetReporteDepuraciones(FechaInicial, FechaFinal);
-        }
-
         [HttpGet("ReporteDinamicoNNA")]
         public async Task<List<ReporteDinamicoNNADTO>> ReporteDinamicoNNA(DateTime FechaInicial, DateTime FechaFinal)
         {
@@ -36,10 +30,16 @@ namespace MSSeguimiento.Api.Controllers
             return await _dinamicoSeguimientoService.GetReporteDinamicoSeguimientoAsync(FechaInicial, FechaFinal, cancellationToken: default);
         }
 
-        [HttpGet("ReporteDetalleRegDepurados")]
-        public async Task<List<ReporteDetalleRegDepuradosDTO>> ReporteDetalleRegDepurados(int TipoRegistro = 1)
+        [HttpGet("EstadoDepuracion")]
+        public async Task<List<ReporteDepuracionDTO>> ReporteDepuracion(DateTime FechaInicial, DateTime FechaFinal)
         {
-            return await _reporteDepuradosService.GetReporteDetalleRegDepuradosAsync(TipoRegistro, cancellationToken: default);
+            return await _depuracionService.GetReporteDepuraciones(FechaInicial, FechaFinal);
+        }
+
+        [HttpGet("ReporteDetalleRegDepurados")]
+        public async Task<List<ReporteDetalleRegDepuradosDTO>> ReporteDetalleRegDepurados(int IdReporteDepuracion, int TipoRegistro = 1)
+        {
+            return await _reporteDepuradosService.GetReporteDetalleRegDepuradosAsync(IdReporteDepuracion, TipoRegistro, cancellationToken: default);
         //TipoRegistro
         //Nuevo = 1,
         //Duplicado = 2,
