@@ -11,9 +11,9 @@
     public class ReporteDepuracionDetalle
     {
         public int Id { get; set; }
+        public int IdReporteDepuracion { get; set; }
         public long IdNNA { get; set; }
         public int TipoRegistro { get; set; }
-        public DateTime Fecha { get; set; }
 
         // Propiedad de solo lectura para devolver el texto correspondiente al valor de TipoRegistro
         public string TipoRegistroString

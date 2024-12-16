@@ -7,9 +7,9 @@ namespace Core.Services.Reportes
     public class ReporteDetalleRegDepuradosService(IReporteDetalleRegDepuradosRepository repository) : IReporteDetalleRegDepuradosService
     {
         private readonly IReporteDetalleRegDepuradosRepository _repository = repository;
-        public async Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(DateTime fechaInicio, DateTime fechaFin, int TipoRegistro, CancellationToken cancellationToken)
+        public async Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(int TipoRegistro, CancellationToken cancellationToken)
         {
-            return await _repository.GetReporteDetalleRegDepuradosAsync(fechaInicio, fechaFin, TipoRegistro, cancellationToken);
+            return await _repository.GetReporteDetalleRegDepuradosAsync(TipoRegistro, cancellationToken);
         }
     }
 }

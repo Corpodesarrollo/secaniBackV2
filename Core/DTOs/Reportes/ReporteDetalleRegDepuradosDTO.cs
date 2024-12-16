@@ -6,6 +6,7 @@ namespace Core.DTOs.Reportes
     {
         //NNA
         public long Id { get; set; }
+        public int IdReporteDepuracion { get; set; }
         public DateTime? FechaNotificacion { get; set; }
         public int? OrigenReporteId { get; set; }
         public string OrigenReporte { get; set; } //calculado

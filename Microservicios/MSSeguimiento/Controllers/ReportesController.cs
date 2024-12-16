@@ -37,9 +37,14 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("ReporteDetalleRegDepurados")]
-        public async Task<List<ReporteDetalleRegDepuradosDTO>> ReporteDetalleRegDepurados(DateTime FechaInicial, DateTime FechaFinal, int TipoRegistro = 0)
+        public async Task<List<ReporteDetalleRegDepuradosDTO>> ReporteDetalleRegDepurados(int TipoRegistro = 1)
         {
-            return await _reporteDepuradosService.GetReporteDetalleRegDepuradosAsync(FechaInicial, FechaFinal, TipoRegistro, cancellationToken: default);
+            return await _reporteDepuradosService.GetReporteDetalleRegDepuradosAsync(TipoRegistro, cancellationToken: default);
+        //TipoRegistro
+        //Nuevo = 1,
+        //Duplicado = 2,
+        //SegundaNeoplastia = 3,
+        //Recaida = 4
         }
     }
 }

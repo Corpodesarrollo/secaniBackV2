@@ -4,6 +4,6 @@ namespace Core.Interfaces.Repositorios.Reportes
 {
     public interface IReporteDetalleRegDepuradosRepository
     {
-        Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(DateTime fechaInicio, DateTime fechaFin, int TipoRegistro, CancellationToken cancellationToken);
+        Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(int TipoRegistro, CancellationToken cancellationToken);
     }
 }
