@@ -11,12 +11,14 @@ namespace MSSeguimiento.Api.Controllers
         IReporteDepuracionService depuracionService, 
         IReporteDinamicoNNAService dinamicoNNAService,
         IReporteDinamicoSeguimientoService dinamicoSeguimientoService,
-        IReporteDetalleRegDepuradosService reporteDepuradosService) : ControllerBase
+        IReporteDetalleRegDepuradosService reporteDepuradosService,
+        IReporteDinamicoAlertasService reporteDinamicoAlertasService) : ControllerBase
     {
         private readonly IReporteDepuracionService _depuracionService = depuracionService;
         private readonly IReporteDinamicoNNAService _dinamicoNNAService = dinamicoNNAService;
         private readonly IReporteDinamicoSeguimientoService _dinamicoSeguimientoService = dinamicoSeguimientoService;
         private readonly IReporteDetalleRegDepuradosService _reporteDepuradosService = reporteDepuradosService;
+        private readonly IReporteDinamicoAlertasService _reporteDinamicoAlertasService = reporteDinamicoAlertasService;
 
         [HttpGet("ReporteDinamicoNNA")]
         public async Task<List<ReporteDinamicoNNADTO>> ReporteDinamicoNNA(DateTime FechaInicial, DateTime FechaFinal)
@@ -45,6 +47,12 @@ namespace MSSeguimiento.Api.Controllers
         //Duplicado = 2,
         //SegundaNeoplastia = 3,
         //Recaida = 4
+        }
+
+        [HttpGet("ReporteDinamicoAlertas")]
+        public async Task<List<ReporteDinamicoAlertasDTO>> ReporteDinamicoAlertas(DateTime FechaInicial, DateTime FechaFinal)
+        {
+            return await _reporteDinamicoAlertasService.GetReporteDinamicoAlertasAsync(FechaInicial, FechaFinal, default);
         }
     }
 }

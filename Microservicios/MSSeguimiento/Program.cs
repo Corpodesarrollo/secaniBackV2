@@ -80,6 +80,8 @@ builder.Services.AddScoped<IReporteDetalleRegDepuradosService, ReporteDetalleReg
 builder.Services.AddScoped<TablaParametricaService>();
 builder.Services.AddScoped<IEnviarRespuesta, EnviarRespuestaRepo>();
 builder.Services.AddScoped<IGestionarAlertas, GestionarAlertasRepo>();
+builder.Services.AddScoped<IReporteDinamicoAlertasRepository, ReporteDinamicoAlertasRepository>();
+builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlertasService>();
 builder.Services.AddHttpClient();
 
 // Register Quartz services

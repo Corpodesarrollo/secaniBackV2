@@ -217,11 +217,9 @@ namespace Infra.Repositorios.Reportes
                 .OrderByDescending(s => s.Id)
                 .FirstOrDefaultAsync();
 
-            if (seguimiento == null)
-                return string.Empty;
-            var estado = await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default);
-            return seguimiento.UsuarioId;
-            // return await _identityService.GetUserNameAsync(seguimiento.UsuarioId) ?? string.Empty;
+            var agente = (seguimiento == null) ? null : await _context.Users.Where(u => u.Id == seguimiento.UsuarioId).FirstOrDefaultAsync();
+
+            return agente?.FullName ?? string.Empty;
         }
     }
 }
