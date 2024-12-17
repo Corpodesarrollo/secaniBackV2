@@ -2,6 +2,7 @@
 using Core.DTOs.Reportes;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios.Reportes;
+using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Modelos;
 using Core.Modelos.TablasParametricas;
 using Core.Services.MSTablasParametricas;
@@ -15,7 +16,8 @@ namespace Infra.Repositorios.Reportes
         IGenericService<TPOrigenReporte, GenericTPDTO> origenReporteService,
         TablaParametricaService tablaParametricaService,
         IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> estadoIngresoEstrategiaService,
-        IGenericService<TPEstadoSeguimiento, GenericTPDTO> estadoSeguimientoService
+        IGenericService<TPEstadoSeguimiento, GenericTPDTO> estadoSeguimientoService,
+        IIdentityService identityService
         ) : IReporteDetalleRegDepuradosRepository
     {
         private readonly ApplicationDbContext _context = context;
@@ -24,7 +26,7 @@ namespace Infra.Repositorios.Reportes
         private readonly TablaParametricaService _tablaParametricaService = tablaParametricaService;
         private readonly IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> _estadoIngresoEstrategiaService = estadoIngresoEstrategiaService;
         private readonly IGenericService<TPEstadoSeguimiento, GenericTPDTO> _estadoSeguimientoService = estadoSeguimientoService;
-
+        private readonly IIdentityService _identityService = identityService;
         public async Task<List<ReporteDetalleRegDepuradosDTO>> GetReporteDetalleRegDepuradosAsync(int IdReporteDepuracion, int TipoRegistro, CancellationToken cancellationToken)
         {
             // Obtener los IdNNA desde ReporteDepuracionDetalle
@@ -217,9 +219,22 @@ namespace Infra.Repositorios.Reportes
                 .OrderByDescending(s => s.Id)
                 .FirstOrDefaultAsync();
 
-            var agente = (seguimiento == null) ? null : await _context.Users.Where(u => u.Id == seguimiento.UsuarioId).FirstOrDefaultAsync();
+            var agente = (seguimiento == null) ? string.Empty : await GetAgenteById(seguimiento.UsuarioId);
 
-            return agente?.FullName ?? string.Empty;
+            return agente;
         }
+
+        private async Task<string> GetAgenteById(string? usuarioId)
+        {
+            if (string.IsNullOrEmpty(usuarioId))
+                return string.Empty;
+
+            var users = await _identityService.GetAllUsersAsync();
+            var user = users.FirstOrDefault(u => u.id == usuarioId);
+
+            // Validar que user no sea null antes de acceder a fullName
+            return user.fullName;
+        }
+
     }
 }

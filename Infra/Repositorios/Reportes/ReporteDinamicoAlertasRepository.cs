@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infra.Repositorios.Reportes
 {
     public class ReporteDinamicoAlertasRepository(
-        ApplicationDbContext _context,
+        ApplicationDbContext context,
         IGenericService<TPCIE10, CIE10DTO> diagnosticoService,
         TablaParametricaService tablaParametricaService,
         IGenericService<TPOrigenReporte, GenericTPDTO> origenReporteService,
@@ -24,7 +24,7 @@ namespace Infra.Repositorios.Reportes
     ) : IReporteDinamicoAlertasRepository
     {
         private readonly IGenericService<TPCIE10, CIE10DTO> _diagnosticoService = diagnosticoService;
-        private readonly ApplicationDbContext _context = _context ?? throw new ArgumentNullException(nameof(_context));
+        private readonly ApplicationDbContext _context = context;
         private readonly TablaParametricaService _tablaParametricaService = tablaParametricaService ?? throw new ArgumentNullException(nameof(tablaParametricaService));
         private readonly IGenericService<TPOrigenReporte, GenericTPDTO> _origenReporteService = origenReporteService ?? throw new ArgumentNullException(nameof(origenReporteService));
         private readonly IIdentityService _identityService = identityService ?? throw new ArgumentNullException(nameof(identityService)); 
@@ -156,16 +156,14 @@ namespace Infra.Repositorios.Reportes
 
         private async Task<string> GetAgente(string? usuarioId)
         {
-            if (usuarioId == null)
+            if (string.IsNullOrEmpty(usuarioId))
                 return string.Empty;
-            var users = _context.Users.ToList();
 
-            var agente = await _context.Users
-                .Where(u => u.Id == usuarioId)
-                .FirstOrDefaultAsync();
+            var users = await _identityService.GetAllUsersAsync();
+            var user = users.FirstOrDefault(u => u.id == usuarioId);
 
-            // Devolver el nombre del agente o string.Empty si no existe
-            return agente?.FullName ?? string.Empty;
+            // Validar que user no sea null antes de acceder a fullName
+            return user.fullName;
         }
 
     }
