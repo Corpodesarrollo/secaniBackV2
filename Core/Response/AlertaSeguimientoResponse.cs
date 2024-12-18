@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Response
+﻿namespace Core.Response
 {
     public class AlertaSeguimientoResponse
     {
@@ -13,8 +7,8 @@ namespace Core.Response
         public string? Observaciones { get; set; }
         public int EstadoId { get; set; }
         public DateTime UltimaFechaSeguimiento { get; set; }
-        public string NombreAlerta {  get; set; }
-        public string CategoriaAlerta {  get; set; }
+        public string NombreAlerta { get; set; }
+        public string CategoriaAlerta { get; set; }
         public string SubcategoriaAlerta { get; set; }
     }
 }

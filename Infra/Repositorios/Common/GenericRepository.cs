@@ -30,6 +30,7 @@ namespace Infra.Repositories.Common
             var items = await _context.Set<T>().AsNoTracking().ToListAsync();
             return items ?? Enumerable.Empty<T>();
         }
+
         public async Task<T> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             return await _context.Set<T>().FindAsync(id);
