@@ -36,7 +36,7 @@ builder
 
 builder.Services.AddControllersWithViews();
 
-//builder.Services.AddHostedService<TareaEnSegundoPlano>();
+builder.Services.AddHostedService<TareaEnSegundoPlano>();
 
 
 builder.Services.AddCustomSwagger();
