@@ -580,12 +580,7 @@ namespace Infra.Repositorios
                             {
                                 key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_res_dd);
                             }
-                            List<DateTime?> value;
-                            if (!dTrazabilidad.TryGetValue(kvp.Value[i].Id,out value))
-                            {
-                                dTrazabilidad.Add(kvp.Value[i].Id, key);
-                            }
-                            
+                            dTrazabilidad.Add(kvp.Value[i].Id, key);
                         }
 
                         cantidadMaxima = 0;
@@ -949,9 +944,8 @@ namespace Infra.Repositorios
                 response.SegundasNeoplasias = segundaNeoplasia;
                 response.Estado = reporte.Estado;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e.StackTrace);
                 ReporteDepuracion reporte = new()
                 {
                     Estado = "Procesada",
@@ -1195,7 +1189,7 @@ namespace Infra.Repositorios
             _context.SaveChanges();
         }
 
-        public DepuracionProtocoloResponse CargarArchivoNNA(IFormFile file)
+        public async Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file)
         {
             List<DepuracionProtocoloRequest> DepuracionRequest = new();
             DepuracionProtocoloResponse response;
@@ -1212,7 +1206,7 @@ namespace Infra.Repositorios
             {
                 using (var stream = new MemoryStream())
                 {
-                    file.CopyToAsync(stream);
+                    await file.CopyToAsync(stream);
                     string[] fileName = file.FileName.Split('.');
                     if (fileName[1].ToLower() == "xls" || fileName[1].ToLower() == "xlsx")
                     {
@@ -1498,14 +1492,7 @@ namespace Infra.Repositorios
                                 depuracion.fec_con = fec_con;
                             }
                             DateTime ini_sin = DateTime.MinValue;
-                            try
-                            {
-                                DateTime.TryParse(columns[50], out ini_sin);
-                            } catch (Exception e)
-                            {
-                                Console.WriteLine(e.StackTrace);
-                            }
-                            
+                            DateTime.TryParse(columns[50], out ini_sin);
                             if (ini_sin != DateTime.MinValue)
                             {
                                 depuracion.ini_sin = ini_sin;
@@ -1533,15 +1520,7 @@ namespace Infra.Repositorios
                             depuracion.uni_modif = columns[61];
                             depuracion.nuni_modif = columns[62];
                             DateTime fec_arc_xl = DateTime.MinValue;
-                            try
-                            {
-                                DateTime.TryParse(columns[63], out fec_arc_xl);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.StackTrace);
-                            }
-                            
+                            DateTime.TryParse(columns[63], out fec_arc_xl);
                             if (fec_arc_xl != DateTime.MinValue)
                             {
                                 depuracion.fec_arc_xl = fec_arc_xl;

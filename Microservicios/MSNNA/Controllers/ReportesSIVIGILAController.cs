@@ -30,20 +30,6 @@ namespace MSNNA.Api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("EvidenciaDiagnostico/{id}")]
-        public async Task<ActionResult> EvidenciaDiagnostico(long id)
-        {
-            var result = await _reportesSIVIGILARepo.EvidenciaDiagnostico(id);
-            return Ok(result);
-        }
-
-        [HttpGet("EvidenciaParentesco/{id}")]
-        public async Task<ActionResult> EvidenciaParentesco(long id)
-        {
-            var result = await _reportesSIVIGILARepo.EvidenciaParentesco(id);
-            return Ok(result);
-        }
-
         [HttpPost]
         public async Task<ActionResult> AddAsync(ReportesSIVIGILADto data)
         {

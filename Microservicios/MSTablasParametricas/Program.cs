@@ -36,9 +36,6 @@ builder
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHostedService<TareaEnSegundoPlano>();
-
-
 builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
@@ -62,7 +59,6 @@ builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValid
 builder.Services.AddScoped<IFestivoService, FestivoService>();
 builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
 builder.Services.AddScoped<ITPParentescos, TPParentescosRepo>();
-builder.Services.AddScoped<IIpsRepo, IpsRepo>();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),

@@ -13,7 +13,6 @@ namespace Infra
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
             : base(dbContextOptions)
         {
-            this.Database.SetCommandTimeout(180);
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -152,11 +151,6 @@ namespace Infra
         public DbSet<TPParentescos> TPParentescos { get; set; }
 
         public DbSet<ReportesSIVIGILA> ReportesSIVIGILA { get; set; }
-        public DbSet<RespuestasAlerta> RespuestasAlerta { get; internal set; }
-        public DbSet<TPIPS> TPIPS { get; internal set; }
-        public DbSet<ReporteInconsistenciaPersona> ReporteInconsistenciaPersonas { get; set; } 
-        public DbSet<ReporteDepuracionDetalle> ReporteDepuracionDetalle { get; set; }
-
 
     }
 }

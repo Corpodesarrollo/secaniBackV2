@@ -16,6 +16,5 @@ namespace Core.Modelos
         public int? Aseguradora { get; set; }
         public string? DepartamentoProcedenciaId { get; set; }
         public string? MunicipioProcedenciaId { get; set; }
-        public int? Estado { get; set; }
     }
 }
