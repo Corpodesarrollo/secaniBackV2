@@ -26,6 +26,6 @@ namespace Core.Interfaces.Repositorios
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request);
         public List<ConsultaCasosAbiertosResponse> ConsultaCasosAbiertos(CasosAbiertosRequest request);
         public void AsignacionManual(AsignacionManualRequest request);
-        public Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file);
+        public DepuracionProtocoloResponse CargarArchivoNNA(IFormFile file);
     }
 }

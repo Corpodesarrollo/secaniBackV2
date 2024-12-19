@@ -20,5 +20,11 @@ namespace MSSeguimiento.Api.Controllers
         {
             return repo.GetNotificacionEntidad(idAlerta);
         }
+
+        [HttpGet("Alerta/{idAlerta}")]
+        public async Task<RespuestasAlertaDto> Alerta(int idAlerta)
+        {
+            return await repo.Alerta(idAlerta);
+        }
     }
 }

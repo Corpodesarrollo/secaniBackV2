@@ -1,7 +1,8 @@
-﻿namespace Core.Response
+﻿namespace Core.DTOs.Reportes
 {
-    public class AlertaSeguimientoResponse
+    public class AlertaSeguimientoDTO
     {
+        public long AlertaSeguimientoId { get; set; }
         public long AlertaId { get; set; }
         public long SeguimientoId { get; set; }
         public string? Observaciones { get; set; }

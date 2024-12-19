@@ -2,6 +2,7 @@
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
+using Core.Request;
 using Core.Services.StorageService;
 using Infra.Repositories.Common;
 
@@ -35,6 +36,20 @@ namespace Infra.Repositorios
             }
         }
 
+        public async Task<IEnumerable<ReportesSIVIGILADto>> GetAllPorEnviar(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _repository.FindAllAsync(x => x.Estado == 0);
+                var dtos = GenericMapper.MapList<ReportesSIVIGILA, ReportesSIVIGILADto>(result);
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
         public async Task<ReportesSIVIGILADto?> GetById(long id)
         {
             var result = await _repository.GetByIdAsync(id);
@@ -47,7 +62,9 @@ namespace Infra.Repositorios
 
         public async Task<(bool, ReportesSIVIGILA)> AddAsync(ReportesSIVIGILADto data)
         {
+
             var entity = GenericMapper.Map<ReportesSIVIGILADto, ReportesSIVIGILA>(data);
+            entity.Estado = 0;
             var (success, response) = await _repository.AddAsync(entity);
 
             if (success)
@@ -60,6 +77,40 @@ namespace Infra.Repositorios
             }
 
             return (success, response);
+        }
+
+        public async Task<UploadFileRequest?> EvidenciaDiagnostico(long id)
+        {
+
+            var result = await _repository.GetByIdAsync(id);
+            if (result == null)
+                return null;
+
+            var dto = GenericMapper.Map<ReportesSIVIGILA, ReportesSIVIGILADto>(result);
+
+            var evidenciaDiagnostico = await _storageService.DownloadFileAsync($"RS-EvidenciaDiagnostico-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaDiagnostico.Extension}");
+            return new()
+            {
+                FileBytes = evidenciaDiagnostico,
+                FileName = $"RS-EvidenciaDiagnostico-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaDiagnostico.Extension}"
+            };
+        }
+
+        public async Task<UploadFileRequest?> EvidenciaParentesco(long id)
+        {
+
+            var result = await _repository.GetByIdAsync(id);
+            if (result == null)
+                return null;
+
+            var dto = GenericMapper.Map<ReportesSIVIGILA, ReportesSIVIGILADto>(result);
+
+            var evidenciaParentesco = await _storageService.DownloadFileAsync($"RS-EvidenciaParentesco-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaParentesco.Extension}");
+            return new()
+            {
+                FileBytes = evidenciaParentesco,
+                FileName = $"RS-EvidenciaParentesco-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaParentesco.Extension}"
+            };
         }
 
         public async Task<(bool, ReportesSIVIGILA)> UpdateAsync(ReportesSIVIGILADto data)

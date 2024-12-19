@@ -71,5 +71,20 @@ namespace Infra.Repositorios
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task<RespuestasAlertaDto> Alerta(int idAlerta)
+        {
+            try
+            {
+                var result = await db.RespuestasAlerta.FirstOrDefaultAsync(x => x.IdAlerta == idAlerta) ?? throw new Exception("Alerta no encontrada");
+                var data = GenericMapper.Map<RespuestasAlerta, RespuestasAlertaDto>(result);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+
+            }
+        }
     }
 }
