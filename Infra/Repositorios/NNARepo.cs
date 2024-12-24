@@ -441,12 +441,6 @@ namespace Infra.Repositorios
                 bool fallecido;
                 int recorridoCaso2 = 0;
                 int recorridoCaso3 = 0;
-                bool tieneCancer1;
-                bool tieneCancer2;
-                bool tieneCancer3;
-                bool tieneCancer4;
-                bool tieneCancer13;
-                bool tieneCancer14;
                 DateTime fechaNotificacion;
                 Dictionary<int, List<DateTime?>> dTrazabilidad;
                 int cantidadMaxima = 0;
@@ -581,11 +575,11 @@ namespace Infra.Repositorios
                                 key.Add(kvp.Value[i].DepuracionProtocoloRequest.fec_res_dd);
                             }
                             List<DateTime?> value;
-                            if (!dTrazabilidad.TryGetValue(kvp.Value[i].Id,out value))
+                            if (!dTrazabilidad.TryGetValue(kvp.Value[i].Id, out value))
                             {
                                 dTrazabilidad.Add(kvp.Value[i].Id, key);
                             }
-                            
+
                         }
 
                         cantidadMaxima = 0;
@@ -612,64 +606,35 @@ namespace Infra.Repositorios
 
                     if (kvp.Value.Count > 1)
                     {
-                        //tipoCancer
-                        tieneCancer1 = false;
-                        tieneCancer2 = false;
-                        tieneCancer3 = false;
-                        tieneCancer4 = false;
-                        tieneCancer13 = false;
-                        tieneCancer14 = false;
+                        // Inicializar los indicadores de tipo de cáncer
+                        bool tieneCancer1 = false, tieneCancer2 = false, tieneCancer3 = false;
+                        bool tieneCancer4 = false, tieneCancer13 = false, tieneCancer14 = false;
+
                         for (int i = kvp.Value.Count - 1; i >= 0; i--)
                         {
-                            if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "1")
+                            var tipoCa = kvp.Value[i].DepuracionProtocoloRequest.tipo_ca;
+
+                            switch (tipoCa)
                             {
-                                tieneCancer1 = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "2")
-                            {
-                                tieneCancer2 = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "3")
-                            {
-                                tieneCancer3 = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "4")
-                            {
-                                tieneCancer4 = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "13")
-                            {
-                                tieneCancer4 = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.tipo_ca == "14")
-                            {
-                                tieneCancer14 = true;
+                                case "1": tieneCancer1 = true; break;
+                                case "2": tieneCancer2 = true; break;
+                                case "3": tieneCancer3 = true; break;
+                                case "4": tieneCancer4 = true; break;
+                                case "13": tieneCancer13 = true; break;
+                                case "14": tieneCancer14 = true; break;
                             }
                         }
 
                         for (int i = kvp.Value.Count - 1; i >= 0; i--)
                         {
-                            if (tieneCancer1 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "1")
-                            {
-                                kvp.Value.RemoveAt(i);
-                            }
-                            else if (tieneCancer2 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "2")
-                            {
-                                kvp.Value.RemoveAt(i);
-                            }
-                            else if (tieneCancer3 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "3")
-                            {
-                                kvp.Value.RemoveAt(i);
-                            }
-                            else if (tieneCancer4 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "4")
-                            {
-                                kvp.Value.RemoveAt(i);
-                            }
-                            else if (tieneCancer13 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "13")
-                            {
-                                kvp.Value.RemoveAt(i);
-                            }
-                            else if (tieneCancer14 && kvp.Value[i].DepuracionProtocoloRequest.tipo_ca != "14")
+                            var tipoCa = kvp.Value[i].DepuracionProtocoloRequest.tipo_ca;
+
+                            if ((tieneCancer1 && tipoCa != "1") ||
+                                (tieneCancer2 && tipoCa != "2") ||
+                                (tieneCancer3 && tipoCa != "3") ||
+                                (tieneCancer4 && tipoCa != "4") ||
+                                (tieneCancer13 && tipoCa != "13") ||
+                                (tieneCancer14 && tipoCa != "14"))
                             {
                                 kvp.Value.RemoveAt(i);
                             }
@@ -682,15 +647,9 @@ namespace Infra.Repositorios
 
                         for (int i = kvp.Value.Count - 1; i >= 0; i--)
                         {
-                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not.Year == DateTime.Now.Year)
-                            {
-                                anioActual = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.recaida == "1")
-                            {
-                                anioActual = true;
-                            }
-                            else if (kvp.Value[i].DepuracionProtocoloRequest.consx2_neo == "1")
+                            if (kvp.Value[i].DepuracionProtocoloRequest.fec_not.Year == DateTime.Now.Year ||
+                                kvp.Value[i].DepuracionProtocoloRequest.recaida == "1" ||
+                                kvp.Value[i].DepuracionProtocoloRequest.consx2_neo == "1")
                             {
                                 anioActual = true;
                             }
@@ -723,9 +682,9 @@ namespace Infra.Repositorios
                     }
                 }
 
-                List<NNAs> insertNNA = new();
-                List<NNAs> updateNNA = new();
-                DateTime fechaDefuncion;
+                List<NNAs> insertNNA = [];
+                List<NNAs> updateNNA = [];
+                //DateTime fechaDefuncion;
                 foreach (DepuracionProtocolo d in insertarNNa)
                 {
                     if (d.DepuracionProtocoloRequest.consx2_neo == "1")
@@ -736,21 +695,17 @@ namespace Infra.Repositorios
                     {
                         recaidas += 1;
                     }
-                    else
-                    {
-                        nuevos += 1;
-                    }
 
-                    NNAs? nna = (from nnas in _context.NNAs
-                                 where nnas.NumeroIdentificacion == d.DepuracionProtocoloRequest.num_ide
-                                 select nnas).FirstOrDefault();
+                    var nna = (from nnas in _context.NNAs
+                               where nnas.NumeroIdentificacion == d.DepuracionProtocoloRequest.num_ide
+                               select nnas).FirstOrDefault();
 
                     if (nna != null)
                     {
                         if (d.DepuracionProtocoloRequest.consx2_neo == "1")
                         {
                             nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
-                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion))
+                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out DateTime fechaDefuncion))
                             {
                                 nna.FechaDefuncion = fechaDefuncion;
                             }
@@ -761,7 +716,7 @@ namespace Infra.Repositorios
                         {
                             nna.Recaida = true;
                             nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
-                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion))
+                            if (DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out DateTime fechaDefuncion))
                             {
                                 nna.FechaDefuncion = fechaDefuncion;
                             }
@@ -775,10 +730,12 @@ namespace Infra.Repositorios
                     }
                     else
                     {
-                        fechaDefuncion = DateTime.MinValue;
-                        DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out fechaDefuncion);
+                        nuevos += 1;
+                        DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out DateTime fechaDefuncion);
                         nna = new NNAs()
                         {
+                            DateCreated = DateTime.Now,
+                            CreatedByUserId = "1",
                             FechaNotificacionSIVIGILA = d.DepuracionProtocoloRequest.fec_not,
                             EPSId = 0,//verificar de donde sale el id de la eps
                             PrimerNombre = d.DepuracionProtocoloRequest.pri_nom,
@@ -926,7 +883,7 @@ namespace Infra.Repositorios
                     depuracionProtocolos.Add(dep);
                 }
 
-                _context.DepuracionManualProtocolos.AddRange(depuracionProtocolos);
+                _context.DepuracionManualProtocolo.AddRange(depuracionProtocolos);
                 _context.SaveChanges();
 
                 ReporteDepuracion reporte = new()
@@ -943,11 +900,6 @@ namespace Infra.Repositorios
 
                 _context.ReporteDepuracion.AddRange(reporte);
                 _context.SaveChanges();
-
-                response.Nuevos = nuevos;
-                response.Recaidas = recaidas;
-                response.SegundasNeoplasias = segundaNeoplasia;
-                response.Estado = reporte.Estado;
             }
             catch (Exception e)
             {
@@ -966,14 +918,12 @@ namespace Infra.Repositorios
 
                 _context.ReporteDepuracion.AddRange(reporte);
                 _context.SaveChanges();
-
-                response.Nuevos = nuevos;
-                response.Recaidas = recaidas;
-                response.SegundasNeoplasias = segundaNeoplasia;
-                response.Estado = reporte.Estado;
             }
 
-            return response;
+            if (nuevos == 0)
+                return new() { Estado = "Procesada" };
+            else
+                return new() { Estado = "Procesada", Nuevos = nuevos, Recaidas = recaidas, SegundasNeoplasias = segundaNeoplasia };
         }
 
         public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
@@ -1380,8 +1330,7 @@ namespace Infra.Repositorios
                                 {
                                     depuracion.fec_tomadd = fec_tomadd;
                                 }
-                                DateTime fec_res_dd;
-                                DateTime.TryParse(currentRow.Cell(83).GetValue<string>(), out fec_res_dd);
+                                DateTime.TryParse(currentRow.Cell(83).GetValue<string>(), out DateTime fec_res_dd);
                                 if (fec_tomadd != DateTime.MinValue)
                                 {
                                     depuracion.fec_res_dd = fec_res_dd;
@@ -1501,11 +1450,12 @@ namespace Infra.Repositorios
                             try
                             {
                                 DateTime.TryParse(columns[50], out ini_sin);
-                            } catch (Exception e)
+                            }
+                            catch (Exception e)
                             {
                                 Console.WriteLine(e.StackTrace);
                             }
-                            
+
                             if (ini_sin != DateTime.MinValue)
                             {
                                 depuracion.ini_sin = ini_sin;
@@ -1541,7 +1491,7 @@ namespace Infra.Repositorios
                             {
                                 Console.WriteLine(ex.StackTrace);
                             }
-                            
+
                             if (fec_arc_xl != DateTime.MinValue)
                             {
                                 depuracion.fec_arc_xl = fec_arc_xl;

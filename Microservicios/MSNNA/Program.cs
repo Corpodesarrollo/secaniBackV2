@@ -13,6 +13,7 @@ using Core.Services.StorageService;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.Reportes;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using MSNNA.Api.Extensions;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
@@ -77,5 +78,19 @@ app.UseCors("AllowSpecificOrigin");
 
 app.UseCustomConfigure();
 app.UseCustomSwagger();
+
+app.UseHealthChecks("/health");
+app.UseHealthChecks("/health_check", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 app.Run();

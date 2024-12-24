@@ -16,6 +16,7 @@ using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
+using Quartz;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
@@ -36,8 +37,25 @@ builder
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHostedService<TareaEnSegundoPlano>();
+//builder.Services.AddHostedService<TareaEnSegundoPlano>();
 
+// Agregar servicios Quartz
+//builder.Services.AddQuartz(q =>
+//{
+//    // Usar la fábrica de inyección de dependencias de Microsoft
+//    q.UseMicrosoftDependencyInjectionJobFactory();
+
+//    // Configurar el Job y su Trigger
+//    var jobKey = new JobKey("TareaQuartz");
+//    q.AddJob<TareaEnSegundoPlano>(opts => opts.WithIdentity(jobKey));
+//    q.AddTrigger(opts => opts
+//        .ForJob(jobKey) // Asocia el Trigger con el Job
+//        .WithIdentity("Trigger-TareaQuartz")
+//        .WithCronSchedule("0 0/1 * * * ?")); // Cada 10 minutos
+//});
+
+// Agregar el Hosted Service de Quartz
+//builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 builder.Services.AddCustomSwagger();
 
