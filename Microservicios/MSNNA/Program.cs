@@ -60,6 +60,7 @@ builder.Services.AddTransient<IReporteInconsistenciaPersonaService, ReporteIncon
 builder.Services.AddTransient<Client>();
 builder.Services.AddTransient<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
 builder.Services.AddTransient<IReporteDinamicoNNARepository, ReporteDinamicoNNARepository>();
+builder.Services.AddTransient<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddHttpClient();
 
 

@@ -7,7 +7,6 @@ using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
 
 namespace Api.Controllers
@@ -156,9 +155,9 @@ namespace Api.Controllers
         }
 
         [HttpPost("CargarArchivoNNA")]
-        public IActionResult CargarArchivoNNA(IFormFile file)
+        public async Task<IActionResult> CargarArchivoNNA(IFormFile file)
         {
-            var response = _nNARepo.CargarArchivoNNA(file);
+            var response = await _nNARepo.CargarArchivoNNA(file);
             return Ok(response);
         }
     }

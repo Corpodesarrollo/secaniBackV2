@@ -1,7 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
-using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -572,58 +571,43 @@ namespace Infra.Repositorios
             return 1;
         }
 
-        public void AsignacionAutomatica()
+        public async Task AsignacionAutomatica()
         {
-            List<ConsultaCasosAbiertosResponse> lista;
-            List<int> estados = new() { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
-            UsuarioAsignado usuarioAsignado;
-            List<UsuarioAsignado> usuarios = new();
+            var estados = new int[] { 2, 3, 4, 5, 6, 7, 8, 9, 15 };
 
-            lista = (from seg in _context.Seguimientos
-                     join nna in _context.NNAs on seg.NNAId equals nna.Id
-                     where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
-                     select new ConsultaCasosAbiertosResponse()
-                     {
-                         AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
-                         Estado = seg.EstadoId,
-                         FechaNotificacion = seg.FechaSolicitud ?? new(),
-                         FechaUltimaActuacion = seg.UltimaActuacionFecha,
-                         Alertas = new List<AlertaSeguimientoResponse>(),
-                         SeguimientoId = seg.Id
-                     }).ToList();
+            var seguimientos = await (from seg in _context.Seguimientos
+                                      join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                      where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
+                                      select seg.Id).ToArrayAsync();
 
-            List<ApplicationUser> revisores = (from us in _context.Users
-                                               select us).ToList();
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            var revisores = await (from ur in _context.UserRoles
+                                   join r in _context.Roles on ur.RoleId equals r.Id
+                                   join u in _context.Users on ur.UserId equals u.Id
+                                   where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046"
+                                   select u).ToListAsync();
 
-            foreach (ConsultaCasosAbiertosResponse r in lista)
+            var usuariosAsignados = new List<UsuarioAsignado>();
+            int revisorIndex = 0;
+
+            foreach (var item in seguimientos)
             {
-                usuarioAsignado = new UsuarioAsignado()
+                var revisor = revisores[revisorIndex];
+                usuariosAsignados.Add(new UsuarioAsignado
                 {
                     Activo = true,
                     DateCreated = DateTime.Now,
                     FechaAsignacion = DateTime.Now,
-                    Observaciones = "Asignacion automatica",
-                    SeguimientoId = r.SeguimientoId,
-                };
-                usuarios.Add(usuarioAsignado);
+                    Observaciones = "Asignación automática",
+                    SeguimientoId = item,
+                    UsuarioId = revisor.Id
+                });
+
+                revisorIndex = (revisorIndex + 1) % revisores.Count;
             }
 
-            this.AsignarUsuarios(revisores, usuarios);
-
-            _context.UsuarioAsignados.AddRange(usuarios);
-            _context.SaveChanges();
-        }
-
-        private void AsignarUsuarios(List<ApplicationUser> usuarios, List<UsuarioAsignado> solicitudes)
-        {
-            int usuarioIndex = 0;
-            int totalUsuarios = usuarios.Count;
-
-            foreach (var solicitud in solicitudes)
-            {
-                solicitud.UsuarioId = usuarios[usuarioIndex].Id;  // Asignar el usuario
-                usuarioIndex = (usuarioIndex + 1) % totalUsuarios;  // Reinicia el índice si se alcanzan todos los usuarios
-            }
+            _context.UsuarioAsignados.AddRange(usuariosAsignados);
+            await _context.SaveChangesAsync();
         }
 
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)

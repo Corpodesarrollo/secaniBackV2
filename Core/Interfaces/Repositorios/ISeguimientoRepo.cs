@@ -23,7 +23,6 @@ namespace Core.Interfaces.Repositorios
         Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id);
         Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id);
         public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request);
-        public void AsignacionAutomatica();
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request);
         public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
         public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo();
@@ -32,5 +31,6 @@ namespace Core.Interfaces.Repositorios
         Task<long> GetCntSeguimientoByNNA(long id);
         Task<string> SetSeguimiento(SetSeguimientoRequest request);
         Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
+        Task AsignacionAutomatica();
     }
 }

@@ -81,6 +81,7 @@ builder.Services.AddScoped<IFestivoService, FestivoService>();
 builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
 builder.Services.AddScoped<ITPParentescos, TPParentescosRepo>();
 builder.Services.AddScoped<IIpsRepo, IpsRepo>();
+builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),

@@ -160,9 +160,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("AsignacionAutomatica")]
-        public void AsignacionAutomatica()
+        public async Task AsignacionAutomatica()
         {
-            seguimientoRepo.AsignacionAutomatica();
+            await seguimientoRepo.AsignacionAutomatica();
         }
 
         [HttpPost("CrearPlantillaCorreo")]

@@ -1,5 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Interfaces;
+using Core.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -25,6 +26,12 @@ namespace MSSeguimiento.Api.Controllers
         public async Task<RespuestasAlertaDto> Alerta(int idAlerta)
         {
             return await repo.Alerta(idAlerta);
+        }
+
+        [HttpPost("EnviarRespuesta")]
+        public async Task<RespuestaResponse<bool>> EnviarRespuesta(EnviarRespuestaDto dto)
+        {
+            return await repo.EnviarRespuesta(dto);
         }
     }
 }

@@ -77,9 +77,7 @@ namespace Core.Modelos
                     foreach (var item in attachment)
                     {
                         var file = item.File;
-                        byte[] bytes = file.ToArray();
-                        file.Close();
-                        email.Attachments.Add(new Attachment(new MemoryStream(bytes), $"{item.FileName}.{item.FileExtension}"));
+                        email.Attachments.Add(new Attachment(new MemoryStream(file), $"{item.FileName}.{item.FileExtension}"));
                     }
 
                 using var smtpClient = new SmtpClient(SmtpServer)
@@ -96,6 +94,5 @@ namespace Core.Modelos
                 throw new Exception(ex.Message);
             }
         }
-
     }
 }
