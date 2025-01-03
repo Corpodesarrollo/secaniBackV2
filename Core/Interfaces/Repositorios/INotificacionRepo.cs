@@ -2,6 +2,7 @@
 using Core.Request;
 using Core.response;
 using Core.Response;
+using System.Net.Mail;
 
 namespace Core.Interfaces.Repositorios
 {
@@ -18,7 +19,8 @@ namespace Core.Interfaces.Repositorios
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId);
         Task<bool?> NotificacionRespuesta(NotificacionRespuestaDto data);
 
-        public  Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos);
-        //string NotificacionReporteSivigila();
+        public  Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos, Attachment AdjuntoPdf);
+        Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId);
+        Task<string> NotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId);
     }
 }

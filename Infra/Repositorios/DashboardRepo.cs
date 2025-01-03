@@ -248,6 +248,7 @@ namespace Infra.Repositorios
 
             var seguimientos = _context.Seguimientos
                 .Where(s => maxSeguimientos.Select(m => m.Id).Contains(s.Id))
+                .DefaultIfEmpty()
                 .ToList();  // Filtrar los seguimientos en memoria
 
             var usuarioAsignados = _context.UsuarioAsignados

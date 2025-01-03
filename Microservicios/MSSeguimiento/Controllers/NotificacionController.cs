@@ -3,6 +3,7 @@ using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using Infra;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -13,6 +14,8 @@ namespace MSSeguimiento.Api.Controllers
     public class NotificacionController : ControllerBase
     {
         private readonly INotificacionRepo notificacionRepo;
+
+        
 
         public NotificacionController(INotificacionRepo notificacion)
         {
@@ -106,24 +109,43 @@ namespace MSSeguimiento.Api.Controllers
                 correoRequest.ConCopia,
                 correoRequest.Asunto,
                 correoRequest.Body,
-                correoRequest.Adjuntos
+                correoRequest.Adjuntos,
+                null
             );
 
             return Ok(new { mensaje = resultado });
         }
 
         [HttpPost("NotificacionReporteSivigila")]
-        public async Task<IActionResult> NotificacionReporteSivigila([FromBody] CorreoRequest correoRequest)
+        public async Task<IActionResult> NotificacionReporteSivigila([FromBody] NotificacionSigivilaRequest request)
         {
+
+            Task<string>  resultado =  notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId);
+
+            /*
             if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
             {
                 return BadRequest("El cuerpo del mensaje no puede estar vacío");
             }
+            */
+            // string resultado = notificacionRepo.NotificacionReporteSivigila();
 
-           // string resultado = notificacionRepo.NotificacionReporteSivigila();
-
-            return Ok(new { mensaje = "resultado" });
+            return Ok(new { mensaje = resultado });
         }
+
+
+        [HttpPost("NotificacionSolicitudSeguimiento")]
+        public async Task<IActionResult> NotificacionSolicitudSeguimiento([FromBody] NotificacionSolicitudSeguimientoRequest request)
+        {
+
+            Task<string> resultado = notificacionRepo.NotificacionSolicitudSeguimiento(request.cuidadorId!, request.nnaId, request.agenteSeguimientoId!);
+
+
+            return Ok(new { mensaje = resultado });
+        }
+
+
+
 
     }
 }
