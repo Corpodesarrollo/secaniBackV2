@@ -115,9 +115,9 @@ namespace Infra.Repositories
             }
 
             notificacionEntidad.EntidadId = request.IdEntidad;
-            notificacionEntidad.Entidad = entidad;
+            //notificacionEntidad.Entidad = entidad;
             notificacionEntidad.Ciudad = request.Ciudad;
-            notificacionEntidad.AlertaSeguimiento = alerta;
+            //notificacionEntidad.AlertaSeguimiento = alerta;
             notificacionEntidad.Asunto = request.Asunto;
             notificacionEntidad.Cierre = request.Cierre;
             notificacionEntidad.CiudadEnvio = request.CiudadEnvio;
@@ -126,7 +126,7 @@ namespace Infra.Repositories
             notificacionEntidad.Ciudad = request.Ciudad;
             notificacionEntidad.Mensaje = request.Mensaje;
             notificacionEntidad.Comentario = request.Comentario;
-            notificacionEntidad.NNAs = nna;
+            //notificacionEntidad.NNAs = nna;
             notificacionEntidad.NNAId = nna.Id;
             notificacionEntidad.Firmajpg = request.FirmaJpg;
 
@@ -538,7 +538,7 @@ namespace Infra.Repositories
                         {
                             if (File.Exists(archivo))
                             {
-                                Attachment adjunto = new Attachment(archivo);
+                                Attachment adjunto = new(archivo);
                                 mensaje.Attachments.Add(adjunto);
                             }
                         }

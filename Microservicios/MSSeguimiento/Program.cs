@@ -1,3 +1,5 @@
+using Core.Common;
+using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
@@ -12,8 +14,8 @@ using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
-using DinkToPdf.Contracts;
 using DinkToPdf;
+using DinkToPdf.Contracts;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositories.Common;
@@ -24,7 +26,6 @@ using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Api.Extensions;
-using PdfSharp.Charting;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
@@ -43,6 +44,7 @@ builder
     .AddCustomMvcControllers()
     .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.Converters.Add(new ByteArrayConverter());
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
@@ -73,7 +75,13 @@ builder.Services.AddScoped<IReporteDinamicoNNARepository, ReporteDinamicoNNARepo
 builder.Services.AddScoped<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
 builder.Services.AddScoped<IReporteDinamicoSeguimientoRepository, ReporteDinamicoSeguimientoRepository>();
 builder.Services.AddScoped<IReporteDinamicoSeguimientoService, ReporteDinamicoSeguimientoService>();
+builder.Services.AddScoped<IReporteDetalleRegDepuradosRepository, ReporteDetalleRegDepuradosRepository>();
+builder.Services.AddScoped<IReporteDetalleRegDepuradosService, ReporteDetalleRegDepuradosService>();
 builder.Services.AddScoped<TablaParametricaService>();
+builder.Services.AddScoped<IEnviarRespuesta, EnviarRespuestaRepo>();
+builder.Services.AddScoped<IGestionarAlertas, GestionarAlertasRepo>();
+builder.Services.AddScoped<IReporteDinamicoAlertasRepository, ReporteDinamicoAlertasRepository>();
+builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlertasService>();
 builder.Services.AddHttpClient();
 
 // Register Quartz services

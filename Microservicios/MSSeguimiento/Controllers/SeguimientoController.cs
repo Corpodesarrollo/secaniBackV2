@@ -115,6 +115,14 @@ namespace MSSeguimiento.Api.Controllers
             seguimientoRepo.SetEstadoDiagnosticoTratamiento(request);
         }
 
+        [HttpGet("GetSeguimientosByNNA/{idNNA}")]
+        public async Task<ActionResult> GetSeguimientosByNNA(int idNNA)
+        {
+
+            var response = await seguimientoRepo.GetSeguimientosByNNA(idNNA);
+            return Ok(response);
+        }
+
         [HttpGet("GetSeguimientosNNA/{idNNA}")]
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
@@ -131,11 +139,18 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("SetSeguimiento")]
-        public string SetSeguimiento(SetSeguimientoRequest request)
+        public async Task<ActionResult> SetSeguimiento(SetSeguimientoRequest request)
         {
-            string response = seguimientoRepo.SetSeguimiento(request);
+            try
+            {
+                string response = await seguimientoRepo.SetSeguimiento(request);
 
-            return response;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("PutSeguimientoRechazo")]
@@ -145,9 +160,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("AsignacionAutomatica")]
-        public void AsignacionAutomatica()
+        public async Task AsignacionAutomatica()
         {
-            seguimientoRepo.AsignacionAutomatica();
+            await seguimientoRepo.AsignacionAutomatica();
         }
 
         [HttpPost("CrearPlantillaCorreo")]

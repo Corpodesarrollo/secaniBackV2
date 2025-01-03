@@ -2,6 +2,7 @@
 using Core.Interfaces;
 using Core.Modelos;
 using Core.Modelos.Common;
+using Core.Response;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios
@@ -31,7 +32,8 @@ namespace Infra.Repositorios
                                    IdAlertaSeguimiento = als.Id,
                                    Alerta = sca.CategoriaAlertaId + "." + sca.Indicador,
                                    NombreNNA = $"{n.PrimerNombre ?? ""} {n.SegundoNombre ?? ""} {n.PrimerApellido ?? ""} {n.SegundoApellido ?? ""}",
-                                   Categoria = ca.Nombre,
+                                   DocumentoNNA = $"{n.TipoIdentificacionId} {n.NumeroIdentificacion ?? ""}",
+                                   Categoria = $"{ca.Id}. {ca.Nombre}",
                                    Subcategoria = sca.SubCategoriaAlerta,
                                    FechaNotificacion = s.FechaSeguimiento,
                                    Estado = ea.Nombre
@@ -60,9 +62,50 @@ namespace Infra.Repositorios
 
         public async Task<NotificacionEntidadDto> GetNotificacionEntidad(int idAlerta)
         {
-            var result = await db.NotificacionesEntidad.FirstOrDefaultAsync(x => x.AlertaSeguimientoId == idAlerta) ?? throw new Exception("Notificación no encontrada");
-            var data = GenericMapper.Map<NotificacionEntidad, NotificacionEntidadDto>(result);
-            return data;
+            try
+            {
+                var result = await db.NotificacionesEntidad.FirstOrDefaultAsync(x => x.AlertaSeguimientoId == idAlerta) ?? throw new Exception("Notificación no encontrada");
+                var data = GenericMapper.Map<NotificacionEntidad, NotificacionEntidadDto>(result);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<RespuestasAlertaDto> Alerta(int idAlerta)
+        {
+            try
+            {
+                var result = await db.RespuestasAlerta.FirstOrDefaultAsync(x => x.IdAlerta == idAlerta) ?? throw new Exception("Alerta no encontrada");
+                var data = GenericMapper.Map<RespuestasAlerta, RespuestasAlertaDto>(result);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+
+            }
+        }
+
+        public async Task<RespuestaResponse<bool>> EnviarRespuesta(EnviarRespuestaDto dto)
+        {
+            try
+            {
+                var emailConfigurations = await db.EmailConfigurations.FirstOrDefaultAsync();
+                if (emailConfigurations == null)
+                    return new() { Estado = false, Descripcion = "No se ha configurado el envío de correos electrónicos" };
+
+                var archivos = dto.Archivo != null ? new[] { dto.Archivo } : [];
+                emailConfigurations.SendEmail(dto.Para, dto.Cc, null, dto.Asunto, $"{dto.Mensaje}</br>{dto.Firma}", archivos);
+
+                return new() { Estado = true, Datos = true };
+            }
+            catch (Exception ex)
+            {
+                return new() { Estado = false, Descripcion = ex.Message };
+            }
         }
     }
 }

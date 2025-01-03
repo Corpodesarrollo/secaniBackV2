@@ -1,7 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
-using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -54,7 +53,7 @@ namespace Infra.Repositorios
                                   join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
                                   join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
                                   where als.SeguimientoId == s.Id
-                                  select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                                  select new Core.DTOs.AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
                    };
         }
 
@@ -196,8 +195,8 @@ namespace Infra.Repositorios
                                                          Telefono = g.Key.Telefono,
                                                          UsuarioId = g.Key.UsuarioId,
                                                          SolicitanteId = g.Key.SolicitanteId,
-                                                         FechaSolicitud = g.Key.FechaSolicitud,
-                                                         TieneDiagnosticos = g.Key.TieneDiagnosticos,
+                                                         FechaSolicitud = g.Key.FechaSolicitud ?? new(),
+                                                         TieneDiagnosticos = g.Key.TieneDiagnosticos ?? false,
                                                          ObservacionesSolicitante = g.Key.ObservacionesSolicitante,
                                                          PrimerNombre = g.Key.PrimerNombre,
                                                          SegundoNombre = g.Key.SegundoNombre,
@@ -359,6 +358,53 @@ namespace Infra.Repositorios
             }
         }
 
+        public async Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA)
+        {
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                        where n.Id == idNNA
+                        select new SeguimientoDto()
+                        {
+                            Id = s.Id,
+                            NoCaso = s.NNAId,
+                            PrimerNombre = n.PrimerNombre,
+                            SegundoNombre = n.SegundoNombre,
+                            PrimerApellido = n.PrimerApellido,
+                            SegundoApellido = n.SegundoApellido,
+                            FechaNotificacion = s.FechaSolicitud,
+                            FechaSeguimiento = s.UltimaActuacionFecha,
+                            Observaciones = s.ObservacionAgente,
+                            EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
+                                                               join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                                                               join en in _context.Entidades on na.EntidadId equals en.Id
+                                                               where als.SeguimientoId == s.Id
+                                                               select en.Nombre).ToArray()),
+                            //FechaRespuesta = (from als in _context.RespuestaAlerta
+                            //                  join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                            //                  join en in _context.Entidades on na.EntidadId equals en.Id
+                            //                  where als.SeguimientoId == s.Id
+                            //                  select en.Nombre).ToArray(),
+                            Estado = new TPEstadoNNADto()
+                            {
+                                Nombre = e.Nombre,
+                                Descripcion = e.Descripcion,
+                                ColorBG = e.ColorBG,
+                                ColorText = e.ColorText
+                            },
+                            AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                            FechaUltimaActuacion = s.UltimaActuacionFecha,
+                            Alertas = (from als in _context.AlertaSeguimientos
+                                       join a in _context.Alertas on als.AlertaId equals a.Id
+                                       join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
+                                       join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
+                                       where als.SeguimientoId == s.Id
+                                       select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                        };
+
+            return await query.ToArrayAsync();
+        }
+
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
             List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
@@ -366,11 +412,11 @@ namespace Infra.Repositorios
                                                          where seg.NNAId == idNNA
                                                          select new SeguimientoNNAResponse()
                                                          {
-                                                             FechaNotificacion = seg.FechaSolicitud,
+                                                             FechaNotificacion = seg.FechaSolicitud ?? new(),
                                                              FechaSeguimiento = seg.UltimaActuacionFecha,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
-                                                             Observacion = seg.ObservacionesSolicitante,
+                                                             Observacion = seg.ObservacionAgente,
                                                              FechaInicioSeguimiento = seg.FechaSeguimiento,
                                                              NNA = new NNAResponse()
                                                              {
@@ -397,7 +443,7 @@ namespace Infra.Repositorios
                                EstadoId = alert.EstadoId,
                                Observaciones = alert.Observaciones,
                                SeguimientoId = alert.SeguimientoId,
-                               UltimaFechaSeguimiento = alert.UltimaFechaSeguimiento,
+                               UltimaFechaSeguimiento = (DateTime)alert.UltimaFechaSeguimiento,
                                NombreAlerta = sca.CategoriaAlertaId + "." + sca.Indicador,
                                SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
                                CategoriaAlerta = catal.Id + ". " + catal.Nombre
@@ -431,32 +477,71 @@ namespace Infra.Repositorios
 
         }
 
-        public string SetSeguimiento(SetSeguimientoRequest request)
+        public async Task<string> SetSeguimiento(SetSeguimientoRequest request)
         {
             try
             {
-                Seguimiento seguimiento = new();
-                seguimiento.NNAId = request.IdNNA;
-                seguimiento.FechaSeguimiento = request.FechaSeguimiento;
-                seguimiento.EstadoId = request.IdEstado;
-                seguimiento.ContactoNNAId = request.IdContactoNNA;
-                seguimiento.Telefono = request.Telefono;
-                seguimiento.UsuarioId = request.IdUsuario;
-                seguimiento.SolicitanteId = request.IdSolicitante;
-                seguimiento.ObservacionesSolicitante = request.ObservacionSolicitante;
-                seguimiento.CreatedByUserId = request.IdUsuarioCreacion;
-                seguimiento.DateCreated = DateTime.Now;
+                var ultimaFechaSeguimiento = await _context.Seguimientos.Where(s => s.NNAId == request.NNAId).OrderByDescending(x => x.FechaSeguimiento).Select(s => s.FechaSeguimiento).FirstOrDefaultAsync();
 
+                var seguimiento = new Seguimiento()
+                {
+                    NNAId = request.NNAId,
+                    FechaSeguimiento = request.FechaSeguimiento,
+                    EstadoId = request.EstadoId,
+                    ContactoNNAId = request.ContactoNNAId,
+                    Telefono = request.Telefono,
+                    UsuarioId = request.UsuarioId,
+                    SolicitanteId = request.SolicitanteId,
+                    FechaSolicitud = request.FechaSolicitud,
+                    TieneDiagnosticos = request.TieneDiagnosticos,
+                    ObservacionesSolicitante = request.ObservacionesSolicitante,
+                    ObservacionAgente = request.ObservacionAgente,
+                    UltimaActuacionAsunto = request.UltimaActuacionAsunto,
+                    UltimaActuacionFecha = request.UltimaActuacionFecha,
+                    NombreRechazo = request.NombreRechazo,
+                    ParentescoRechazo = request.ParentescoRechazo,
+                    RazonesRechazo = request.RazonesRechazo,
+                    CreatedByUserId = "1"
+                };
                 _context.Seguimientos.Add(seguimiento);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+
+                if (request.Alertas != null)
+                {
+                    foreach (var item in request.Alertas)
+                    {
+                        var alerta = new Alerta()
+                        {
+                            SubcategoriaId = item,
+                            Descripcion = "Alerta generada por seguimiento",
+                            Alias = 'S',
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now
+                        };
+                        _context.Alertas.Add(alerta);
+                        await _context.SaveChangesAsync();
+
+                        var alertaSeguimiento = new AlertaSeguimiento()
+                        {
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now,
+                            EstadoId = 1,
+                            AlertaId = alerta.Id,
+                            SeguimientoId = seguimiento.Id,
+                            Observaciones = "Alerta generada por seguimiento",
+                            UltimaFechaSeguimiento = ultimaFechaSeguimiento
+                        };
+                        _context.AlertaSeguimientos.Add(alertaSeguimiento);
+                        await _context.SaveChangesAsync();
+                    }
+                }
 
                 return "Segumiento almacenado correctamente";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return "Existe una error al almacenar el segumiento";
+                throw new Exception(ex.Message);
             }
-
         }
 
         public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request)
@@ -486,58 +571,43 @@ namespace Infra.Repositorios
             return 1;
         }
 
-        public void AsignacionAutomatica()
+        public async Task AsignacionAutomatica()
         {
-            List<ConsultaCasosAbiertosResponse> lista;
-            List<int> estados = new() { 2, 3, 4, 5, 6, 7, 8, 9, 15, 16 };
-            UsuarioAsignado usuarioAsignado;
-            List<UsuarioAsignado> usuarios = new();
+            var estados = new int[] { 2, 3, 4, 5, 6, 7, 8, 9, 15 };
 
-            lista = (from seg in _context.Seguimientos
-                     join nna in _context.NNAs on seg.NNAId equals nna.Id
-                     where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
-                     select new ConsultaCasosAbiertosResponse()
-                     {
-                         AsuntoUltimaActuacion = seg.UltimaActuacionAsunto,
-                         Estado = seg.EstadoId,
-                         FechaNotificacion = seg.FechaSolicitud,
-                         FechaUltimaActuacion = seg.UltimaActuacionFecha,
-                         Alertas = new List<AlertaSeguimientoResponse>(),
-                         SeguimientoId = seg.Id
-                     }).ToList();
+            var seguimientos = await (from seg in _context.Seguimientos
+                                      join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                      where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
+                                      select seg.Id).ToArrayAsync();
 
-            List<ApplicationUser> revisores = (from us in _context.Users
-                                               select us).ToList();
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            var revisores = await (from ur in _context.UserRoles
+                                   join r in _context.Roles on ur.RoleId equals r.Id
+                                   join u in _context.Users on ur.UserId equals u.Id
+                                   where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046"
+                                   select u).ToListAsync();
 
-            foreach (ConsultaCasosAbiertosResponse r in lista)
+            var usuariosAsignados = new List<UsuarioAsignado>();
+            int revisorIndex = 0;
+
+            foreach (var item in seguimientos)
             {
-                usuarioAsignado = new UsuarioAsignado()
+                var revisor = revisores[revisorIndex];
+                usuariosAsignados.Add(new UsuarioAsignado
                 {
                     Activo = true,
                     DateCreated = DateTime.Now,
                     FechaAsignacion = DateTime.Now,
-                    Observaciones = "Asignacion automatica",
-                    SeguimientoId = r.SeguimientoId,
-                };
-                usuarios.Add(usuarioAsignado);
+                    Observaciones = "Asignación automática",
+                    SeguimientoId = item,
+                    UsuarioId = revisor.Id
+                });
+
+                revisorIndex = (revisorIndex + 1) % revisores.Count;
             }
 
-            this.AsignarUsuarios(revisores, usuarios);
-
-            _context.UsuarioAsignados.AddRange(usuarios);
-            _context.SaveChanges();
-        }
-
-        private void AsignarUsuarios(List<ApplicationUser> usuarios, List<UsuarioAsignado> solicitudes)
-        {
-            int usuarioIndex = 0;
-            int totalUsuarios = usuarios.Count;
-
-            foreach (var solicitud in solicitudes)
-            {
-                solicitud.UsuarioId = usuarios[usuarioIndex].Id;  // Asignar el usuario
-                usuarioIndex = (usuarioIndex + 1) % totalUsuarios;  // Reinicia el índice si se alcanzan todos los usuarios
-            }
+            _context.UsuarioAsignados.AddRange(usuariosAsignados);
+            await _context.SaveChangesAsync();
         }
 
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)

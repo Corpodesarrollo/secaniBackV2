@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Modelos
+﻿namespace Core.Modelos
 {
     public class DepuracionManualProtocolo
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string cod_eve { get; set; }
         public DateTime fec_not { get; set; }
         public int semana { get; set; }

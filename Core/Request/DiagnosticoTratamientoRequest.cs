@@ -11,7 +11,7 @@
         public bool Recaidas { get; set; }
         public int? NumeroRecaidas { get; set; }
         public DateTime? FechaUltimaRecaida { get; set; }
-        public string? IdMotivoNoDiagnostico { get; set; }
+        public int? IdMotivoNoDiagnostico { get; set; }
         public string? RazonNoDiagnostico { get; set; }
     }
 }

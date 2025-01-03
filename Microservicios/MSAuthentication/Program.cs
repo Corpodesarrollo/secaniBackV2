@@ -20,6 +20,7 @@ using Infra.Repositories;
 using Infra.Repositorios.MSPermisos;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSAuthentication.Api.Middleware;
@@ -65,6 +66,11 @@ builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();
 builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignUsersRoleCommandHandler).Assembly));
 
+builder.Services.AddHttpClient<Client>(client =>
+{
+    client.BaseAddress = new Uri("https://web.sispropreprod.gov.co/interoperabilidad/maestropersona/");
+});
+
 builder.Services.AddTransient<IValidator<ContactoEntidadRequest>, ContactoEntidadRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
@@ -100,5 +106,19 @@ app.UseCors("AllowSpecificOrigin");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCustomConfigure();
 app.UseCustomSwagger();
+
+app.UseHealthChecks("/health");
+app.UseHealthChecks("/health_check", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 app.Run();

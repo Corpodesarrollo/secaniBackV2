@@ -1,8 +1,7 @@
 ﻿using Core.DTOs;
+using Core.Modelos;
 using Core.Request;
 using Core.response;
-using Core.Modelos;
-using Microsoft.AspNetCore.Mvc;
 using Core.Response;
 
 
@@ -22,15 +21,16 @@ namespace Core.Interfaces.Repositorios
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
         Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);
         Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id);
-        public string SetSeguimiento(SetSeguimientoRequest request);
         Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id);
         public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request);
-        public void AsignacionAutomatica();
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request);
         public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
         public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo();
         public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id);
         public Task<ExportarDetalleSeguimientoResponse> ExportarDetalleSeguimiento(long id);
         Task<long> GetCntSeguimientoByNNA(long id);
+        Task<string> SetSeguimiento(SetSeguimientoRequest request);
+        Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
+        Task AsignacionAutomatica();
     }
 }

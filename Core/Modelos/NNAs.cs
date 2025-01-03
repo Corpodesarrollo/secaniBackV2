@@ -53,7 +53,7 @@ namespace Core.Modelos
         public string? TipoDiagnosticoId { get; set; }
         public int? DiagnosticoId { get; set; }
         public DateTime? FechaDiagnostico { get; set; }
-        public string? MotivoNoDiagnosticoId { get; set; }
+        public int? MotivoNoDiagnosticoId { get; set; }
         public string? MotivoNoDiagnosticoOtro { get; set; }
         public DateTime? FechaConsultaDiagnostico { get; set; }
         public string? DepartamentoTratamientoId { get; set; }

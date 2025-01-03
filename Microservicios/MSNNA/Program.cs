@@ -2,11 +2,18 @@ using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
+using Core.Interfaces.Repositorios.Reportes;
+using Core.Interfaces.Services;
+using Core.Interfaces.Services.MSUsuariosyRoles;
+using Core.Interfaces.Services.Reportes;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
+using Core.Services.Reportes;
 using Core.Services.StorageService;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
+using Infra.Repositorios.Reportes;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using MSNNA.Api.Extensions;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
@@ -43,13 +50,19 @@ builder.Services.AddScoped<TablaParametricaService>();
 builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 
-builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddTransient<INNARepo, NNARepo>();
 builder.Services.AddScoped<INNAService, NNAService>();
 builder.Services.AddTransient<INNAService, NNAService>();
-builder.Services.AddScoped<ICuidadorRepo, CuidadorRepo>();
+builder.Services.AddTransient<ICuidadorRepo, CuidadorRepo>();
+builder.Services.AddTransient<IPersonaService, PersonaService>();
+builder.Services.AddTransient<IReporteInconsistenciaPersonaRepository, ReporteInconsistenciaPersonaRepository>();
+builder.Services.AddTransient<IReporteInconsistenciaPersonaService, ReporteInconsistenciaPersonaService>();
+builder.Services.AddTransient<Client>();
+builder.Services.AddTransient<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
+builder.Services.AddTransient<IReporteDinamicoNNARepository, ReporteDinamicoNNARepository>();
+builder.Services.AddTransient<ISeguimientoRepo, SeguimientoRepo>();
+builder.Services.AddHttpClient();
 
-builder.Services.AddHttpClient<TablaParametricaService>();
 
 builder.Services.AddCors(options =>
 {
@@ -66,5 +79,19 @@ app.UseCors("AllowSpecificOrigin");
 
 app.UseCustomConfigure();
 app.UseCustomSwagger();
+
+app.UseHealthChecks("/health");
+app.UseHealthChecks("/health_check", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 app.Run();
