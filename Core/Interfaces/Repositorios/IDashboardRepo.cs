@@ -1,6 +1,4 @@
-﻿using Core.Modelos;
-using Core.Request;
-using Core.response;
+﻿using Core.response;
 
 namespace Core.Interfaces.Repositorios
 {
@@ -30,7 +28,7 @@ namespace Core.Interfaces.Repositorios
 
         List<GetDashboardEstadoResponse> RepoDashboardAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int EAPBId);
         GetDashboardTipoCasosResponse RepoDashboardTipoCasos(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId);
-        List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB( int EntidadId);
+        List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(int EntidadId);
 
     }
 }

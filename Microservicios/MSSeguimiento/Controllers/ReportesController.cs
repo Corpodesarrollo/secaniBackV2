@@ -1,4 +1,5 @@
-﻿using Core.DTOs.Reportes;
+﻿using Core.DTOs;
+using Core.DTOs.Reportes;
 using Core.Interfaces.Services.Reportes;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +9,7 @@ namespace MSSeguimiento.Api.Controllers
     //[Authorize]
     [Route("[controller]")]
     public class ReportesController(
-        IReporteDepuracionService depuracionService, 
+        IReporteDepuracionService depuracionService,
         IReporteDinamicoNNAService dinamicoNNAService,
         IReporteDinamicoSeguimientoService dinamicoSeguimientoService,
         IReporteDetalleRegDepuradosService reporteDepuradosService,
@@ -42,17 +43,36 @@ namespace MSSeguimiento.Api.Controllers
         public async Task<List<ReporteDetalleRegDepuradosDTO>> ReporteDetalleRegDepurados(int IdReporteDepuracion, int TipoRegistro = 1)
         {
             return await _reporteDepuradosService.GetReporteDetalleRegDepuradosAsync(IdReporteDepuracion, TipoRegistro, cancellationToken: default);
-        //TipoRegistro
-        //Nuevo = 1,
-        //Duplicado = 2,
-        //SegundaNeoplastia = 3,
-        //Recaida = 4
         }
 
         [HttpGet("ReporteDinamicoAlertas")]
         public async Task<List<ReporteDinamicoAlertasDTO>> ReporteDinamicoAlertas(DateTime FechaInicial, DateTime FechaFinal)
         {
             return await _reporteDinamicoAlertasService.GetReporteDinamicoAlertasAsync(FechaInicial, FechaFinal, default);
+        }
+
+        [HttpPost("ReporteCasosEAPB")]
+        public async Task<List<ReporteCasosEAPBDto>> ReporteCasosEAPB(ReporteCasosEAPBRequestDto request)
+        {
+            return await _dinamicoSeguimientoService.GetReporteCasosEAPBAsync(request);
+        }
+
+        [HttpPost("ReporteCasosEAPBExcel")]
+        public async Task<string> ReporteCasosEAPBExcel(ReporteCasosEAPBRequestDto request)
+        {
+            return await _dinamicoSeguimientoService.GetReporteCasosEAPBExcelAsync(request);
+        }
+
+        [HttpPost("ReporteCasosEntidad")]
+        public async Task<List<ReporteCasosEAPBDto>> ReporteCasosEntidad(ReporteCasosEntidadRequestDto request)
+        {
+            return await _dinamicoSeguimientoService.GetReporteCasosEntidadAsync(request);
+        }
+
+        [HttpPost("ReporteCasosEntidadExcel")]
+        public async Task<string> ReporteCasosEAPBExcel(ReporteCasosEntidadRequestDto request)
+        {
+            return await _dinamicoSeguimientoService.GetReporteCasosEntidadExcelAsync(request);
         }
     }
 }

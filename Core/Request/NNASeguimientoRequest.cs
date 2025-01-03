@@ -18,7 +18,7 @@
         public string? IdGrupoPoblacionalNNA { get; set; }
         public string? IdSexoNNA { get; set; }
         public string? IdRegimenAfiliacionNNA { get; set; }
-        public int EAPBNNA { get; set; }
+        public string EAPBNNA { get; set; }
 
     }
 }

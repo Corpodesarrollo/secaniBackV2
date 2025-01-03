@@ -32,7 +32,7 @@ namespace Core.Modelos
         public string? MunicipioNacimientoId { get; set; }
         public string? SexoId { get; set; }
         public string? TipoRegimenSSId { get; set; }
-        public int? EAPBId { get; set; }
+        public string? EAPBId { get; set; }
         public int? EPSId { get; set; }
         public int? IPSId { get; set; }
         public string? GrupoPoblacionId { get; set; }
