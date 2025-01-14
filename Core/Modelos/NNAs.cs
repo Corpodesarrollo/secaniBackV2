@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Core.Modelos
 {
@@ -32,7 +33,18 @@ namespace Core.Modelos
         public string? MunicipioNacimientoId { get; set; }
         public string? SexoId { get; set; }
         public string? TipoRegimenSSId { get; set; }
-        public string? EAPBId { get; set; }
+        
+        //public string? EAPBId { get; set; }
+        [NotMapped]
+        public string? EAPBId
+        {
+            get => EAPBIdInternal?.ToString() ?? string.Empty;
+            set { }
+        }
+
+        [Column("EAPBId")]
+        public int? EAPBIdInternal { get; set; }
+
         public int? EPSId { get; set; }
         public int? IPSId { get; set; }
         public string? GrupoPoblacionId { get; set; }

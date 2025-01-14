@@ -27,7 +27,7 @@ namespace TestsSecani
             .Options;
 
             Context = new ApplicationDbContext(options);
-            NNARepo = new NNARepo(Context);
+            //NNARepo = new NNARepo(Context);
         }
 
         //[Fact]

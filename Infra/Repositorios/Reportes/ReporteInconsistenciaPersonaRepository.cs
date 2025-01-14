@@ -20,7 +20,7 @@ namespace Infra.Repositorios.Reportes
                 if (reporte == null)
                     throw new ArgumentNullException(nameof(reporte), "El reporte no puede ser nulo.");
 
-                _context.ReporteInconsistenciaPersonas.Add(reporte);
+                _context.ReporteInconsistenciaPersona.Add(reporte);
                 await _context.SaveChangesAsync();
 
                 return reporte;
@@ -41,7 +41,7 @@ namespace Infra.Repositorios.Reportes
         {
             try
             {
-                var reporte = await _context.ReporteInconsistenciaPersonas.FirstOrDefaultAsync(r => r.NNAId == NNAId);
+                var reporte = await _context.ReporteInconsistenciaPersona.FirstOrDefaultAsync(r => r.NNAId == NNAId);
 
                 if (reporte == null)
                     throw new KeyNotFoundException($"No se encontró ningún reporte con NNAId: {NNAId}.");
@@ -58,7 +58,7 @@ namespace Infra.Repositorios.Reportes
         {
             try
             {
-                return await _context.ReporteInconsistenciaPersonas.ToListAsync();
+                return await _context.ReporteInconsistenciaPersona.ToListAsync();
             }
             catch (Exception ex)
             {
