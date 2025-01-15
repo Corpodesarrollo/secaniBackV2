@@ -25,12 +25,12 @@ namespace Infra.Repositorios
                         return data.Items.ToArray();
                 }
 
-                return Array.Empty<ItemDto>();
+                return [];
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al obtener los datos de la url: {ex.Message}");
-                return Array.Empty<ItemDto>();
+                return [];
             }
         }
 
@@ -108,7 +108,6 @@ namespace Infra.Repositorios
             {
                 throw new Exception(ex.Message);
             }
-
         }
     }
 }

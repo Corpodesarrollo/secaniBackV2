@@ -420,7 +420,7 @@ namespace Infra.Repositories
                                                       join s in _context.Seguimientos on n.Id equals s.NNAId
                                                       join a in _context.AlertaSeguimientos on s.Id equals a.SeguimientoId
 
-                                                      where n.EAPBId == eapbId || n.EPSId == epsId
+                                                      where /*n.EAPBId == eapbId ||*/ n.EPSId == epsId
                                                       group new { n, s, a } by new
                                                       {
                                                           NNAId = n.Id,

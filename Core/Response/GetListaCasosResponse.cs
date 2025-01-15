@@ -12,6 +12,6 @@
 
         public int EstadoSeguimientoId { get; set; }
 
-        public int? EAPBId { get; set; }
+        public string? EAPBId { get; set; }
     }
 }

@@ -1,11 +1,5 @@
 ﻿using Core.Interfaces.Repositorios;
-using Core.Request;
 using Core.response;
-using Core.Modelos;
-using MSAuthentication.Core.DTOs;
-using Core.Response;
-using System.Runtime.Intrinsics.X86;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 
 namespace Infra.Repositorios
@@ -44,7 +38,7 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardTotalRegistros(DateTime FechaInicial, DateTime FechaFinal, string? EntidadId)
         {
-           
+
             DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
             DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
 
@@ -73,32 +67,17 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardMisCasos(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
-            
+
             DateTime FechaInicialSemanaAnterior = FechaInicial.AddDays(-7);
             DateTime FechaFinalSemanaAnterior = FechaFinal.AddDays(-7);
 
 
             // Obtenemos el conteo de casos actuales directamente
             var totalCasosActual = (from ua in _context.UsuarioAsignados
-                              where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
-                                 && ua.FechaAsignacion >= FechaInicial
-                                 && ua.FechaAsignacion <= FechaFinal
-                              join s1 in
-                                  (from s1 in _context.Seguimientos
-                                   join s2 in
-                                       (from s in _context.Seguimientos
-                                        group s by s.NNAId into g
-                                        select new { NNAId = g.Key, Id = g.Max(x => x.Id) })
-                                   on s1.Id equals s2.Id
-                                   select s1)
-                              on ua.SeguimientoId equals s1.Id
-                              select ua).Count();
-
-            var totalCasosAnterior = (from ua in _context.UsuarioAsignados
                                     where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
-                                       && ua.FechaAsignacion >= FechaInicialSemanaAnterior
-                                       && ua.FechaAsignacion <= FechaFinalSemanaAnterior
-                                      join s1 in
+                                       && ua.FechaAsignacion >= FechaInicial
+                                       && ua.FechaAsignacion <= FechaFinal
+                                    join s1 in
                                         (from s1 in _context.Seguimientos
                                          join s2 in
                                              (from s in _context.Seguimientos
@@ -109,8 +88,23 @@ namespace Infra.Repositorios
                                     on ua.SeguimientoId equals s1.Id
                                     select ua).Count();
 
+            var totalCasosAnterior = (from ua in _context.UsuarioAsignados
+                                      where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
+                                         && ua.FechaAsignacion >= FechaInicialSemanaAnterior
+                                         && ua.FechaAsignacion <= FechaFinalSemanaAnterior
+                                      join s1 in
+                                        (from s1 in _context.Seguimientos
+                                         join s2 in
+                                             (from s in _context.Seguimientos
+                                              group s by s.NNAId into g
+                                              select new { NNAId = g.Key, Id = g.Max(x => x.Id) })
+                                         on s1.Id equals s2.Id
+                                         select s1)
+                                    on ua.SeguimientoId equals s1.Id
+                                      select ua).Count();
+
             var totalCasosGeneral = (from ua in _context.UsuarioAsignados
-                                    where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
+                                     where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
 
                                      join s1 in
                                         (from s1 in _context.Seguimientos
@@ -121,7 +115,7 @@ namespace Infra.Repositorios
                                          on s1.Id equals s2.Id
                                          select s1)
                                     on ua.SeguimientoId equals s1.Id
-                                    select ua).Count();
+                                     select ua).Count();
 
 
             // Retornamos un único resultado
@@ -136,7 +130,7 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardAlertas(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
-           
+
             DateTime FechaInicialSemanaAnterior = FechaInicial.AddDays(-7);
             DateTime FechaFinalSemanaAnterior = FechaFinal.AddDays(-7);
 
@@ -171,7 +165,7 @@ namespace Infra.Repositorios
                     a => a.SeguimientoId,
                     u => u.SeguimientoId,
                     (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId })
-                .Where(x => (string.IsNullOrEmpty(UsuarioID) || x.UsuarioId == UsuarioID) 
+                .Where(x => (string.IsNullOrEmpty(UsuarioID) || x.UsuarioId == UsuarioID)
                             && x.EstadoId != 5
                             )
                 .Count();
@@ -286,8 +280,8 @@ namespace Infra.Repositorios
 
         public List<GetDashboardEstadoResponse> RepoDashboardIntentos(DateTime FechaInicial, DateTime FechaFinal, string UsuarioID)
         {
-            
-            
+
+
             var response = _context.Intentos
                 .Join(_context.ContactoNNAs,
                     n => n.ContactoNNAId,               // Clave externa en Intentos
@@ -323,7 +317,7 @@ namespace Infra.Repositorios
 
         public List<GetDashboardFechaTotalResponse> RepoDashboardAsignadosPorFecha(DateTime fechaInicial, DateTime fechaFinal, string UsuarioID)
         {
-           
+
             var response = _context.UsuarioAsignados
                 .Where(ua => ua.UsuarioId == UsuarioID &&
                              ua.FechaAsignacion >= fechaInicial &&
@@ -352,14 +346,14 @@ namespace Infra.Repositorios
 
             return response;
 
-        
+
         }
 
 
 
         //Dasboard 2
 
-       
+
 
 
         public List<GetEntidadCantidadResponse> RepoDashboardEntidadCantidad(DateTime fechaInicial, DateTime fechaFinal)
@@ -369,7 +363,7 @@ namespace Infra.Repositorios
                             n.DateCreated <= fechaFinal) // Filtro por FechaNotificacionSIVIGILA
             .Join(
                 _context.Entidades, // Segunda tabla
-                n => (int) n.EPSId!,       // Clave externa de NNAs
+                n => (int)n.EPSId!,       // Clave externa de NNAs
                 e => e.Id,          // Clave primaria de Entidades
                 (n, e) => new { NombreEntidad = e.Nombre }) // Proyección explícita
             .GroupBy(e => e.NombreEntidad) // Agrupar por el nombre de la entidad
@@ -412,12 +406,12 @@ namespace Infra.Repositorios
         public List<GetDashboardCasosCriticosResponse> RepoDashboardCasosCriticos(DateTime fechaInicio, DateTime fechaFin, string? UsuarioID)
         {
             var response = (from n in _context.NNAs
-                          join c in _context.CIE10s on n.DiagnosticoId equals c.Id
-                          join e in _context.Entidades on (int)n.EPSId! equals e.Id
-                          join s in _context.Seguimientos on n.Id equals s.NNAId
-                          join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
-                          join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
-                          join alt in _context.Alertas on als.AlertaId equals alt.Id
+                            join c in _context.CIE10s on n.DiagnosticoId equals c.Id
+                            join e in _context.Entidades on (int)n.EPSId! equals e.Id
+                            join s in _context.Seguimientos on n.Id equals s.NNAId
+                            join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
+                            join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
+                            join alt in _context.Alertas on als.AlertaId equals alt.Id
                             join s1 in
                                           (from s1 in _context.Seguimientos
                                            join s2 in
@@ -429,31 +423,31 @@ namespace Infra.Repositorios
                                       on ua.SeguimientoId equals s1.Id
 
                             from bm1 in _context.BiStgMunicipio.Where(bm1 => bm1.COD_MUNICIPIO == n.ResidenciaActualMunicipioId).DefaultIfEmpty()
-                          from bd1 in _context.BiStgDepartamento.Where(bd1 => bd1.COD_DPTO == bm1.COD_DPTO).DefaultIfEmpty()
-                          from bm2 in _context.BiStgMunicipio.Where(bm2 => bm2.COD_MUNICIPIO == n.ResidenciaOrigenMunicipioId).DefaultIfEmpty()
-                          from bd2 in _context.BiStgDepartamento.Where(bd2 => bd2.COD_DPTO == bm2.COD_DPTO).DefaultIfEmpty()
-                          where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID) &&  s.FechaSeguimiento >= fechaInicio && s.FechaSeguimiento <= fechaFin
+                            from bd1 in _context.BiStgDepartamento.Where(bd1 => bd1.COD_DPTO == bm1.COD_DPTO).DefaultIfEmpty()
+                            from bm2 in _context.BiStgMunicipio.Where(bm2 => bm2.COD_MUNICIPIO == n.ResidenciaOrigenMunicipioId).DefaultIfEmpty()
+                            from bd2 in _context.BiStgDepartamento.Where(bd2 => bd2.COD_DPTO == bm2.COD_DPTO).DefaultIfEmpty()
+                            where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID) && s.FechaSeguimiento >= fechaInicio && s.FechaSeguimiento <= fechaFin
                             orderby als.AlertaId, s.FechaSeguimiento
-                          select new GetDashboardCasosCriticosResponse
-                          {
-                              AlertaId = als.AlertaId,
-                              SubcategoriaId = alt.SubcategoriaId,
-                              Alias = alt.Alias,
-                              PrimerNombre = n.PrimerNombre,
-                              SegundoNombre = n.SegundoNombre,
-                              PrimerApellido = n.PrimerApellido,
-                              SegundoApellido = n.SegundoApellido,
-                              FechaNacimiento = n.FechaNacimiento,
-                              Diagnostico = c.Nombre,
-                              DepartamentoActual = bd1.NOM_DPTO ?? bd2.NOM_DPTO,  // Usamos COALESCE para elegir el primero no nulo
-                              MunicipioActual = bm1.Municipio ?? bm2.Municipio,    // Igual para Municipio
-                              DepartamentoOrigen = bd2.NOM_DPTO,
-                              MunicipioOrigen = bm2.Municipio,
-                              FechaNotificacionSIVIGILA = n.FechaNotificacionSIVIGILA,
-                              Entidad = e.Nombre,
-                              FechaSeguimiento = s.FechaSeguimiento,
-                              AgenteSeguimiento = ua.UsuarioId
-                          }).Distinct().ToList();
+                            select new GetDashboardCasosCriticosResponse
+                            {
+                                AlertaId = als.AlertaId,
+                                SubcategoriaId = alt.SubcategoriaId,
+                                Alias = alt.Alias,
+                                PrimerNombre = n.PrimerNombre,
+                                SegundoNombre = n.SegundoNombre,
+                                PrimerApellido = n.PrimerApellido,
+                                SegundoApellido = n.SegundoApellido,
+                                FechaNacimiento = n.FechaNacimiento,
+                                Diagnostico = c.Nombre,
+                                DepartamentoActual = bd1.NOM_DPTO ?? bd2.NOM_DPTO,  // Usamos COALESCE para elegir el primero no nulo
+                                MunicipioActual = bm1.Municipio ?? bm2.Municipio,    // Igual para Municipio
+                                DepartamentoOrigen = bd2.NOM_DPTO,
+                                MunicipioOrigen = bm2.Municipio,
+                                FechaNotificacionSIVIGILA = n.FechaNotificacionSIVIGILA,
+                                Entidad = e.Nombre,
+                                FechaSeguimiento = s.FechaSeguimiento,
+                                AgenteSeguimiento = ua.UsuarioId
+                            }).Distinct().ToList();
 
 
             return response;
@@ -521,15 +515,15 @@ namespace Infra.Repositorios
 
             // Obtenemos el conteo de casos actuales y anteriores directamente
             var totalCasosActual = _context.NNAs
-                .Where(s => s.DateCreated >= FechaInicial && s.DateCreated <= FechaFinal && s.EAPBId == EntidadId)
+                .Where(s => s.DateCreated >= FechaInicial && s.DateCreated <= FechaFinal /* && s.EAPBId == EntidadId */)
                 .Count();
 
             var totalCasosAnterior = _context.NNAs
-                .Where(s => s.DateCreated >= startDatePreviousWeek && s.DateCreated <= endDatePreviousWeek && s.EAPBId == EntidadId)
+                .Where(s => s.DateCreated >= startDatePreviousWeek && s.DateCreated <= endDatePreviousWeek /* && s.EAPBId == EntidadId */)
                 .Count();
 
             var totalCasosGeneral = _context.NNAs
-                .Where(s => s.EAPBId == EntidadId)
+               /*.Where(s => s.EAPBId == EntidadId)*/
                .Count();
 
             // Retornamos un solo objeto de respuesta
@@ -563,7 +557,7 @@ namespace Infra.Repositorios
                             x.EstadoId != 5
                             /*&& x.UltimaFechaSeguimiento >= FechaInicial
                             && x.UltimaFechaSeguimiento <= FechaFinal*/
-                            && x.EAPBId == EntidadId)  // Filtro por EAPBId = EntidadId
+                            /*&& x.EAPBId == EntidadId */)  // Filtro por EAPBId = EntidadId
                 .Count();
 
             // Calcular alertas anteriores
@@ -584,7 +578,7 @@ namespace Infra.Repositorios
                            x.EstadoId != 5
                            /*&& x.UltimaFechaSeguimiento >= FechaInicialSemanaAnterior
                            && x.UltimaFechaSeguimiento <= FechaFinalSemanaAnterior*/
-                           && x.EAPBId == EntidadId)  // Filtro por EAPBId = EntidadId
+                           /* && x.EAPBId == EntidadId*/)  // Filtro por EAPBId = EntidadId
                .Count();
 
             // Calcular alertas totales
@@ -603,9 +597,9 @@ namespace Infra.Repositorios
                    (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
                .Where(x =>
                            x.EstadoId != 5
-                         
-                           && x.EAPBId == EntidadId)  // Filtro por EAPBId = EntidadId
-               .Count();
+
+                /*&& x.EAPBId == EntidadId*/)  // Filtro por EAPBId = EntidadId
+    .Count();
 
             // Retornar un único resultado
             return new GetTotalDashboardResponse
@@ -646,10 +640,10 @@ namespace Infra.Repositorios
                     s => s.Id,
                     u => u.SeguimientoId,
                     (s, u) => new { s.EstadoId, u.UsuarioId, u.FechaAsignacion })
-                /*.Where(x => 
-                            x.FechaAsignacion >= FechaInicial
-                            && x.FechaAsignacion <= FechaFinal)*/
-                .ToList();  // Ejecutar la consulta en memoria
+                           /*.Where(x => 
+                                       x.FechaAsignacion >= FechaInicial
+                                       && x.FechaAsignacion <= FechaFinal)*/
+                           .ToList();  // Ejecutar la consulta en memoria
 
             // Paso 3: Agrupar los resultados y proyectar el resultado final
             var response = joinedData
@@ -671,8 +665,8 @@ namespace Infra.Repositorios
                             join s in _context.Seguimientos on n.Id equals s.NNAId
                             join u in _context.UsuarioAsignados on s.Id equals u.SeguimientoId
                             join nan in _context.NNAs on s.NNAId equals nan.Id
-                            where /* u.FechaAsignacion >= FechaInicial && u.FechaAsignacion <= FechaFinal
-                                  &&*/ nan.EAPBId == EAPBId
+                            /* where u.FechaAsignacion >= FechaInicial && u.FechaAsignacion <= FechaFinal
+                                  && nan.EAPBId == EAPBId*/
                             group n by n.EstadoId into grouped
                             select new GetDashboardEstadoResponse
                             {
@@ -686,7 +680,7 @@ namespace Infra.Repositorios
 
         public GetDashboardTipoCasosResponse RepoDashboardTipoCasos(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
-           
+
 
             // Obtenemos el conteo de casos actuales y anteriores directamente
             var ConAlerta =
@@ -708,12 +702,12 @@ namespace Infra.Repositorios
                  on s.Id equals nan.SeguimientoId
                  where /*u.FechaAsignacion >= FechaInicial
                        && u.FechaAsignacion <= FechaFinal
-                       &&*/ n.EAPBId == EntidadId
-                       && !new[] { 5 }.Contains(nan.EstadoId!)
+                       && n.EAPBId == EntidadId
+                       &&*/ !new[] { 5 }.Contains(nan.EstadoId!)
                  select n).Count();
 
 
-        
+
 
             var SinAlerta = (from n in _context.NNAs
                              join s in _context.Seguimientos on n.Id equals s.NNAId
@@ -735,8 +729,8 @@ namespace Infra.Repositorios
                              from nan in leftJoinAlerta.DefaultIfEmpty() // Left Join
                              where /*u.FechaAsignacion >= FechaInicial
                                    && u.FechaAsignacion <= FechaFinal
-                                   &&*/ n.EAPBId == EntidadId
-                                   && nan.AlertaId == null
+                                   && n.EAPBId == EntidadId
+                                   &&*/ nan.AlertaId == null
                              select n).Count();
 
 
@@ -746,20 +740,20 @@ namespace Infra.Repositorios
             {
                 ConAlerta = ConAlerta,
                 SinAlerta = SinAlerta,
-               
+
             };
         }
 
 
-        public List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB( int EntidadId)
+        public List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(int EntidadId)
         {
             var resultado = (from n in _context.NNAs
                              join c in _context.CIE10s on n.DiagnosticoId equals c.Id
                              join s in _context.Seguimientos on n.Id equals s.NNAId
                              join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
-                             where /*s.FechaSeguimiento >= FechaInicio
+                             /*where s.FechaSeguimiento >= FechaInicio
                                    && s.FechaSeguimiento <= FechaFin
-                                   &&*/ n.EAPBId == EntidadId
+                                   && n.EAPBId == EntidadId*/
                              orderby als.AlertaId, s.FechaSeguimiento
                              select new GetDashboardCasosCriticosEapbResponse
                              {
@@ -771,7 +765,7 @@ namespace Infra.Repositorios
                                  FechaNacimiento = n.FechaNacimiento,
                                  Diagnostico = c.Nombre,
                                  FechaSeguimiento = als.DateCreated,
-                                
+
                              }).Distinct().ToList();
 
 
