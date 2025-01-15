@@ -138,7 +138,7 @@ namespace MSSeguimiento.Api.Controllers
         public async Task<IActionResult> NotificacionSolicitudSeguimiento([FromBody] NotificacionSolicitudSeguimientoRequest request)
         {
 
-            Task<string> resultado = notificacionRepo.NotificacionSolicitudSeguimiento(request.cuidadorId!, request.nnaId, request.agenteSeguimientoId!);
+            Task<string> resultado = notificacionRepo.NotificacionSolicitudSeguimiento(request.cuidadorId!, request.nnaId, request.agenteSeguimientoId!, request.userId);
 
 
             return Ok(new { mensaje = resultado });

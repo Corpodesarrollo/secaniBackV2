@@ -21,6 +21,6 @@ namespace Core.Interfaces.Repositorios
 
         public  Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos, Attachment AdjuntoPdf);
         Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId);
-        Task<string> NotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId);
+        Task<string> NotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId, string userId);
     }
 }

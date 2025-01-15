@@ -7,12 +7,14 @@ using Core.response;
 using Core.Response;
 using Core.Services.StorageService;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Infra.Repositorios;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.TeamFoundation.Test.WebApi;
 using Org.BouncyCastle.Utilities.IO;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
@@ -25,12 +27,14 @@ namespace Infra.Repositories
         private readonly ApplicationDbContext _context;
         private readonly IAdjuntosRepo _adjuntosRepo;
         private readonly IStorageService _storageService;
+        private readonly ReportesSIVIGILARepo _reportesSIVIGILARepo;
 
-        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, ReportesSIVIGILARepo reportesSIVIGILARepo)
         {
             _context = context;
             _adjuntosRepo = adjuntosRepo;
             _storageService = storageService;
+            _reportesSIVIGILARepo = reportesSIVIGILARepo;
         }
 
         public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId)
@@ -491,6 +495,8 @@ namespace Infra.Repositories
                 await page.SetContentAsync(Body);
                 await browser.CloseAsync();
 
+                Console.WriteLine("INICIO DEL ENVIO");
+
                 // Obtener configuraciones de correo
                 List<EmailConfiguration> emailConfigurations = _context.EmailConfigurations.ToList();
 
@@ -499,9 +505,9 @@ namespace Infra.Repositories
                     EmailConfiguration emailConfiguration = emailConfigurations[0];
                     using SmtpClient clienteSmtp = new(emailConfiguration.SmtpServer)
                     {
-                        Port = 587, // Puerto SMTP
+                        Port = 587,
                         Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                        EnableSsl = emailConfiguration.EnableSsl // Habilitar SSL
+                        EnableSsl = emailConfiguration.EnableSsl 
                     };
 
                     // Creación del mensaje de correo
@@ -510,7 +516,7 @@ namespace Infra.Repositories
                         From = new MailAddress(emailConfiguration.UserName),
                         Subject = Asunto,
                         Body = Body,
-                        IsBodyHtml = true // Cambia a true si el cuerpo del correo es HTML
+                        IsBodyHtml = true 
                     };
 
                     // Agregar destinatarios
@@ -518,17 +524,41 @@ namespace Infra.Repositories
                     {
                         foreach (var item in Para)
                         {
-                            mensaje.To.Add(item);
+                            if (!string.IsNullOrEmpty(item))
+                            {
+                                Console.WriteLine($"El correo para => {item}");
+                                mensaje.To.Add(item);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Elemento vacío o nulo en el arreglo.");
+                            }
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("El arreglo 'Para' está vacío.");
                     }
 
                     // Agregar destinatarios en copia
                     if (ConCopia.Length > 0)
                     {
-                        foreach (var item in ConCopia)
+                        foreach (var item2 in ConCopia)
                         {
-                            mensaje.CC.Add(item);
+                            if (!string.IsNullOrEmpty(item2))
+                            {
+                                Console.WriteLine($"El correo copia para => {item2}");
+                                mensaje.To.Add(item2);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Elemento vacío o nulo en el arreglo.");
+                            }
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("El arreglo 'ConCopia' está vacío.");
                     }
 
                     // Agregar adjuntos si hay
@@ -545,8 +575,9 @@ namespace Infra.Repositories
                     }
 
                     //Agregar adjuntos generados al momento
-                    mensaje.Attachments.Add(adjuntoPDF);
-
+                    if(adjuntoPDF != null)
+                        mensaje.Attachments.Add(adjuntoPDF);
+                    
                     // Enviar el correo
                     await clienteSmtp.SendMailAsync(mensaje);
                 }
@@ -644,6 +675,15 @@ namespace Infra.Repositories
             Debug.WriteLine("Data: " + string.Join(", ", dataContacto));*/
 
             ReportesSIVIGILA dataReporte = _context.ReportesSIVIGILA.FirstOrDefault(x => x.Id == idReporteSivigila);
+            int departamentoId = string.IsNullOrEmpty(dataReporte.DepartamentoProcedenciaId) ? 0 : Convert.ToInt32(dataReporte.DepartamentoProcedenciaId);
+
+            BiStgDepartamento dataDepartamento = _context.BiStgDepartamento
+                .FirstOrDefault(x => x.COD_DPTO == departamentoId);
+
+            BiStgMunicipio dataMunicipio = _context.BiStgMunicipio.FirstOrDefault(x => x.COD_MUNICIPIO == dataReporte.MunicipioProcedenciaId && x.COD_DPTO == departamentoId);
+
+
+
             /*var jsonData2 = JsonSerializer.Serialize(dataReporte, new JsonSerializerOptions { WriteIndented = true });
             Console.WriteLine(jsonData2);*/
 
@@ -658,20 +698,7 @@ namespace Infra.Repositories
             /*var jsonData3 = JsonSerializer.Serialize(plantillaCorreo, new JsonSerializerOptions { WriteIndented = true });
             Console.WriteLine(jsonData3);*/
 
-            /**
-             *  paso 3: crear las variables para el correo
-             * */
-
-            /*Dictionary<string, string> replacements = new Dictionary<string, string>
-            {
-                { "{EntidadId}", dataReporte.EntidadId },
-                { "{Nombres}", dataReporte.Nombres },
-                { "{Cargo}", dataReporte.Cargo },
-                { "{Email}", dataReporte.Email }
-            };*/
-
-
-
+            
             string Asunto = plantillaCorreo.Asunto;
             string Body = plantillaCorreo.Mensaje;
 
@@ -699,11 +726,57 @@ namespace Infra.Repositories
 
             string contentHtml = contentidoPDFNotificacion();
 
-            var AdjuntoPDF = await CreateNotificationPdfAsync(membreteUrl, footerUrl, contentHtml);
+            string laFecha = CalcularEdad(dataReporte!.FechaNacimiento!).ToString() ?? "";
+            string diagnostico = (bool)dataReporte.TieneDiagnostico! ? "Sí" : "No"; 
 
-            
+            // Fecha actual
+            DateTime fechaActual = DateTime.Now;
+
+            // Cultura en español
+            CultureInfo culturaEspañol = new CultureInfo("es-ES");
+
+            // Formato deseado
+            string fechaFormateada = fechaActual.ToString("dd 'de' MMMM 'de' yyyy", culturaEspañol);
+
+            string lugar = dataDepartamento.NOM_DPTO+" "+dataMunicipio.Municipio;
+
+            // Reemplazar los valores
+            Dictionary<string, string> replacements = new Dictionary<string, string>
+            {
+                { "{nombre}", dataReporte.PrimerApellido+" "+dataReporte.SegundoApellido+" "+dataReporte.PrimerNombre+" "+dataReporte.SegundoApellido },
+                { "{identificacion}", dataReporte.NumeroIdentificacion! },
+                { "{edad}", laFecha },
+                { "{diagnostico}", diagnostico },
+                { "{fecha}", fechaFormateada },
+                { "{lugar}", lugar }
+            };
+
+            string reemplazo = ReplaceHtmlPlaceholders(contentHtml, replacements);
+
+            var AdjuntoPDF = await CreateNotificationPdfAsync(membreteUrl, footerUrl, reemplazo);
+
+
             //TODO: Adjuntar los que se generan por formulario
-            string[] Adjuntos = Array.Empty<string>();
+
+            // Obtener los archivos usando las funciones existentes
+            var evidenciaDiagnostico = await _reportesSIVIGILARepo.EvidenciaDiagnostico(idReporteSivigila);
+            var evidenciaParentesco  = await _reportesSIVIGILARepo.EvidenciaParentesco(idReporteSivigila);
+
+            List<string> adjuntosList = new List<string>();
+
+            // Verificar si existen los archivos y agregarlos al array
+            if (evidenciaDiagnostico != null && evidenciaDiagnostico.FileBytes != null)
+            {
+                adjuntosList.Add(evidenciaDiagnostico.FileName);  
+            }
+
+            if (evidenciaParentesco != null && evidenciaParentesco.FileBytes != null)
+            {
+                adjuntosList.Add(evidenciaParentesco.FileName); 
+            }
+
+            // Convertir la lista a un array para pasarlo a la función de correo
+            string[] Adjuntos = adjuntosList.ToArray();
 
             string resultado = await this.PlantillaCorreo(Para, ConCopia!, Asunto, Body, Adjuntos, AdjuntoPDF);
 
@@ -712,30 +785,84 @@ namespace Infra.Repositories
             return resultado;
         }
 
+        public static int CalcularEdad(DateTime? fechaNacimiento)
+        {
 
-        public async Task<string> NotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId)
+            if (!fechaNacimiento.HasValue)
+            {
+                // Retorna null para indicar que no hay edad calculable
+                return 0;
+            }
+
+            // Fecha actual
+            DateTime fechaActual = DateTime.Now;
+
+            // Calcula los años preliminares
+            int años = fechaActual.Year - fechaNacimiento.Value.Year;
+
+            // Ajusta si el cumpleaños aún no ha ocurrido este año
+            if (fechaActual < fechaNacimiento.Value.AddYears(años))
+            {
+                años--;
+            }
+
+            return años;
+        }
+
+
+        public async Task<string> NotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId, string userId)
+        {
+
+
+            string resultado = await operacionNotificacionSolicitudSeguimiento(cuidadorId, nnaId, agenteSeguimientoId);
+
+
+            DateTime fechaActual = DateTime.Now;
+
+            var seguimiento = new NotificacionSolicitudSeguimiento()
+            {
+                CuidadorId = cuidadorId,
+                NNAId = nnaId,
+                AgenteSeguimientoId = agenteSeguimientoId,
+                TotalEnvios = 1,
+                CreatedByUserId = userId,
+                DateCreated = fechaActual
+
+            };
+            _context.NotificacionSolicitudSeguimiento.Add(seguimiento);
+
+
+            return resultado;
+
+
+
+
+
+        }
+
+        public async Task<string> operacionNotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId)
         {
             //Consultar los datos del usuario y del nna
             //Console.WriteLine("data " + cuidadorId + " - " + nnaId + " - "+agenteSeguimientoId);
             ApplicationUser dataUsuario = (from p in _context.Users
-                                            where p.Id == cuidadorId
-                                            select p).FirstOrDefault();
+                                           where p.Id == cuidadorId
+                                           select p).FirstOrDefault();
 
             /*var jsonData2 = JsonSerializer.Serialize(dataUsuario, new JsonSerializerOptions { WriteIndented = true });
             Console.WriteLine(jsonData2);*/
 
             var dataNna = (from p in _context.NNAs
-                               where p.Id == nnaId
-                               select new
-                               {
-                                   Id = p.Id,
-                                   TipoIdentificacionId = p.TipoIdentificacionId,
-                                   NumeroIdentificacion = p.NumeroIdentificacion,
-                                   Nombre = p.PrimerNombre +
-                                            (string.IsNullOrEmpty(p.SegundoNombre) ? "" : " " + p.SegundoNombre) +
-                                            " " + p.PrimerApellido +
-                                            (string.IsNullOrEmpty(p.SegundoApellido) ? "" : " " + p.SegundoApellido)
-                               }).FirstOrDefault();
+                           where p.Id == nnaId
+                           select new
+                           {
+                               Id = p.Id,
+                               TipoIdentificacionId = p.TipoIdentificacionId,
+                               NumeroIdentificacion = p.NumeroIdentificacion,
+                               Nombre = p.PrimerNombre +
+                                        (string.IsNullOrEmpty(p.SegundoNombre) ? "" : " " + p.SegundoNombre) +
+                                        " " + p.PrimerApellido +
+                                        (string.IsNullOrEmpty(p.SegundoApellido) ? "" : " " + p.SegundoApellido)
+                           }).FirstOrDefault();
 
             /*var jsonData3 = JsonSerializer.Serialize(dataNna, new JsonSerializerOptions { WriteIndented = true });
             Console.WriteLine(jsonData3);*/
@@ -768,17 +895,15 @@ namespace Infra.Repositories
                                           where p.Id == agenteSeguimientoId
                                           select p).FirstOrDefault();
 
-            //Console.WriteLine("data " + dataAgente?.Email+" - "+ agenteSeguimientoId);
 
-            string[] Para = new[] { dataAgente?.Email! };
+
+            string[] Para = string.IsNullOrEmpty(dataAgente?.Email) ? Array.Empty<string>() : new string[] { dataAgente.Email };
             string[] ConCopia = Array.Empty<string>();
             string[] Adjuntos = Array.Empty<string>();
-            string resultado = await this.PlantillaCorreo(Para, ConCopia!, Asunto, Body, Adjuntos, null);
 
-            //TODO: hacer el proceso de guardar el tracking de las notificaciones
+            string resultado = await this.PlantillaCorreo(Para, ConCopia!, Asunto, Body, Adjuntos);
 
             return resultado;
-
         }
 
 
@@ -911,11 +1036,11 @@ namespace Infra.Repositories
         {
             var cadena = $@"
             <div class=""content"">
-                <p>Bogotá, 03 diciembre 2024</p>
+                <p>Bogotá, {{fecha}}</p>
     
                 <p>Respetadas EPS / ET.</p>
 
-                <p>Ciudad: <span class=""highlight"">Atlántico - Sabanalarga</span></p>
+                <p>Ciudad: <span class=""highlight"">{{lugar}}</span></p>
 
                 <p><strong>Asunto:</strong> Notificación de alerta por barrera de acceso en la atención integral de los niños, niñas y adolescentes con cáncer infantil</p>
     
@@ -943,17 +1068,17 @@ namespace Infra.Repositories
                 </p>
 
                 <ul>
-                    <li><strong>Nombre del paciente:</strong></li>
-                    <li><strong>Identificación:</strong></li>
-                    <li><strong>Edad:</strong></li>
-                    <li><strong>Diagnóstico:</strong></li>
-                    <li><strong>Nombre del acudiente:</strong></li>
-                    <li><strong>Teléfono de contacto:</strong></li>
+                    <li><strong>Nombre del paciente: {{nombre}}</strong></li>
+                    <li><strong>Identificación: {{identificacion}}</strong></li>
+                    <li><strong>Edad: {{edad}}</strong></li>
+                    <li><strong>Diagnóstico: {{diagnostico}}</strong></li>
+                    <li><strong>Nombre del acudiente: {{nombre_acudiente}}</strong></li>
+                    <li><strong>Teléfono de contacto: {{telefono}}</strong></li>
                 </ul>
                 <br><br>
-<br><br>
-<br><br>
-<br><br>
+                <br><br>
+                <br><br>
+                <br><br>
                 <p>
                     Teniendo en cuenta que los niños, niñas y adolescentes con sospecha o diagnóstico de 
                     cáncer infantil son de especial protección de acuerdo al artículo 13 de la Constitución 
