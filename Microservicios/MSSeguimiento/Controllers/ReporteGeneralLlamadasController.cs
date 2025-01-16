@@ -5,7 +5,7 @@ using Core.Modelos;
 using Core.Services.Llamadas;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MSNNA.Api.Controllers
+namespace MSSeguimiento.Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -52,5 +52,15 @@ namespace MSNNA.Api.Controllers
             return Ok(resumen);
         }
 
+        [HttpPost("InicializarResumenLlamadas")]
+        public async Task<IActionResult> EjecutarActualizacionDesdeIntentos()
+        {
+            var resultado = await _service.EjecutarActualizacionDesdeIntentos();
+
+            if (!resultado)
+                return BadRequest("Error al ejecutar la actualización.");
+
+            return Ok("Resumen de llamadas actualizado correctamente desde Intentos.");
+        }
     }
 }
