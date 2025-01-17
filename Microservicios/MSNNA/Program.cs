@@ -63,8 +63,8 @@ builder.Services.AddTransient<IReporteDinamicoNNARepository, ReporteDinamicoNNAR
 builder.Services.AddTransient<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IReporteDinamicoEAPBRepository, ReporteDinamicoEAPBRepository>();
 builder.Services.AddScoped<IReporteDinamicoEAPBService, ReporteDinamicoEAPBService>();
-builder.Services.AddScoped<IReporteGeneralLlamadasRepository, ReporteGeneralLlamadasRepository>();
-builder.Services.AddScoped<IReporteGeneralLlamadasService, ReporteGeneralLlamadasService>();
+builder.Services.AddScoped<IReporteInconsistenciaPersonaRepository, ReporteInconsistenciaPersonaRepository>();
+builder.Services.AddScoped<IReporteInconsistenciaPersonaService, ReporteInconsistenciaPersonaService>();
 builder.Services.AddHttpClient();
 
 
