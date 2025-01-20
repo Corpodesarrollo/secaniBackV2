@@ -1,4 +1,6 @@
-﻿using Core.Interfaces.Services.Reportes;
+﻿using Core.DTOs.Reportes;
+using Core.DTOs;
+using Core.Interfaces.Services.Reportes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSNNA.Api.Controllers
@@ -14,16 +16,41 @@ namespace MSNNA.Api.Controllers
             _reporteService = reporteService;
         }
 
+        [HttpPost]
+        public async Task<ActionResult<ReporteInconsistenciaPersonaDTO>> AddReporteInconsistenciaAsync([FromBody] NNADto menor)
+        {
+            var resultado = await _reporteService.AddReporteInconsistenciaAsync(menor);
+            return Ok(resultado);
+        }
+
         /// <summary>
         /// Obtiene la lista de reportes de inconsistencias de personas.
         /// </summary>
         /// <returns>Lista de reportes de inconsistencias.</returns>
-        [HttpGet]
-        public async Task<IActionResult> GetReporteInconsistencias()
+        [HttpGet("GetListaInconsistencias")]
+        public async Task<IActionResult> GetListaInconsistencias()
         {
             try
             {
-                var reportes = await _reporteService.GetReporteInconsistenciasAsync();
+                var reportes = await _reporteService.GetReporteInconsistenciasPersonaAsync();
+                return Ok(reportes);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtiene reporte de inconsistencias de personas.
+        /// </summary>
+        /// <returns>Lista de reportes de inconsistencias.</returns>
+        [HttpGet("GetReporteInconsistencias")]
+        public async Task<IActionResult> GetReporteInconsistencias([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
+        {
+            try
+            {
+                var reportes = await _reporteService.GetReporteInconsistenciasAsync(fechaInicio, fechaFin);
                 return Ok(reportes);
             }
             catch (Exception ex)
@@ -42,7 +69,7 @@ namespace MSNNA.Api.Controllers
         {
             try
             {
-                var reporte = await _reporteService.GetReporteInconsistenciaAsync(id);
+                var reporte = await _reporteService.GetReporteInconsistenciaPersonaByIdAsync(id);
 
                 if (reporte == null)
                 {
