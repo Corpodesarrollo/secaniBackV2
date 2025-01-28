@@ -82,6 +82,7 @@ builder.Services.AddScoped<IEnviarRespuesta, EnviarRespuestaRepo>();
 builder.Services.AddScoped<IGestionarAlertas, GestionarAlertasRepo>();
 builder.Services.AddScoped<IReporteDinamicoAlertasRepository, ReporteDinamicoAlertasRepository>();
 builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlertasService>();
+
 builder.Services.AddHttpClient();
 
 // Register Quartz services
@@ -118,6 +119,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
 builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+builder.Services.AddScoped<ReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 WebApplication app = builder.Build();

@@ -64,7 +64,8 @@ builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
 builder.Services.AddScoped<ITPParentescos, TPParentescosRepo>();
 builder.Services.AddScoped<IIpsRepo, IpsRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
-
+builder.Services.AddScoped<ReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddScoped<ReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)

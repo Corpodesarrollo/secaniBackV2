@@ -814,10 +814,10 @@ namespace Infra.Repositories
         {
 
 
-            string resultado = await operacionNotificacionSolicitudSeguimiento(cuidadorId, nnaId, agenteSeguimientoId);
+            string resultado = await this.OperacionNotificacionSolicitudSeguimiento(cuidadorId, nnaId, agenteSeguimientoId);
 
 
-            DateTime fechaActual = DateTime.Now;
+            /*DateTime fechaActual = DateTime.Now;
 
             var seguimiento = new NotificacionSolicitudSeguimiento()
             {
@@ -830,7 +830,7 @@ namespace Infra.Repositories
 
             };
             _context.NotificacionSolicitudSeguimiento.Add(seguimiento);
-
+            */
 
             return resultado;
 
@@ -840,7 +840,7 @@ namespace Infra.Repositories
 
         }
 
-        public async Task<string> operacionNotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId)
+        public async Task<string> OperacionNotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId)
         {
             //Consultar los datos del usuario y del nna
             //Console.WriteLine("data " + cuidadorId + " - " + nnaId + " - "+agenteSeguimientoId);

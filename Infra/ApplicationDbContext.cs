@@ -157,8 +157,8 @@ namespace Infra
         public DbSet<ReporteInconsistenciaPersona> ReporteInconsistenciaPersona { get; set; }
         public DbSet<ReporteDepuracionDetalle> ReporteDepuracionDetalle { get; set; }
         public DbSet<Log> Log { get; set; }
-
         public DbSet<NotificacionSolicitudSeguimiento> NotificacionSolicitudSeguimiento { get; set; }
+
 
     }
 }
