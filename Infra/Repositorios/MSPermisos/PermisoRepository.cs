@@ -21,12 +21,24 @@ namespace Infra.Repositorios.MSPermisos
 
         public async Task<IList<Permisos>> GetPermisosByModuloId(int ModuloId, CancellationToken cancellationToken)
         {
-            return await _context.TPermisos.Where(x => x.ModuloComponenteObjetoId == ModuloId).ToListAsync();
+            var funcionalidades = await _context.TPModuloComponenteObjeto.Where(x => x.ModuloComponenteObjetoIdPadre == ModuloId).ToListAsync();
+            var listaIds = funcionalidades.Select(m => m.Id).ToList();
+
+            var permisosFiltrados = await _context.TPermisos
+                                        .Where(p => listaIds.Contains(p.ModuloComponenteObjetoId ?? 0))
+                                        .ToListAsync();
+            return permisosFiltrados;
         }
 
         public async Task<IList<Permisos>> GetPermisosByRoleandModulo(string RoleId, int ModuloId, CancellationToken cancellationToken)
         {
-            return await _context.TPermisos.Where(x => x.RoleId == RoleId && x.ModuloComponenteObjetoId == ModuloId).ToListAsync();
+            var funcionalidades = await _context.TPModuloComponenteObjeto.Where(x => x.ModuloComponenteObjetoIdPadre == ModuloId).ToListAsync();
+            var listaIds = funcionalidades.Select(m => m.Id).ToList();
+
+            var permisosFiltrados = await _context.TPermisos
+                                        .Where(p => p.RoleId == RoleId && listaIds.Contains(p.ModuloComponenteObjetoId ?? 0))
+                                        .ToListAsync();
+            return permisosFiltrados;
         }
 
         public async Task<IList<Permisos>> GetPermisos(CancellationToken cancellationToken)
@@ -35,14 +47,14 @@ namespace Infra.Repositorios.MSPermisos
             return items;
         }
 
-        public async Task<(Permisos, TPFuncionalidad, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken)
+        public async Task<(Permisos, TPModuloComponenteObjeto, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken)
         {
             var permiso = await _context.TPermisos.FirstOrDefaultAsync(x => x.Id == id);
             if (permiso == null)
             {
                 return (null, null, null);
             }
-            var funcionalidad = await _context.TPFuncionalidad.FirstOrDefaultAsync(x => x.Id == permiso.FuncionalidadId);
+            var funcionalidad = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == permiso.FuncionalidadId);
             var modulo = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == permiso.ModuloComponenteObjetoId);
             return (permiso, funcionalidad, modulo);
         }

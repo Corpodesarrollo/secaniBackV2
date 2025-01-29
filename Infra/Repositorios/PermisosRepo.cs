@@ -111,7 +111,7 @@ namespace Infra.Repositories
                 entitiesDto = entities.Adapt<List<PermisoResponseDTO>>();
                 foreach (var entity in entities)
                 {
-                    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                    var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                     var permisoDto = permiso.Adapt<PermisoResponseDTO>();
                     permisoDto.Funcionalidad = funcionalidad;
                     permisoDto.Modulo = modulo;
@@ -131,7 +131,7 @@ namespace Infra.Repositories
                 entitiesDto = new List<PermisoResponseDTO>();
                 foreach (var entity in entities)
                 {
-                    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                    var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                     var permisoDto = permiso.Adapt<PermisoResponseDTO>();
                     permisoDto.Funcionalidad = funcionalidad;
                     permisoDto.Modulo = modulo;
@@ -151,7 +151,7 @@ namespace Infra.Repositories
                 entitiesDto = new List<PermisoResponseDTO>();
                 foreach (var entity in entities)
                 {
-                    var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                    var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                     var permisoDto = permiso.Adapt<PermisoResponseDTO>();
                     permisoDto.Funcionalidad = funcionalidad;
                     permisoDto.Modulo = modulo;
@@ -168,7 +168,7 @@ namespace Infra.Repositories
             var entitiesDto = new List<PermisoResponseDTO>();
             foreach (var entity in entities)
             {
-                var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                 var permisoDto = permiso.Adapt<PermisoResponseDTO>();
                 permisoDto.Funcionalidad = funcionalidad;
                 permisoDto.Modulo = modulo;
@@ -184,7 +184,7 @@ namespace Infra.Repositories
             if (!_cache.TryGetValue(cacheKeyId, out PermisoResponseDTO entityDto))
             {
                 var entity = await _repository.GetByIdAsync(id, cancellationToken);
-                var (permiso, funcionalidad, modulo) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                 entityDto = permiso.Adapt<PermisoResponseDTO>();
                 entityDto.Funcionalidad = funcionalidad;
                 entityDto.Modulo = modulo;
