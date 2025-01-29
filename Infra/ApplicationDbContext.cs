@@ -160,5 +160,7 @@ namespace Infra
         public DbSet<NotificacionSolicitudSeguimiento> NotificacionSolicitudSeguimiento { get; set; }
 
 
+        public DbSet<ResumenLlamadas> ResumenLlamadas { get; set; }
+        public DbSet<DetalleFallasLlamadas> DetalleFallasLlamadas { get; set; }
     }
 }

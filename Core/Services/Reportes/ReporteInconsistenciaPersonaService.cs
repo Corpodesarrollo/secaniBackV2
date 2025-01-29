@@ -13,7 +13,7 @@ namespace Core.Services.Reportes
     {
         private readonly IPersonaService _personaService = personaService;
         private readonly IReporteInconsistenciaPersonaRepository _repository = repository;
-        public async Task<ReporteInconsistenciaPersonaDTO> AddReporteInconsistenciaPersonaAsync(NNADto menor)
+        public async Task<ReporteInconsistenciaPersonaDTO> AddReporteInconsistenciaAsync(NNADto menor)
         {
             try
             {
@@ -107,18 +107,18 @@ namespace Core.Services.Reportes
                 throw new Exception("Ocurrió un error al generar el reporte de inconsistencia.", ex);
             }
         }
-        public async Task<ReporteInconsistenciaPersonaDTO> GetReporteInconsistenciaAsync(long id)
+        public async Task<ReporteInconsistenciaPersonaDTO> GetReporteInconsistenciaPersonaByIdAsync(long id)
         {
-            var reporte = await _repository.GetReporteInconsistenciaAsync(id);
+            var reporte = await _repository.GetReporteInconsistenciaPersonaByIdAsync(id);
             if (reporte == null)
                 return null;
             return reporte.Adapt<ReporteInconsistenciaPersonaDTO>();
         }
 
-        public async Task<List<ReporteInconsistenciaPersonaDTO>> GetReporteInconsistenciasAsync()
+        public async Task<List<ReporteInconsistenciaPersonaDTO>> GetReporteInconsistenciasPersonaAsync()
         {
             // Obtener todos los reportes desde el repositorio
-            var reportes = await _repository.GetReporteInconsistenciasAsync();
+            var reportes = await _repository.GetReporteInconsistenciasPersonaAsync();
 
             // Si no hay reportes, retornar una lista vacía
             if (reportes == null || !reportes.Any())
@@ -131,6 +131,11 @@ namespace Core.Services.Reportes
         private static string NormalizeString(string input)
         {
             return input?.Trim().ToUpper() ?? string.Empty;
+        }
+
+        public async Task<InconsistenciaReporte> GetReporteInconsistenciasAsync(DateTime fechaInicio, DateTime fechaFin)
+        {
+            return await _repository.GetReporteInconsistenciasAsync(fechaInicio, fechaFin);
         }
     }
 }

@@ -1,16 +1,7 @@
-﻿using Infra.Repositorios;
+﻿using Core.Services.MSTablasParametricas;
 using Infra;
+using Infra.Repositorios;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core.Services.MSTablasParametricas;
-using NSubstitute;
-using Core.Response;
-using Core.Modelos.Common;
-using System.Net;
 
 namespace TestsSecani
 {
