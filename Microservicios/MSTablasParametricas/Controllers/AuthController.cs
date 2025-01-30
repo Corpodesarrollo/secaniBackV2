@@ -1,12 +1,11 @@
 ﻿using Core.DTOs;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SISPRO.TRV.Web.MVCCore;
 
 namespace MSTablasParametricas.Api.Controllers
 {
     [Route("[controller]")]
-    [Authorize]
+    //[Authorize]
     [ApiController]
     public class AuthController : Controller
     {

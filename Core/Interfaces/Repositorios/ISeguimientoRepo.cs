@@ -32,5 +32,6 @@ namespace Core.Interfaces.Repositorios
         Task<string> SetSeguimiento(SetSeguimientoRequest request);
         Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
         Task AsignacionAutomatica();
+        Task<SeguimientoDto[]> GetSeguimientosEstados(string id);
     }
 }

@@ -984,5 +984,50 @@ namespace Infra.Repositorios
 
             return response;
         }
+
+        public async Task<SeguimientoDto[]> GetSeguimientosEstados(string id)
+        {
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        where s.UsuarioId == id
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+            return await (from q in query
+                          join s in _context.Seguimientos on q.id equals s.Id
+                          join n in _context.NNAs on s.NNAId equals n.Id
+
+                          join p in _context.TPParentescos on n.CuidadorParentescoId equals p.Id into parentesco
+                          from p in parentesco.DefaultIfEmpty()
+
+                          join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
+                          from d in diagnostico.DefaultIfEmpty()
+
+                          join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                          select new SeguimientoDto()
+                          {
+                              Id = s.Id,
+                              NoCaso = s.NNAId,
+                              PrimerNombre = n.PrimerNombre,
+                              SegundoNombre = n.SegundoNombre,
+                              PrimerApellido = n.PrimerApellido,
+                              SegundoApellido = n.SegundoApellido,
+                              FechaNotificacion = n.FechaNotificacionSIVIGILA,
+                              FechaSeguimiento = s.FechaSeguimiento,
+                              TipoIdentificacion = n.TipoIdentificacionId,
+                              NumeroIdentificacion = n.NumeroIdentificacion,
+                              Parentesco = p != null ? p.Nombre : "",
+                              Diagnostico = d != null ? d.Nombre : "",
+                              Estado = new TPEstadoNNADto()
+                              {
+                                  Nombre = e.Nombre,
+                                  Descripcion = e.Descripcion,
+                                  ColorBG = e.ColorBG,
+                                  ColorText = e.ColorText
+                              },
+                              AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                              FechaUltimaActuacion = s.UltimaActuacionFecha
+                          }).ToArrayAsync();
+        }
     }
 }

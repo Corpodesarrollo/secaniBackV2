@@ -1,5 +1,4 @@
-﻿using Core.DTOs;
-using Core.DTOs.MSTablasParametricas;
+﻿using Core.DTOs.MSTablasParametricas;
 using Core.DTOs.Reportes;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios.Reportes;
@@ -136,7 +135,7 @@ namespace Infra.Repositorios.Reportes
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
                         ResidenciaOrigenMunicipioId = nna.ResidenciaOrigenMunicipioId,
-                        ResidenciaOrigenDepartamento = 
+                        ResidenciaOrigenDepartamento =
                             !string.IsNullOrEmpty(nna.ResidenciaOrigenMunicipioId) &&
                             nna.ResidenciaOrigenMunicipioId.Length >= 2 &&
                             int.TryParse(nna.ResidenciaOrigenMunicipioId.Substring(0, 2), out int codigoDepartamento2)
@@ -203,10 +202,10 @@ namespace Infra.Repositorios.Reportes
                             : string.Empty,
                         CuidadorNombres = nna.CuidadorNombres,
                         CuidadorParentescoId = nna.CuidadorParentescoId,
-                        CuidadorParentesco = !string.IsNullOrEmpty(nna.CuidadorParentescoId)
+                        CuidadorParentesco = nna.CuidadorParentescoId != null
                             ? (await _tablaParametricaService.GetBynomTREFStringCodigo(
                                 "RLCPDParentesco",
-                                nna.CuidadorParentescoId,
+                                nna.CuidadorParentescoId.ToString(),
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
                         CuidadorEmail = nna.CuidadorEmail,

@@ -13,6 +13,15 @@ WORKDIR /src
 # Copia el archivo nuget.config a la ubicación predeterminada de NuGet
 COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
 
+# Instalar el proveedor de credenciales de NuGet
+WORKDIR /tools
+RUN curl -L https://raw.githubusercontent.com/Microsoft/artifacts-credprovider/master/helpers/installcredprovider.sh | sh
+
+# Configurar acceso al feed privado de NuGet
+ARG FEED_ACCESSTOKEN
+ENV VSS_NUGET_EXTERNAL_FEED_ENDPOINTS="{\"endpointCredentials\": [{\"endpoint\":\"https://saturno.minsalud.gov.co/tfs/DefaultCollection/_packaging/SISPRO.TRV/nuget/v3/index.json\", \"username\":\"docker\", \"password\":\"${FEED_ACCESSTOKEN}\"}]}"
+
+
 COPY ["Microservicios/MSSeguimiento/MSSeguimiento.Api.csproj", "Microservicios/MSSeguimiento/"]
 COPY ["Core/Core.csproj", "Core/"]
 COPY ["Infra/Infra.csproj", "Infra/"]

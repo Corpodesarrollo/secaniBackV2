@@ -16,6 +16,11 @@
                 return $"{PrimerNombre} {SegundoNombre} {PrimerApellido} {SegundoApellido}";
             }
         }
+        public string? TipoIdentificacion { get; set; }
+        public string? NumeroIdentificacion { get; set; }
+        public string? Parentesco { get; set; }
+        public string? Diagnostico { get; set; }
+        public string? Aseguradora { get; set; }
         public TPEstadoNNADto? Estado { get; set; }
         public string? AsuntoUltimaActuacion { get; set; }
         public DateTime? FechaUltimaActuacion { get; set; }
