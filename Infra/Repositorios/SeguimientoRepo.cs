@@ -1003,6 +1003,9 @@ namespace Infra.Repositorios
                           join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
                           from d in diagnostico.DefaultIfEmpty()
 
+                          join a in _context.UsuarioAsignados on s.Id equals a.SeguimientoId into asignado
+                          from a in asignado.DefaultIfEmpty()
+
                           join e in _context.TPEstadoNNA on n.estadoId equals e.Id
                           select new SeguimientoDto()
                           {
@@ -1012,19 +1015,16 @@ namespace Infra.Repositorios
                               SegundoNombre = n.SegundoNombre,
                               PrimerApellido = n.PrimerApellido,
                               SegundoApellido = n.SegundoApellido,
+                              Sexo = n.SexoId == "1" ? "Masculino" : "Femenino",
+                              FechaNacimiento = n.FechaNacimiento,
                               FechaNotificacion = n.FechaNotificacionSIVIGILA,
+                              FechaSolicitud = s.FechaSolicitud,
+                              FechaAsignacion = a != null ? a.FechaAsignacion : null,
                               FechaSeguimiento = s.FechaSeguimiento,
                               TipoIdentificacion = n.TipoIdentificacionId,
                               NumeroIdentificacion = n.NumeroIdentificacion,
                               Parentesco = p != null ? p.Nombre : "",
                               Diagnostico = d != null ? d.Nombre : "",
-                              Estado = new TPEstadoNNADto()
-                              {
-                                  Nombre = e.Nombre,
-                                  Descripcion = e.Descripcion,
-                                  ColorBG = e.ColorBG,
-                                  ColorText = e.ColorText
-                              },
                               AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
                               FechaUltimaActuacion = s.UltimaActuacionFecha
                           }).ToArrayAsync();

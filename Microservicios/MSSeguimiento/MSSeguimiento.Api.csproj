@@ -13,8 +13,10 @@
     <PackageReference Include="AspNetCore.LegacyAuthCookieCompat" Version="2.0.5" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.HealthChecks" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.12" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="PDFsharp" Version="6.1.1" />
     <PackageReference Include="Quartz" Version="3.13.0" />

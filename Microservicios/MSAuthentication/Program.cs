@@ -84,9 +84,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
-builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
-                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
-
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
 builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
@@ -100,15 +97,12 @@ builder.Services.AddCors(options =>
                           .AllowCredentials());
 });
 
+builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
+                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
+
 WebApplication app = builder.Build();
 
-app.UseCors("AllowSpecificOrigin");
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseCustomConfigure();
-app.UseCustomSwagger();
-
-app.UseHealthChecks("/health");
-app.UseHealthChecks("/health_check", new HealthCheckOptions
+app.UseHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
@@ -120,5 +114,10 @@ app.UseHealthChecks("/health_check", new HealthCheckOptions
         await context.Response.WriteAsync(result);
     }
 });
+
+app.UseCors("AllowSpecificOrigin");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCustomConfigure();
+app.UseCustomSwagger();
 
 app.Run();
