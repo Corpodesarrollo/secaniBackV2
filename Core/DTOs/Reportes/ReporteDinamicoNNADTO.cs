@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Core.DTOs.Reportes
+﻿namespace Core.DTOs.Reportes
 {
     public class ReporteDinamicoNNADTO
     {
@@ -23,7 +21,7 @@ namespace Core.DTOs.Reportes
         public int? OrigenReporteId { get; set; }
         public string OrigenReporte { get; set; } //calculado
         public string? PaisId { get; set; }
-        public string? Pais { get; set; }   
+        public string? Pais { get; set; }
         public string? EtniaId { get; set; }
         public string? Etnia { get; set; }
         public string? MunicipioNacimientoId { get; set; }
@@ -53,7 +51,7 @@ namespace Core.DTOs.Reportes
         public int? IPSId { get; set; }
         public string IPS { get; set; } //calculado
         public string? CuidadorNombres { get; set; }
-        public string? CuidadorParentescoId { get; set; }
+        public int? CuidadorParentescoId { get; set; }
         public string? CuidadorParentesco { get; set; }
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }

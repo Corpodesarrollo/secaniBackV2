@@ -10,6 +10,8 @@ using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
+using Core.Validators.MSPermisos;
+using Infra;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.Reportes;
@@ -77,15 +79,12 @@ builder.Services.AddCors(options =>
                           .AllowCredentials());
 });
 
+builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
+                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
+
 WebApplication app = builder.Build();
 
-app.UseCors("AllowSpecificOrigin");
-
-app.UseCustomConfigure();
-app.UseCustomSwagger();
-
-app.UseHealthChecks("/health");
-app.UseHealthChecks("/health_check", new HealthCheckOptions
+app.UseHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
@@ -97,5 +96,10 @@ app.UseHealthChecks("/health_check", new HealthCheckOptions
         await context.Response.WriteAsync(result);
     }
 });
+
+app.UseCors("AllowSpecificOrigin");
+
+app.UseCustomConfigure();
+app.UseCustomSwagger();
 
 app.Run();

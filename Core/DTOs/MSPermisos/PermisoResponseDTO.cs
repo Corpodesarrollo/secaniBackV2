@@ -12,7 +12,7 @@ namespace Core.DTOs.MSPermisos
         public bool CanEdit { get; set; }
         public bool CanDele { get; set; }
         public bool CanAdd { get; set; }
-        public virtual TPFuncionalidad Funcionalidad { get; set; }
+        public virtual TPModuloComponenteObjeto Funcionalidad { get; set; }
         public virtual TPModuloComponenteObjeto Modulo { get; set; }
     }
 }

@@ -139,10 +139,10 @@ namespace Infra.Repositorios.Reportes
                         TrasladosServiciosdeApoyoOportunos = nna.TrasladosServiciosdeApoyoOportunos,
                         CuidadorNombres = nna.CuidadorNombres,
                         CuidadorParentescoId = nna.CuidadorParentescoId,
-                        CuidadorParentesco = !string.IsNullOrEmpty(nna.CuidadorParentescoId)
+                        CuidadorParentesco = nna.CuidadorParentescoId != null
                             ? (await _tablaParametricaService.GetBynomTREFStringCodigo(
                                 "RLCPDParentesco",
-                                nna.CuidadorParentescoId,
+                                nna.CuidadorParentescoId.ToString(),
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
                         CuidadorEmail = nna.CuidadorEmail,

@@ -8,6 +8,7 @@ using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.StorageService;
 using Core.Validators;
+using Core.Validators.MSPermisos;
 using FluentValidation;
 using Infra;
 using Infra.Repositories;
@@ -15,6 +16,7 @@ using Infra.Repositories.Common;
 using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 using SISPRO.TRV.General;
@@ -82,7 +84,23 @@ builder.Services.AddCors(options =>
                           .AllowCredentials());
 });
 
-var app = builder.Build();
+builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
+                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
+
+WebApplication app = builder.Build();
+
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 app.UseCors("AllowSpecificOrigin");
 app.UseCustomConfigure();

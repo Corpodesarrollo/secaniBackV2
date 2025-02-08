@@ -203,6 +203,20 @@ namespace MSSeguimiento.Api.Controllers
             var response = seguimientoRepo.ExportarDetalleSeguimiento(id);
             return Ok(response);
         }
+
+        [HttpGet("GetSeguimientosEstados/{id}")]
+        public async Task<ActionResult> GetSeguimientosEstados(string id)
+        {
+            try
+            {
+                var response = await seguimientoRepo.GetSeguimientosEstados(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
 

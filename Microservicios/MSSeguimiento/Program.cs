@@ -17,6 +17,7 @@ using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
+using Core.Validators.MSPermisos;
 using DinkToPdf;
 using DinkToPdf.Contracts;
 using Infra;
@@ -27,6 +28,7 @@ using Infra.Repositorios.Llamadas;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
 using Infra.Repositorios.Reportes;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Api.Extensions;
@@ -127,7 +129,23 @@ builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepositor
 builder.Services.AddScoped<ReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
+builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
+                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
+
 WebApplication app = builder.Build();
+
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 app.UseCors("AllowSpecificOrigin");
 

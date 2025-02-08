@@ -33,7 +33,7 @@ namespace Core.Modelos
         public string? MunicipioNacimientoId { get; set; }
         public string? SexoId { get; set; }
         public string? TipoRegimenSSId { get; set; }
-        
+
         //public string? EAPBId { get; set; }
         [NotMapped]
         public string? EAPBId
@@ -110,7 +110,7 @@ namespace Core.Modelos
         public bool? TratamientoRequirioCambiodeCiudad { get; set; }
         public string? TratamientoObservaciones { get; set; }
         public string? CuidadorNombres { get; set; }
-        public string? CuidadorParentescoId { get; set; }
+        public int? CuidadorParentescoId { get; set; }
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }
         public string? SeguimientoLoDesea { get; set; }
