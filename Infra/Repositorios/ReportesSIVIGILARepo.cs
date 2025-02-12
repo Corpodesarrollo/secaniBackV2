@@ -88,11 +88,20 @@ namespace Infra.Repositorios
 
             var dto = GenericMapper.Map<ReportesSIVIGILA, ReportesSIVIGILADto>(result);
 
-            var evidenciaDiagnostico = await _storageService.DownloadFileAsync($"RS-EvidenciaDiagnostico-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaDiagnostico.Extension}");
-            return new()
+            // Construcción del nombre del archivo
+            string fileName = $"RS-EvidenciaDiagnostico-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaDiagnostico?.Extension}";
+
+            // Intentar descargar el archivo
+            var evidenciaDiagnostico = await _storageService.DownloadFileAsync(fileName);
+
+            // Validar si el archivo no existe o está vacío
+            if (evidenciaDiagnostico == null || evidenciaDiagnostico.Length == 0)
+                return null;
+
+            return new UploadFileRequest
             {
                 FileBytes = evidenciaDiagnostico,
-                FileName = $"RS-EvidenciaDiagnostico-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaDiagnostico.Extension}"
+                FileName = fileName
             };
         }
 
@@ -105,11 +114,18 @@ namespace Infra.Repositorios
 
             var dto = GenericMapper.Map<ReportesSIVIGILA, ReportesSIVIGILADto>(result);
 
-            var evidenciaParentesco = await _storageService.DownloadFileAsync($"RS-EvidenciaParentesco-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaParentesco.Extension}");
+            string fileName = $"RS-EvidenciaParentesco-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaParentesco?.Extension}";
+
+            var evidenciaParentesco = await _storageService.DownloadFileAsync(fileName);
+
+            // Validar si el archivo no existe o está vacío
+            if (evidenciaParentesco == null || evidenciaParentesco.Length == 0)
+                return null;
+
             return new()
             {
                 FileBytes = evidenciaParentesco,
-                FileName = $"RS-EvidenciaParentesco-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaParentesco.Extension}"
+                FileName = $"RS-EvidenciaParentesco-{dto.Id}-{dto.NumeroIdentificacion}{dto.EvidenciaParentesco?.Extension}"
             };
         }
 

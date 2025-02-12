@@ -1,4 +1,6 @@
 ﻿using Core.Interfaces;
+using Core.Interfaces.Repositorios;
+using Infra.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,6 +29,7 @@ namespace Infra.Repositorios
 
             // Configura el temporizador para ejecutar la tarea a la hora configurada y luego cada intervalo configurado
             _timer = new Timer(EjecutarTarea, null, initialDelay, TimeSpan.FromHours(intervaloHoras));
+
             return Task.CompletedTask;
         }
 
@@ -58,6 +61,9 @@ namespace Infra.Repositorios
             using var scope = serviceProvider.CreateScope();
             var ipsRepo = scope.ServiceProvider.GetRequiredService<IIpsRepo>();
             await ipsRepo.LoadData();
+
+            var sivigilaRepo = scope.ServiceProvider.GetRequiredService<INotificacionRepo>();
+            await sivigilaRepo.RevisarYEnviarNotificaciones();
         }
 
         public override void Dispose()
