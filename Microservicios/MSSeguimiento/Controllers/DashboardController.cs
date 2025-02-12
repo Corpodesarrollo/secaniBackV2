@@ -159,10 +159,10 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetCasosCriticosEAPB")]
-        public List<GetDashboardCasosCriticosEapbResponse> GetCasosCriticosEAPB( int EntidadId)
+        public List<GetDashboardCasosCriticosEapbResponse> GetCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal)
         {
 
-            List<GetDashboardCasosCriticosEapbResponse> response = _dashboardRepo.RepoDashboardCasosCriticosEAPB( EntidadId!);
+            List<GetDashboardCasosCriticosEapbResponse> response = _dashboardRepo.RepoDashboardCasosCriticosEAPB( EntidadId!, FechaInicial, FechaFinal);
             return response;
         }
 

@@ -555,8 +555,8 @@ namespace Infra.Repositorios
                     (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
                 .Where(x =>
                             x.EstadoId != 5
-                            /*&& x.UltimaFechaSeguimiento >= FechaInicial
-                            && x.UltimaFechaSeguimiento <= FechaFinal*/
+                            && x.UltimaFechaSeguimiento >= FechaInicial
+                            && x.UltimaFechaSeguimiento <= FechaFinal
                             /*&& x.EAPBId == EntidadId */)  // Filtro por EAPBId = EntidadId
                 .Count();
 
@@ -576,8 +576,8 @@ namespace Infra.Repositorios
                    (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
                .Where(x =>
                            x.EstadoId != 5
-                           /*&& x.UltimaFechaSeguimiento >= FechaInicialSemanaAnterior
-                           && x.UltimaFechaSeguimiento <= FechaFinalSemanaAnterior*/
+                           && x.UltimaFechaSeguimiento >= FechaInicial
+                           && x.UltimaFechaSeguimiento <= FechaFinal
                            /* && x.EAPBId == EntidadId*/)  // Filtro por EAPBId = EntidadId
                .Count();
 
@@ -597,7 +597,8 @@ namespace Infra.Repositorios
                    (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
                .Where(x =>
                            x.EstadoId != 5
-
+                     && x.UltimaFechaSeguimiento >= FechaInicial
+                    && x.UltimaFechaSeguimiento <= FechaFinal
                 /*&& x.EAPBId == EntidadId*/)  // Filtro por EAPBId = EntidadId
     .Count();
 
@@ -640,9 +641,9 @@ namespace Infra.Repositorios
                     s => s.Id,
                     u => u.SeguimientoId,
                     (s, u) => new { s.EstadoId, u.UsuarioId, u.FechaAsignacion })
-                           /*.Where(x => 
+                           .Where(x => 
                                        x.FechaAsignacion >= FechaInicial
-                                       && x.FechaAsignacion <= FechaFinal)*/
+                                       && x.FechaAsignacion <= FechaFinal)
                            .ToList();  // Ejecutar la consulta en memoria
 
             // Paso 3: Agrupar los resultados y proyectar el resultado final
@@ -665,8 +666,8 @@ namespace Infra.Repositorios
                             join s in _context.Seguimientos on n.Id equals s.NNAId
                             join u in _context.UsuarioAsignados on s.Id equals u.SeguimientoId
                             join nan in _context.NNAs on s.NNAId equals nan.Id
-                            /* where u.FechaAsignacion >= FechaInicial && u.FechaAsignacion <= FechaFinal
-                                  && nan.EAPBId == EAPBId*/
+                            where u.FechaAsignacion >= FechaInicial && u.FechaAsignacion <= FechaFinal
+                                 // && nan.EAPBId == EAPBId
                             group n by n.EstadoId into grouped
                             select new GetDashboardEstadoResponse
                             {
@@ -700,10 +701,10 @@ namespace Infra.Repositorios
                       on s1.Id equals s2.MaxId
                       select s1)
                  on s.Id equals nan.SeguimientoId
-                 where /*u.FechaAsignacion >= FechaInicial
+                 where u.FechaAsignacion >= FechaInicial
                        && u.FechaAsignacion <= FechaFinal
-                       && n.EAPBId == EntidadId
-                       &&*/ !new[] { 5 }.Contains(nan.EstadoId!)
+                      // && n.EAPBId == EntidadId
+                       //&& !new[] { 5 }.Contains(nan.EstadoId!)
                  select n).Count();
 
 
@@ -727,10 +728,10 @@ namespace Infra.Repositorios
                                   select s1)
                              on s.Id equals nan.SeguimientoId into leftJoinAlerta
                              from nan in leftJoinAlerta.DefaultIfEmpty() // Left Join
-                             where /*u.FechaAsignacion >= FechaInicial
+                             where u.FechaAsignacion >= FechaInicial
                                    && u.FechaAsignacion <= FechaFinal
-                                   && n.EAPBId == EntidadId
-                                   &&*/ nan.AlertaId == null
+                                   //&& n.EAPBId == EntidadId
+                                  // && nan.AlertaId == null
                              select n).Count();
 
 
@@ -745,15 +746,15 @@ namespace Infra.Repositorios
         }
 
 
-        public List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(int EntidadId)
+        public List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal)
         {
             var resultado = (from n in _context.NNAs
                              join c in _context.CIE10s on n.DiagnosticoId equals c.Id
                              join s in _context.Seguimientos on n.Id equals s.NNAId
                              join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
-                             /*where s.FechaSeguimiento >= FechaInicio
-                                   && s.FechaSeguimiento <= FechaFin
-                                   && n.EAPBId == EntidadId*/
+                             where s.FechaSeguimiento >= FechaInicial
+                                   && s.FechaSeguimiento <= FechaFinal
+                                   //&& n.EAPBId == EntidadId
                              orderby als.AlertaId, s.FechaSeguimiento
                              select new GetDashboardCasosCriticosEapbResponse
                              {

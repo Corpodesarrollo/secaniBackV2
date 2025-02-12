@@ -88,7 +88,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetListaCasosNotificacion")]
-        public List<GetListaCasosResponse> GetListaCasosNotificacion(int eapbId, int epsId)
+        public List<GetListaCasosResponse> GetListaCasosNotificacion(string eapbId, int epsId)
         {
 
             List<GetListaCasosResponse> response = notificacionRepo.RepoListaCasosNotificacion(eapbId, epsId);
@@ -120,7 +120,7 @@ namespace MSSeguimiento.Api.Controllers
         public async Task<IActionResult> NotificacionReporteSivigila([FromBody] NotificacionSigivilaRequest request)
         {
 
-            Task<string>  resultado =  notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId);
+            Task<string>  resultado =  notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId, request.userId);
 
             /*
             if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
@@ -131,6 +131,13 @@ namespace MSSeguimiento.Api.Controllers
             // string resultado = notificacionRepo.NotificacionReporteSivigila();
 
             return Ok(new { mensaje = resultado });
+        }
+
+        [HttpPost("ProbarNotificacionReporteSivigila")]
+        public async Task<IActionResult> ProbarEnvios()
+        {
+            await notificacionRepo.RevisarYEnviarNotificaciones();
+            return Ok("Proceso ejecutado exitosamente");
         }
 
 

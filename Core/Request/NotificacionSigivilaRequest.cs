@@ -4,6 +4,8 @@
     {
         public long idReporteSivigila { get; set; }
         public string entidadId { get; set; }
-      
+
+        public string userId { get; set; }
+
     }
 }

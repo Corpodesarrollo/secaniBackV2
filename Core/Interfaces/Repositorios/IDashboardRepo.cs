@@ -28,7 +28,7 @@ namespace Core.Interfaces.Repositorios
 
         List<GetDashboardEstadoResponse> RepoDashboardAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int EAPBId);
         GetDashboardTipoCasosResponse RepoDashboardTipoCasos(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId);
-        List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(int EntidadId);
+        List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal);
 
     }
 }

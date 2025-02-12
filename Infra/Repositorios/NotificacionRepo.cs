@@ -8,8 +8,9 @@ using Core.Response;
 using Core.Services.StorageService;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Infra.Repositorios;
+using iText.Barcodes.Dmcode;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.TeamFoundation.Test.WebApi;
+//using Microsoft.TeamFoundation.Test.WebApi;
 using Org.BouncyCastle.Utilities.IO;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
@@ -414,7 +415,7 @@ namespace Infra.Repositories
         }
 
 
-        public List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId)
+        public List<GetListaCasosResponse> RepoListaCasosNotificacion(string eapbId, int epsId)
         {
             List<GetListaCasosResponse> listaCasos = (from n in _context.NNAs
                                                       join s in _context.Seguimientos on n.Id equals s.NNAId
@@ -660,13 +661,81 @@ namespace Infra.Repositories
 
 
 
-        public async Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId)
+        public async Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId, string userId)
         {
 
+            string resultado = await this.OperacionReporteSivigila(idReporteSivigila, entidadId, "1");
+
+            var resp = await this.GuardarOperacionSivigila(idReporteSivigila, entidadId, userId);
+            
+
+
+            return resultado;
+        }
+
+        public async Task<string> GuardarOperacionSivigila(long idReporteSivigila, string entidadId, string userId )
+        {
+            DateTime fechaActual = DateTime.Now;
+
+            var seguimiento = new NotificacionReporteSivigila()
+            {
+                IdReporteSivigila = (int)idReporteSivigila,
+                EntidadId = entidadId,
+                TotalEnvios = 1,
+                CreatedByUserId = userId,
+                DateCreated = fechaActual
+
+            };
+            _context.NotificacionReporteSivigila.Add(seguimiento);
+            await _context.SaveChangesAsync();
+
+            return "Exito";
+        }
+
+        public async Task RevisarYEnviarNotificaciones()
+        {
+            var hoy = DateTime.UtcNow.Date;
+
+            var registros = await _context.NotificacionReporteSivigila
+                .Where(n => n.TotalEnvios < (byte) 3) // Solo registros con menos de 3 envíos
+                .ToListAsync();
+
+            foreach (var registro in registros)
+            {
+                int siguienteEnvio = (byte)(registro.TotalEnvios + 1);
+                DateTime fechaEsperadaEnvio = registro.DateCreated.AddDays(siguienteEnvio * 3).Date;
+
+                if (hoy >= fechaEsperadaEnvio) // Si ya pasaron los días necesarios
+                {
+                    try
+                    {
+                        string resultado = await OperacionReporteSivigila(registro.IdReporteSivigila, registro.EntidadId, siguienteEnvio.ToString());
+
+                        if (resultado == "Exito")
+                        {
+                            registro.TotalEnvios = (byte)siguienteEnvio;
+                            _context.NotificacionReporteSivigila.Update(registro);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error procesando reporte {registro.IdReporteSivigila}: {ex.Message}");
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+        public async Task<string> OperacionReporteSivigila(long idReporteSivigila, string entidadId, string numeroNotificacion)
+        {
 
             /*
-             * paso 1: obtener los datos del reporte sivigila y del destino del correo
-             */
+           * paso 1: obtener los datos del reporte sivigila y del destino del correo
+           */
             List<ContactoEntidad> dataContactos = _context.ContactoEntidades
                 .Where(x => x.EntidadId == entidadId)
                 .ToList();
@@ -698,8 +767,8 @@ namespace Infra.Repositories
             /*var jsonData3 = JsonSerializer.Serialize(plantillaCorreo, new JsonSerializerOptions { WriteIndented = true });
             Console.WriteLine(jsonData3);*/
 
-            
-            string Asunto = plantillaCorreo.Asunto;
+
+            string Asunto = plantillaCorreo.Asunto.Replace("{{}}", numeroNotificacion); ;
             string Body = plantillaCorreo.Mensaje;
 
 
@@ -727,7 +796,7 @@ namespace Infra.Repositories
             string contentHtml = contentidoPDFNotificacion();
 
             string laFecha = CalcularEdad(dataReporte!.FechaNacimiento!).ToString() ?? "";
-            string diagnostico = (bool)dataReporte.TieneDiagnostico! ? "Sí" : "No"; 
+            string diagnostico = (bool)dataReporte.TieneDiagnostico! ? "Sí" : "No";
 
             // Fecha actual
             DateTime fechaActual = DateTime.Now;
@@ -738,7 +807,7 @@ namespace Infra.Repositories
             // Formato deseado
             string fechaFormateada = fechaActual.ToString("dd 'de' MMMM 'de' yyyy", culturaEspañol);
 
-            string lugar = dataDepartamento.NOM_DPTO+" "+dataMunicipio.Municipio;
+            string lugar = dataDepartamento.NOM_DPTO + " " + dataMunicipio.Municipio;
 
             // Reemplazar los valores
             Dictionary<string, string> replacements = new Dictionary<string, string>
@@ -760,27 +829,32 @@ namespace Infra.Repositories
 
             // Obtener los archivos usando las funciones existentes
             var evidenciaDiagnostico = await _reportesSIVIGILARepo.EvidenciaDiagnostico(idReporteSivigila);
-            var evidenciaParentesco  = await _reportesSIVIGILARepo.EvidenciaParentesco(idReporteSivigila);
+            var evidenciaParentesco = await _reportesSIVIGILARepo.EvidenciaParentesco(idReporteSivigila);
 
             List<string> adjuntosList = new List<string>();
+            List<string> tempFiles = new List<string>();
 
-            // Verificar si existen los archivos y agregarlos al array
+            // Verificar si existen los archivos y guardarlos en archivos temporales
             if (evidenciaDiagnostico != null && evidenciaDiagnostico.FileBytes != null)
             {
-                adjuntosList.Add(evidenciaDiagnostico.FileName);  
+                string tempFilePath = Path.Combine(Path.GetTempPath(), evidenciaDiagnostico.FileName);
+                File.WriteAllBytes(tempFilePath, evidenciaDiagnostico.FileBytes);
+                adjuntosList.Add(tempFilePath);
+                tempFiles.Add(tempFilePath);
             }
 
             if (evidenciaParentesco != null && evidenciaParentesco.FileBytes != null)
             {
-                adjuntosList.Add(evidenciaParentesco.FileName); 
+                string tempFilePath = Path.Combine(Path.GetTempPath(), evidenciaParentesco.FileName);
+                File.WriteAllBytes(tempFilePath, evidenciaParentesco.FileBytes);
+                adjuntosList.Add(tempFilePath);
+                tempFiles.Add(tempFilePath);
             }
 
             // Convertir la lista a un array para pasarlo a la función de correo
             string[] Adjuntos = adjuntosList.ToArray();
 
             string resultado = await this.PlantillaCorreo(Para, ConCopia!, Asunto, Body, Adjuntos, AdjuntoPDF);
-
-            //TODO: hacer el proceso de guardar el tracking de las notificaciones
 
             return resultado;
         }
@@ -817,7 +891,7 @@ namespace Infra.Repositories
             string resultado = await this.OperacionNotificacionSolicitudSeguimiento(cuidadorId, nnaId, agenteSeguimientoId);
 
 
-            /*DateTime fechaActual = DateTime.Now;
+            DateTime fechaActual = DateTime.Now;
 
             var seguimiento = new NotificacionSolicitudSeguimiento()
             {
@@ -830,7 +904,7 @@ namespace Infra.Repositories
 
             };
             _context.NotificacionSolicitudSeguimiento.Add(seguimiento);
-            */
+            await _context.SaveChangesAsync();
 
             return resultado;
 

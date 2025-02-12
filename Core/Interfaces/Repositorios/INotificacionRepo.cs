@@ -15,13 +15,15 @@ namespace Core.Interfaces.Repositorios
         public Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
         public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request);
         List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
-        List<GetListaCasosResponse> RepoListaCasosNotificacion(int eapbId, int epsId);
+        List<GetListaCasosResponse> RepoListaCasosNotificacion(string eapbId, int epsId);
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId);
         Task<bool?> NotificacionRespuesta(NotificacionRespuestaDto data);
 
         public  Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos, Attachment AdjuntoPdf);
-        Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId);
+        Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId, string userId);
         Task<string> NotificacionSolicitudSeguimiento(string cuidadorId, long nnaId, string agenteSeguimientoId, string userId);
+
+        Task RevisarYEnviarNotificaciones();
 
     }
 }
