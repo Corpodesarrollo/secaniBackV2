@@ -8,7 +8,6 @@ using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Infra.Repositories.Common;
-using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -24,53 +23,182 @@ namespace Infra.Repositorios
 
         private readonly ISeguimientoRepo _seguimientoRepo;
 
-        public NNARepo(ApplicationDbContext context, ISeguimientoRepo seguimientoRepo)
+        public NNARepo(
+            ApplicationDbContext context,
+            ISeguimientoRepo seguimientoRepo,
+            GenericRepository<NNAs> repository,
+            GenericRepository<TPCIE10> repositoryCie10
+            )
         {
-
-            GenericRepository<NNAs> repository = new(_context);
-            GenericRepository<TPCIE10> repositoryCie10 = new(_context);
-
             _context = context;
+            _seguimientoRepo = seguimientoRepo;
             _repository = repository;
             _repositoryCie10 = repositoryCie10;
-            _seguimientoRepo = seguimientoRepo;
+        }
+
+
+        public IQueryable<NNADto> SelectBase()
+        {
+            try
+            {
+
+                return from nna in _context.NNAs
+
+                       join ips in _context.TPIPS on nna.IPSId equals ips.Id into ipsJoin
+                       from ips in ipsJoin.DefaultIfEmpty()
+
+                       join eps in _context.TPIPS on nna.EPSId equals eps.Id into epsJoin
+                       from eps in epsJoin.DefaultIfEmpty()
+
+                       join eapb in _context.TPEAPB on nna.EAPBId equals eapb.Id into eapbJoin
+                       from eapb in eapbJoin.DefaultIfEmpty()
+
+                       join p in _context.TPParentescos on nna.CuidadorParentescoId equals p.Id into pJoin
+                       from p in pJoin.DefaultIfEmpty()
+
+                       select new NNADto
+                       {
+                           Id = nna.Id,
+                           PrimerNombre = nna.PrimerNombre,
+                           SegundoNombre = nna.SegundoNombre,
+                           PrimerApellido = nna.PrimerApellido,
+                           SegundoApellido = nna.SegundoApellido,
+                           TipoIdentificacionId = nna.TipoIdentificacionId,
+                           NumeroIdentificacion = nna.NumeroIdentificacion,
+                           FechaNacimiento = nna.FechaNacimiento,
+                           EtniaId = nna.EtniaId,
+                           GrupoPoblacionId = nna.GrupoPoblacionId,
+                           SexoId = nna.SexoId,
+                           TipoRegimenSSId = nna.TipoRegimenSSId,
+                           EAPBId = nna.EAPBId,
+                           EAPBNombre = eapb != null ? eapb.Nombre : "",
+                           EPSId = nna.EPSId,
+                           EPSNombre = eps != null ? eps.Nombre : "",
+                           IPSId = nna.IPSId,
+                           IPSNombre = ips != null ? ips.Nombre : "",
+                           OrigenReporteId = nna.OrigenReporteId,
+                           OrigenReporteOtro = nna.OrigenReporteOtro,
+                           PaisId = nna.PaisId,
+                           DiagnosticoId = nna.DiagnosticoId,
+                           FechaDiagnostico = nna.FechaDiagnostico,
+                           FechaInicioSintomas = nna.FechaInicioSintomas,
+                           FechaHospitalizacion = nna.FechaHospitalizacion,
+                           FechaDefuncion = nna.FechaDefuncion,
+                           MotivoDefuncion = nna.MotivoDefuncion,
+                           FechaInicioTratamiento = nna.FechaInicioTratamiento,
+                           Recaida = nna.Recaida,
+                           CantidadRecaidas = nna.CantidadRecaidas,
+                           FechaUltimaRecaida = nna.FechaUltimaRecaida,
+                           TipoDiagnosticoId = nna.TipoDiagnosticoId,
+                           MotivoNoDiagnosticoId = nna.MotivoNoDiagnosticoId,
+                           MotivoNoDiagnosticoOtro = nna.MotivoNoDiagnosticoOtro,
+                           DepartamentoTratamientoId = nna.DepartamentoTratamientoId,
+                           IPSIdTratamiento = nna.IPSIdTratamiento,
+                           PropietarioResidenciaActual = nna.PropietarioResidenciaActual,
+                           EstadoIngresoEstrategiaId = nna.EstadoIngresoEstrategiaId,
+                           FechaIngresoEstrategia = nna.FechaIngresoEstrategia,
+                           FechaConsultaOrigenReporte = nna.FechaConsultaOrigenReporte,
+                           FechaNotificacionSIVIGILA = nna.FechaNotificacionSIVIGILA,
+                           ResidenciaActualCategoriaId = nna.ResidenciaActualCategoriaId,
+                           ResidenciaActualMunicipioId = nna.ResidenciaActualMunicipioId,
+                           ResidenciaActualBarrio = nna.ResidenciaActualBarrio,
+                           ResidenciaActualAreaId = nna.ResidenciaActualAreaId,
+                           ResidenciaActualDireccion = nna.ResidenciaActualDireccion,
+                           ResidenciaActualEstratoId = nna.ResidenciaActualEstratoId,
+                           ResidenciaActualTelefono = nna.ResidenciaActualTelefono,
+                           ResidenciaOrigenCategoriaId = nna.ResidenciaOrigenCategoriaId,
+                           ResidenciaOrigenMunicipioId = nna.ResidenciaOrigenMunicipioId,
+                           ResidenciaOrigenBarrio = nna.ResidenciaOrigenBarrio,
+                           ResidenciaOrigenAreaId = nna.ResidenciaOrigenAreaId,
+                           ResidenciaOrigenDireccion = nna.ResidenciaOrigenDireccion,
+                           ResidenciaOrigenEstratoId = nna.ResidenciaOrigenEstratoId,
+                           ResidenciaOrigenTelefono = nna.ResidenciaOrigenTelefono,
+                           Contactos = (from c in _context.ContactoNNAs
+                                        where c.NNAId == nna.Id
+                                        select new ContactoNNADto
+                                        {
+                                            Id = c.Id,
+                                            NNAId = c.NNAId,
+                                            Nombres = c.Nombres,
+                                            ParentescoId = c.ParentescoId,
+                                            Telefonos = c.Telefonos
+                                        }).ToArray(),
+                           CuidadorParentescoId = nna.CuidadorParentescoId,
+                           CuidadorParentesco = p != null ? p.Nombre : "",
+                           CuidadorNombres = nna.CuidadorNombres,
+                           CuidadorTelefono = nna.CuidadorTelefono,
+                           CuidadorEmail = nna.CuidadorEmail,
+                           CategoriaAlertaId = nna.CategoriaAlertaId,
+                           DifAsignaciondeCitas = nna.DifAsignaciondeCitas,
+                           DifAutorizaciondeMedicamentos = nna.DifAutorizaciondeMedicamentos,
+                           DifAutorizacionProcedimientos = nna.DifAutorizacionProcedimientos,
+                           DifMalaAtencionIPS = nna.DifMalaAtencionIPS,
+                           DifMalaAtencionNombreIPSId = nna.DifMalaAtencionNombreIPSId,
+                           PropietarioResidenciaActualOtro = nna.PropietarioResidenciaActualOtro,
+                           SubcategoriaAlertaId = nna.SubcategoriaAlertaId,
+                           TrasladoEAPBSuministroApoyo = nna.TrasladoEAPBSuministroApoyo,
+                           TrasladosApoyoRecibidoxFundacion = nna.TrasladosApoyoRecibidoxFundacion,
+                           TrasladosHaRecurridoAccionLegal = nna.TrasladosHaRecurridoAccionLegal,
+                           TrasladosHaSolicitadoApoyoFundacion = nna.TrasladosHaSolicitadoApoyoFundacion,
+                           TrasladosMotivoAccionLegal = nna.TrasladosMotivoAccionLegal,
+                           TrasladosPropietarioResidenciaActualId = nna.TrasladosPropietarioResidenciaActualId,
+                           TrasladosServiciosdeApoyoCobertura = nna.TrasladosServiciosdeApoyoCobertura,
+                           TrasladosServiciosdeApoyoOportunos = nna.TrasladosServiciosdeApoyoOportunos,
+                           TrasladosPropietarioResidenciaActualOtro = nna.TrasladosPropietarioResidenciaActualOtro,
+                           TrasladosQuienAsumioCostosTraslado = nna.TrasladosQuienAsumioCostosTraslado,
+                           TrasladosQuienAsumioCostosVivienda = nna.TrasladosQuienAsumioCostosVivienda,
+                           TrasladosTipoAccionLegalId = nna.TrasladosTipoAccionLegalId,
+                           TratamientoCuantoTiemposinAsistir = nna.TratamientoCuantoTiemposinAsistir,
+                           TratamientoEstudiaActualmente = nna.TratamientoEstudiaActualmente,
+                           TratamientoHaDejadodeAsistir = nna.TratamientoHaDejadodeAsistir,
+                           TratamientoHaDejadodeAsistirColegio = nna.TratamientoHaDejadodeAsistirColegio,
+                           DifEntregaMedicamentosLAP = nna.DifEntregaMedicamentosLAP,
+                           DifEntregaMedicamentosNoLAP = nna.DifEntregaMedicamentosNoLAP,
+                           DifFallaConvenioEAPBeIPSTratante = nna.DifFallaConvenioEAPBeIPSTratante,
+                           DifFallasenMIPRES = nna.DifFallasenMIPRES,
+                           DifHanCobradoCuotasoCopagos = nna.DifHanCobradoCuotasoCopagos,
+                           DifRemisionInstitucionesEspecializadas = nna.DifRemisionInstitucionesEspecializadas,
+                           TrasladosHaSidoTrasladadodeInstitucion = nna.TrasladosHaSidoTrasladadodeInstitucion,
+                           TrasladosNumerodeTraslados = nna.TrasladosNumerodeTraslados,
+                           TrasladosIPSId = nna.TrasladosIPSId,
+                           TratamientoCausasInasistenciaId = nna.TratamientoCausasInasistenciaId,
+                           TratamientoCausasInasistenciaOtra = nna.TratamientoCausasInasistenciaOtra,
+                           TratamientoHaSidoInformadoClaramente = nna.TratamientoHaSidoInformadoClaramente,
+                           TratamientoObservaciones = nna.TratamientoObservaciones,
+                           TratamientoTiempoInasistenciaColegio = nna.TratamientoTiempoInasistenciaColegio,
+                           TratamientoTiempoInasistenciaUnidadMedidaId = nna.TratamientoTiempoInasistenciaUnidadMedidaId,
+                           TratamientoUnidadMedidaIdTiempoId = nna.TratamientoUnidadMedidaIdTiempoId,
+                           SeguimientoLoDesea = nna.SeguimientoLoDesea,
+                           SeguimientoMotivoNoLoDesea = nna.SeguimientoMotivoNoLoDesea,
+                           estadoId = nna.estadoId,
+                           FechaConsultaDiagnostico = nna.FechaConsultaDiagnostico,
+                           MunicipioNacimientoId = nna.MunicipioNacimientoId,
+                           TipoCancerId = nna.TipoCancerId,
+                           TrasladosNombreFundacion = nna.TrasladosNombreFundacion,
+                           TrasladoTieneCapacidadEconomica = nna.TrasladoTieneCapacidadEconomica,
+                           TratamientoRequirioCambiodeCiudad = nna.TratamientoRequirioCambiodeCiudad,
+                           CreatedByUserId = nna.CreatedByUserId,
+                           DateCreated = nna.DateCreated,
+                           DateDeleted = nna.DateDeleted,
+                           DeletedByUserId = nna.DeletedByUserId,
+                           IsDeleted = nna.IsDeleted,
+                           UpdatedByUserId = nna.UpdatedByUserId,
+                           DateUpdated = nna.DateUpdated
+                       };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return Enumerable.Empty<NNADto>().AsQueryable();
+            }
         }
 
         public async Task<NNADto?> GetById(long id)
         {
             try
             {
-                var result = await _repository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Entity not found");
-
-                NNADto nNADto = result.Adapt<NNADto>();
-
-                Entidad? eps = (from ent in _context.Entidades
-                                where ent.Id == nNADto.EPSId
-                                select ent).FirstOrDefault();
-                if (eps != null)
-                {
-                    nNADto.EPSNombre = eps.Nombre;
-                }
-
-                Entidad? ips = (from ent in _context.Entidades
-                                where ent.Id == nNADto.IPSId
-                                select ent).FirstOrDefault();
-
-                if (ips != null)
-                {
-                    nNADto.IPSNombre = ips.Nombre;
-                }
-
-                Entidad? eapb = (from ent in _context.Entidades
-                                 where ent.Id == nNADto.EAPBId
-                                 select ent).FirstOrDefault();
-
-                if (eapb != null)
-                {
-                    nNADto.EAPBNombre = eapb.Nombre;
-                }
-
-                return nNADto;
+                var nna = await SelectBase().FirstOrDefaultAsync(x => x.Id == id);
+                return nna;
             }
             catch (Exception ex)
             {
@@ -182,6 +310,7 @@ namespace Infra.Repositorios
                     FiltroNNADto dto = new()
                     {
                         NoCaso = filtroNNA.NoCaso,
+                        IdNNA = filtroNNA.IdNNA,
                         NombreNNA = filtroNNA.NombreNNA,
                         NoDocumento = filtroNNA.NoDocumento,
                         UltimaActualizacion = filtroNNA.UltimaActualizacion,
@@ -311,9 +440,9 @@ namespace Infra.Repositorios
                                                            select new DatosBasicosNNAResponse()
                                                            {
                                                                Diagnostico = "",
-                                                               FechaInicioSegumiento = seguimiento.FechaSeguimiento,
+                                                               FechaInicioSegumiento = seguimiento != null ? seguimiento.FechaSeguimiento : null,
                                                                FechaNacimiento = nna.FechaNacimiento,
-                                                               NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                                               NombreCompleto = $"{nna.PrimerNombre ?? ""} {nna.SegundoNombre ?? ""} {nna.PrimerApellido ?? ""} {nna.SegundoApellido ?? ""}",
                                                                DiagnosticoId = nna.DiagnosticoId
                                                            }).FirstOrDefaultAsync();
 
@@ -380,6 +509,7 @@ namespace Infra.Repositorios
             int duplicados = 0;
             int ingresados = 0;
 
+            List<ContactoNNA> insertContactoNNA = [];
             List<NNAs> insertNNA = [];
             List<NNAs> updateNNA = [];
 
@@ -765,11 +895,21 @@ namespace Infra.Repositorios
                             estadoId = 15
                         };
                         insertNNA.Add(newNNA);
+
+                        var contacto = new ContactoNNA()
+                        {
+                            NNAId = newNNA.Id,
+                            Nombres = "Cuidador",
+                            Telefonos = d.DepuracionProtocoloRequest.tel_cont_2,
+                            Cuidador = true,
+                        };
+                        insertContactoNNA.Add(contacto);
                     }
                 }
 
                 _context.NNAs.UpdateRange(updateNNA);
                 _context.NNAs.AddRange(insertNNA);
+                _context.ContactoNNAs.AddRange(insertContactoNNA);
                 await _context.SaveChangesAsync();
 
                 List<DepuracionManualProtocolo> depuracionProtocolos = [];
@@ -943,8 +1083,6 @@ namespace Infra.Repositorios
                     var seguimiento = new Seguimiento()
                     {
                         NNAId = nna.Id,
-                        FechaSeguimiento = DateTime.Now,
-                        FechaSolicitud = DateTime.Now,
                         TieneDiagnosticos = true,
                         Telefono = nna.CuidadorTelefono,
                         ObservacionesSolicitante = "Generado automáticamente",

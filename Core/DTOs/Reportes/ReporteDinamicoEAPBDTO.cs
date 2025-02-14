@@ -2,7 +2,7 @@
 {
     public class ReporteDinamicoEAPBDTO
     {
-        public string EAPBId { get; set; }
+        public int EAPBId { get; set; }
         public string EAPB { get; set; }
         public int CasosAsociados { get; set; }
         public int CasosConAlertasSinResolver { get; set; }

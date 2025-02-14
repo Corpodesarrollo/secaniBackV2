@@ -39,11 +39,13 @@ builder
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHostedService<TareaEnSegundoPlano>();
+//builder.Services.AddHostedService<TareaEnSegundoPlano>();
 
 builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
+
+builder.Services.AddScoped(typeof(GenericRepository<>));
 
 builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddScoped<IStorageService, StorageService>();

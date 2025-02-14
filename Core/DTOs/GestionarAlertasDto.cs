@@ -10,6 +10,7 @@
         public string? ColorEstado { get; set; }
         public DateTime? FechaNotificacion { get; set; }
         public string? NombreNNA { get; set; }
+        public string? NombreEAPB { get; set; }
         public string? DocumentoNNA { get; set; }
         public string? Categoria { get; set; }
         public string? Subcategoria { get; set; }

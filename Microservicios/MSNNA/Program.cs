@@ -6,6 +6,7 @@ using Core.Interfaces.Repositorios.Reportes;
 using Core.Interfaces.Services;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Interfaces.Services.Reportes;
+using Core.Modelos;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.Reportes;
@@ -43,6 +44,9 @@ builder.Services.AddCustomAuthentication(true);
 builder.CustomConfigureServices();
 
 //Registro de Repos
+builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
+builder.Services.AddScoped(typeof(GenericRepository<>));
+
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
 

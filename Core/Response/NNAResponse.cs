@@ -6,5 +6,6 @@
         public string NombreCompleto { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public string Diagnostico { get; set; }
+        public long? IdEstado { get; set; }
     }
 }

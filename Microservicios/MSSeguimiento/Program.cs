@@ -10,6 +10,7 @@ using Core.Interfaces.Repositorios.Reportes;
 using Core.Interfaces.Services.Llamadas;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Interfaces.Services.Reportes;
+using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
 using Core.Services.Llamadas;
@@ -63,6 +64,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 
 // Registro de los servicios
 builder.CustomConfigureServices();
+
+builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
+builder.Services.AddScoped(typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));

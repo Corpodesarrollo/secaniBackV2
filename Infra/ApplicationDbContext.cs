@@ -154,6 +154,7 @@ namespace Infra
         public DbSet<ReportesSIVIGILA> ReportesSIVIGILA { get; set; }
         public DbSet<RespuestasAlerta> RespuestasAlerta { get; internal set; }
         public DbSet<TPIPS> TPIPS { get; internal set; }
+        public DbSet<TPEAPB> TPEAPB { get; internal set; }
         public DbSet<ReporteInconsistenciaPersona> ReporteInconsistenciaPersona { get; set; }
         public DbSet<ReporteDepuracionDetalle> ReporteDepuracionDetalle { get; set; }
         public DbSet<Log> Log { get; set; }

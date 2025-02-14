@@ -39,8 +39,6 @@ namespace Api.Controllers
         [HttpPut("Actualizar")]
         public async Task<(bool, NNAs)> UpdateAsync(NNADto dto)
         {
-
-            // Mapear NNADto a NNAs
             var entity = dto.Adapt<NNAs>();
             return await _nNARepo.UpdateAsync(entity);
         }

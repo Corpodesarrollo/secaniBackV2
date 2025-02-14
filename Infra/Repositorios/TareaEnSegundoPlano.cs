@@ -22,10 +22,11 @@ namespace Infra.Repositorios
             var nextRun = new DateTime(now.Year, now.Month, now.Day, horaEjecucion.Hours, horaEjecucion.Minutes, horaEjecucion.Seconds);
             if (now > nextRun)
             {
-                nextRun = nextRun.AddDays(1);
+                //nextRun = nextRun.AddDays(1);
             }
 
-            var initialDelay = nextRun - now;
+            //var initialDelay = nextRun - now;
+            var initialDelay = now - now;
 
             // Configura el temporizador para ejecutar la tarea a la hora configurada y luego cada intervalo configurado
             _timer = new Timer(EjecutarTarea, null, initialDelay, TimeSpan.FromHours(intervaloHoras));

@@ -18,6 +18,7 @@
         public string? NombreRechazo { get; set; }
         public string? ParentescoRechazo { get; set; }
         public string? RazonesRechazo { get; set; }
-        public int[]? Alertas { get; set; }
+        public int[]? NewAlertas { get; set; }
+        public int[]? OldAlertas { get; set; }
     }
 }

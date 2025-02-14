@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Core.Modelos
 {
@@ -33,18 +32,7 @@ namespace Core.Modelos
         public string? MunicipioNacimientoId { get; set; }
         public string? SexoId { get; set; }
         public string? TipoRegimenSSId { get; set; }
-
-        //public string? EAPBId { get; set; }
-        [NotMapped]
-        public string? EAPBId
-        {
-            get => EAPBIdInternal?.ToString() ?? string.Empty;
-            set { }
-        }
-
-        [Column("EAPBId")]
-        public int? EAPBIdInternal { get; set; }
-
+        public int? EAPBId { get; set; }
         public int? EPSId { get; set; }
         public int? IPSId { get; set; }
         public string? GrupoPoblacionId { get; set; }
@@ -63,9 +51,7 @@ namespace Core.Modelos
         public int? CantidadRecaidas { get; set; }
         public DateTime? FechaUltimaRecaida { get; set; }
         public string? TipoDiagnosticoId { get; set; }
-        public int? DiagnosticoId { get; set; }
         public DateTime? FechaDiagnostico { get; set; }
-        public int? MotivoNoDiagnosticoId { get; set; }
         public string? MotivoNoDiagnosticoOtro { get; set; }
         public DateTime? FechaConsultaDiagnostico { get; set; }
         public string? DepartamentoTratamientoId { get; set; }
@@ -76,7 +62,6 @@ namespace Core.Modelos
         public bool? TrasladoEAPBSuministroApoyo { get; set; }
         public bool? TrasladosServiciosdeApoyoOportunos { get; set; }
         public bool? TrasladosServiciosdeApoyoCobertura { get; set; }
-        public bool? TrasladosHaSolicitadoApoyoFundacion { get; set; }
         public string? TrasladosNombreFundacion { get; set; }
         public string? TrasladosApoyoRecibidoxFundacion { get; set; }
         public bool? DifAutorizaciondeMedicamentos { get; set; }
@@ -107,7 +92,6 @@ namespace Core.Modelos
         public int? TratamientoTiempoInasistenciaColegio { get; set; }
         public string? TratamientoTiempoInasistenciaUnidadMedidaId { get; set; }
         public bool? TratamientoHaSidoInformadoClaramente { get; set; }
-        public bool? TratamientoRequirioCambiodeCiudad { get; set; }
         public string? TratamientoObservaciones { get; set; }
         public string? CuidadorNombres { get; set; }
         public int? CuidadorParentescoId { get; set; }
@@ -117,8 +101,8 @@ namespace Core.Modelos
         public string? SeguimientoMotivoNoLoDesea { get; set; }
         public DateTime? DateDeleted { get; set; }
         public DateTime? DateUpdated { get; set; }
-        public string? CreatedByUserId { get; set; }
-        public DateTime? DateCreated { get; set; }
+        public string CreatedByUserId { get; set; }
+        public DateTime DateCreated { get; set; }
         public string? DeletedByUserId { get; set; }
         public bool IsDeleted { get; set; }
         public string? UpdatedByUserId { get; set; }
@@ -129,5 +113,13 @@ namespace Core.Modelos
         public string? TrasladosPropietarioResidenciaActualOtro { get; set; }
         public string? TrasladosQuienAsumioCostosTraslado { get; set; }
         public string? TrasladosQuienAsumioCostosVivienda { get; set; }
+        public bool? TrasladosHaSolicitadoApoyoFundacion { get; set; }
+        public bool? TratamientoRequirioCambiodeCiudad { get; set; }
+        public string? TratamientoRazonesNoHaIniciadoId { get; set; }
+        public string? TratamientoRazonesNoHaIniciadoOtro { get; set; }
+        public int? DiagnosticoId { get; set; }
+        public int? RazonesSinIniciarTratamiento { get; set; }
+        public string? RazonesSinIniciarTratamientoOtros { get; set; }
+        public int? MotivoNoDiagnosticoId { get; set; }
     }
 }

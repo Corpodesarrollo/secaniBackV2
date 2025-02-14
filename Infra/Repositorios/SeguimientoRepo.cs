@@ -424,6 +424,7 @@ namespace Infra.Repositorios
                                                                  FechaNacimiento = nna.FechaNacimiento,
                                                                  NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
                                                                  Diagnostico = "",
+                                                                 IdEstado = nna.estadoId
                                                              }
                                                          }).ToList();
 
@@ -506,9 +507,9 @@ namespace Infra.Repositorios
                 _context.Seguimientos.Add(seguimiento);
                 await _context.SaveChangesAsync();
 
-                if (request.Alertas != null)
+                if (request.NewAlertas != null)
                 {
-                    foreach (var item in request.Alertas)
+                    foreach (var item in request.NewAlertas)
                     {
                         var alerta = new Alerta()
                         {
@@ -1018,15 +1019,17 @@ namespace Infra.Repositorios
                               Sexo = n.SexoId == "1" ? "Masculino" : "Femenino",
                               FechaNacimiento = n.FechaNacimiento,
                               FechaNotificacion = n.FechaNotificacionSIVIGILA,
-                              FechaSolicitud = s.FechaSolicitud,
-                              FechaAsignacion = a != null ? a.FechaAsignacion : null,
-                              FechaSeguimiento = s.FechaSeguimiento,
+
+                              FechaSolicitud = s.FechaSolicitud, // solicitado
+                              FechaAsignacion = a != null ? a.FechaAsignacion : null, // fecha asignacion
+                              FechaSeguimiento = s.FechaSeguimiento, // agendado
+                              FechaUltimaActuacion = s.UltimaActuacionFecha, // contacto
+
                               TipoIdentificacion = n.TipoIdentificacionId,
                               NumeroIdentificacion = n.NumeroIdentificacion,
                               Parentesco = p != null ? p.Nombre : "",
                               Diagnostico = d != null ? d.Nombre : "",
                               AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
-                              FechaUltimaActuacion = s.UltimaActuacionFecha
                           }).ToArrayAsync();
         }
     }

@@ -20,7 +20,7 @@
         public string? Observaciones { get; set; }
         public string? TipoIdentificacion { get; set; }
         public string? BarrioProcedencia { get; set; }
-        public string? EAPB { get; set; }
+        public int? EAPB { get; set; }
         public string? NumeroIdentificacion { get; set; }
         public string? AreaProcedencia { get; set; }
         public string? RegimenAfiliacion { get; set; }

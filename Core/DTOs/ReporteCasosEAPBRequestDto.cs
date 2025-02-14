@@ -5,7 +5,7 @@
         public DateTime FechaInicial { get; set; }
         public DateTime FechaFinal { get; set; }
         public string? Buscar { get; set; }
-        public string? EAPB { get; set; }
+        public int? EAPB { get; set; }
         public int IdCicloVida { get; set; }
 
         public bool CategoriaAlerta { get; set; }

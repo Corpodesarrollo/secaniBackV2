@@ -9,7 +9,8 @@ namespace Infra.Repositorios
 {
     public class IpsRepo(HttpClient httpClient, ApplicationDbContext db, DbContextOptions<ApplicationDbContext> dbContextOptions) : IIpsRepo
     {
-        private readonly string BASEURL = "https://web.sispro.gov.co/directoriogeneral/api/IPSCodHabilitacion";
+        private readonly string BASEURL = "https://web.sispro.gov.co/directoriogeneral/api/CodigoEAPByNit";
+        //private readonly string BASEURL = "https://web.sispro.gov.co/directoriogeneral/api/IPSCodHabilitacion";
 
         private async Task<ItemDto[]> GetIPS()
         {
@@ -48,24 +49,35 @@ namespace Infra.Repositorios
 
                 using (var db = new ApplicationDbContext(dbContextOptions))
                 {
-                    await db.TPIPS.ExecuteDeleteAsync();
+                    await db.TPEAPB.ExecuteDeleteAsync();
                 }
 
                 for (int i = 0; i < totalBatches; i++)
                 {
-                    var batch = data.Skip(i * batchSize).Take(batchSize).Select(dto => new TPIPS
+                    //var batch = data.Skip(i * batchSize).Take(batchSize).Select(dto => new TPIPS
+                    //{
+                    //    Codigo = dto.Codigo,
+                    //    Nombre = dto.Nombre,
+                    //    Habilitado = dto.Habilitado,
+                    //    CodigoMunicipio = dto.Extra_IV,
+                    //    NombreMunicipio = dto.Extra_V,
+                    //    Creation = dto.Creation,
+                    //    LastUpdate = dto.LastUpdate
+                    //}).ToArray();
+
+                    var batch = data.Skip(i * batchSize).Take(batchSize).Select(dto => new TPEAPB
                     {
                         Codigo = dto.Codigo,
                         Nombre = dto.Nombre,
-                        Habilitado = dto.Habilitado,
-                        CodigoMunicipio = dto.Extra_IV,
-                        NombreMunicipio = dto.Extra_V,
+                        Descripcion = dto.Descripcion,
+                        NIT = long.TryParse(dto.Extra_III, out long nit) ? nit : null,
+                        DV = int.TryParse(dto.Extra_IV, out int dv) ? dv : null,
                         Creation = dto.Creation,
                         LastUpdate = dto.LastUpdate
                     }).ToArray();
 
                     using var db = new ApplicationDbContext(dbContextOptions);
-                    await db.TPIPS.AddRangeAsync(batch);
+                    await db.TPEAPB.AddRangeAsync(batch);
                     await db.SaveChangesAsync();
                 }
 

@@ -23,11 +23,30 @@
         public string? SegundoNombre { get; set; }
         public string? PrimerApellido { get; set; }
         public string? SegundoApellido { get; set; }
+        public string? NombreCompleto
+        {
+            get
+            {
+                return $"{PrimerNombre ?? ""} {SegundoNombre ?? ""} {PrimerApellido ?? ""} {SegundoApellido ?? ""}";
+            }
+        }
         public string? TipoIdentificacionId { get; set; }
         public string? NumeroIdentificacion { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public string? MunicipioNacimientoId { get; set; }
         public string? SexoId { get; set; }
+        public string? Sexo
+        {
+            get
+            {
+                return SexoId switch
+                {
+                    "M" or "1" => "Masculino",
+                    "F" or "2" => "Femenino",
+                    _ => "Otro"
+                };
+            }
+        }
         public string? TipoRegimenSSId { get; set; }
         public int? EAPBId { get; set; }
         public string? EAPBNombre { get; set; }
@@ -97,15 +116,16 @@
         public bool? TratamientoHaSidoInformadoClaramente { get; set; }
         public string? TratamientoObservaciones { get; set; }
         public string? CuidadorNombres { get; set; }
-        public string? CuidadorParentescoId { get; set; }
+        public int? CuidadorParentescoId { get; set; }
+        public string? CuidadorParentesco { get; set; }
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }
         public string? SeguimientoLoDesea { get; set; }
         public string? SeguimientoMotivoNoLoDesea { get; set; }
-        public DateTime DateDeleted { get; set; }
-        public DateTime DateUpdated { get; set; }
-        public string CreatedByUserId { get; set; }
-        public DateTime DateCreated { get; set; }
+        public DateTime? DateDeleted { get; set; }
+        public DateTime? DateUpdated { get; set; }
+        public string? CreatedByUserId { get; set; }
+        public DateTime? DateCreated { get; set; }
         public string? DeletedByUserId { get; set; }
         public bool IsDeleted { get; set; }
         public string? UpdatedByUserId { get; set; }

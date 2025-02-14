@@ -16,7 +16,7 @@
         public string? NumeroIdentificacion { get; set; }
         public string? TipoRegimenSSId { get; set; }
         public string? TipoRegimenSS { get; set; } //calculado
-        public string? EAPBId { get; set; }
+        public int? EAPBId { get; set; }
         public string EAPB { get; set; } //calculado
         public int EstadoId { get; set; }
         public string Estado { get; set; } //calculado

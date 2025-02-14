@@ -26,12 +26,15 @@ namespace Infra.Repositorios
                                join ea in db.TPEstadoAlerta on als.EstadoId equals ea.Id
                                join sca in db.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
                                join ca in db.TPCategoriaAlerta on sca.CategoriaAlertaId equals ca.Id
+                               join eapb in db.TPEAPB on n.EAPBId equals eapb.Id into eapbGroup
+                               from eapb in eapbGroup.DefaultIfEmpty()
                                select new GestionarAlertasDto
                                {
                                    IdAlerta = ea.Id,
                                    IdAlertaSeguimiento = als.Id,
                                    Alerta = sca.CategoriaAlertaId + "." + sca.Indicador,
                                    NombreNNA = $"{n.PrimerNombre ?? ""} {n.SegundoNombre ?? ""} {n.PrimerApellido ?? ""} {n.SegundoApellido ?? ""}",
+                                   NombreEAPB = eapb == null ? "" : eapb.Nombre,
                                    DocumentoNNA = $"{n.TipoIdentificacionId} {n.NumeroIdentificacion ?? ""}",
                                    Categoria = $"{ca.Id}. {ca.Nombre}",
                                    Subcategoria = sca.SubCategoriaAlerta,

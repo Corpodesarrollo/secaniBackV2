@@ -1,6 +1,5 @@
 ﻿using Core.DTOs.Reportes;
 using Core.Interfaces.Repositorios.Reportes;
-using Core.Modelos;
 using Core.Services.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,12 +46,12 @@ namespace Infra.Repositorios.Reportes
                         seg => seg.NNAId,
                         (nna, seguimientosAgrupados) => new { nna.EAPBId, nna.TipoRegimenSSId, Seguimientos = seguimientosAgrupados })
                     .GroupBy(g => g.EAPBId)  // Agrupa por EAPBId
-                    .OrderBy(grupo => string.IsNullOrEmpty(grupo.Key) ? 0 : int.Parse(grupo.Key))   // Ordenar por EAPBId
+                    .OrderBy(grupo => grupo.Key ?? 0)   // Ordenar por EAPBId
                     .ToList();
 
                 foreach (var grupo in grupos)
                 {
-                    int? eapbIdInt = string.IsNullOrEmpty(grupo.Key) ? (int?)null : int.Parse(grupo.Key);
+                    int? eapbIdInt = grupo.Key ?? 0;
 
                     var eapbName = grupo.Key == null
                         ? string.Empty
@@ -60,7 +59,7 @@ namespace Infra.Repositorios.Reportes
 
                     reporte.Add(new ReporteDinamicoEAPBDTO
                     {
-                        EAPBId = grupo.Key ?? "",
+                        EAPBId = grupo.Key ?? 0,
                         EAPB = eapbName,
                         CasosAsociados = grupo.Sum(g => g.Seguimientos.Count()),
                         CasosConAlertasSinResolver = grupo.Sum(g => g.Seguimientos.Count(seg => _context.AlertaSeguimientos.Any(als => als.SeguimientoId == seg.NNAId && als.EstadoId == 3))),
