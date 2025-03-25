@@ -32,7 +32,7 @@ namespace TestsSecani
             storageService = Substitute.For<IStorageService>();
 
             Context = new ApplicationDbContext(options);
-            NotificacionRepo = new NotificacionRepo(Context,adjuntosRepo,storageService);
+            NotificacionRepo = new NotificacionRepo(Context,adjuntosRepo,storageService, new Infra.Repositorios.ReportesSIVIGILARepo(Context, storageService));
         }
 
         [Fact]
