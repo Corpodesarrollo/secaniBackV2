@@ -1039,7 +1039,9 @@ namespace Infra.Repositorios
                 await _context.SaveChangesAsync();
 
                 await GenerarSeguimientos();
-                await _seguimientoRepo.AsignacionAutomatica();
+                var asignados = await _seguimientoRepo.AsignacionAutomatica();
+                var reagendados = await _seguimientoRepo.AsignacionAutomaticaReagendar();
+                var reasignados = await _seguimientoRepo.AsignacionAutomaticaReasignacion();
             }
             catch (Exception e)
             {

@@ -20,9 +20,6 @@ namespace Api.Controllers
         private INNAService _nNAService = service;
         private readonly TablaParametricaService tablaParametricaService = tablaParametrica;
 
-        /**
-        * NNA
-        */
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {

@@ -17,6 +17,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Infra;
 using Infra.Repositories;
+using Infra.Repositorios;
 using Infra.Repositorios.MSPermisos;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
@@ -83,6 +84,8 @@ builder.Services.AddSingleton<ITokenGenerator>(new TokenGenerator(_key, _issuer,
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));

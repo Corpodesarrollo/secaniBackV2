@@ -3,7 +3,7 @@
     public class GetDashboardFechaTotalResponse
     {
 
-        public DateTime FechaAsignacion { get; set; }
+        public DateTime? FechaAsignacion { get; set; }
 
         public int Cantidad { get; set; }
 

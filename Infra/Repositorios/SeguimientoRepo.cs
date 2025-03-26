@@ -507,9 +507,9 @@ namespace Infra.Repositorios
                 _context.Seguimientos.Add(seguimiento);
                 await _context.SaveChangesAsync();
 
-                if (request.NewAlertas != null)
+                if (request.Alertas != null)
                 {
-                    foreach (var item in request.NewAlertas)
+                    foreach (var item in request.Alertas)
                     {
                         var alerta = new Alerta()
                         {
@@ -534,6 +534,22 @@ namespace Infra.Repositorios
                         };
                         _context.AlertaSeguimientos.Add(alertaSeguimiento);
                         await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (request.alertasPendientes != null)
+                {
+                    foreach (var item in request.alertasPendientes)
+                    {
+                        var alertaSeguimiento = await _context.AlertaSeguimientos.FirstOrDefaultAsync(x => x.AlertaId == item.Id);
+                        if (alertaSeguimiento != null)
+                        {
+                            alertaSeguimiento.EstadoId = item.Resuelta ?? false ? 4 : 3;
+                            alertaSeguimiento.Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento";
+                            alertaSeguimiento.UltimaFechaSeguimiento = DateTime.Now;
+                            _context.AlertaSeguimientos.Update(alertaSeguimiento);
+                            await _context.SaveChangesAsync();
+                        }
                     }
                 }
 
@@ -572,43 +588,272 @@ namespace Infra.Repositorios
             return 1;
         }
 
-        public async Task AsignacionAutomatica()
+        public async Task<List<UsuarioAsignado>> AsignacionAutomatica()
         {
-            var estados = new int[] { 2, 3, 4, 5, 6, 7, 8, 9, 15 };
+            var revisoresAusentes = new List<UsuariosHorariosDto>();
+            var seguimientosAsignados = new List<UsuarioAsignado>();
 
-            var seguimientos = await (from seg in _context.Seguimientos
-                                      join nna in _context.NNAs on seg.NNAId equals nna.Id
-                                      where nna.estadoId.HasValue && estados.Contains(nna.estadoId.Value)
-                                      select seg.Id).ToArrayAsync();
+            var seguimientosNoAsignados = await CargarSeguimientos();
+
+            var fecha = DateTime.Now.Date;
+            var revisores = await CargarRevisores(fecha);
+
+            while (seguimientosNoAsignados.Count > 0 && revisores.Count > 0)
+            {
+                while (seguimientosNoAsignados.Count > 0 && revisores.Count > 0)
+                {
+                    var revisor = revisores.Select(x => x).OrderByDescending(x => x.CantidadSeguimientosDisponibles).FirstOrDefault();
+
+                    //validar que la fecha no es dia festivo
+                    var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                    if (festivos != null)
+                        break;
+
+                    //validamos los seguimientos asignados al revisor en la fecha
+                    var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
+                    if (seguimientosAsignadosFecha.Count > 0)
+                        revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+
+                    //valida si el revisor tiene seguimeintos disponibles por asignar
+                    if (revisor.CantidadSeguimientosDisponibles <= 0)
+                    {
+                        revisores.Remove(revisor);
+                        continue;
+                    }
+
+                    //validar lista de seguimientos no asignados
+                    if (seguimientosNoAsignados.Count == 0)
+                        break;
+
+                    var seguimiento = seguimientosNoAsignados[0];
+
+                    //asignar seguimiento al revisor
+                    var usuarioAsignado = new UsuarioAsignado
+                    {
+                        Activo = true,
+                        DateCreated = DateTime.Now,
+                        FechaAsignacion = DateTime.Now,
+                        Observaciones = "Asignación automática",
+                        SeguimientoId = seguimiento,
+                        UsuarioId = revisor.UserId
+                    };
+
+                    _context.UsuarioAsignados.Add(usuarioAsignado);
+                    await _context.SaveChangesAsync();
+
+                    seguimientosAsignados.Add(usuarioAsignado);
+
+                    seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                    revisor.CantidadSeguimientosDisponibles--;
+                }
+
+                fecha = fecha.AddDays(1);
+                revisores = await CargarRevisores(fecha);
+            }
+
+            return seguimientosAsignados;
+        }
+
+        public async Task<List<UsuarioAsignado>> AsignacionAutomaticaReagendar()
+        {
+            var fecha = DateTime.Now.Date;
 
             //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
             var revisores = await (from ur in _context.UserRoles
                                    join r in _context.Roles on ur.RoleId equals r.Id
                                    join u in _context.Users on ur.UserId equals u.Id
-                                   where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046"
-                                   select u).ToListAsync();
+                                   join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                                   join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                                   from aus in a.DefaultIfEmpty()
+                                   where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus != null
+                                   select new UsuariosHorariosDto
+                                   {
+                                       UserId = u.Id,
+                                       Fecha = h.Fecha,
+                                       HoraEntrada = h.HoraEntrada,
+                                       HoraSalida = h.HoraSalida
+                                   }).ToListAsync();
 
-            var usuariosAsignados = new List<UsuarioAsignado>();
-            int revisorIndex = 0;
+            var seguimientosReagendados = new List<UsuarioAsignado>();
 
-            foreach (var item in seguimientos)
+            foreach (var revisor in revisores)
             {
-                var revisor = revisores[revisorIndex];
-                usuariosAsignados.Add(new UsuarioAsignado
-                {
-                    Activo = true,
-                    DateCreated = DateTime.Now,
-                    FechaAsignacion = DateTime.Now,
-                    Observaciones = "Asignación automática",
-                    SeguimientoId = item,
-                    UsuarioId = revisor.Id
-                });
+                var seguimientos = from s in _context.Seguimientos
+                                   join n in _context.NNAs on s.NNAId equals n.Id
+                                   where s.UsuarioId == revisor.UserId
+                                   group s by s.NNAId into g
+                                   select new { id = g.Max(x => x.Id) };
 
-                revisorIndex = (revisorIndex + 1) % revisores.Count;
+                var seguimientosReagendamiento = await (from q in seguimientos
+                                                        join seg in _context.Seguimientos on q.id equals seg.Id
+                                                        join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                        where ua.FechaAsignacion == fecha
+                                                        select seg.Id).ToListAsync();
+
+                while (seguimientosReagendamiento.Count > 0)
+                {
+                    fecha = fecha.AddDays(1);
+
+                    //validar que la fecha no es dia festivo
+                    var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                    if (festivos != null)
+                        continue;
+
+                    //validamos los seguimientos asignados al revisor en la fecha
+                    var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
+                    if (seguimientosAsignadosFecha.Count > 0)
+                        revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+
+                    //valida si el revisor tiene seguimeintos disponibles por asignar
+                    if (revisor.CantidadSeguimientosDisponibles <= 0)
+                        continue;
+
+                    var seguimiento = seguimientosReagendamiento[0];
+
+                    //asignar seguimiento al revisor
+                    var usuarioAsignado = new UsuarioAsignado
+                    {
+                        Activo = true,
+                        DateCreated = DateTime.Now,
+                        FechaAsignacion = DateTime.Now,
+                        Observaciones = "Reagendamiento automático",
+                        SeguimientoId = seguimiento,
+                        UsuarioId = revisor.UserId
+                    };
+
+                    _context.UsuarioAsignados.Add(usuarioAsignado);
+                    await _context.SaveChangesAsync();
+
+                    seguimientosReagendados.Add(usuarioAsignado);
+                    seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                }
             }
 
-            _context.UsuarioAsignados.AddRange(usuariosAsignados);
-            await _context.SaveChangesAsync();
+            return seguimientosReagendados;
+        }
+
+        public async Task<List<UsuarioAsignado>> AsignacionAutomaticaReasignacion()
+        {
+            var fecha = DateTime.Now.Date;
+            var seguimientosAsignados = new List<UsuarioAsignado>();
+
+            var seguimientos = from s in _context.Seguimientos
+                               join n in _context.NNAs on s.NNAId equals n.Id
+                               group s by s.NNAId into g
+                               select new { id = g.Max(x => x.Id) };
+
+            var seguimientosReasignacion = await (from q in seguimientos
+                                                  join seg in _context.Seguimientos on q.id equals seg.Id
+                                                  join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                  join u in _context.Users on ua.UsuarioId equals u.Id
+                                                  where ua.FechaAsignacion == fecha && u.Activo == false
+                                                  select seg.Id).ToListAsync();
+
+            var revisores = await CargarRevisoresReasignacion(fecha);
+
+            while (seguimientosReasignacion.Count > 0 && revisores.Count > 0)
+            {
+                while (seguimientosReasignacion.Count > 0 && revisores.Count > 0)
+                {
+                    var revisor = revisores.Select(x => x).OrderByDescending(x => x.CantidadSeguimientosDisponibles).FirstOrDefault();
+
+                    //validar que la fecha no es dia festivo
+                    var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                    if (festivos != null)
+                        break;
+
+                    //validamos los seguimientos asignados al revisor en la fecha
+                    var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
+                    if (seguimientosAsignadosFecha.Count > 0)
+                        revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+
+                    //valida si el revisor tiene seguimeintos disponibles por asignar
+                    if (revisor.CantidadSeguimientosDisponibles <= 0)
+                    {
+                        revisores.Remove(revisor);
+                        continue;
+                    }
+
+                    //validar lista de seguimientos no asignados
+                    if (seguimientosReasignacion.Count == 0)
+                        break;
+
+                    var seguimiento = seguimientosReasignacion[0];
+
+                    //asignar seguimiento al revisor
+                    var usuarioAsignado = new UsuarioAsignado
+                    {
+                        Activo = true,
+                        DateCreated = DateTime.Now,
+                        FechaAsignacion = DateTime.Now,
+                        Observaciones = "Asignación automática",
+                        SeguimientoId = seguimiento,
+                        UsuarioId = revisor.UserId
+                    };
+
+                    _context.UsuarioAsignados.Add(usuarioAsignado);
+                    await _context.SaveChangesAsync();
+
+                    seguimientosAsignados.Add(usuarioAsignado);
+
+                    seguimientosReasignacion.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                    revisor.CantidadSeguimientosDisponibles--;
+                }
+
+                fecha = fecha.AddDays(1);
+                revisores = await CargarRevisoresReasignacion(fecha);
+            }
+
+            return seguimientosAsignados;
+        }
+
+        private async Task<List<UsuariosHorariosDto>> CargarRevisoresReasignacion(DateTime fecha)
+        {
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus == null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).ToListAsync();
+        }
+
+        private async Task<List<long>> CargarSeguimientos()
+        {
+            return await (from seg in _context.Seguimientos
+                          join nna in _context.NNAs on seg.NNAId equals nna.Id
+                          join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId into ua
+                          from uas in ua.DefaultIfEmpty()
+                          where nna.estadoId == 15 && uas == null
+                          select seg.Id).ToListAsync();
+        }
+
+        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha)
+        {
+            var fechaValidar = fecha;
+
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus == null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).ToListAsync();
         }
 
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)
@@ -1007,6 +1252,9 @@ namespace Infra.Repositorios
                           join a in _context.UsuarioAsignados on s.Id equals a.SeguimientoId into asignado
                           from a in asignado.DefaultIfEmpty()
 
+                          join ea in _context.TPEAPB on n.EAPBId equals ea.Id into eapb
+                          from ea in eapb.DefaultIfEmpty()
+
                           join e in _context.TPEstadoNNA on n.estadoId equals e.Id
                           select new SeguimientoDto()
                           {
@@ -1025,10 +1273,13 @@ namespace Infra.Repositorios
                               FechaSeguimiento = s.FechaSeguimiento, // agendado
                               FechaUltimaActuacion = s.UltimaActuacionFecha, // contacto
 
+                              EstadoSeguimiento = (s.UltimaActuacionFecha != null ? "Contactado" : (s.FechaSeguimiento != null ? "Agendado" : (a.FechaAsignacion != null ? "Asignado" : (s.FechaSolicitud != null ? "Solicitado" : "")))),
+
                               TipoIdentificacion = n.TipoIdentificacionId,
                               NumeroIdentificacion = n.NumeroIdentificacion,
                               Parentesco = p != null ? p.Nombre : "",
                               Diagnostico = d != null ? d.Nombre : "",
+                              Aseguradora = ea != null ? ea.Nombre : "",
                               AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
                           }).ToArrayAsync();
         }
