@@ -59,6 +59,13 @@ namespace MSAuthentication.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("GetByModuloPadreId/{id}")]
+        public async Task<IActionResult> GetByModuloPadreId(int id)
+        {
+            var result = await _service.GetAllByModuloPadreIdAsync(id, cancellationToken: default);
+            return Ok(result);
+        }
+
         [HttpGet("GetByRoleandModuloId/{roleId}/{moduloId}")]
         public async Task<IActionResult> GetByRoleandModuloId(string roleId, int moduloId)
         {

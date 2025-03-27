@@ -6,6 +6,7 @@ namespace Core.Interfaces.Repositorios.MSPermisos
     public interface IPermisoRepository : IGenericRepository<Permisos>
     {
         public Task<(Permisos, TPModuloComponenteObjeto, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById(long id, CancellationToken cancellationToken);
+        public Task<(Permisos, TPModuloComponenteObjeto, TPModuloComponenteObjeto)> GetPermisoWithFuncionalidadAndModuloById0(Permisos permiso, CancellationToken cancellationToken);
         public Task<IList<Permisos>> GetPermisos(CancellationToken cancellationToken);
         public Task<IList<Permisos>> GetPermisosByRoleId(string RoleId, CancellationToken cancellationToken);
         public Task<IList<Permisos>> GetPermisosByRoleandModulo(string RoleId, int ModuloId, CancellationToken cancellationToken);
