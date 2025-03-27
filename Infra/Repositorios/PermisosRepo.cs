@@ -38,6 +38,8 @@ namespace Infra.Repositories
             {
                 response = new List<GetVwMenuResponse>(); // Inicializar response si no está en caché
 
+                var x = _context.VwMenu
+                                      .Where(v => v.RoleId == request.RoleId);
                 var dataResponse = _context.VwMenu
                                       .Where(v => v.RoleId == request.RoleId)
                                       .OrderBy(v => v.MenuOrden)
@@ -162,13 +164,30 @@ namespace Infra.Repositories
             return entitiesDto;
         }
 
+        public async Task<IEnumerable<PermisoResponseDTO>> GetAllByModuloPadreIdAsync(int ModuloId, CancellationToken cancellationToken)
+        {
+            var entities = await _repository.GetPermisosByModuloId(ModuloId, cancellationToken);
+            var entitiesDto = new List<PermisoResponseDTO>();
+            foreach (var entity in entities)
+            {
+                var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                var permisoDto = permiso.Adapt<PermisoResponseDTO>();
+                permisoDto.Funcionalidad = funcionalidad;
+                permisoDto.Modulo = modulo;
+                entitiesDto.Add(permisoDto);
+            }
+            return entitiesDto;
+        }
+
         public async Task<IEnumerable<PermisoResponseDTO>> GetAllByModuloandRoleAsync(string RoleId, int ModuloId, CancellationToken cancellationToken)
         {
             var entities = await _repository.GetPermisosByRoleandModulo(RoleId, ModuloId, cancellationToken);
             var entitiesDto = new List<PermisoResponseDTO>();
             foreach (var entity in entities)
             {
-                var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
+                var (permiso, modulo, funcionalidad) = 
+                    (entity.Id == 0) ? await _repository.GetPermisoWithFuncionalidadAndModuloById0(entity, cancellationToken)
+                                     : await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                 var permisoDto = permiso.Adapt<PermisoResponseDTO>();
                 permisoDto.Funcionalidad = funcionalidad;
                 permisoDto.Modulo = modulo;
