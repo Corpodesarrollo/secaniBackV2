@@ -40,6 +40,12 @@ namespace Core.Services.MSTablasParametricas
             return entities.Adapt<IEnumerable<T2>>();
         }
 
+        public async Task<IEnumerable<T2>> GetAllNotDeletedAsync(CancellationToken cancellationToken)
+        {
+            var entities = await _repository.GetAllNotDeletedAsync(cancellationToken);
+            return entities.Adapt<IEnumerable<T2>>();
+        }
+
         public async Task<(bool, T2)> AddAsync(T1 entity, CancellationToken cancellationToken)
         {
             var (success, response) = await _repository.AddAsync(entity);

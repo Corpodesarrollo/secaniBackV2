@@ -6,5 +6,6 @@
         public string SubCategoriaAlerta { get; set; }
         public int CategoriaAlertaId { get; set; }
         public string Indicador { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }

@@ -8,5 +8,6 @@
         public DateTime? FechaCreacion { get; set; }
         public int? Orden { get; set; }
         public bool? Activo { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }

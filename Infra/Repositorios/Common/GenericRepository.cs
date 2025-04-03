@@ -30,6 +30,30 @@ namespace Infra.Repositories.Common
             var items = await _context.Set<T>().AsNoTracking().ToListAsync();
             return items ?? Enumerable.Empty<T>();
         }
+        public async Task<IEnumerable<T>> GetAllNotDeletedAsync(CancellationToken cancellationToken)
+        {
+            var prop = typeof(T).GetProperty("IsDeleted");
+            if (prop != null && prop.PropertyType == typeof(bool))
+            {
+                // Construye una expresión lambda: x => x.IsDeleted == false
+                var parameter = Expression.Parameter(typeof(T), "x");
+                var propertyAccess = Expression.Property(parameter, prop);
+                var falseConstant = Expression.Constant(false);
+                var equalExpression = Expression.Equal(propertyAccess, falseConstant);
+                var lambda = Expression.Lambda<Func<T, bool>>(equalExpression, parameter);
+
+                return await _context.Set<T>()
+                    .AsNoTracking()
+                    .Where(lambda)
+                    .ToListAsync(cancellationToken);
+            }
+
+            // Si no tiene IsDeleted, retorna todo
+            return await _context.Set<T>()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
 
         public async Task<T> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
@@ -109,9 +133,24 @@ namespace Infra.Repositories.Common
         // Delete
         public async Task<bool> DeleteAsync(T entity)
         {
-            _context.Set<T>().Remove(entity);
-            var result = await _context.SaveChangesAsync();
-            return result > 0;
+            var prop = typeof(T).GetProperty("IsDeleted");
+
+            if (prop != null && prop.PropertyType == typeof(bool) && prop.CanWrite)
+            {
+                try
+                {
+                    prop.SetValue(entity, true);
+                    _context.Entry(entity).State = EntityState.Modified;
+                    var result = await _context.SaveChangesAsync();
+                    return result > 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return false; // No tiene propiedad IsDeleted
         }
     }
 }

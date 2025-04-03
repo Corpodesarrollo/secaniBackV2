@@ -7,5 +7,6 @@
         public string? Descripcion { get; set; }
         public string? ColorBG { get; set; }
         public string? ColorText { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }

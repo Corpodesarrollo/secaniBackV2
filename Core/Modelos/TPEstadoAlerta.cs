@@ -11,5 +11,6 @@ namespace Core.Modelos
         public DateTime? FechaCreacion { get; set; }
         public int Orden { get; set; } = 0;
         public bool Activo { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
     }
 }

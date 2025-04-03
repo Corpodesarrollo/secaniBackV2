@@ -32,16 +32,44 @@ namespace MSTablasParametricas.Api.Controllers.Common
             return Ok(entities);
         }
 
+        [HttpGet("NotDeleted")]
+        public async Task<ActionResult<IEnumerable<T2>>> GetAllNotDeleted(CancellationToken cancellationToken)
+        {
+            var entities = await _service.GetAllNotDeletedAsync(cancellationToken);
+            return Ok(entities);
+        }
+
+
         [HttpPost]
         public async Task<ActionResult<T2>> Add([FromBody] T1 entity, CancellationToken cancellationToken)
         {
+            // Obtener la propiedad 'Id'
+            var idProp = entity.GetType().GetProperty("Id");
+
+            // Si existe, establecerla en null (solo si es nullable o referencia)
+            if (idProp != null && idProp.CanWrite)
+            {
+                if (idProp.PropertyType == typeof(int) || idProp.PropertyType == typeof(long))
+                {
+                    idProp.SetValue(entity, Activator.CreateInstance(idProp.PropertyType));
+                }
+                else
+                {
+                    idProp.SetValue(entity, null);
+                }
+            }
+
             var (success, createdEntity) = await _service.AddAsync(entity, cancellationToken);
+
             if (success)
             {
-                return CreatedAtAction(nameof(GetById), new { id = createdEntity.GetType().GetProperty("Id").GetValue(createdEntity) }, createdEntity);
+                var idValue = createdEntity.GetType().GetProperty("Id")?.GetValue(createdEntity);
+                return CreatedAtAction(nameof(GetById), new { id = idValue }, createdEntity);
             }
+
             return BadRequest();
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] T1 entity, CancellationToken cancellationToken)
@@ -59,15 +87,11 @@ namespace MSTablasParametricas.Api.Controllers.Common
             return BadRequest();
         }
 
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
-        //{
-        //    var success = await _service.DeleteAsync(id, cancellationToken);
-        //    if (success)
-        //    {
-        //        return NoContent();
-        //    }
-        //    return NotFound();
-        //}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var result = await _service.DeleteAsync(id, cancellationToken);
+            return Ok(result); // true si se marcó como eliminada, false si no tiene IsDeleted o falló
+        }
     }
 }
