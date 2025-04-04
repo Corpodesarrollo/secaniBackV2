@@ -51,6 +51,7 @@ builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 
 builder.Services.AddScoped<ICategoriaAlertaRepository, CategoriaAlertaRepository>();
+builder.Services.AddScoped<IHistoricoTransaccionRepository, HistoricoTransaccionRepository>();
 builder.Services.AddScoped<ICategoriaAlertaService, CategoriaAlertaService>();
 builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddScoped<INombreTablaParametricaService, NombresTablaParametricaService>();
@@ -64,6 +65,7 @@ builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
 builder.Services.AddScoped<IFestivoService, FestivoService>();
+builder.Services.AddScoped<IHistoricoTransaccionService, HistoricoTransaccionService>();
 builder.Services.AddScoped<IFestivosRepository, FestivosRepository>();
 builder.Services.AddScoped<ITPParentescos, TPParentescosRepo>();
 builder.Services.AddScoped<IIpsRepo, IpsRepo>();

@@ -1,5 +1,7 @@
 ﻿using Core.Interfaces.MSTablasParametricas;
+using Core.Interfaces.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace MSTablasParametricas.Api.Controllers.Common
 {
@@ -8,10 +10,12 @@ namespace MSTablasParametricas.Api.Controllers.Common
     public class GenericController<T1, T2> : ControllerBase where T1 : class where T2 : class
     {
         private readonly IGenericService<T1, T2> _service;
+        private readonly IHistoricoTransaccionService _historicoService;
 
-        public GenericController(IGenericService<T1, T2> service)
+        public GenericController(IGenericService<T1, T2> service, IHistoricoTransaccionService historicoService)
         {
             _service = service;
+            _historicoService = historicoService;
         }
 
         [HttpGet("{id}")]
@@ -63,6 +67,19 @@ namespace MSTablasParametricas.Api.Controllers.Common
 
             if (success)
             {
+                var historico = new HistoricoTransaccion
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    NombreTabla = typeof(T1).Name,
+                    FechaTransaccion = DateTime.UtcNow,
+                    Transaccion = "Adicionar",
+                    UsuarioId = User?.Identity?.Name ?? "Sistema",
+                    RegistroAnterior = string.Empty,
+                    RegistroNuevo = JsonSerializer.Serialize(createdEntity),
+                    Comentario = string.Empty
+                };
+                await _historicoService.GuardarHistoricoAsync(historico, cancellationToken);
+
                 var idValue = createdEntity.GetType().GetProperty("Id")?.GetValue(createdEntity);
                 return CreatedAtAction(nameof(GetById), new { id = idValue }, createdEntity);
             }
@@ -79,9 +96,22 @@ namespace MSTablasParametricas.Api.Controllers.Common
                 return BadRequest();
             }
 
+            var entityAntes = await _service.GetByIdAsync(id, cancellationToken);
             var (success, updatedEntity) = await _service.UpdateAsync(entity, cancellationToken);
             if (success)
             {
+                var historico = new HistoricoTransaccion
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    NombreTabla = typeof(T1).Name,
+                    FechaTransaccion = DateTime.UtcNow,
+                    Transaccion = "Actualizacion",
+                    UsuarioId = User?.Identity?.Name ?? "Sistema",
+                    RegistroAnterior = JsonSerializer.Serialize(entityAntes),
+                    RegistroNuevo = JsonSerializer.Serialize(updatedEntity),
+                };
+                historico.Comentario = historico.ObtenerCamposModificados();
+                await _historicoService.GuardarHistoricoAsync(historico, cancellationToken);
                 return Ok(updatedEntity);
             }
             return BadRequest();
@@ -90,7 +120,21 @@ namespace MSTablasParametricas.Api.Controllers.Common
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
+            var entityAntes = await _service.GetByIdAsync(id, cancellationToken);
             var result = await _service.DeleteAsync(id, cancellationToken);
+
+            var historico = new HistoricoTransaccion
+            {
+                Id = Guid.NewGuid().ToString(),
+                NombreTabla = typeof(T1).Name,
+                FechaTransaccion = DateTime.UtcNow,
+                Transaccion = "Eliminar",
+                UsuarioId = User?.Identity?.Name ?? "Sistema",
+                RegistroAnterior = JsonSerializer.Serialize(entityAntes),
+                RegistroNuevo = string.Empty,
+                Comentario = string.Empty
+            };
+            await _historicoService.GuardarHistoricoAsync(historico, cancellationToken);
             return Ok(result); // true si se marcó como eliminada, false si no tiene IsDeleted o falló
         }
     }

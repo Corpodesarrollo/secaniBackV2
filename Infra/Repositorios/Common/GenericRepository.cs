@@ -125,10 +125,29 @@ namespace Infra.Repositories.Common
         // Update
         public async Task<(bool, T)> UpdateAsync(T entity)
         {
-            _context.Entry(entity).State = EntityState.Modified;
+            var keyProperty = typeof(T).GetProperties()
+                .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+
+            if (keyProperty == null)
+            {
+                throw new InvalidOperationException($"No se encontró una propiedad 'Id' en {typeof(T).Name}.");
+            }
+
+            var keyValue = keyProperty.GetValue(entity);
+
+            var existingEntity = await _context.Set<T>().FindAsync(keyValue);
+
+            if (existingEntity == null)
+            {
+                return (false, null); // O lanza una excepción si prefieres
+            }
+
+            _context.Entry(existingEntity).CurrentValues.SetValues(entity);
             var result = await _context.SaveChangesAsync();
-            return (result > 0, entity);
+            return (result > 0, existingEntity);
         }
+
+
 
         // Delete
         public async Task<bool> DeleteAsync(T entity)
