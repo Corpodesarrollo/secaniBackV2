@@ -1,5 +1,6 @@
 ﻿using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.MSTablasParametricas;
+using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Modelos.TablasParametricas;
 using Microsoft.AspNetCore.Mvc;
 using MSTablasParametricas.Api.Controllers.Common;
@@ -11,7 +12,8 @@ namespace MSTablasParametricas.Api.Controllers
     [ApiController]
     public class EstadoIngresoEstrategiaController : GenericController<TPEstadoIngresoEstrategia, GenericTPDTO>
     {
-        public EstadoIngresoEstrategiaController(IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> service) : base(service)
+        public EstadoIngresoEstrategiaController(IGenericService<TPEstadoIngresoEstrategia, GenericTPDTO> service,
+                                                IHistoricoTransaccionService historicoService) : base(service, historicoService)
         {
         }
     }
