@@ -1363,6 +1363,15 @@ namespace Infra.Repositorios
                         for (int row = firstRow.RowNumber() + 1; row <= lastRow.RowNumber(); row++)
                         {
                             var currentRow = worksheet.Row(row);
+                            string xlSexo = currentRow.Cell(17).GetValue<string>();
+                            if (xlSexo.Trim().ToLower().Equals("masculino") || xlSexo.Trim().ToLower().Equals("hombre"))
+                            {
+                                xlSexo = "H";
+                            }
+                            if (xlSexo.Trim().ToLower().Equals("femenino") || xlSexo.Trim().ToLower().Equals("mujer"))
+                            {
+                                xlSexo = "M";
+                            }
 
                             DepuracionProtocoloRequest depuracion = new()
                             {
@@ -1382,7 +1391,7 @@ namespace Infra.Repositorios
                                 uni_med = currentRow.Cell(14).GetValue<string>(),
                                 nacionali = currentRow.Cell(15).GetValue<string>(),
                                 nombre_nacionalidad = currentRow.Cell(16).GetValue<string>(),
-                                sexo = currentRow.Cell(17).GetValue<string>(),
+                                sexo = xlSexo,
                                 cod_pais_o = currentRow.Cell(18).GetValue<string>(),
                                 cod_dpto_o = currentRow.Cell(19).GetValue<string>(),
                                 cod_mun_o = currentRow.Cell(20).GetValue<string>(),
