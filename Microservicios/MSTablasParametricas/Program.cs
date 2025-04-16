@@ -16,7 +16,6 @@ using Infra.Repositories.Common;
 using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
-using Infra.Repositorios.Procesos;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
@@ -41,7 +40,7 @@ builder
 builder.Services.AddControllersWithViews();
 
 ////builder.Services.AddHostedService<TareaEnSegundoPlano>();
-builder.Services.AddHostedService<ProcesadorTareasAutomaticas>();
+//builder.Services.AddHostedService<ProcesadorTareasAutomaticas>();
 //builder.Services.AddScoped<IProcesoAutomatico, ProcesoEnviarCorreos>();
 
 builder.Services.AddCustomSwagger();
