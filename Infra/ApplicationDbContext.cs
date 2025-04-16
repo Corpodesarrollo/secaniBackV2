@@ -166,5 +166,7 @@ namespace Infra
 
         public DbSet<ResumenLlamadas> ResumenLlamadas { get; set; }
         public DbSet<DetalleFallasLlamadas> DetalleFallasLlamadas { get; set; }
+        public DbSet<VwExportarDetalleSeguimientoModel> VwExportarDetalleSeguimiento { get; set; }
+        public DbSet<VwExportarDetalleSeguimientoAlertasModel> VwExportarDetalleSeguimientoAlertas { get; set; }
     }
 }

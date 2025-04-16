@@ -1,15 +1,26 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Common;
 using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Core.Utilities;
 using iText.Html2pdf;
+using iText.Html2pdf.Resolver.Font;
 using iText.Kernel.Exceptions;
+using iText.Kernel.Geom;
+using iText.Kernel.Pdf;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.ComponentModel;
+using System.IO;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
 
 namespace Infra.Repositorios
 {
@@ -589,33 +600,6 @@ namespace Infra.Repositorios
             }
         }
 
-        public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request)
-        {
-
-            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
-
-            if (seguimiento == null)
-            {
-                return -1;
-            }
-            seguimiento.EstadoId = 3;
-            seguimiento.NombreRechazo = request.NombreRechazo;
-            seguimiento.ParentescoRechazo = request.ParentescoRechazo;
-            seguimiento.RazonesRechazo = request.RazonesRechazo;
-
-            var contactonna = _context.ContactoNNAs.FirstOrDefault(s => s.Id == seguimiento.ContactoNNAId);
-            if (contactonna == null)
-            {
-                return -1;
-            }
-
-            contactonna.TelefnosInactivos = contactonna.TelefnosInactivos + ' ' + contactonna.Telefonos;
-            contactonna.Telefonos = "";
-
-            _context.SaveChanges();
-            return 1;
-        }
-
         public async Task<List<UsuarioAsignado>> AsignacionAutomatica()
         {
             var revisoresAusentes = new List<UsuariosHorariosDto>();
@@ -1064,1574 +1048,154 @@ namespace Infra.Repositorios
             ExportarDetalleSeguimientoResponse response = new();
             try
             {
-                var query = from s in _context.Seguimientos
-                            join n in _context.NNAs on s.NNAId equals n.Id
-                            where n.Id == id
-                            group s by s.NNAId into g
-                            select new { id = g.Max(x => x.Id) };
-
-                ExportarDetalleSeguimientoDto? seguimiento = (from q in query
-                                                              join seg in _context.Seguimientos on q.id equals seg.Id
-                                                              join nna in _context.NNAs on seg.NNAId equals nna.Id
-                                                              join c in _context.CIE10s on nna.DiagnosticoId equals c.Id
-                                                              select new ExportarDetalleSeguimientoDto()
-                                                              {
-                                                                  Nombre = nna.PrimerNombre + " " + nna.SegundoApellido + " " + nna.PrimerApellido + " " + nna.SegundoApellido,
-                                                                  FechaNacimiento = nna.FechaNacimiento,
-                                                                  Diagnostico = c.Nombre,
-                                                                  FechaSeguimiento = seg.FechaSeguimiento,
-                                                                  Id = seg.Id,
-                                                                  IdSexo = nna.SexoId,
-                                                                  TipoIdentificacion = nna.TipoIdentificacionId,
-                                                                  NumeroIdentificacion = nna.NumeroIdentificacion,
-                                                                  PaisNacimiento = nna.PaisId,
-                                                                  Etnia = nna.EtniaId,
-                                                                  CiudadNacimiento = nna.MunicipioNacimientoId,
-                                                                  OrigenReporte = nna.OrigenReporteId,
-                                                                  EstadoIngreso = nna.estadoId,
-                                                                  FechaIngreso = nna.FechaIngresoEstrategia,
-                                                                  GrupoPoblacional = nna.GrupoPoblacionId,
-                                                                  RegimenAfiliacion = nna.TipoRegimenSSId,
-                                                                  Asegurador = nna.EPSId,
-                                                                  Ips = nna.IPSId,
-                                                                  IdNNA = nna.Id,
-                                                                  razonesNoTratamiento = seg.RazonesRechazo,
-                                                                  fechaConsulta = nna.FechaConsultaDiagnostico,
-                                                                  fechaDiagnostico = nna.FechaDiagnostico,
-                                                                  fechaInicioTratamiento = nna.FechaInicioTratamiento,
-                                                                  IpsTratamiento = nna.IPSIdTratamiento.ToString(),
-                                                                  tieneRecaidas = nna.Recaida,
-                                                                  numeroRecaidas = nna.CantidadRecaidas,
-                                                                  fechaUltimaRecaida = nna.FechaUltimaRecaida,
-                                                                  departamentoResidencia = nna.ResidenciaOrigenMunicipioId,
-                                                                  municipioResidencia = nna.ResidenciaOrigenMunicipioId,
-                                                                  barrioResidencia = nna.ResidenciaOrigenBarrio,
-                                                                  areaResidencia = nna.ResidenciaOrigenBarrio,
-                                                                  direccionResidencia = nna.ResidenciaOrigenDireccion,
-                                                                  estratoResidencia = nna.ResidenciaOrigenEstratoId,
-                                                                  telefonoResidencia = nna.ResidenciaOrigenTelefono,
-                                                                  requirioTrasladarse = nna.ResidenciaOrigenDireccion != nna.ResidenciaActualDireccion,
-                                                                  departamentoResidenciaActual = nna.ResidenciaActualMunicipioId,
-                                                                  municipioResidenciaActual = nna.ResidenciaActualMunicipioId,
-                                                                  barrioResidenciaActual = nna.ResidenciaActualBarrio,
-                                                                  direccionResidenciaActual = nna.ResidenciaActualDireccion,
-                                                                  estratoResidenciaActual = nna.ResidenciaActualEstratoId,
-                                                                  telefonoResidenciaActual = nna.ResidenciaActualTelefono,
-                                                                  capacidadEconomicaTraslado = nna.TrasladoTieneCapacidadEconomica,
-                                                                  apoyoTraslado = nna.TrasladoEAPBSuministroApoyo,
-                                                                  apoyoOportuno = nna.TrasladosServiciosdeApoyoOportunos,
-                                                                  coberturaServicioSocial = nna.TrasladosServiciosdeApoyoCobertura,
-                                                                  nombreFundacion = nna.TrasladosNombreFundacion,
-                                                                  apoyoFundacion = nna.TrasladosApoyoRecibidoxFundacion,
-                                                                  tipoResidenciaActual = nna.ResidenciaActualCategoriaId,
-                                                                  asumioCostosTraslado = nna.TrasladosQuienAsumioCostosTraslado,
-                                                                  asumioCostosVivienda = nna.TrasladosQuienAsumioCostosVivienda,
-                                                                  dificultadAutorizacionMedicamentos = nna.DifAutorizaciondeMedicamentos,
-                                                                  dificultadEntregaMedicamentosLAP = nna.DifEntregaMedicamentosLAP,
-                                                                  dificultadEntregaMedicamentosNoLAP = nna.DifEntregaMedicamentosNoLAP,
-                                                                  dificultadAsignacionCitas = nna.DifAsignaciondeCitas,
-                                                                  HanCobradoCopago = nna.DifHanCobradoCuotasoCopagos,
-                                                                  AutorizacionProcedimiento = nna.DifAutorizacionProcedimientos,
-                                                                  remisionEspecialista = nna.DifRemisionInstitucionesEspecializadas,
-                                                                  MalaAtencionIps = nna.DifMalaAtencionIPS,
-                                                                  cualIps = nna.DifMalaAtencionNombreIPSId,
-                                                                  FallaMipres = nna.DifFallasenMIPRES,
-                                                                  fallaConvenio = nna.DifFallaConvenioEAPBeIPSTratante,
-                                                                  HaTrasladado = nna.TrasladosHaSidoTrasladadodeInstitucion,
-                                                                  ips = nna.IPSId,
-                                                                  haRecurridoAccionLegal = nna.TrasladosHaRecurridoAccionLegal,
-                                                                  Motivo = nna.TrasladosMotivoAccionLegal,
-                                                                  tipoRecurso = nna.TrasladosTipoAccionLegalId,
-                                                                  haDejadoTratamiento = nna.TratamientoHaDejadodeAsistir,
-                                                                  tiempoInasistenciaTratamiento = nna.TratamientoCuantoTiemposinAsistir,
-                                                                  causaInasistencia = nna.TratamientoCausasInasistenciaId,
-                                                                  estudiaActualmente = nna.TratamientoEstudiaActualmente,
-                                                                  haDejadoColegio = nna.TratamientoHaDejadodeAsistirColegio,
-                                                                  tiempoInasistenciaColegio = nna.TratamientoTiempoInasistenciaColegio,
-                                                                  ipsClara = nna.TratamientoHaSidoInformadoClaramente
-                                                              }).FirstOrDefault();
-
-                seguimiento.Contactos = (from nna in _context.NNAs
-                                         join cont in _context.ContactoNNAs on nna.Id equals cont.NNAId
-                                         join p in _context.TPParentescos on cont.ParentescoId equals p.Id
-                                         where nna.Id == seguimiento.IdNNA
-                                         select new ExportarDetalleSeguimientoContactoDto()
-                                         {
-                                             CorreoElectronico = cont.Email,
-                                             Nombre = cont.Nombres,
-                                             Parentesco = p.Nombre,
-                                             Telefono = cont.Telefonos
-                                         }).ToList();
-
-                seguimiento.CantidadSegumientos = (from seg in _context.Seguimientos
-                                                   where seg.NNAId == seguimiento.IdNNA
-                                                   select seg).Count();
-
-                int edad = 0;
-                if (seguimiento.FechaNacimiento != null)
+                VwExportarDetalleSeguimientoModel? vwSeg = _context.VwExportarDetalleSeguimiento.FirstOrDefault(seg => seg.SeguimientoId == id);
+                if (vwSeg != null)
                 {
-                    edad = DateTime.Now.Year - seguimiento.FechaNacimiento.Value.Year;
+                    List<Seguimiento>? seguimientos = _context.Seguimientos.Where(s => s.NNAId == vwSeg.NNAId).OrderByDescending(x => x.FechaSeguimiento).ToList();
 
-                    // Ajustar si la fecha de inicio no ha cumplido el mismo día/mes en el año final
-                    if (DateTime.Now < seguimiento.FechaNacimiento.Value.AddYears(edad))
+                    string htmlContent = File.ReadAllText("PlantillaExportarSeguimiento.html");
+                    htmlContent = htmlContent
+                        .Replace("{nombreNNA}", vwSeg.Nombres)
+                        .Replace("{fechaHoy}", DateTime.Now.ToString("dd/MM/yyyy"))
+                        .Replace("{edadNNA}", vwSeg.Edad)
+                        .Replace("{seguimientosRealizados}", vwSeg.SeguimientosRealizados.ToString())
+                        .Replace("{diagnosticoNNA}", vwSeg.Diagnostico)
+                        .Replace("{seguimientosEnProceso}", vwSeg.SeguimientosEnProceso.ToString())
+                        .Replace("{fechaInicioSeguimiento}", vwSeg.FechaSeguimiento)
+                        .Replace("{fechaSivigila}", vwSeg.FechaSivigila)
+                        .Replace("{sexo}", vwSeg.Sexo)
+                        .Replace("{tipoIdentificacion}", vwSeg.TipoIdentificacion)
+                        .Replace("{numeroIdentificacion}", vwSeg.NumeroIdentificacion)
+                        .Replace("{fechaNacimiento}", vwSeg.FechaNacimiento)
+                        .Replace("{paisNacimiento}", vwSeg.Pais)
+                        .Replace("{etnia}", vwSeg.Etnia)
+                        .Replace("{departamentoNacimiento}", vwSeg.DepartamentoNacimiento)
+                        .Replace("{ciudadNacimiento}", vwSeg.CiudadNacimiento)
+                        .Replace("{origenReporte}", vwSeg.OrigenReporte)
+                        .Replace("{departamentoTratamiento}", vwSeg.DepartamentoTratamiento)
+                        .Replace("{estadoIngesoEstrategia}", vwSeg.EstadoIngresoEstrategia)
+                        .Replace("{fechaIngresoEstrategia}", vwSeg.FechaIngresoEstrategia)
+                        .Replace("{grupoPoblacional}", vwSeg.GrupoPoblacional)
+                        .Replace("{semanasGestacion}", "")
+                        .Replace("{regimenAfiliacion}", vwSeg.RegimenAfiliacion)
+                        .Replace("{asegurador}", vwSeg.Asegurador)
+                        .Replace("{ips}", vwSeg.Ips)
+                        .Replace("{razonesNoDiagnostico}", vwSeg.RazonesNoDiagnostico)
+                        .Replace("{fechaConsulta}", vwSeg.FechaConsulta)
+                        .Replace("{fechaDiagnostico}", vwSeg.FechaDiagnostico)
+                        .Replace("{fechaInicioTratamiento}", vwSeg.FechaInicioTratamiento)
+                        .Replace("{ipsTratamiento}", vwSeg.IpsTratamiento)
+                        .Replace("{recaidas}", vwSeg.Recaida)
+                        .Replace("{cantidadRecaidas}", vwSeg.CantidadRecaidas.ToString())
+                        .Replace("{fechaUltimaRecaida}", vwSeg.FechaUltimaRecaida)
+                        .Replace("{procedenciaDepartamento}", vwSeg.ProcedenciaDepartamento)
+                        .Replace("{procedenciaMunicipio}", vwSeg.ProcedenciaMunicipio)
+                        .Replace("{procedenciaBarrio}", vwSeg.ProcedenciaBarrio)
+                        .Replace("{procedenciaArea}", vwSeg.ProcedenciaArea)
+                        .Replace("{procedenciaDireccion}", vwSeg.ProcedenciaDireccion)
+                        .Replace("{procedenciaEstrato}", vwSeg.ProcedenciaEstrato)
+                        .Replace("{procedenciaTelefono}", vwSeg.ProcedenciaTelefono)
+                        .Replace("{actualDepartamento}", vwSeg.ActualDepartamento)
+                        .Replace("{actualMunicipio}", vwSeg.ActualMunicipio)
+                        .Replace("{actualBarrio}", vwSeg.ActualBarrio)
+                        .Replace("{actualArea}", vwSeg.ActualArea)
+                        .Replace("{actualDireccion}", vwSeg.ActualDireccion)
+                        .Replace("{actualEstrato}", vwSeg.ActualEstrato)
+                        .Replace("{actualTelefono}", vwSeg.ActualTelefono)
+                        .Replace("{requirioTraslado}", vwSeg.RequirioTraslado)
+                        .Replace("{capacidadEconomica}", vwSeg.CapacidadEconomica)
+                        .Replace("{serviciosSocialesA}", vwSeg.ServiciosSocialesA)
+                        .Replace("{oportunidadSSA}", vwSeg.OportunidadSSA)
+                        .Replace("{coberturaTrasladoSSA}", vwSeg.CoberturaTrasladoSSA)
+                        .Replace("{nombreFundacion}", vwSeg.NombreFundacion)
+                        .Replace("{apoyoFundacion}", vwSeg.ApoyoFundacion)
+                        .Replace("{sitioResidencia}", vwSeg.SitioResidencia)
+                        .Replace("{asumioCostoTraslado}", vwSeg.AsumioCostoTraslado)
+                        .Replace("{asumioCostoVivienda}", vwSeg.AsumioCostoVivienda)
+                        .Replace("{autorizacionMed}", vwSeg.AutorizacionMed)
+                        .Replace("{entregaMedLAP}", vwSeg.EntregaMedLAP)
+                        .Replace("{entregaMedNoLAP}", vwSeg.EntregaMedNoLAP)
+                        .Replace("{asignacionCitas}", vwSeg.AsignacionCitas)
+                        .Replace("{cobroCopagos}", vwSeg.CobroCopagos)
+                        .Replace("{autorizacionProc}", vwSeg.AutorizacionProc)
+                        .Replace("{remisionIExp}", vwSeg.RemisionIExp)
+                        .Replace("{malaAtencionIPS}", vwSeg.MalaAtencionIPS)
+                        .Replace("{fallaMipres}", vwSeg.FallaMipres)
+                        .Replace("{fallaEapbIps}", vwSeg.FallaEapbIps)
+                        .Replace("{transladoInstitucion}", vwSeg.TransladoInstitucion)
+                        .Replace("{numeroTraslado}", vwSeg.NumeroTraslado.ToString())
+                        .Replace("{ipsTraslado}", vwSeg.IpsTraslado)
+                        .Replace("{accionLegal}", vwSeg.AccionLegal)
+                        .Replace("{motivoAccionLegal}", vwSeg.MotivoAccionLegal)
+                        .Replace("{tipoRecursoAccionLegal}", vwSeg.TipoRecursoAccionLegal)
+                        .Replace("{dejoAsistirTratamiento}", vwSeg.DejoAsistirTratamiento)
+                        .Replace("{cuantoTiempoTratamiento}", vwSeg.CuantoTiempoTratamiento)
+                        .Replace("{causaInasistencia}", vwSeg.CausaInasistencia)
+                        .Replace("{otaCausaCual}", vwSeg.OtaCausaCual)
+                        .Replace("{estudiando}", vwSeg.Estudiando)
+                        .Replace("{dejoAsistirColegio}", vwSeg.DejoAsistirColegio)
+                        .Replace("{cuantoTiempoColegio}", vwSeg.CuantoTiempoColegio)
+                        .Replace("{informeClaroDiagTrat}", vwSeg.InformeClaroDiagTrat)
+                        .Replace("{obsSolicitante}", (seguimientos != null)? seguimientos.First().ObservacionesSolicitante:"")
+                        .Replace("{obsAgente}", (seguimientos != null) ? seguimientos.First().ObservacionAgente : "")
+                        ;
+
+                    List<ContactoNNA> contactosNNA = _context.ContactoNNAs.Where(contacto => contacto.NNAId == vwSeg.NNAId).ToList();
+                    string htmlContactos = "";
+                    string plantillaContactos = File.ReadAllText("PlantillaContactos.html");
+                    foreach (var contacto in contactosNNA)
                     {
-                        edad--;
+                        TPParentescos? tPParentescos = _context.TPParentescos.FirstOrDefault(p => p.Id == contacto.ParentescoId);
+                        string? parentesco = (tPParentescos==null)?"": tPParentescos.Nombre;
+                        htmlContactos += plantillaContactos
+                            .Replace("{contactoNombre}", contacto.Nombres)
+                            .Replace("{contactoParentesco}", parentesco)
+                            .Replace("{contactoEmail}", contacto.Email)
+                            .Replace("{contactoTelefono}", contacto.Telefonos);
                     }
-                }
+                    htmlContent = htmlContent.Replace("{contactos}", htmlContactos);
 
-                var tipoIdentificacion = await tablaParametricaService.GetBynomTREF("APSTipoIdentificacion", CancellationToken.None);
-                var paises = await tablaParametricaService.GetBynomTREF("Pais", CancellationToken.None);
-                var GruposEtnicos = await tablaParametricaService.GetBynomTREF("GrupoEtnico", CancellationToken.None);
-                var departamentos = await tablaParametricaService.GetBynomTREF("Departamento", CancellationToken.None);
-                var municipios = await tablaParametricaService.GetBynomTREF("Municipio", CancellationToken.None);
-                var zonas = await tablaParametricaService.GetBynomTREF("ZonaTerritorial", CancellationToken.None);
-                var estratos = await tablaParametricaService.GetBynomTREF("EstratoSocioeconomico", CancellationToken.None);
-                var tiposVivienda = await tablaParametricaService.GetBynomTREF("RIBATipoVivienda", CancellationToken.None);
-                var tiposPoblacion = await tablaParametricaService.GetBynomTREF("LCETipoPoblacionEspecial", CancellationToken.None);
-                var regimenes = await tablaParametricaService.GetBynomTREF("APSRegimenAfiliacion", CancellationToken.None);
-
-                var estadoIngreso = await _context.tPEstadoIngresoEstrategia.FirstOrDefaultAsync(x => x.Id == seguimiento.EstadoIngreso);
-                var origenReporte = await _context.TPOrigenReporte.FirstOrDefaultAsync(x => x.Id == seguimiento.OrigenReporte);
-                var eps = await _context.TPEAPB.FirstOrDefaultAsync(x => x.Id == seguimiento.Asegurador);
-                var ips = await _context.TPIPS.FirstOrDefaultAsync(x => x.Id == seguimiento.Ips);
-                //var ipsTratamiento = await _context.TPIPS.FirstOrDefaultAsync(x => x.Id == seguimiento.IpsTratamiento);
-
-                if (seguimiento != null)
-                {
-                    #region TEMPLATE
-                    string htmlContent = @"
-                    <!DOCTYPE html>
-                    <html lang='es'>
-                        <head>
-                            <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
-                            <style type='text/css'>
-                                * {
-                                    margin: 0;
-                                    padding: 0;
-                                    text-indent: 0;
-                                }
-
-                                 .s1 {
-                                    color: black;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight: bold;
-                                    text-decoration: none;
-                                    font-size: 10pt;
-                                }
-
-                                 .s2 {
-                                    color: black;
-                                    font-family: Verdana,
-                                        sans-serif;
-                                    font-style: normal;
-                                    font-weight: normal;
-                                    text-decoration: none;
-                                    font-size: 10pt;
-                                }
-
-                                 p {
-                                    color:
-                                        black;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight: bold;
-                                    text-decoration: none;
-                                    font-size:
-                                        8pt;
-                                    margin: 0pt;
-                                }
-
-                                 .s4 {
-                                    color: black;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight:
-                                        normal;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 .s5 {
-                                    color: black;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight: bold;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 h1 {
-                                    color: #0D0D0D;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight: bold;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 .s6 {
-                                    color: #0D0D0D;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight: normal;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 .s7 {
-                                    color: #0D0D0D;
-                                    font-family: Arial, sans-serif;
-                                    font-style:
-                                        normal;
-                                    font-weight: normal;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 .s8 {
-                                    color: black;
-                                    font-family: Verdana, sans-serif;
-                                    font-style: normal;
-                                    font-weight: normal;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 li {
-                                    display: block;
-                                }
-
-                                 #l1 {
-                                    padding-left: 0pt;
-                                }
-
-                                 #l1>li>*:first-child:before {
-                                    content: ' ';
-                                    color: black;
-                                    font-family: Symbol, serif;
-                                    font-style: normal;
-                                    font-weight: normal;
-                                    text-decoration: none;
-                                    font-size: 8pt;
-                                }
-
-                                 table,
-                                tbody {
-                                    vertical-align: top;
-                                    overflow: visible;
-                                }
-
-        
-                            </style>
-                        </head>
-
-                        <body>
-                            <p style='padding-top: 1pt;text-indent: 0pt;text-align: left;'><br /></p>
-                            <table style='border-collapse:collapse;margin-left:7.9pt' cellspacing='0'>
-                                <tr style='height:50pt'>
-                                    <td style='width:263pt'>
-                                        <p class='s1' style='padding-left: 2pt;text-indent:
-                                            0pt;line-height: 12pt;text-align: left;'>{NombreNNA}</p>
-                                        <p class='s2' style='padding-left: 2pt;text-indent: 0pt;line-height: 12pt;text-align: left;'>Edad:
-                                            {edadNNA}</p>
-                                        <p class='s2' style='padding-left: 2pt;text-indent: 0pt;line-height: 12pt;text-align:
-                                            left;'>Diagnóstico:{DiagnosticoNNA}</p>
-                                        <p class='s2' style='padding-left:
-                                            2pt;text-indent: 0pt;line-height: 11pt;text-align: left;'>Fecha inicio seguimiento:
-                                            {fechaInicioSeguimiento}</p>
-                                    </td>
-                                    <td style='width:227pt'>
-                                        <p class='s2' style='padding-left: 68pt;padding-right: 2pt;text-indent: -7pt;text-align: right;'>
-                                            Fecha generación: {FechaHoy}<br /> <u><b>{seguimientosRealizados} seguimientos
-                                                    realizados</b><br /></u><b>
-                                            </b><u><b>{SeguimientoId} Seguimiento en
-                                                    proceso</b></u></p>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                            <p style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Datos básicos</p>
-                            <p style='text-indent:
-                                0pt;text-align: left;'><br /></p>
-                            <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                <tr style='height:18pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Fecha de
-                                            notificación del SIVIGILA</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>{fechaSivigila}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:18pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Sexo</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>{sexo}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Tipo de identificación</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {tipoIdentificacion}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Número de identificación</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {numeroIdentificacion}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Fecha de nacimiento</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {fechaNacimiento}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>País de nacimiento</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {paisNacimiento}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Etnia</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>{etnia}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Departamento de nacimiento</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {departamentoNacimiento}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Ciudad de nacimiento</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {ciudadNacimiento}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Origen del reporte</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {origenReporte}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:20pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 10pt;text-align:
-                                            left;'>Departamento donde actualmente recibe el tratamiento</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {departamentoTratamiento}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Estado de ingreso a la estrategia</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {departamentoTratamiento}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Fecha de ingreso a la estrategia</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {fechaIngresoEstrategia}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Grupo poblacional</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {grupoPoblacional}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Semanas de Gestación</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {semanasGestacion}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Régimen de afiliación</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>
-                                            {regimenAfiliacion}</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Asegurador</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>{asegurador}
-                                        </p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>IPS</p>
-                                    </td>
-                                    <td
-                                        style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'>{Ips}</p>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style='padding-top: 9pt;text-indent:
-                                0pt;text-align: left;'><br /></p>
-                            <p style='padding-left: 40pt;text-indent:
-                                0pt;text-align: left;'>Contactos</p>
-                            <p style='text-indent: 0pt;text-align: left;'>
-                                <br /></p>
-                            <table style='border-collapse:collapse;margin-left:40.434pt' cellspacing='0'>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:106pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s5' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Nombre</p>
-                                    </td>
-                                    <td
-                                        style='width:100pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s5' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Parentesco</p>
-                                    </td>
-                                    <td
-                                        style='width:99pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s5' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Correo electrónico</p>
-                                    </td>
-                                    <td
-                                        style='width:156pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s5' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Teléfono</p>
-                                    </td>
-                                </tr>
-                                {contactos}        
-                            </table>
-                            <p style='padding-top: 9pt;text-indent:
-                                0pt;text-align: left;'><br /></p>
-                            <p style='padding-left: 5pt;text-indent:
-                                0pt;text-align: left;'>Información del tratamiento</p>
-                            <ul id='l1'>
-                                <li data-list-text=''>
-                                    <p style='padding-top: 8pt;padding-left: 40pt;text-indent: -17pt;text-align: left;'>
-                                        Diagnóstico y tratamiento</p>
-                                    <p style='text-indent: 0pt;text-align: left;'>
-                                        <br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:20pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;padding-right: 5pt;text-indent:
-                                                    0pt;line-height: 10pt;text-align: left;'>Razones por las cuales el menor no tiene
-                                                    diagnóstico.</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {razonesNoTratamiento}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:11pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Diagnóstico</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {DiagnosticoNNA}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:11pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Fecha de consulta</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {fechaConsulta}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:11pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Fecha de diagnóstico</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {fechaDiagnostico}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:11pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Fecha de inicio de tratamiento</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {fechaInicioTratamiento}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:22pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align:
-                                                    left;'>Nombre de la Institución en la que recibe</p>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align: left;'>
-                                                    tratamiento
-                                                    actualmente (IPS)</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {IpsTratamiento}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 9pt;text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                </li>
-                                <li data-list-text=''>
-                                    <p style='padding-left: 40pt;text-indent: -17pt;text-align: left;'>
-                                        Recaídas</p>
-                                    <p style='text-indent: 0pt;text-align: left;'><br />
-                                    </p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Ha tenido recaídas</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {tieneRecaidas}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Número de recaidas</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {numeroRecaidas}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:221pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Fecha última recaída</p>
-                                            </td>
-                                            <td
-                                                style='width:275pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {fechaUltimaRecaida}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 8pt;text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                </li>
-                                <li data-list-text=''>
-                                    <p style='padding-left: 40pt;text-indent: -17pt;text-align: left;'>
-                                        Residencia y traslados</p>
-                                    <p style='padding-top: 3pt;text-indent: 0pt;text-align: left;'>
-                                        <br /></p>
-                                    <h1 style='padding-left: 5pt;text-indent:
-                                        0pt;text-align: left;'>Residencia de procedencia/ocurrencia</h1>
-                                    <p style='text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Departamento</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {departamentoResidencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Municipio</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {municipioResidencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Barrio</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {barrioResidencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Área</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {areaResidencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Dirección</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {direccionResidencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Estrato</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {estratoResidencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Teléfono</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {telefonoResidencia}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 9pt;text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                    <p style='padding-left:
-                                        5pt;text-indent: 0pt;text-align: left;'>Traslado</p>
-                                    <p style='text-indent: 0pt;text-align:
-                                        left;'><br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:30pt'>
-                                            <td
-                                                style='width:220pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-top: 5pt;padding-left: 5pt;padding-right:
-                                                    27pt;text-indent: 0pt;text-align: left;'>Requirió trasladarse de ciudad para acceder al
-                                                    tratamiento</p>
-                                            </td>
-                                            <td
-                                                style='width:276pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {requirioTrasladarse}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 8pt;text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                    <h1 style='padding-left:
-                                        5pt;text-indent: 0pt;text-align: left;'>Residencia actual</h1>
-                                    <p style='text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Departamento</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {departamentoResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Municipio</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {municipioResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Barrio</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {barrioResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Área</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {areaResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Dirección</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {direccionResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Estrato</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {estratoResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Teléfono</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {telefonoResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 6pt;text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:20pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    10pt;text-align: left;'>Cuenta con la capacidad económica para asumir el traslado del menor
-                                                </p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {capacidadEconomicaTraslado}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:20pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;padding-right: 9pt;text-indent:
-                                                    0pt;line-height: 10pt;text-align: left;'>La EAPB le ha suministrado servicios sociales de
-                                                    apoyo para el traslado</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {apoyoTraslado}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:20pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    10pt;text-align: left;'>¿Los servicios sociales de apoyo fueron entregados con oportunidad?
-                                                </p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {apoyoOportuno}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:20pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    10pt;text-align: left;'>¿Los servicios sociales de apoyo logran dar cobertura al traslado
-                                                    del menor?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {coberturaServicioSocial}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Nombre de la fundación</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {nombreFundacion}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Apoyo recibido por la fundación</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {apoyoFundacion}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>El sitio de residencia actual es</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {tipoResidenciaActual}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Quién asumió los costos del traslado?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {asumioCostosTraslado}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Quién asumió los costos de la vivienda?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {asumioCostosVivienda}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 9pt;text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                </li>
-                                <li data-list-text=''>
-                                    <p style='padding-left: 40pt;text-indent: -17pt;text-align: left;'>
-                                        Dificultades y traslados hospitalarios</p>
-                                    <h1 style='padding-top: 8pt;padding-left:
-                                        5pt;text-indent: 0pt;text-align: left;'>¿Ha presentado dificultades en los siguientes procesos?</h1>
-                                    <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Autorización de medicamentos</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {dificultadAutorizacionMedicamentos}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Entrega de medicamentos LAP</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {dificultadEntregaMedicamentosLAP}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Entrega de medicamentos No LAP</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {dificultadEntregaMedicamentosNoLAP}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Asignación de citas</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {dificultadAsignacionCitas}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Le han cobrado copagos o cuotas moderadoras</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {HanCobradoCopago}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Autorización de procedimientos</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {AutorizacionProcedimiento}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Remisión a instituciones especializadas</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {remisionEspecialista}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Mala atención en la IPS</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>{MalaAtencionIps} {cualIps}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Falla en MIPRES</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {FallaMipres}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Falla en convenio entre la EAPB e IPS tratante</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {fallaConvenio}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='text-indent: 0pt;text-align: left;'>
-                                        <br /></p>
-                                    <p style='padding-left: 5pt;text-indent:
-                                        0pt;text-align: left;'>Traslado de institución</p>
-                                    <p style='text-indent: 0pt;text-align:
-                                        left;'><br /></p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Ha sido trasladado de institución?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {HaTrasladado}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Número de traslados</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {numeroTraslados}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>IPS</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {ips}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:20pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    10pt;text-align: left;'>¿Ha tenido que recurrir a algún tipo de acción legal para acceder a
-                                                    la atención?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {haRecurridoAccionLegal}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Motivo</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {Motivo}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Tipo de recurso</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {tipoRecurso}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 9pt;text-indent: 0pt;text-align: left;'>
-                                        <br /></p>
-                                </li>
-                                <li data-list-text=''>
-                                    <p style='padding-left: 40pt;text-indent: -17pt;text-align: left;'>Adherencia al tratamiento y calendario
-                                        escolar</p>
-                                    <p style='text-indent: 0pt;text-align: left;'><br />
-                                    </p>
-                                    <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Ha dejado de asistir al tratamiento?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {haDejadoTratamiento}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Por cuánto tiempo ha dejado de asistir?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>{tiempoInasistenciaTratamiento}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Causas de inasistencia</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {causaInasistencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>Otra ¿Cuál?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {CualOtraCausaInasistencia}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s7' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Está estudiando actualmente?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {estudiaActualmente}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s7' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿En algún momento ha dejado de asistir al colegio?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {haDejadoColegio}</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:10pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s7' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Por cuánto tiempo ha dejado de asistir al colegio?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s6' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>{tiempoInasistenciaColegio</p>
-                                            </td>
-                                        </tr>
-                                        <tr style='height:19pt'>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p class='s7' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    9pt;text-align: left;'>¿Considera que la IPS y/o el médico le han informado de manera</p>
-                                                <p class='s7' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                                    8pt;text-align: left;'>clara y completa sobre el diagnóstico y el tratamiento del NNA?</p>
-                                            </td>
-                                            <td
-                                                style='width:252pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                                <p style='text-indent: 0pt;text-align: left;'>
-                                                    {ipsClara}</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <p style='padding-top: 9pt;text-indent: 0pt;text-align: left;'>
-                                        <br /></p>
-                                </li>
-                                <li data-list-text=''>
-                                    <p style='padding-left: 40pt;text-indent: -17pt;text-align: left;'>Observaciones</p>
-                                    <p class='s8' style='padding-top: 8pt;padding-left: 5pt;text-indent: 0pt;text-align: left;'>
-                                        Observaciones diligenciadas en el último seguimiento.</p>
-                                    <p style='text-indent:
-                                        0pt;text-align: left;'><br /></p>
-                                </li>
-                                <li data-list-text=''>
-                                    <p style='padding-left: 5pt;text-indent: 18pt;line-height:
-                                        189%;text-align: left;'>Trazabilidad Seguimientos</p>
-                                </li>
-                            </ul>
-                            <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:55pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>No.</p>
-                                    </td>
-                                    <td
-                                        style='width:55pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Fecha</p>
-                                    </td>
-                                    <td
-                                        style='width:117pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Asunto</p>
-                                    </td>
-                                    <td
-                                        style='width:269pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height: 9pt;text-align:
-                                            left;'>Observación</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:55pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:55pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:117pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:269pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style='padding-top: 8pt;text-indent:
-                                0pt;text-align: left;'><br /></p>
-                            <p style='padding-left: 5pt;text-indent:
-                                0pt;text-align: left;'>Alertas</p>
-                            <p style='text-indent: 0pt;text-align: left;'>
-                                <br /></p>
-                            <table style='border-collapse:collapse;margin-left:5.25pt' cellspacing='0'>
-                                <tr style='height:39pt'>
-                                    <td
-                                        style='width:60pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;padding-right: 4pt;text-indent: 0pt;text-align:
-                                            left;'>No. seguimiento</p>
-                                    </td>
-                                    <td
-                                        style='width:56pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;padding-right: 4pt;text-indent: 0pt;text-align:
-                                            left;'>Fecha notificación</p>
-                                    </td>
-                                    <td
-                                        style='width:50pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Categoría
-                                        </p>
-                                    </td>
-                                    <td
-                                        style='width:63pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>
-                                            Subcategoría</p>
-                                    </td>
-                                    <td
-                                        style='width:69pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Entidad(es)
-                                            sobre la(s)</p>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;line-height:
-                                            10pt;text-align: left;'>que se genera alerta</p>
-                                    </td>
-                                    <td
-                                        style='width:134pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Observación
-                                        </p>
-                                    </td>
-                                    <td
-                                        style='width:64pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p class='s4' style='padding-left: 5pt;text-indent: 0pt;text-align: left;'>Estado</p>
-                                    </td>
-                                </tr>
-                                <tr style='height:10pt'>
-                                    <td
-                                        style='width:60pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:56pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:50pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:63pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:69pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:134pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                    <td
-                                        style='width:64pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                        <p style='text-indent: 0pt;text-align: left;'><br /></p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </body>
-                    </html>";
-
-                    var contactos = @"
-                        <tr style='height:10pt'>
-                            <td
-                                style='width:106pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                <p style='text-indent: 0pt;text-align: left;'>{NombreContacto}</p>
-                            </td>
-                            <td
-                                style='width:100pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                <p style='text-indent: 0pt;text-align: left;'>{ParentescoContacto}</p>
-                            </td>
-                            <td
-                                style='width:99pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                <p style='text-indent: 0pt;text-align: left;'>{CorreoContacto}</p>
-                            </td>
-                            <td
-                                style='width:156pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt'>
-                                <p style='text-indent: 0pt;text-align: left;'>{TelefonoContacto}</p>
-                            </td>
-                        </tr>
-                    ";
-                    #endregion
-
-                    htmlContent = htmlContent.Replace("{NombreNNA}", seguimiento.Nombre)
-                        .Replace("{FechaHoy}", DateTime.Now.ToString("dd/MM/yyyy"))
-                        .Replace("{edadNNA}", edad.ToString())
-                        .Replace("{DiagnosticoNNA}", seguimiento.Diagnostico)
-                        .Replace("{fechaInicioSeguimiento}", seguimiento.FechaSeguimiento == null ? "" : seguimiento.FechaSeguimiento.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{fechaSivigila}", seguimiento.FechaSeguimiento == null ? "" : seguimiento.FechaSeguimiento.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{sexo}", seguimiento.IdSexo == "M" ? "Masculino" : "Femenino")
-                        .Replace("{tipoIdentificacion}", tipoIdentificacion.FirstOrDefault(x => x.Codigo == seguimiento.TipoIdentificacion)?.Nombre ?? "")
-                        .Replace("{numeroIdentificacion}", seguimiento.NumeroIdentificacion)
-                        .Replace("{seguimientosRealizados}", seguimiento.CantidadSegumientos.ToString())
-                        .Replace("{SeguimientoId}", seguimiento.Id.ToString())
-                        .Replace("{fechaNacimiento}", seguimiento.FechaNacimiento == null ? "" : seguimiento.FechaNacimiento.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{paisNacimiento}", paises.FirstOrDefault(x => x.Codigo == seguimiento.PaisNacimiento)?.Nombre ?? "")
-                        .Replace("{etnia}", GruposEtnicos.FirstOrDefault(x => x.Codigo == seguimiento.Etnia)?.Nombre ?? "")
-                        .Replace("{departamentoNacimiento}", departamentos.FirstOrDefault(x => x.Codigo == seguimiento.DepartamentoNacimiento)?.Nombre ?? "")
-                        .Replace("{ciudadNacimiento}", municipios.FirstOrDefault(x => x.Codigo == seguimiento.CiudadNacimiento)?.Nombre ?? "")
-                        .Replace("{origenReporte}", origenReporte != null ? origenReporte.Nombre : "")
-                        .Replace("{departamentoTratamiento}", departamentos.FirstOrDefault(x => x.Codigo == seguimiento.DepartamentoTratamiento)?.Nombre ?? "")
-                        .Replace("{fechaIngresoEstrategia}", seguimiento.FechaIngreso == null ? "" : seguimiento.FechaIngreso.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{grupoPoblacional}", tiposPoblacion.FirstOrDefault(x => x.Codigo == seguimiento.GrupoPoblacional)?.Nombre ?? "")
-                        .Replace("{semanasGestacion}", seguimiento.SemanasGestacion.ToString())
-                        .Replace("{regimenAfiliacion}", regimenes.FirstOrDefault(x => x.Codigo == seguimiento.RegimenAfiliacion)?.Nombre ?? "")
-                        .Replace("{asegurador}", seguimiento.Asegurador.ToString())
-                        .Replace("{Ips}", ips != null ? ips.Nombre : "")
-                        .Replace("{razonesNoTratamiento}", seguimiento.razonesNoTratamiento)
-                        .Replace("{fechaConsulta}", seguimiento.fechaConsulta == null ? "" : seguimiento.fechaConsulta.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{fechaDiagnostico}", seguimiento.fechaDiagnostico == null ? "" : seguimiento.fechaDiagnostico.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{fechaInicioTratamiento}", seguimiento.fechaInicioTratamiento == null ? "" : seguimiento.fechaInicioTratamiento.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{IpsTratamiento}", seguimiento.IpsTratamiento)
-                        .Replace("{tieneRecaidas}", seguimiento.tieneRecaidas == null ? "NA" : seguimiento.tieneRecaidas.Value ? "SI" : "NO")
-                        .Replace("{numeroRecaidas}", seguimiento.numeroRecaidas == null ? "0" : seguimiento.numeroRecaidas.ToString())
-                        .Replace("{fechaUltimaRecaida}", seguimiento.fechaUltimaRecaida == null ? "" : seguimiento.fechaUltimaRecaida.Value.ToString("dd/MM/yyyy"))
-                        .Replace("{departamentoResidencia}", departamentos.FirstOrDefault(x => x.Codigo == seguimiento.departamentoResidencia)?.Nombre ?? "")
-                        .Replace("{municipioResidencia}", municipios.FirstOrDefault(x => x.Codigo == seguimiento.municipioResidencia)?.Nombre ?? "")
-                        .Replace("{barrioResidencia}", seguimiento.barrioResidencia)
-                        .Replace("{areaResidencia}", zonas.FirstOrDefault(x => x.Codigo == seguimiento.areaResidencia)?.Nombre ?? "")
-                        .Replace("{direccionResidencia}", seguimiento.direccionResidencia)
-                        .Replace("{estratoResidencia}", estratos.FirstOrDefault(x => x.Codigo == seguimiento.estratoResidencia)?.Nombre ?? "")
-                        .Replace("{telefonoResidencia}", seguimiento.telefonoResidencia)
-                        .Replace("{requirioTrasladarse}", seguimiento.requirioTrasladarse ? "SI" : "NO")
-                        .Replace("{departamentoResidenciaActual}", departamentos.FirstOrDefault(x => x.Codigo == seguimiento.departamentoResidenciaActual)?.Nombre ?? "")
-                        .Replace("{municipioResidenciaActual}", municipios.FirstOrDefault(x => x.Codigo == seguimiento.municipioResidenciaActual)?.Nombre ?? "")
-                        .Replace("{barrioResidenciaActual}", seguimiento.barrioResidenciaActual)
-                        .Replace("{areaResidenciaActual}", zonas.FirstOrDefault(x => x.Codigo == seguimiento.areaResidenciaActual)?.Nombre ?? "")
-                        .Replace("{direccionResidenciaActual}", seguimiento.direccionResidenciaActual)
-                        .Replace("{estratoResidenciaActual}", estratos.FirstOrDefault(x => x.Codigo == seguimiento.estratoResidenciaActual)?.Nombre ?? "")
-                        .Replace("{telefonoResidenciaActual}", seguimiento.telefonoResidencia)
-                        .Replace("{capacidadEconomicaTraslado}", seguimiento.capacidadEconomicaTraslado == null ? "NA" : seguimiento.capacidadEconomicaTraslado.Value ? "SI" : "NO")
-                        .Replace("{apoyoTraslado}", seguimiento.apoyoTraslado == null ? "NA" : seguimiento.apoyoTraslado.Value ? "SI" : "NO")
-                        .Replace("{apoyoOportuno}", seguimiento.apoyoOportuno == null ? "NA" : seguimiento.apoyoOportuno.Value ? "SI" : "NO")
-                        .Replace("{coberturaServicioSocial}", seguimiento.coberturaServicioSocial == null ? "NA" : seguimiento.coberturaServicioSocial.Value ? "SI" : "NO")
-                        .Replace("{nombreFundacion}", seguimiento.nombreFundacion)
-                        .Replace("{apoyoFundacion}", seguimiento.apoyoFundacion)
-                        .Replace("{tipoResidenciaActual}", tiposVivienda.FirstOrDefault(x => x.Codigo == seguimiento.tipoResidenciaActual)?.Nombre ?? "")
-                        .Replace("{asumioCostosTraslado}", seguimiento.asumioCostosTraslado)
-                        .Replace("{asumioCostosVivienda}", seguimiento.asumioCostosVivienda)
-                        .Replace("{dificultadAutorizacionMedicamentos}", seguimiento.dificultadAutorizacionMedicamentos == null ? "NA" : seguimiento.dificultadAutorizacionMedicamentos.Value ? "SI" : "NO")
-                        .Replace("{dificultadEntregaMedicamentosLAP}", seguimiento.dificultadEntregaMedicamentosLAP == null ? "NA" : seguimiento.dificultadEntregaMedicamentosLAP.Value ? "SI" : "NO")
-                        .Replace("{dificultadEntregaMedicamentosNoLAP}", seguimiento.dificultadEntregaMedicamentosNoLAP == null ? "NA" : seguimiento.dificultadEntregaMedicamentosNoLAP.Value ? "SI" : "NO")
-                        .Replace("{dificultadAsignacionCitas}", seguimiento.dificultadAsignacionCitas == null ? "NA" : seguimiento.dificultadAsignacionCitas.Value ? "SI" : "NO")
-                        .Replace("{HanCobradoCopago}", seguimiento.HanCobradoCopago == null ? "NA" : seguimiento.HanCobradoCopago.Value ? "SI" : "NO")
-                        .Replace("{AutorizacionProcedimiento}", seguimiento.AutorizacionProcedimiento == null ? "NA" : seguimiento.AutorizacionProcedimiento.Value ? "SI" : "NO")
-                        .Replace("{remisionEspecialista}", seguimiento.remisionEspecialista == null ? "NA" : seguimiento.remisionEspecialista.Value ? "SI" : "NO")
-                        .Replace("{MalaAtencionIps} {cualIps}", seguimiento.MalaAtencionIps == null ? "NA" : seguimiento.MalaAtencionIps.Value ? ("SI" + seguimiento.cualIps.ToString() == null ? "" : seguimiento.cualIps.ToString()) : "NO")
-                        .Replace("{FallaMipres}", seguimiento.FallaMipres == null ? "NA" : seguimiento.FallaMipres.Value ? "SI" : "NO")
-                        .Replace("{fallaConvenio}", seguimiento.fallaConvenio == null ? "NA" : seguimiento.fallaConvenio.Value ? "SI" : "NO")
-                        .Replace("{HaTrasladado}", seguimiento.HaTrasladado == null ? "NA" : seguimiento.HaTrasladado.Value ? "SI" : "NO")
-                        .Replace("{ips}", seguimiento.ips == null ? "NA" : seguimiento.ips.ToString())
-                        .Replace("{haRecurridoAccionLegal}", seguimiento.haRecurridoAccionLegal == null ? "NA" : seguimiento.haRecurridoAccionLegal.Value ? "SI" : "NO")
-                        .Replace("{Motivo}", seguimiento.Motivo)
-                        .Replace("{tipoRecurso}", seguimiento.tipoRecurso)
-                        .Replace("{haDejadoTratamiento}", seguimiento.haDejadoTratamiento == null ? "NA" : seguimiento.haDejadoTratamiento.Value ? "SI" : "NO")
-                        .Replace("{tiempoInasistenciaTratamiento}", seguimiento.tiempoInasistenciaTratamiento == null ? "" : seguimiento.tiempoInasistenciaTratamiento.ToString())
-                        .Replace("{causaInasistencia}", seguimiento.causaInasistencia)
-                        .Replace("{CualOtraCausaInasistencia}", seguimiento.CualOtraCausaInasistencia)
-                        .Replace("{estudiaActualmente}", seguimiento.estudiaActualmente == null ? "NA" : seguimiento.estudiaActualmente.Value ? "SI" : "NO")
-                        .Replace("{haDejadoColegio}", seguimiento.haDejadoColegio == null ? "NA" : seguimiento.haDejadoColegio.Value ? "SI" : "NO")
-                        .Replace("{tiempoInasistenciaColegio", seguimiento.tiempoInasistenciaColegio == null ? "" : seguimiento.tiempoInasistenciaColegio.ToString())
-                        .Replace("{ipsClara}", seguimiento.ipsClara == null ? "NA" : seguimiento.ipsClara.Value ? "SI" : "NO");
-
-                    var contactosHtml = string.Empty;
-                    seguimiento.Contactos.ForEach(x =>
+                    string htmlSeguimientos = "";
+                    string plantillaSeguimientos = File.ReadAllText("PlantillaSeguimientos.html");
+                    foreach (var seguimiento in seguimientos)
                     {
-                        contactosHtml += contactos.Replace("{NombreContacto}", x.Nombre)
-                            .Replace("{ParentescoContacto}", x.Parentesco)
-                            .Replace("{CorreoContacto}", x.CorreoElectronico)
-                            .Replace("{TelefonoContacto}", x.Telefono);
-                    });
+                        htmlSeguimientos += plantillaSeguimientos
+                            .Replace("{seguimientoNumero}", seguimiento.Id.ToString())
+                            .Replace("{seguimientoFecha}", seguimiento.FechaSeguimiento?.ToString("dd/MM/yyyy"))
+                            .Replace("{seguimientoAsunto}", seguimiento.UltimaActuacionAsunto)
+                            .Replace("{seguimientoObservacion}", seguimiento.ObservacionAgente)
+                            ;
+                    }
+                    htmlContent = htmlContent.Replace("{tbSeguimientos}", htmlSeguimientos);
 
-                    htmlContent = htmlContent.Replace("{contactos}", contactosHtml);
+                    List<VwExportarDetalleSeguimientoAlertasModel> vwAlertas = _context.VwExportarDetalleSeguimientoAlertas.Where(alerta => alerta.SeguimientoId == id).ToList();
+                    string htmlAlertas = "";
+                    string plantillaAlertas = File.ReadAllText("PlantillaAlertas.html");
+                    foreach (var alerta in vwAlertas)
+                    {
+                        htmlAlertas += plantillaAlertas
+                            .Replace("{alertaNumeroSeguimiento}", alerta.SeguimientoId.ToString())
+                            .Replace("{alertaFecha}", alerta.FechaNotificacion)
+                            .Replace("{alertaCategoria}", alerta.Categoria)
+                            .Replace("{alertaSubcategoria}", alerta.SubCategoriaAlerta)
+                            .Replace("{alertaEntidad}", vwSeg.Ips)
+                            .Replace("{alertaObservacion}", alerta.Observaciones)
+                            .Replace("{alertaEstado}", alerta.Estado)
+                            ;
+                    }
+                    htmlContent = htmlContent.Replace("{tbAlertas}", htmlAlertas);
 
                     using (var pdfStream = new MemoryStream())
                     {
+                        ConverterProperties properties = new ConverterProperties();
+                        properties.SetBaseUri("");
+                        DefaultFontProvider fontProvider = new DefaultFontProvider(false, true, true);
+                        properties.SetFontProvider(fontProvider);
+                        PdfWriter writer = new PdfWriter(pdfStream);
+                        PdfDocument pdf = new PdfDocument(writer);
+                        pdf.SetDefaultPageSize(PageSize.LETTER);
                         // Convertir HTML a PDF usando el MemoryStream
-                        HtmlConverter.ConvertToPdf(htmlContent, pdfStream);
+                        HtmlConverter.ConvertToPdf(htmlContent, pdf, properties);
 
                         // Convertir el MemoryStream a un array de bytes
                         byte[] pdfBytes = pdfStream.ToArray();
@@ -2639,19 +1203,21 @@ namespace Infra.Repositorios
                         // Convertir el PDF a Base64
                         var base64Pdf = Convert.ToBase64String(pdfBytes);
 
-                        File.WriteAllBytes("C:\\Users\\Giroco\\Documents\\DetalleSeguimiento.pdf", pdfBytes);
+                        File.WriteAllBytes("D:\\Temp\\DetalleSeguimiento.pdf", pdfBytes);
 
                         // Retornar el PDF en Base64
                         response.Base64 = base64Pdf;
                     }
                 }
             }
-            catch (PdfException)
+            catch (PdfException exception)
             {
+                Console.WriteLine(exception.ToString());
                 response.Nombre = "Ha ocurrido un error";
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                Console.WriteLine(exception.ToString());
                 response.Nombre = "Ha ocurrido un error";
             }
 

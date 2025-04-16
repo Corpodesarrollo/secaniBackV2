@@ -29,7 +29,7 @@ namespace TestsSecani
             env = Substitute.For<IWebHostEnvironment>();    
 
             Context = new ApplicationDbContext(options);
-            SeguimientoRepo = new SeguimientoRepo(Context,env);
+            SeguimientoRepo = new SeguimientoRepo(Context,env,null);
         }
 
         [Fact]

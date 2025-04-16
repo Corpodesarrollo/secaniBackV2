@@ -1,4 +1,6 @@
-﻿using Core.Modelos.Common;
+﻿using Core.Modelos;
+using Core.Modelos.Common;
+using DocumentFormat.OpenXml.Spreadsheet;
 using System.Text.Json;
 
 namespace Core.Services.MSTablasParametricas
@@ -127,6 +129,22 @@ namespace Core.Services.MSTablasParametricas
             }
 
             return entities;
+        }
+
+        public string GetBynomTREFStringCodigoX(string nomTREF, string? Codigo)
+        {
+            var task = Task.Run(() => _httpClient.GetStringAsync(_baseUrl + nomTREF + "/" + Codigo));
+            task.Wait();
+            var respuesta1 = task.Result;
+            var respuesta2 = JsonDocument.Parse(respuesta1);
+            var items = respuesta2.RootElement.GetProperty("items");
+
+            string Nombre = "";
+            foreach (var item in items.EnumerateArray())
+            {
+                Nombre = item.GetProperty("nombre").GetString();
+            }
+            return Nombre;
         }
 
         public async Task<List<TPExternalEntityBase>> GetMunicipiosByDepto(string CodigoDepto, CancellationToken cancellationToken)
