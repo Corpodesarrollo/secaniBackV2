@@ -16,6 +16,7 @@ using Infra.Repositories.Common;
 using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
+using Infra.Repositorios.Procesos;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
@@ -39,7 +40,9 @@ builder
 
 builder.Services.AddControllersWithViews();
 
-//builder.Services.AddHostedService<TareaEnSegundoPlano>();
+////builder.Services.AddHostedService<TareaEnSegundoPlano>();
+builder.Services.AddHostedService<ProcesadorTareasAutomaticas>();
+//builder.Services.AddScoped<IProcesoAutomatico, ProcesoEnviarCorreos>();
 
 builder.Services.AddCustomSwagger();
 
@@ -53,7 +56,6 @@ builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<ICategoriaAlertaRepository, CategoriaAlertaRepository>();
 builder.Services.AddScoped<IHistoricoTransaccionRepository, HistoricoTransaccionRepository>();
 builder.Services.AddScoped<ICategoriaAlertaService, CategoriaAlertaService>();
-builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddScoped<INombreTablaParametricaService, NombresTablaParametricaService>();
 builder.Services.AddScoped<ITablaParametricaRepository, TablaParametricaRepository>();
 
@@ -72,6 +74,7 @@ builder.Services.AddScoped<IIpsRepo, IpsRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<ReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 builder.Services.AddScoped<ReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)

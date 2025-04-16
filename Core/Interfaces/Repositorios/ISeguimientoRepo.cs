@@ -35,5 +35,7 @@ namespace Core.Interfaces.Repositorios
         Task<SeguimientoDto[]> GetSeguimientosEstados(string id);
         Task<List<UsuarioAsignado>> AsignacionAutomaticaReagendar();
         Task<List<UsuarioAsignado>> AsignacionAutomaticaReasignacion();
+        Task<UserDto[]> CargarCoordinadores();
+        Task<UserDto[]> CargarRevisores();
     }
 }

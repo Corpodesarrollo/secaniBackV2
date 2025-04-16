@@ -13,6 +13,7 @@ using Core.Services.Reportes;
 using Core.Services.StorageService;
 using Core.Validators.MSPermisos;
 using Infra;
+using Infra.Repositories;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.Reportes;
@@ -52,13 +53,13 @@ builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>)
 
 builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
 builder.Services.AddScoped<TablaParametricaService>();
-
-builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
-builder.Services.AddScoped<IStorageService, StorageService>();
-
-builder.Services.AddTransient<INNARepo, NNARepo>();
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
+builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddScoped<INNAService, NNAService>();
-builder.Services.AddTransient<INNAService, NNAService>();
+builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<ReportesSIVIGILARepo>();
+builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddTransient<ICuidadorRepo, CuidadorRepo>();
 builder.Services.AddTransient<IPersonaService, PersonaService>();
 builder.Services.AddTransient<IReporteInconsistenciaPersonaRepository, ReporteInconsistenciaPersonaRepository>();
@@ -69,8 +70,6 @@ builder.Services.AddTransient<IReporteDinamicoNNARepository, ReporteDinamicoNNAR
 builder.Services.AddTransient<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IReporteDinamicoEAPBRepository, ReporteDinamicoEAPBRepository>();
 builder.Services.AddScoped<IReporteDinamicoEAPBService, ReporteDinamicoEAPBService>();
-builder.Services.AddScoped<IReporteInconsistenciaPersonaRepository, ReporteInconsistenciaPersonaRepository>();
-builder.Services.AddScoped<IReporteInconsistenciaPersonaService, ReporteInconsistenciaPersonaService>();
 builder.Services.AddHttpClient();
 
 

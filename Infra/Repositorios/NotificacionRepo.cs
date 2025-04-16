@@ -6,20 +6,17 @@ using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Services.StorageService;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Infra.Repositorios;
-using iText.Barcodes.Dmcode;
 using Microsoft.EntityFrameworkCore;
 //using Microsoft.TeamFoundation.Test.WebApi;
-using Org.BouncyCastle.Utilities.IO;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
-using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Text.Json;
+using Path = System.IO.Path;
 
 namespace Infra.Repositories
 {
@@ -470,6 +467,8 @@ namespace Infra.Repositories
             return response;
         }
 
+
+
         /// <summary>
         /// Metodo principal para el envio del correo
         /// </summary>
@@ -508,7 +507,7 @@ namespace Infra.Repositories
                     {
                         Port = 587,
                         Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                        EnableSsl = emailConfiguration.EnableSsl 
+                        EnableSsl = emailConfiguration.EnableSsl
                     };
 
                     // Creación del mensaje de correo
@@ -517,7 +516,7 @@ namespace Infra.Repositories
                         From = new MailAddress(emailConfiguration.UserName),
                         Subject = Asunto,
                         Body = Body,
-                        IsBodyHtml = true 
+                        IsBodyHtml = true
                     };
 
                     // Agregar destinatarios
@@ -576,9 +575,9 @@ namespace Infra.Repositories
                     }
 
                     //Agregar adjuntos generados al momento
-                    if(adjuntoPDF != null)
+                    if (adjuntoPDF != null)
                         mensaje.Attachments.Add(adjuntoPDF);
-                    
+
                     // Enviar el correo
                     await clienteSmtp.SendMailAsync(mensaje);
                 }
@@ -654,12 +653,7 @@ namespace Infra.Repositories
             using var ms = new MemoryStream(pdfBytes.ToArray());
             Attachment adjunto = new(ms, "OficioNotificacion.pdf", MediaTypeNames.Application.Octet);
             return adjunto;
-
-
         }
-
-
-
 
         public async Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId, string userId)
         {
@@ -667,13 +661,13 @@ namespace Infra.Repositories
             string resultado = await this.OperacionReporteSivigila(idReporteSivigila, entidadId, "1");
 
             var resp = await this.GuardarOperacionSivigila(idReporteSivigila, entidadId, userId);
-            
+
 
 
             return resultado;
         }
 
-        public async Task<string> GuardarOperacionSivigila(long idReporteSivigila, string entidadId, string userId )
+        public async Task<string> GuardarOperacionSivigila(long idReporteSivigila, string entidadId, string userId)
         {
             DateTime fechaActual = DateTime.Now;
 
@@ -697,7 +691,7 @@ namespace Infra.Repositories
             var hoy = DateTime.UtcNow.Date;
 
             var registros = await _context.NotificacionReporteSivigila
-                .Where(n => n.TotalEnvios < (byte) 3) // Solo registros con menos de 3 envíos
+                .Where(n => n.TotalEnvios < (byte)3) // Solo registros con menos de 3 envíos
                 .ToListAsync();
 
             foreach (var registro in registros)
@@ -726,9 +720,6 @@ namespace Infra.Repositories
 
             await _context.SaveChangesAsync();
         }
-
-
-
 
         public async Task<string> OperacionReporteSivigila(long idReporteSivigila, string entidadId, string numeroNotificacion)
         {
@@ -980,11 +971,6 @@ namespace Infra.Repositories
             return resultado;
         }
 
-
-
-
-        // PROCESOS PARA EL PDF
-
         public string GenerateHtmlTemplate(string membreteUrl, string footerUrl, string content)
         {
             return $@"
@@ -1177,6 +1163,166 @@ namespace Infra.Repositories
             ";
 
             return cadena;
+        }
+
+        public async Task EnviarNotificacionAsignacionAgentes(UserDto[] agentes, List<UsuarioAsignado> asignados)
+        {
+            var subject = "[SECÁNI] NUEVAS ASIGNACIONES";
+            var html = @"
+                <!DOCTYPE html>
+                <html>
+                <body>
+                    <p style='font-family: Arial, sans-serif; font-style: italic;'>
+                        Se le han asignado los siguientes casos:
+                    </p>
+                    <ul style='font-family: Arial, sans-serif;'>
+                        {listaAsignados}
+                    </ul>
+                </body>
+                </html>
+            ";
+
+            var listaAsignados = string.Join("", asignados.Select(a => $@"
+                <li>
+                    <strong>{a.DocumentoNNA}</strong> - {a.NombreNNA}
+                </li>"));
+
+            var usuariosNotificar = asignados
+                .Select(a => a.UsuarioId)
+                .Distinct()
+                .ToArray();
+
+            foreach (var usuario in usuariosNotificar)
+            {
+                var agente = agentes.FirstOrDefault(u => u.Id == usuario);
+                if (agente != null)
+                {
+                    html = html.Replace("{listaAsignados}", listaAsignados);
+                    var body = html;
+
+                    var result = PlantillaCorreo([agente.Email ?? ""], [], subject, body, []);
+                }
+            }
+        }
+
+        public async Task EnviarNotificacionAsignacionCoordinadores(string[] para, List<UsuarioAsignado> asignados, List<UsuarioAsignado> reagendados, List<UsuarioAsignado> reasignados)
+        {
+            var fecha = DateTime.Now.ToString("dd/MM/yyyy");
+            var hora = DateTime.Now.ToString("HH:mm:ss");
+            var total = asignados.Count + reasignados.Count + reagendados.Count;
+            var asignadosCount = asignados.Count;
+            var reasignadosCount = reasignados.Count;
+            var reagendadosCount = reagendados.Count;
+
+            var html = @"
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        table {width: 100%;
+                            border-collapse: collapse;
+                        }
+                        th, td {border: 1px solid black;
+                            padding: 8px;
+                            text-align: center;
+                        }
+                        th {background - color: #f2f2f2;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <table>
+		                <tr>
+                            <th colspan='6'>Reporte de asignaciones – {fecha}</th>
+                        </tr>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Seguimientos asignados</th>
+                            <th>Seguimientos reasignados</th>
+                            <th>Seguimientos reagendados</th>
+                            <th>Total</th>
+                        </tr>
+                        <tr>
+                            <td>{fecha}</td>
+                            <td>{hora}</td>
+                            <td>{asignados}</td>
+                            <td>{reasignados}</td>
+                            <td>{reagendados}</td>
+                            <td>{total}</td>
+                        </tr>
+                    </table>
+                    </br>
+                    </br>
+                    <table>
+		                <tr>
+                            <th colspan='7'>Detalle reporte de asignaciones</th>
+                        </tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>NNA</th>
+                            <th>No. de Seguimiento</th>
+                            <th>Estado</th>
+                            <th>Criterio</th>
+                            <th>Agente de seguimiento activo</th>
+                        </tr>
+                        {asignadosRows}
+                    </table>
+                </body>
+                </html>
+            ";
+
+            var asignadosRows = string.Join("", asignados.Select(a => $@"
+                <tr>
+                    <td>{a.Id}</td>
+                    <td>{fecha}</td>
+                    <td>{a.NombreNNA}</td>
+                    <td>{a.SeguimientoId}</td>
+                    <td>Asignado</td>
+                    <td>Registro por primera vez</td>
+                    <td>{a.NombreUsuario}</td>
+                </tr>"));
+
+            var reasignadosRows = string.Join("", reasignados.Select(a => $@"
+                <tr>
+                    <td>{a.Id}</td>
+                    <td>{fecha}</td>
+                    <td>{a.NombreNNA}</td>
+                    <td>{a.SeguimientoId}</td>
+                    <td>Reasignado</td>
+                    <td>Agente inactivo</td>
+                    <td>{a.NombreUsuario}</td>
+                </tr>"));
+
+            var reagendadosRows = string.Join("", reagendados.Select(a => $@"
+                <tr>
+                    <td>{a.Id}</td>
+                    <td>{fecha}</td>
+                    <td>{a.NombreNNA}</td>
+                    <td>{a.SeguimientoId}</td>
+                    <td>Reagendado</td>
+                    <td>{a.Criterio}</td>
+                    <td>{a.NombreUsuario}</td>
+                </tr>"));
+
+            html = html.Replace("{asignadosRows}", asignadosRows);
+
+            var replacements = new Dictionary<string, string>
+            {
+                { "{fecha}", fecha },
+                { "{hora}", hora },
+                { "{asignados}", asignadosCount.ToString() },
+                { "{reasignados}", reasignadosCount.ToString() },
+                { "{reagendados}", reagendadosCount.ToString() },
+                { "{total}", total.ToString() },
+            };
+
+            var content = ReplaceHtmlPlaceholders(html, replacements);
+            var subject = $"REPORTE DE ASIGNACIONES - {fecha} {hora}";
+            var body = content;
+
+            var result = await PlantillaCorreo(para, [], subject, body, []);
         }
     }
 }

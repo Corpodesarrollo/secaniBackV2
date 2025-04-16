@@ -20,6 +20,7 @@ namespace Infra.Repositorios
         private readonly ApplicationDbContext _context;
         private readonly GenericRepository<NNAs> _repository;
         private readonly GenericRepository<TPCIE10> _repositoryCie10;
+        private readonly INotificacionRepo _notificacionRepo;
 
         private readonly ISeguimientoRepo _seguimientoRepo;
 
@@ -27,13 +28,15 @@ namespace Infra.Repositorios
             ApplicationDbContext context,
             ISeguimientoRepo seguimientoRepo,
             GenericRepository<NNAs> repository,
-            GenericRepository<TPCIE10> repositoryCie10
+            GenericRepository<TPCIE10> repositoryCie10,
+            INotificacionRepo notificacionRepo
             )
         {
             _context = context;
             _seguimientoRepo = seguimientoRepo;
             _repository = repository;
             _repositoryCie10 = repositoryCie10;
+            _notificacionRepo = notificacionRepo;
         }
 
 
@@ -1042,6 +1045,18 @@ namespace Infra.Repositorios
                 var asignados = await _seguimientoRepo.AsignacionAutomatica();
                 var reagendados = await _seguimientoRepo.AsignacionAutomaticaReagendar();
                 var reasignados = await _seguimientoRepo.AsignacionAutomaticaReasignacion();
+
+                var coordinadores = await _seguimientoRepo.CargarCoordinadores();
+                var revisores = await _seguimientoRepo.CargarRevisores();
+
+                if (coordinadores.Count() > 0)
+                    await _notificacionRepo.EnviarNotificacionAsignacionCoordinadores((string[])coordinadores.Select(x => x.Email), asignados, reagendados, reasignados);
+
+                if (revisores.Count() > 0)
+                {
+                    asignados.AddRange(reagendados);
+                    await _notificacionRepo.EnviarNotificacionAsignacionAgentes(revisores, asignados);
+                }
             }
             catch (Exception e)
             {
@@ -1067,6 +1082,9 @@ namespace Infra.Repositorios
             else
                 return new() { Estado = "Procesada", Nuevos = insertNNA.Count, Recaidas = recaidas, SegundasNeoplasias = segundaNeoplasia };
         }
+
+
+
 
         private async Task GenerarSeguimientos()
         {

@@ -602,7 +602,6 @@ namespace Infra.Repositorios
 
         public async Task<List<UsuarioAsignado>> AsignacionAutomatica()
         {
-            var revisoresAusentes = new List<UsuariosHorariosDto>();
             var seguimientosAsignados = new List<UsuarioAsignado>();
 
             var seguimientosNoAsignados = await CargarSeguimientos();
@@ -610,7 +609,7 @@ namespace Infra.Repositorios
             var fecha = DateTime.Now.Date;
             var revisores = await CargarRevisores(fecha);
 
-            while (seguimientosNoAsignados.Count > 0 && revisores.Count > 0)
+            while (seguimientosNoAsignados.Count > 0)
             {
                 while (seguimientosNoAsignados.Count > 0 && revisores.Count > 0)
                 {
@@ -637,9 +636,11 @@ namespace Infra.Repositorios
                     if (seguimientosNoAsignados.Count == 0)
                         break;
 
-                    //el revisor entra a las horaentrada y sale a la horasalida. sedebe asignar el seguimiento en un rango de 640 segundos,
+                    //el revisor entra a las horaentrada y sale a la horasalida. se debe asignar el seguimiento en un rango de 640 segundos,
                     //si el seguimiento se cruza con otro se debe aumentar 640 segundos  y volver a verificar hasta lograr agendar el seguimiento
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
+                    if (fechaAsignacion == null)
+                        continue;
 
                     var seguimiento = seguimientosNoAsignados[0];
 
@@ -650,8 +651,10 @@ namespace Infra.Repositorios
                         DateCreated = DateTime.Now,
                         FechaAsignacion = fechaAsignacion,
                         Observaciones = "Asignación automática",
-                        SeguimientoId = seguimiento,
-                        UsuarioId = revisor.UserId
+                        SeguimientoId = seguimiento.Item1,
+                        NombreNNA = seguimiento.Item2,
+                        UsuarioId = revisor.UserId,
+                        NombreUsuario = revisor.Nombre,
                     };
 
                     _context.UsuarioAsignados.Add(usuarioAsignado);
@@ -665,12 +668,17 @@ namespace Infra.Repositorios
 
                 fecha = fecha.AddDays(1);
                 revisores = await CargarRevisores(fecha);
+
+                //validar si hay disponibilidad de revisores
+                var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
+                if (!revisoresDisponibles)
+                    break;
             }
 
             return seguimientosAsignados;
         }
 
-        private static DateTime BuscarEspacioHorario(DateTime fecha, UsuariosHorariosDto revisor, List<UsuarioAsignado> seguimientosAsignadosFecha)
+        private static DateTime? BuscarEspacioHorario(DateTime fecha, UsuariosHorariosDto revisor, List<UsuarioAsignado> seguimientosAsignadosFecha)
         {
             var fechaAsignacion = fecha.Date + revisor.HoraEntrada.GetValueOrDefault();
             var fechaSalida = fecha.Date + revisor.HoraSalida.GetValueOrDefault();
@@ -687,30 +695,19 @@ namespace Infra.Repositorios
                     fechaEncontrada = true;
             }
 
+            if (!fechaEncontrada)
+                return null;
+
             return fechaAsignacion;
         }
 
         public async Task<List<UsuarioAsignado>> AsignacionAutomaticaReagendar()
         {
             var fecha = DateTime.Now;
-
-            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
-            var revisores = await (from ur in _context.UserRoles
-                                   join r in _context.Roles on ur.RoleId equals r.Id
-                                   join u in _context.Users on ur.UserId equals u.Id
-                                   join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
-                                   join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
-                                   from aus in a.DefaultIfEmpty()
-                                   where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus != null
-                                   select new UsuariosHorariosDto
-                                   {
-                                       UserId = u.Id,
-                                       Fecha = h.Fecha,
-                                       HoraEntrada = h.HoraEntrada,
-                                       HoraSalida = h.HoraSalida
-                                   }).ToListAsync();
-
             var seguimientosReagendados = new List<UsuarioAsignado>();
+
+            //reagendar por no ejecucion de seguimiento
+            var revisores = await CargarRevisores(fecha);
 
             foreach (var revisor in revisores)
             {
@@ -722,52 +719,107 @@ namespace Infra.Repositorios
 
                 var seguimientosReagendamiento = await (from q in seguimientos
                                                         join seg in _context.Seguimientos on q.id equals seg.Id
+                                                        join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                         join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                         where seg.FechaSeguimiento < fecha && ua.UsuarioId == revisor.UserId
-                                                        select seg.Id).ToListAsync();
+                                                        select new ValueTuple<long, string>(
+                                                            seg.Id,
+                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                                                        )).ToListAsync();
 
-                while (seguimientosReagendamiento.Count > 0)
-                {
-                    fecha = fecha.Date.AddDays(1);
+                fecha = await ReagendarSeguimientos(fecha, seguimientosReagendados, revisor, seguimientosReagendamiento, "No ejecución");
+            }
 
-                    //validar que la fecha no es dia festivo
-                    var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
-                    if (festivos != null)
-                        continue;
+            //reagendar por agente ausente
+            var revisoresAusentes = await CargarRevisoresAusentes(fecha);
 
-                    //validamos los seguimientos asignados al revisor en la fecha
-                    var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
-                    if (seguimientosAsignadosFecha.Count > 0)
-                        revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+            foreach (var revisor in revisoresAusentes)
+            {
+                var seguimientosReagendamiento = await (from seg in _context.Seguimientos
+                                                        join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                        join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                        where ua.FechaAsignacion == fecha && ua.UsuarioId == revisor.UserId
+                                                        select new ValueTuple<long, string>(
+                                                            seg.Id,
+                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                                                        )).ToListAsync();
 
-                    //valida si el revisor tiene seguimeintos disponibles por asignar
-                    if (revisor.CantidadSeguimientosDisponibles <= 0)
-                        continue;
-
-                    var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
-
-                    var seguimiento = seguimientosReagendamiento[0];
-
-                    //asignar seguimiento al revisor
-                    var usuarioAsignado = new UsuarioAsignado
-                    {
-                        Activo = true,
-                        DateCreated = DateTime.Now,
-                        FechaAsignacion = fechaAsignacion,
-                        Observaciones = "Reagendamiento automático",
-                        SeguimientoId = seguimiento,
-                        UsuarioId = revisor.UserId
-                    };
-
-                    _context.UsuarioAsignados.Add(usuarioAsignado);
-                    await _context.SaveChangesAsync();
-
-                    seguimientosReagendados.Add(usuarioAsignado);
-                    seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
-                }
+                fecha = await ReagendarSeguimientos(fecha, seguimientosReagendados, revisor, seguimientosReagendamiento, "Ausencia");
             }
 
             return seguimientosReagendados;
+        }
+
+        private async Task<DateTime> ReagendarSeguimientos(DateTime fecha, List<UsuarioAsignado> seguimientosReagendados, UsuariosHorariosDto revisor, List<(long, string)> seguimientosReagendamiento, string tipo)
+        {
+            while (seguimientosReagendamiento.Count > 0)
+            {
+                fecha = fecha.Date.AddDays(1);
+
+                //validar que la fecha no es dia festivo
+                var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                if (festivos != null)
+                    continue;
+
+                //validamos los seguimientos asignados al revisor en la fecha
+                var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
+                if (seguimientosAsignadosFecha.Count > 0)
+                    revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+
+                //valida si el revisor tiene seguimeintos disponibles por asignar
+                if (revisor.CantidadSeguimientosDisponibles <= 0)
+                    continue;
+
+                var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
+                if (fechaAsignacion == null)
+                    continue;
+
+                var seguimiento = seguimientosReagendamiento[0];
+
+                //asignar seguimiento al revisor
+                var usuarioAsignado = new UsuarioAsignado
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = fechaAsignacion,
+                    Observaciones = "Reagendamiento automático",
+                    SeguimientoId = seguimiento.Item1,
+                    NombreNNA = seguimiento.Item2,
+                    Criterio = tipo,
+                    UsuarioId = revisor.UserId
+                };
+
+                _context.UsuarioAsignados.Add(usuarioAsignado);
+                await _context.SaveChangesAsync();
+
+                seguimientosReagendados.Add(usuarioAsignado);
+                seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+
+                //validar si hay disponibilidad de revisores
+                var revisoresDisponibles = await _context.HorarioLaboralAgente.AnyAsync(x => x.UserId == revisor.UserId && x.Fecha == fecha);
+                if (!revisoresDisponibles)
+                    break;
+            }
+
+            return fecha;
+        }
+
+        private async Task<List<UsuariosHorariosDto>> CargarRevisoresAusentes(DateTime fecha)
+        {
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus != null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).ToListAsync();
         }
 
         public async Task<List<UsuarioAsignado>> AsignacionAutomaticaReasignacion()
@@ -782,14 +834,18 @@ namespace Infra.Repositorios
 
             var seguimientosReasignacion = await (from q in seguimientos
                                                   join seg in _context.Seguimientos on q.id equals seg.Id
+                                                  join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                   join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                   join u in _context.Users on ua.UsuarioId equals u.Id
                                                   where ua.FechaAsignacion == fecha && u.Activo == false
-                                                  select seg.Id).ToListAsync();
+                                                  select new ValueTuple<long, string>(
+                                                      seg.Id,
+                                                      $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                                                  )).ToListAsync();
 
             var revisores = await CargarRevisoresReasignacion(fecha);
 
-            while (seguimientosReasignacion.Count > 0 && revisores.Count > 0)
+            while (seguimientosReasignacion.Count > 0)
             {
                 while (seguimientosReasignacion.Count > 0 && revisores.Count > 0)
                 {
@@ -817,6 +873,8 @@ namespace Infra.Repositorios
                         break;
 
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
+                    if (fechaAsignacion == null)
+                        continue;
 
                     var seguimiento = seguimientosReasignacion[0];
 
@@ -827,7 +885,8 @@ namespace Infra.Repositorios
                         DateCreated = DateTime.Now,
                         FechaAsignacion = fechaAsignacion,
                         Observaciones = "Asignación automática",
-                        SeguimientoId = seguimiento,
+                        SeguimientoId = seguimiento.Item1,
+                        NombreNNA = seguimiento.Item2,
                         UsuarioId = revisor.UserId
                     };
 
@@ -842,6 +901,11 @@ namespace Infra.Repositorios
 
                 fecha = fecha.AddDays(1);
                 revisores = await CargarRevisoresReasignacion(fecha);
+
+                //validar si hay disponibilidad de revisores
+                var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
+                if (!revisoresDisponibles)
+                    break;
             }
 
             return seguimientosAsignados;
@@ -859,20 +923,48 @@ namespace Infra.Repositorios
                           select new UsuariosHorariosDto
                           {
                               UserId = u.Id,
+                              Nombre = u.FullName,
+                              Email = u.Email,
                               Fecha = h.Fecha,
                               HoraEntrada = h.HoraEntrada,
                               HoraSalida = h.HoraSalida
                           }).ToListAsync();
         }
 
-        private async Task<List<long>> CargarSeguimientos()
+        private async Task<List<(long, string)>> CargarSeguimientos()
         {
             return await (from seg in _context.Seguimientos
                           join nna in _context.NNAs on seg.NNAId equals nna.Id
-                          join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId into ua
-                          from uas in ua.DefaultIfEmpty()
+                          join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId into uaJoin
+                          from uas in uaJoin.DefaultIfEmpty()
                           where nna.estadoId == 15 && uas == null
-                          select seg.Id).ToListAsync();
+                          select new ValueTuple<long, string>(
+                              seg.Id,
+                              $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                          )).ToListAsync();
+        }
+
+        private async Task<bool> ValidarDiponibilidadAgentes(DateTime fecha)
+        {
+            var fechaValidar = fecha;
+
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha >= fecha && aus == null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Nombre = u.FullName,
+                              Email = u.Email,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).AnyAsync();
         }
 
         private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha)
@@ -890,10 +982,44 @@ namespace Infra.Repositorios
                           select new UsuariosHorariosDto
                           {
                               UserId = u.Id,
+                              Nombre = u.FullName,
+                              Email = u.Email,
                               Fecha = h.Fecha,
                               HoraEntrada = h.HoraEntrada,
                               HoraSalida = h.HoraSalida
                           }).ToListAsync();
+        }
+
+        public async Task<UserDto[]> CargarRevisores()
+        {
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true
+                          select new UserDto
+                          {
+                              Id = u.Id,
+                              Alias = u.Alias,
+                              Email = u.Email,
+                              Name = u.FullName
+                          }).ToArrayAsync();
+        }
+
+        public async Task<UserDto[]> CargarCoordinadores()
+        {
+            //311882D4-EAD0-4B0B-9C5D-4A434D49D16D	Coordinadores
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          where r.Id == "311882D4-EAD0-4B0B-9C5D-4A434D49D16D" && u.Activo == true
+                          select new UserDto
+                          {
+                              Id = u.Id,
+                              Alias = u.Alias,
+                              Email = u.Email,
+                              Name = u.FullName
+                          }).ToArrayAsync();
         }
 
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)

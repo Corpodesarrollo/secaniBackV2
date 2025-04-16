@@ -162,11 +162,10 @@ namespace Infra
         public DbSet<NotificacionSolicitudSeguimiento> NotificacionSolicitudSeguimiento { get; set; }
 
         public DbSet<NotificacionReporteSivigila> NotificacionReporteSivigila { get; set; }
-
-
         public DbSet<ResumenLlamadas> ResumenLlamadas { get; set; }
         public DbSet<DetalleFallasLlamadas> DetalleFallasLlamadas { get; set; }
         public DbSet<VwExportarDetalleSeguimientoModel> VwExportarDetalleSeguimiento { get; set; }
         public DbSet<VwExportarDetalleSeguimientoAlertasModel> VwExportarDetalleSeguimientoAlertas { get; set; }
+        public DbSet<ControlProcesosAutomaticos> ControlProcesosAutomaticos { get; set; }
     }
 }

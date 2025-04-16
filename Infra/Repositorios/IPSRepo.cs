@@ -73,7 +73,8 @@ namespace Infra.Repositorios
                         NIT = long.TryParse(dto.Extra_III, out long nit) ? nit : null,
                         DV = int.TryParse(dto.Extra_IV, out int dv) ? dv : null,
                         Creation = dto.Creation,
-                        LastUpdate = dto.LastUpdate
+                        LastUpdate = dto.LastUpdate,
+                        Tipo = ExtraerCode(dto.Extra_IX),
                     }).ToArray();
 
                     using var db = new ApplicationDbContext(dbContextOptions);
@@ -88,6 +89,19 @@ namespace Infra.Repositorios
                 Console.WriteLine($"Error al cargar los datos a la base de datos: {ex.Message}");
                 return false;
             }
+        }
+
+        private int? ExtraerCode(string? extra_IX)
+        {
+            if (string.IsNullOrEmpty(extra_IX))
+                return null;
+
+            if (extra_IX.StartsWith("1") || extra_IX.StartsWith("2"))
+                return 1; // ET
+            else if (extra_IX.StartsWith("10") || extra_IX.StartsWith("4") || extra_IX.StartsWith("5") || extra_IX.StartsWith("7") || extra_IX.StartsWith("8") || extra_IX.StartsWith("9"))
+                return 2; // EAPB
+            else
+                return null; // No se puede determinar el tipo
         }
 
         public async Task<TPIPSDto[]?> GetMunicipio(string codeMunicipio)

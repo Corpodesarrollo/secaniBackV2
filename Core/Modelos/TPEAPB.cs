@@ -13,5 +13,6 @@ namespace Core.Modelos
         public int? DV { get; set; }
         public DateTime? Creation { get; set; }
         public DateTime? LastUpdate { get; set; }
+        public int? Tipo { get; set; }
     }
 }

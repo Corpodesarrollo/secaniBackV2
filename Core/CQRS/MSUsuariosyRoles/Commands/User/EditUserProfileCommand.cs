@@ -1,4 +1,5 @@
-﻿using Core.Interfaces.Services.MSUsuariosyRoles;
+﻿using Core.Interfaces.Repositorios;
+using Core.Interfaces.Services.MSUsuariosyRoles;
 using MediatR;
 
 namespace Core.CQRS.MSUsuariosyRoles.Commands.User
@@ -17,13 +18,21 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
     public class EditUserProfileCommandHandler : IRequestHandler<EditUserProfileCommand, int>
     {
         private readonly IIdentityService _identityService;
+        private readonly ISeguimientoRepo _seguimientoRepo;
 
-        public EditUserProfileCommandHandler(IIdentityService identityService)
+        public EditUserProfileCommandHandler(IIdentityService identityService, ISeguimientoRepo seguimientoRepo)
         {
+            _seguimientoRepo = seguimientoRepo;
             _identityService = identityService;
         }
+
         public async Task<int> Handle(EditUserProfileCommand request, CancellationToken cancellationToken)
         {
+            if (request.Estado != "Activo")
+            {
+                var reasignados = await _seguimientoRepo.AsignacionAutomaticaReasignacion();
+            }
+
             var result = await _identityService.UpdateUserProfile(request.Id, request.FullName, request.Email, request.Telefonos, request.EntidadId, request.Cargo, request.Estado);
             return result ? 1 : 0;
         }

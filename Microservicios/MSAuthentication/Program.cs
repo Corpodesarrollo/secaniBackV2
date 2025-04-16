@@ -9,6 +9,7 @@ using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Modelos.Identity;
 using Core.Services;
 using Core.Services.MSPermisos;
+using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.StorageService;
 using Core.Validators;
@@ -90,6 +91,8 @@ builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
 builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
+builder.Services.AddTransient<TablaParametricaService>();
 
 builder.Services.AddCors(options =>
 {

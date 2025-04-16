@@ -15,6 +15,5 @@
         public bool IsDeleted { get; set; }
         public string? UpdatedByUserId { get; set; }
 
-        
     }
 }
