@@ -1,7 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
-using Core.Modelos.Common;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -12,15 +11,8 @@ using iText.Html2pdf.Resolver.Font;
 using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
-using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.ComponentModel;
-using System.IO;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading;
 
 namespace Infra.Repositorios
 {
@@ -623,7 +615,7 @@ namespace Infra.Repositorios
                     //validamos los seguimientos asignados al revisor en la fecha
                     var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion.Value.Date == fecha.Date).ToListAsync();
                     if (seguimientosAsignadosFecha.Count > 0)
-                        revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+                        revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
 
                     //valida si el revisor tiene seguimeintos disponibles por asignar
                     if (revisor.CantidadSeguimientosDisponibles <= 0)
@@ -653,6 +645,7 @@ namespace Infra.Repositorios
                         Observaciones = "Asignación automática",
                         SeguimientoId = seguimiento.Item1,
                         NombreNNA = seguimiento.Item2,
+                        DocumentoNNA = seguimiento.Item3,
                         UsuarioId = revisor.UserId,
                         NombreUsuario = revisor.Nombre,
                     };
@@ -661,9 +654,7 @@ namespace Infra.Repositorios
                     await _context.SaveChangesAsync();
 
                     seguimientosAsignados.Add(usuarioAsignado);
-
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
-                    revisor.CantidadSeguimientosDisponibles--;
                 }
 
                 fecha = fecha.AddDays(1);
@@ -685,7 +676,8 @@ namespace Infra.Repositorios
             var fechaEncontrada = false;
             while (!fechaEncontrada && fechaAsignacion < fechaSalida)
             {
-                var seguimientosAsignadosFechaRango = seguimientosAsignadosFecha.Where(x => x.FechaAsignacion > fechaAsignacion && x.FechaAsignacion <= fechaAsignacion.AddSeconds(640)).FirstOrDefault();
+                var proxFechaAsignacion = fechaAsignacion.AddSeconds(640);
+                var seguimientosAsignadosFechaRango = seguimientosAsignadosFecha.Where(x => x.FechaAsignacion >= fechaAsignacion && x.FechaAsignacion < proxFechaAsignacion).FirstOrDefault();
                 if (seguimientosAsignadosFechaRango != null)
                 {
                     fechaAsignacion = fechaAsignacion.AddSeconds(640);
@@ -722,9 +714,10 @@ namespace Infra.Repositorios
                                                         join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                         join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                         where seg.FechaSeguimiento < fecha && ua.UsuarioId == revisor.UserId
-                                                        select new ValueTuple<long, string>(
+                                                        select new ValueTuple<long, string, string>(
                                                             seg.Id,
-                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                            nna.NumeroIdentificacion ?? ""
                                                         )).ToListAsync();
 
                 fecha = await ReagendarSeguimientos(fecha, seguimientosReagendados, revisor, seguimientosReagendamiento, "No ejecución");
@@ -739,9 +732,10 @@ namespace Infra.Repositorios
                                                         join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                         join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                         where ua.FechaAsignacion == fecha && ua.UsuarioId == revisor.UserId
-                                                        select new ValueTuple<long, string>(
+                                                        select new ValueTuple<long, string, string>(
                                                             seg.Id,
-                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                            nna.NumeroIdentificacion ?? ""
                                                         )).ToListAsync();
 
                 fecha = await ReagendarSeguimientos(fecha, seguimientosReagendados, revisor, seguimientosReagendamiento, "Ausencia");
@@ -750,7 +744,7 @@ namespace Infra.Repositorios
             return seguimientosReagendados;
         }
 
-        private async Task<DateTime> ReagendarSeguimientos(DateTime fecha, List<UsuarioAsignado> seguimientosReagendados, UsuariosHorariosDto revisor, List<(long, string)> seguimientosReagendamiento, string tipo)
+        private async Task<DateTime> ReagendarSeguimientos(DateTime fecha, List<UsuarioAsignado> seguimientosReagendados, UsuariosHorariosDto revisor, List<(long, string, string)> seguimientosReagendamiento, string tipo)
         {
             while (seguimientosReagendamiento.Count > 0)
             {
@@ -764,7 +758,7 @@ namespace Infra.Repositorios
                 //validamos los seguimientos asignados al revisor en la fecha
                 var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
                 if (seguimientosAsignadosFecha.Count > 0)
-                    revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+                    revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
 
                 //valida si el revisor tiene seguimeintos disponibles por asignar
                 if (revisor.CantidadSeguimientosDisponibles <= 0)
@@ -785,6 +779,7 @@ namespace Infra.Repositorios
                     Observaciones = "Reagendamiento automático",
                     SeguimientoId = seguimiento.Item1,
                     NombreNNA = seguimiento.Item2,
+                    DocumentoNNA = seguimiento.Item3,
                     Criterio = tipo,
                     UsuarioId = revisor.UserId
                 };
@@ -838,9 +833,10 @@ namespace Infra.Repositorios
                                                   join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                   join u in _context.Users on ua.UsuarioId equals u.Id
                                                   where ua.FechaAsignacion == fecha && u.Activo == false
-                                                  select new ValueTuple<long, string>(
+                                                  select new ValueTuple<long, string, string>(
                                                       seg.Id,
-                                                      $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                                                      $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                      nna.NumeroIdentificacion
                                                   )).ToListAsync();
 
             var revisores = await CargarRevisoresReasignacion(fecha);
@@ -931,16 +927,17 @@ namespace Infra.Repositorios
                           }).ToListAsync();
         }
 
-        private async Task<List<(long, string)>> CargarSeguimientos()
+        private async Task<List<(long, string, string)>> CargarSeguimientos()
         {
             return await (from seg in _context.Seguimientos
                           join nna in _context.NNAs on seg.NNAId equals nna.Id
                           join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId into uaJoin
                           from uas in uaJoin.DefaultIfEmpty()
                           where nna.estadoId == 15 && uas == null
-                          select new ValueTuple<long, string>(
+                          select new ValueTuple<long, string, string>(
                               seg.Id,
-                              $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}"
+                              $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                              nna.NumeroIdentificacion ?? ""
                           )).ToListAsync();
         }
 
@@ -1262,7 +1259,7 @@ namespace Infra.Repositorios
                         .Replace("{dejoAsistirColegio}", vwSeg.DejoAsistirColegio)
                         .Replace("{cuantoTiempoColegio}", vwSeg.CuantoTiempoColegio)
                         .Replace("{informeClaroDiagTrat}", vwSeg.InformeClaroDiagTrat)
-                        .Replace("{obsSolicitante}", (seguimientos != null)? seguimientos.First().ObservacionesSolicitante:"")
+                        .Replace("{obsSolicitante}", (seguimientos != null) ? seguimientos.First().ObservacionesSolicitante : "")
                         .Replace("{obsAgente}", (seguimientos != null) ? seguimientos.First().ObservacionAgente : "")
                         ;
 
@@ -1272,7 +1269,7 @@ namespace Infra.Repositorios
                     foreach (var contacto in contactosNNA)
                     {
                         TPParentescos? tPParentescos = _context.TPParentescos.FirstOrDefault(p => p.Id == contacto.ParentescoId);
-                        string? parentesco = (tPParentescos==null)?"": tPParentescos.Nombre;
+                        string? parentesco = (tPParentescos == null) ? "" : tPParentescos.Nombre;
                         htmlContactos += plantillaContactos
                             .Replace("{contactoNombre}", contacto.Nombres)
                             .Replace("{contactoParentesco}", parentesco)

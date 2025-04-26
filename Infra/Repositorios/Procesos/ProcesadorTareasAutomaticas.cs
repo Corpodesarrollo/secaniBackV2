@@ -43,7 +43,7 @@ namespace Infra.Repositorios.Procesos
 
                         if (procesoImpl != null)
                         {
-                            await procesoImpl.EjecutarAsync(stoppingToken);
+                            await procesoImpl.EjecutarAsync(proceso.UltimaEjecucion ?? DateTime.Now, stoppingToken);
 
                             proceso.UltimaEjecucion = DateTime.Now;
                             proceso.ProximaEjecucion = DateTime.Now.AddSeconds(proceso.IntervaloSegundos);

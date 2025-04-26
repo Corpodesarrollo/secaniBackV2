@@ -8,7 +8,6 @@ using Core.Response;
 using Core.Services.StorageService;
 using Infra.Repositorios;
 using Microsoft.EntityFrameworkCore;
-//using Microsoft.TeamFoundation.Test.WebApi;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
 using System.Globalization;
@@ -26,6 +25,8 @@ namespace Infra.Repositories
         private readonly IAdjuntosRepo _adjuntosRepo;
         private readonly IStorageService _storageService;
         private readonly ReportesSIVIGILARepo _reportesSIVIGILARepo;
+        private readonly SmtpClient clienteSmtp;
+        private readonly string fromMail;
 
         public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, ReportesSIVIGILARepo reportesSIVIGILARepo)
         {
@@ -33,6 +34,21 @@ namespace Infra.Repositories
             _adjuntosRepo = adjuntosRepo;
             _storageService = storageService;
             _reportesSIVIGILARepo = reportesSIVIGILARepo;
+
+            // Obtener configuraciones de correo
+            var emailConfigurations = _context.EmailConfigurations.ToList();
+
+            if (emailConfigurations.Count > 0)
+            {
+                var emailConfiguration = emailConfigurations[0];
+                fromMail = emailConfiguration.UserName;
+                clienteSmtp = new SmtpClient(emailConfiguration.SmtpServer)
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
+                    EnableSsl = emailConfiguration.EnableSsl
+                };
+            }
         }
 
         public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId)
@@ -481,39 +497,30 @@ namespace Infra.Repositories
 
         public async Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos, Attachment adjuntoPDF = null)
         {
-            if (Body != null)
+            try
             {
-                // Configuración de Puppeteer (si es necesario)
-                await new BrowserFetcher().DownloadAsync();
-
-                await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                if (Body != null)
                 {
-                    Headless = true
-                });
+                    // Configuración de Puppeteer (si es necesario)
+                    await new BrowserFetcher().DownloadAsync();
 
-                await using var page = await browser.NewPageAsync();
-                await page.SetContentAsync(Body);
-                await browser.CloseAsync();
-
-                Console.WriteLine("INICIO DEL ENVIO");
-
-                // Obtener configuraciones de correo
-                List<EmailConfiguration> emailConfigurations = _context.EmailConfigurations.ToList();
-
-                if (emailConfigurations.Count > 0)
-                {
-                    EmailConfiguration emailConfiguration = emailConfigurations[0];
-                    using SmtpClient clienteSmtp = new(emailConfiguration.SmtpServer)
+                    await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
                     {
-                        Port = 587,
-                        Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                        EnableSsl = emailConfiguration.EnableSsl
-                    };
+                        Headless = true
+                    });
+
+                    await using var page = await browser.NewPageAsync();
+                    await page.SetContentAsync(Body);
+                    await browser.CloseAsync();
+
+                    Console.WriteLine("INICIO DEL ENVIO");
+
+
 
                     // Creación del mensaje de correo
                     MailMessage mensaje = new()
                     {
-                        From = new MailAddress(emailConfiguration.UserName),
+                        From = new MailAddress(fromMail),
                         Subject = Asunto,
                         Body = Body,
                         IsBodyHtml = true
@@ -580,13 +587,19 @@ namespace Infra.Repositories
 
                     // Enviar el correo
                     await clienteSmtp.SendMailAsync(mensaje);
-                }
 
-                return "Correo enviado satisfactoriamente";
+
+                    return "Correo enviado satisfactoriamente";
+                }
+                else
+                {
+                    return "Cuerpo de mensaje vacío";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return "Cuerpo de mensaje vacío";
+                Console.WriteLine($"Error al enviar el correo: {ex.Message}");
+                return "Error al enviar el correo";
             }
         }
 
@@ -1226,7 +1239,7 @@ namespace Infra.Repositories
                             padding: 8px;
                             text-align: center;
                         }
-                        th {background - color: #f2f2f2;
+                        th {background-color: #f2f2f2;
                         }
                     </style>
                 </head>
@@ -1253,6 +1266,7 @@ namespace Infra.Repositories
                         </tr>
                     </table>
                     </br>
+                    <p> </p>
                     </br>
                     <table>
 		                <tr>

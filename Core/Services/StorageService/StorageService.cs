@@ -14,6 +14,9 @@ namespace Core.Services.StorageService
             var containerName = config["StorageContainerName"];
 
             BlobServiceClient blobServiceClient = new(connectionString);
+            if (string.IsNullOrEmpty(containerName))
+                throw new ArgumentNullException(nameof(containerName), "El nombre del contenedor no puede ser nulo o vacío.");
+
             _containerClient = blobServiceClient.GetBlobContainerClient(containerName);
         }
 

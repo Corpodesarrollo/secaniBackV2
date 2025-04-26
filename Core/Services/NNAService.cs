@@ -1,6 +1,7 @@
 ﻿using Core.DTOs;
 using Core.Interfaces;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Services.Reportes;
 using Core.Modelos;
 using Core.Modelos.Common;
 using Core.Response;
@@ -11,11 +12,13 @@ namespace Core.Services
     {
         private readonly INNARepo _repository;
         private readonly IContactoNNARepo ContactoNNA;
+        private readonly IReporteInconsistenciaPersonaService _reporteInconsistenciaPersonaService;
 
-        public NNAService(INNARepo repository, IContactoNNARepo contactoNNA)
+        public NNAService(INNARepo repository, IContactoNNARepo contactoNNA, IReporteInconsistenciaPersonaService reporteInconsistenciaPersonaService)
         {
             _repository = repository;
             ContactoNNA = contactoNNA;
+            _reporteInconsistenciaPersonaService = reporteInconsistenciaPersonaService;
         }
 
         public async Task<RespuestaResponse<NNADto>> AddAsync(NNADto dto)
@@ -35,6 +38,9 @@ namespace Core.Services
                 }
 
                 var dto1 = GenericMapper.Map<NNAs, NNADto>(entitys);
+
+                var resultReport = await _reporteInconsistenciaPersonaService.AddReporteInconsistenciaAsync(dto1);
+
                 var response = GenericRespuestaResponse.Response<NNADto>(success, success ? "Datos generados" : "Error al generar datos", dto1);
                 return response;
             }

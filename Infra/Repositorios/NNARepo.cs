@@ -1050,7 +1050,7 @@ namespace Infra.Repositorios
                 var revisores = await _seguimientoRepo.CargarRevisores();
 
                 if (coordinadores.Count() > 0)
-                    await _notificacionRepo.EnviarNotificacionAsignacionCoordinadores((string[])coordinadores.Select(x => x.Email), asignados, reagendados, reasignados);
+                    await _notificacionRepo.EnviarNotificacionAsignacionCoordinadores(coordinadores.Select(x => x.Email).ToArray(), asignados, reagendados, reasignados);
 
                 if (revisores.Count() > 0)
                 {

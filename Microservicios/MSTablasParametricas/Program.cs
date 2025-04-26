@@ -39,7 +39,7 @@ builder
 
 builder.Services.AddControllersWithViews();
 
-////builder.Services.AddHostedService<TareaEnSegundoPlano>();
+//builder.Services.AddHostedService<TareaEnSegundoPlano>();
 //builder.Services.AddHostedService<ProcesadorTareasAutomaticas>();
 //builder.Services.AddScoped<IProcesoAutomatico, ProcesoEnviarCorreos>();
 

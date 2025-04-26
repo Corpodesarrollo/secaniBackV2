@@ -4,6 +4,6 @@
     {
         string Nombre { get; }
 
-        Task EjecutarAsync(CancellationToken cancellationToken);
+        Task EjecutarAsync(DateTime lastRun, CancellationToken cancellationToken);
     }
 }

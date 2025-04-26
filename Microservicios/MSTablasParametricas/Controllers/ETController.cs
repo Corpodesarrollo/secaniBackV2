@@ -8,12 +8,12 @@ namespace MSTablasParametricas.Api.Controllers
     [Route("[controller]")]
     //[Authorize]
     [ApiController]
-    public class EAPBController(IEAPBRepo service) : ControllerBase
+    public class ETController(IEAPBRepo service) : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<List<TPEAPBDto>>> GetEAPB(CancellationToken cancellationToken)
+        public async Task<ActionResult<List<TPEAPBDto>>> GetET(CancellationToken cancellationToken)
         {
-            var result = await service.GetEAPB();
+            var result = await service.GetET();
             return Ok(result);
         }
     }

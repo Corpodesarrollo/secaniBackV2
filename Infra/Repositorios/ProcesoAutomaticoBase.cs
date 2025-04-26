@@ -6,11 +6,11 @@ namespace Infra.Repositorios
     {
         public abstract string Nombre { get; }
 
-        public async Task EjecutarAsync(CancellationToken cancellationToken)
+        public async Task EjecutarAsync(DateTime lastRun, CancellationToken cancellationToken)
         {
             try
             {
-                await EjecutarProcesoAsync(cancellationToken);
+                await EjecutarProcesoAsync(lastRun, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -18,6 +18,6 @@ namespace Infra.Repositorios
             }
         }
 
-        protected abstract Task EjecutarProcesoAsync(CancellationToken cancellationToken);
+        protected abstract Task EjecutarProcesoAsync(DateTime lastRun, CancellationToken cancellationToken);
     }
 }

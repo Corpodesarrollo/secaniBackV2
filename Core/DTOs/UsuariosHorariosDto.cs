@@ -8,12 +8,25 @@
 
         public DateTime? Fecha { get; set; }
         public TimeSpan? HoraEntrada { get; set; }
-        public TimeSpan? HoraSalida { get; set; }
+
+        private TimeSpan? _horaSalida;
+        public TimeSpan? HoraSalida
+        {
+            get => _horaSalida; set
+            {
+                _horaSalida = value;
+                _ = HorasTrabajadas;
+                _ = CantidadSeguimientos;
+            }
+        }
 
         public float HorasTrabajadas
         {
             get
             {
+                if (HoraEntrada == null || HoraSalida == null)
+                    return 0;
+
                 return (HoraSalida.Value - HoraEntrada.Value).Hours > 8 ? 8 : (HoraSalida.Value - HoraEntrada.Value).Hours;
             }
         }
