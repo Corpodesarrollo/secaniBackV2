@@ -1329,7 +1329,7 @@ namespace Infra.Repositorios
                         // Convertir el PDF a Base64
                         var base64Pdf = Convert.ToBase64String(pdfBytes);
 
-                        File.WriteAllBytes("D:\\Temp\\DetalleSeguimiento.pdf", pdfBytes);
+                        //File.WriteAllBytes("D:\\Temp\\DetalleSeguimiento.pdf", pdfBytes);
 
                         // Retornar el PDF en Base64
                         response.Base64 = base64Pdf;
