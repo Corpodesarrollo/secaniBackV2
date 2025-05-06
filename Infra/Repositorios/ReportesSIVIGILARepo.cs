@@ -5,6 +5,7 @@ using Core.Modelos.Common;
 using Core.Request;
 using Core.Services.StorageService;
 using Infra.Repositories.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Infra.Repositorios
 {
@@ -13,13 +14,15 @@ namespace Infra.Repositorios
         private readonly ApplicationDbContext _context;
         private readonly GenericRepository<ReportesSIVIGILA> _repository;
         private readonly IStorageService _storageService;
+        private readonly Lazy<INotificacionRepo> _notificacionRepo;
 
-        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService)
+        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService, IServiceProvider serviceProvider)
         {
             _context = context;
             GenericRepository<ReportesSIVIGILA> repository = new(_context);
             _repository = repository;
             _storageService = storageService;
+            _notificacionRepo = new Lazy<INotificacionRepo>(() => serviceProvider.GetRequiredService<INotificacionRepo>());
         }
 
         public async Task<IEnumerable<ReportesSIVIGILADto>> GetAll(CancellationToken cancellationToken)
@@ -74,6 +77,8 @@ namespace Infra.Repositorios
 
                 if (data.EvidenciaParentesco != null)
                     await _storageService.UploadFileAsync(data.EvidenciaParentesco?.FileBytes, $"RS-EvidenciaParentesco-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaParentesco.Extension}", true);
+
+                await _notificacionRepo.Value.RevisarYEnviarNotificaciones();
             }
 
             return (success, response);

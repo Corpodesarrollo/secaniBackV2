@@ -801,13 +801,14 @@ namespace Infra.Repositorios
 
         private async Task<List<UsuariosHorariosDto>> CargarRevisoresAusentes(DateTime fecha)
         {
+            var diaSemana = (int)fecha.DayOfWeek;
             return await (from ur in _context.UserRoles
                           join r in _context.Roles on ur.RoleId equals r.Id
                           join u in _context.Users on ur.UserId equals u.Id
                           join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
                           join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
                           from aus in a.DefaultIfEmpty()
-                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus != null
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && aus != null
                           select new UsuariosHorariosDto
                           {
                               UserId = u.Id,
@@ -909,13 +910,15 @@ namespace Infra.Repositorios
 
         private async Task<List<UsuariosHorariosDto>> CargarRevisoresReasignacion(DateTime fecha)
         {
+            var diaSemana = (int)fecha.DayOfWeek;
+
             return await (from ur in _context.UserRoles
                           join r in _context.Roles on ur.RoleId equals r.Id
                           join u in _context.Users on ur.UserId equals u.Id
                           join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
                           join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
                           from aus in a.DefaultIfEmpty()
-                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus == null
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
                           select new UsuariosHorariosDto
                           {
                               UserId = u.Id,
@@ -944,6 +947,7 @@ namespace Infra.Repositorios
         private async Task<bool> ValidarDiponibilidadAgentes(DateTime fecha)
         {
             var fechaValidar = fecha;
+            var diaSemana = (int)fechaValidar.DayOfWeek;
 
             //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
             return await (from ur in _context.UserRoles
@@ -952,7 +956,7 @@ namespace Infra.Repositorios
                           join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
                           join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
                           from aus in a.DefaultIfEmpty()
-                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha >= fecha && aus == null
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
                           select new UsuariosHorariosDto
                           {
                               UserId = u.Id,
@@ -967,6 +971,7 @@ namespace Infra.Repositorios
         private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha)
         {
             var fechaValidar = fecha;
+            var diaSemana = (int)fechaValidar.DayOfWeek;
 
             //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
             return await (from ur in _context.UserRoles
@@ -975,7 +980,7 @@ namespace Infra.Repositorios
                           join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
                           join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
                           from aus in a.DefaultIfEmpty()
-                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Fecha == fecha && aus == null
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
                           select new UsuariosHorariosDto
                           {
                               UserId = u.Id,

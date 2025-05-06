@@ -105,7 +105,7 @@ namespace Infra
         public DbSet<NNAs> NNAs { get; set; }
         public DbSet<Intentos> Intentos { get; set; }
         public DbSet<ContactoNNA> ContactoNNAs { get; set; }
-        public DbSet<ContactoEntidad> ContactoEntidades { get; set; }
+        public DbSet<ContactoEntidades> ContactoEntidades { get; set; }
         public DbSet<VwMenuModel> VwMenu { get; set; }
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }

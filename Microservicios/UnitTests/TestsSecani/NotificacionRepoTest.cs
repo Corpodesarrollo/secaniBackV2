@@ -1,17 +1,11 @@
-﻿using Core.Modelos;
-using Core.response;
-using Infra.Repositories;
-using Infra;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core.Request;
+﻿using Core.Interfaces.Repositorios;
+using Core.Modelos;
 using Core.Modelos.Identity;
-using Core.Interfaces.Repositorios;
+using Core.response;
 using Core.Services.StorageService;
+using Infra;
+using Infra.Repositories;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
 namespace TestsSecani
@@ -32,7 +26,7 @@ namespace TestsSecani
             storageService = Substitute.For<IStorageService>();
 
             Context = new ApplicationDbContext(options);
-            NotificacionRepo = new NotificacionRepo(Context,adjuntosRepo,storageService, new Infra.Repositorios.ReportesSIVIGILARepo(Context, storageService));
+            //NotificacionRepo = new NotificacionRepo(Context,adjuntosRepo,storageService, new ReportesSIVIGILARepo(Context, storageService));
         }
 
         [Fact]

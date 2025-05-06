@@ -6,7 +6,6 @@ using Core.Request;
 using Core.response;
 using Core.Response;
 using Core.Services.StorageService;
-using Infra.Repositorios;
 using Microsoft.EntityFrameworkCore;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
@@ -24,11 +23,11 @@ namespace Infra.Repositories
         private readonly ApplicationDbContext _context;
         private readonly IAdjuntosRepo _adjuntosRepo;
         private readonly IStorageService _storageService;
-        private readonly ReportesSIVIGILARepo _reportesSIVIGILARepo;
+        private readonly IReportesSIVIGILARepo _reportesSIVIGILARepo;
         private readonly SmtpClient clienteSmtp;
         private readonly string fromMail;
 
-        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, ReportesSIVIGILARepo reportesSIVIGILARepo)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo)
         {
             _context = context;
             _adjuntosRepo = adjuntosRepo;
@@ -740,7 +739,7 @@ namespace Infra.Repositories
             /*
            * paso 1: obtener los datos del reporte sivigila y del destino del correo
            */
-            List<ContactoEntidad> dataContactos = _context.ContactoEntidades
+            List<ContactoEntidades> dataContactos = _context.ContactoEntidades
                 .Where(x => x.EntidadId == entidadId)
                 .ToList();
             var jsonData = JsonSerializer.Serialize(dataContactos, new JsonSerializerOptions { WriteIndented = true });
@@ -778,7 +777,7 @@ namespace Infra.Repositories
 
             //Procedemos a generar la lista de contactos
 
-            var contactos = JsonSerializer.Deserialize<List<ContactoEntidad>>(jsonData);
+            var contactos = JsonSerializer.Deserialize<List<ContactoEntidades>>(jsonData);
 
             // Paso 2: Extraer los correos electrónicos y construir el array
             string[] Para = contactos.Where(c => !string.IsNullOrEmpty(c.Email))

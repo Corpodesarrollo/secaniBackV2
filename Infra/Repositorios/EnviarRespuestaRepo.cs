@@ -14,7 +14,7 @@ namespace Infra.Repositorios
             if (emailConfig == null)
                 return false;
 
-            emailConfig.SendEmail(data.Para, data.Cc, null, data.Asunto, $"{data.Mensaje}\n\n{data.Firma}", data.Archivo != null ? [data.Archivo] : null);
+            emailConfig.SendEmail([data.Para], data.Cc, null, data.Asunto, $"{data.Mensaje}\n\n{data.Firma}", data.Archivo != null ? [data.Archivo] : null);
             return true;
         }
     }

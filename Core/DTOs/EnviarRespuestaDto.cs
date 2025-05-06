@@ -3,7 +3,7 @@
     public class EnviarRespuestaDto
     {
         public long Id { get; set; }
-        public string[]? Para { get; set; }
+        public string? Para { get; set; }
         public string[]? Cc { get; set; }
         public string? Asunto { get; set; }
         public string? Mensaje { get; set; }

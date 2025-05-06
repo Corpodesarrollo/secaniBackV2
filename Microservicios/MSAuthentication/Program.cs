@@ -2,6 +2,7 @@ using Core.CQRS.MSUsuariosyRoles.Commands.User;
 using Core.DTOs;
 using Core.Interfaces;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.MSPermisos;
 using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Base;
 using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
@@ -18,6 +19,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Infra;
 using Infra.Repositories;
+using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.MSPermisos;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
@@ -66,6 +68,8 @@ builder.Services.AddScoped<IModuloRepository, ModuloRepository>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();
 builder.Services.AddScoped<IContactoEntidadService, ContactoEntidadService>();
+builder.Services.AddScoped<IEmailConfigurationRepo, EmailConfigurationRepo>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignUsersRoleCommandHandler).Assembly));
 
 builder.Services.AddHttpClient<Client>(client =>

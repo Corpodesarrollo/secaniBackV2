@@ -4,6 +4,7 @@ using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Core.Interfaces.Repositorios
 {
@@ -15,7 +16,7 @@ namespace Core.Interfaces.Repositorios
         public RespuestaResponse<List<FiltroNNADto>> ConsultarNNAFiltro(FiltroNNARequest entrada);
         public List<VwAgentesAsignados> VwAgentesAsignados();
         public void ActualizarNNASeguimiento(NNASeguimientoRequest request);
-        public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion);
+        public NNADto? ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion);
         public NNAResponse ConsultarNNAsById(long NNAId);
         public Task<DatosBasicosNNAResponse> ConsultarDatosBasicosNNAById(long NNAId, TablaParametricaService tablaParametricaService);
         public Task<SolicitudSeguimientoCuidadorResponse> SolicitudSeguimientoCuidador(long NNAId, TablaParametricaService tablaParametricaService);
@@ -27,5 +28,8 @@ namespace Core.Interfaces.Repositorios
         Task<List<ConsultaCasosAbiertosResponse>> ConsultaCasosAbiertos(CasosAbiertosRequest request);
         Task<DepuracionProtocoloResponse> DepuracionProtocolo(List<DepuracionProtocoloRequest> request);
         Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file);
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task CommitTransactionAsync(IDbContextTransaction transaction);
+        Task RollbackTransactionAsync(IDbContextTransaction transaction);
     }
 }

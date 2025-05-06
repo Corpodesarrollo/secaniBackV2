@@ -9,8 +9,8 @@ using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Infra.Repositories.Common;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 
 namespace Infra.Repositorios
@@ -21,7 +21,6 @@ namespace Infra.Repositorios
         private readonly GenericRepository<NNAs> _repository;
         private readonly GenericRepository<TPCIE10> _repositoryCie10;
         private readonly INotificacionRepo _notificacionRepo;
-
         private readonly ISeguimientoRepo _seguimientoRepo;
 
         public NNARepo(
@@ -246,98 +245,135 @@ namespace Infra.Repositorios
             return response;
         }
 
-        public NNAResponse ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
+        public NNADto? ConsultarNNAsByTipoIdNumeroId(string tipoIdentificacionId, string numeroIdentificacion)
         {
-            var response = new NNAResponse();
-
             try
             {
-                var nnna = _context.NNAs.FirstOrDefault(x => x.TipoIdentificacionId == tipoIdentificacionId && x.NumeroIdentificacion == numeroIdentificacion);
+                var result = SelectBase().FirstOrDefault(x => x.TipoIdentificacionId == tipoIdentificacionId && x.NumeroIdentificacion == numeroIdentificacion);
 
-                if (nnna != null)
-                {
-                    response = new NNAResponse()
-                    {
-                        NombreCompleto = string.Concat(nnna.PrimerNombre, " ", nnna.SegundoNombre, " ", nnna.PrimerApellido, " ", nnna.SegundoApellido),
-                        Diagnostico = "",
-                        FechaNacimiento = nnna.FechaNacimiento,
-                        Id = nnna.Id
-                    };
-                }
-                else
-                {
-                    response = null;
-                }
+                return result;
             }
             catch (Exception)
             {
-                response = null;
+                return null;
             }
-
-            return response;
         }
 
         public RespuestaResponse<List<FiltroNNADto>> ConsultarNNAFiltro(FiltroNNARequest entrada)
         {
-            var response = new RespuestaResponse<List<FiltroNNADto>>();
-            response.Datos = new List<FiltroNNADto>();
-
             try
             {
-                var parameters = new[]
-                {
-                    new SqlParameter("@Estado", entrada.Estado ?? 0),
-                    new SqlParameter("@Agente", entrada.Agente ?? ""),
-                    new SqlParameter("@Buscar", entrada.Buscar ?? ""),
-                    new SqlParameter("@Orden", entrada.Orden ?? 1)
-                };
+                var query = from s in _context.Seguimientos
+                            join n in _context.NNAs on s.NNAId equals n.Id
+                            group s by s.NNAId into g
+                            select new { id = g.Max(x => x.Id) };
 
-                var results = _context.FiltroNNAs.FromSqlRaw(
-                    "EXEC dbo.SpConsultaNnaFiltro @Estado, @Agente, @Buscar, @Orden",
-                    parameters
-                ).ToList();
+                var queryResult = from q in query
+                                  join s in _context.Seguimientos on q.id equals s.Id
+                                  join n in _context.NNAs on s.NNAId equals n.Id
+                                  join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+
+                                  join au in _context.UsuarioAsignados on s.Id equals au.SeguimientoId into auJoin
+                                  from au in auJoin.DefaultIfEmpty()
+
+                                  join a in _context.Users on au.UsuarioId equals a.Id into aJoin
+                                  from a in aJoin.DefaultIfEmpty()
+
+                                  select new SeguimientoDto()
+                                  {
+                                      Id = s.Id,
+                                      NoCaso = s.NNAId,
+                                      PrimerNombre = n.PrimerNombre,
+                                      SegundoNombre = n.SegundoNombre,
+                                      PrimerApellido = n.PrimerApellido,
+                                      SegundoApellido = n.SegundoApellido,
+                                      NumeroIdentificacion = n.NumeroIdentificacion,
+                                      FechaNotificacion = n.FechaNotificacionSIVIGILA,
+                                      FechaSeguimiento = s.FechaSeguimiento,
+                                      Estado = new TPEstadoNNADto()
+                                      {
+                                          Id = e.Id,
+                                          Nombre = e.Nombre,
+                                          Descripcion = e.Descripcion,
+                                          ColorBG = e.ColorBG,
+                                          ColorText = e.ColorText
+                                      },
+                                      AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                                      FechaUltimaActuacion = s.UltimaActuacionFecha,
+                                      UsuarioId = a.Id,
+                                      Usuario = a != null ? a.FullName : "",
+                                      Alertas = (from als in _context.AlertaSeguimientos
+                                                 join al in _context.Alertas on als.AlertaId equals al.Id
+                                                 join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
+                                                 join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
+                                                 where als.SeguimientoId == s.Id
+                                                 select new Core.DTOs.AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                                  };
+
+                IQueryable<SeguimientoDto> queryFiltro = queryResult;
+                if ((entrada.Estado ?? 0) > 0)
+                    queryFiltro = queryResult.Where(x => x.Estado.Id == entrada.Estado);
+
+                if (!string.IsNullOrEmpty(entrada.Agente))
+                    queryFiltro = queryFiltro.Where(x => x.UsuarioId == entrada.Agente);
+
+                if (!string.IsNullOrEmpty(entrada.Buscar))
+                    queryFiltro = queryFiltro.Where(x =>
+                    x.PrimerNombre.Contains(entrada.Buscar) ||
+                    x.SegundoNombre.Contains(entrada.Buscar) ||
+                    x.PrimerApellido.Contains(entrada.Buscar) ||
+                    x.SegundoApellido.Contains(entrada.Buscar) ||
+                    x.NoCaso.ToString().Contains(entrada.Buscar) ||
+                    x.NumeroIdentificacion.Contains(entrada.Buscar) ||
+                    x.Usuario.Contains(entrada.Buscar));
+
+                if (entrada.Orden == 1)
+                    queryFiltro = queryFiltro.OrderByDescending(x => x.FechaUltimaActuacion);
+                else if (entrada.Orden == 2)
+                    queryFiltro = queryFiltro.OrderBy(x => x.FechaUltimaActuacion);
+
+                var results = queryFiltro.ToList();
 
                 if (results.Any())
                 {
-                    response.Estado = true;
-                    response.Descripcion = "Consulta realizada con éxito.";
+                    return new()
+                    {
+                        Estado = true,
+                        Descripcion = "Consulta realizada con éxito.",
+                        Datos = results.Select(x => new FiltroNNADto()
+                        {
+                            NoCaso = x.NoCaso,
+                            IdNNA = x.NoCaso,
+                            NombreNNA = x.NombreCompleto,
+                            NoDocumento = x.NumeroIdentificacion,
+                            UltimaActualizacion = x.FechaUltimaActuacion,
+                            AgenteAsignado = x.Usuario,
+                            EstadoId = x.Estado.Id,
+                            Estado = x.Estado.Nombre,
+                            EstadoDescripcion = x.Estado.Descripcion,
+                            EstadoColorBG = x.Estado.ColorBG,
+                            EstadoColorText = x.Estado.ColorText
+                        }).ToList()
+                    };
                 }
                 else
                 {
-                    response.Estado = false;
-                    response.Descripcion = "No trajo datos en la consulta.";
-                }
-
-                foreach (var filtroNNA in results)
-                {
-                    FiltroNNADto dto = new()
+                    return new()
                     {
-                        NoCaso = filtroNNA.NoCaso,
-                        IdNNA = filtroNNA.IdNNA,
-                        NombreNNA = filtroNNA.NombreNNA,
-                        NoDocumento = filtroNNA.NoDocumento,
-                        UltimaActualizacion = filtroNNA.UltimaActualizacion,
-                        AgenteAsignado = filtroNNA.AgenteAsignado,
-                        EstadoId = filtroNNA.EstadoId,
-                        Estado = filtroNNA.Estado,
-                        EstadoDescripcion = filtroNNA.EstadoDescripcion,
-                        EstadoColorBG = filtroNNA.EstadoColorBG,
-                        EstadoColorText = filtroNNA.EstadoColorText
+                        Estado = true,
+                        Descripcion = "No se encontraron resultados."
                     };
-
-                    response.Datos.Add(dto);
                 }
-
-
             }
             catch (Exception ex)
             {
-                response.Estado = false;
-                response.Descripcion = $"Error al realizar la consulta: {ex.Message}";
-                response.Datos = null;
+                Console.WriteLine(ex.Message);
+                return new()
+                {
+                    Estado = false,
+                    Descripcion = "Error al consultar los datos."
+                };
             }
-
-            return response;
         }
 
         public void ActualizarNNASeguimiento(NNASeguimientoRequest request)
@@ -1636,6 +1672,22 @@ namespace Infra.Repositorios
             }
 
             return response;
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            var transaction = await _context.Database.BeginTransactionAsync();
+            return transaction;
+        }
+
+        public async Task CommitTransactionAsync(IDbContextTransaction transaction)
+        {
+            await transaction.CommitAsync();
+        }
+
+        public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
+        {
+            await transaction.RollbackAsync();
         }
     }
 }

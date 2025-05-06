@@ -101,7 +101,7 @@ namespace Infra.Repositorios
                     return new() { Estado = false, Descripcion = "No se ha configurado el envío de correos electrónicos" };
 
                 var archivos = dto.Archivo != null ? new[] { dto.Archivo } : [];
-                emailConfigurations.SendEmail(dto.Para, dto.Cc, null, dto.Asunto, $"{dto.Mensaje}</br>{dto.Firma}", archivos);
+                emailConfigurations.SendEmail([dto.Para], dto.Cc, null, dto.Asunto, $"{dto.Mensaje}</br>{dto.Firma}", archivos);
 
                 return new() { Estado = true, Datos = true };
             }

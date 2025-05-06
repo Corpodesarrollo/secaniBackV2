@@ -23,6 +23,7 @@ namespace Core.Services
 
         public async Task<RespuestaResponse<NNADto>> AddAsync(NNADto dto)
         {
+            var transaction = await _repository.BeginTransactionAsync();
             try
             {
                 dto.CreatedByUserId = "1";
@@ -41,11 +42,14 @@ namespace Core.Services
 
                 var resultReport = await _reporteInconsistenciaPersonaService.AddReporteInconsistenciaAsync(dto1);
 
+                await _repository.CommitTransactionAsync(transaction);
+
                 var response = GenericRespuestaResponse.Response<NNADto>(success, success ? "Datos generados" : "Error al generar datos", dto1);
                 return response;
             }
             catch (Exception ex)
             {
+                await _repository.RollbackTransactionAsync(transaction);
                 var message = $"Error al crear contacto NNA: {ex.Message}";
                 Console.WriteLine(message);
                 var response = GenericRespuestaResponse.Response<NNADto>(false, message, null);

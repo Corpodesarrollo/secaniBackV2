@@ -1,5 +1,6 @@
 ﻿namespace Core.Interfaces.Services.MSUsuariosyRoles
 {
+    using Newtonsoft.Json;
     using System = global::System;
 
     public class MaestroPersonaClientService
@@ -56,7 +57,7 @@
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<VIdentificacionPersona> GetIdVigenteAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion)
+        public virtual System.Threading.Tasks.Task<VIdentificacionPersona?> GetIdVigenteAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion)
         {
             return GetIdVigenteAsync(apiKey, tipoIdentificacion, nroIdentificacion, System.Threading.CancellationToken.None);
         }
@@ -64,90 +65,40 @@
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<VIdentificacionPersona> GetIdVigenteAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion, System.Threading.CancellationToken cancellationToken)
+        public virtual async Task<VIdentificacionPersona?> GetIdVigenteAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion, System.Threading.CancellationToken cancellationToken)
         {
-            if (tipoIdentificacion == null)
-                throw new System.ArgumentNullException("tipoIdentificacion");
-
-            if (nroIdentificacion == null)
-                throw new System.ArgumentNullException("nroIdentificacion");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
             try
             {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (tipoIdentificacion == null)
+                    throw new System.ArgumentNullException("tipoIdentificacion");
+
+                if (nroIdentificacion == null)
+                    throw new System.ArgumentNullException("nroIdentificacion");
+
+                using var client_ = _httpClient;
+                client_.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                var url = $"{_baseUrl}api/Persona/GetIdVigente/{tipoIdentificacion}/{nroIdentificacion}";
+                var response = await client_.GetAsync(url, cancellationToken);
+                if (response.IsSuccessStatusCode)
                 {
-
-                    if (apiKey == null)
-                        throw new System.ArgumentNullException("apiKey");
-                    request_.Headers.TryAddWithoutValidation("ApiKey", ConvertToString(apiKey, System.Globalization.CultureInfo.InvariantCulture));
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("text/plain"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "api/Persona/GetIdVigente/{TipoIdentificacion}/{NroIdentificacion}"
-                    urlBuilder_.Append("api/Persona/GetIdVigente/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(tipoIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(nroIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<VIdentificacionPersona>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    return JsonConvert.DeserializeObject<VIdentificacionPersona>(content, JsonSerializerSettings);
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new ApiException($"Error: {response.StatusCode}, {errorContent}", (int)response.StatusCode, errorContent, null, null);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                if (disposeClient_)
-                    client_.Dispose();
+                throw new ApiException($"Error en GetIdVigenteAsync: {ex.Message}", 404, ex.Message, null, ex);
             }
         }
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<VIdentificacionPersona> GetIdVigente2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion)
+        public virtual Task<VIdentificacionPersona?> GetIdVigente2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion)
         {
             return GetIdVigente2Async(apiKey, tipoIdentificacion, nroIdentificacion, fechaExpedicion, System.Threading.CancellationToken.None);
         }
@@ -155,95 +106,43 @@
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<VIdentificacionPersona> GetIdVigente2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion, System.Threading.CancellationToken cancellationToken)
+        public virtual async Task<VIdentificacionPersona?> GetIdVigente2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion, System.Threading.CancellationToken cancellationToken)
         {
-            if (tipoIdentificacion == null)
-                throw new System.ArgumentNullException("tipoIdentificacion");
-
-            if (nroIdentificacion == null)
-                throw new System.ArgumentNullException("nroIdentificacion");
-
-            if (fechaExpedicion == null)
-                throw new System.ArgumentNullException("fechaExpedicion");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
             try
             {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (tipoIdentificacion == null)
+                    throw new System.ArgumentNullException("tipoIdentificacion");
+
+                if (nroIdentificacion == null)
+                    throw new System.ArgumentNullException("nroIdentificacion");
+
+                if (fechaExpedicion == null)
+                    throw new System.ArgumentNullException("fechaExpedicion");
+
+                using var client_ = _httpClient;
+                client_.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                var url = $"{_baseUrl}api/Persona/GetIdVigente/{tipoIdentificacion}/{nroIdentificacion}/{fechaExpedicion}";
+                var response = await client_.GetAsync(url, cancellationToken);
+                if (response.IsSuccessStatusCode)
                 {
-
-                    if (apiKey == null)
-                        throw new System.ArgumentNullException("apiKey");
-                    request_.Headers.TryAddWithoutValidation("ApiKey", ConvertToString(apiKey, System.Globalization.CultureInfo.InvariantCulture));
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("text/plain"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "api/Persona/GetIdVigente/{TipoIdentificacion}/{NroIdentificacion}/{FechaExpedicion}"
-                    urlBuilder_.Append("api/Persona/GetIdVigente/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(tipoIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(nroIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(fechaExpedicion, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<VIdentificacionPersona>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    return JsonConvert.DeserializeObject<VIdentificacionPersona>(content, JsonSerializerSettings);
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new ApiException($"Error: {response.StatusCode}, {errorContent}", (int)response.StatusCode, errorContent, null, null);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                if (disposeClient_)
-                    client_.Dispose();
+                throw new ApiException($"Error en GetIdVigenteAsync: {ex.Message}", 404, ex.Message, null, ex);
             }
         }
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<VIdentificacionPersona>> GetIdAllAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion)
+        public virtual Task<ICollection<VIdentificacionPersona>?> GetIdAllAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion)
         {
             return GetIdAllAsync(apiKey, tipoIdentificacion, nroIdentificacion, System.Threading.CancellationToken.None);
         }
@@ -251,90 +150,41 @@
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<VIdentificacionPersona>> GetIdAllAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion, System.Threading.CancellationToken cancellationToken)
+        public virtual async Task<ICollection<VIdentificacionPersona>?> GetIdAllAsync(string apiKey, string tipoIdentificacion, string nroIdentificacion, System.Threading.CancellationToken cancellationToken)
         {
-            if (tipoIdentificacion == null)
-                throw new System.ArgumentNullException("tipoIdentificacion");
-
-            if (nroIdentificacion == null)
-                throw new System.ArgumentNullException("nroIdentificacion");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
             try
             {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (tipoIdentificacion == null)
+                    throw new System.ArgumentNullException("tipoIdentificacion");
+
+                if (nroIdentificacion == null)
+                    throw new System.ArgumentNullException("nroIdentificacion");
+
+                using var client_ = _httpClient;
+                client_.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                var url = $"{_baseUrl}api/Persona/GetIdAll/{tipoIdentificacion}/{nroIdentificacion}";
+                var response = await client_.GetAsync(url, cancellationToken);
+                if (response.IsSuccessStatusCode)
                 {
-
-                    if (apiKey == null)
-                        throw new System.ArgumentNullException("apiKey");
-                    request_.Headers.TryAddWithoutValidation("ApiKey", ConvertToString(apiKey, System.Globalization.CultureInfo.InvariantCulture));
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("text/plain"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "api/Persona/GetIdAll/{TipoIdentificacion}/{NroIdentificacion}"
-                    urlBuilder_.Append("api/Persona/GetIdAll/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(tipoIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(nroIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<VIdentificacionPersona>>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var result = JsonConvert.DeserializeObject<ICollection<VIdentificacionPersona>>(content, JsonSerializerSettings);
+                    return result;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new ApiException($"Error: {response.StatusCode}, {errorContent}", (int)response.StatusCode, errorContent, null, null);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                if (disposeClient_)
-                    client_.Dispose();
+                throw new ApiException($"Error en GetIdVigenteAsync: {ex.Message}", 404, ex.Message, null, ex);
             }
         }
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<VIdentificacionPersona>> GetIdAll2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion)
+        public virtual Task<ICollection<VIdentificacionPersona>?> GetIdAll2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion)
         {
             return GetIdAll2Async(apiKey, tipoIdentificacion, nroIdentificacion, fechaExpedicion, System.Threading.CancellationToken.None);
         }
@@ -342,89 +192,38 @@
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<VIdentificacionPersona>> GetIdAll2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion, System.Threading.CancellationToken cancellationToken)
+        public virtual async Task<ICollection<VIdentificacionPersona>?> GetIdAll2Async(string apiKey, string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion, System.Threading.CancellationToken cancellationToken)
         {
-            if (tipoIdentificacion == null)
-                throw new System.ArgumentNullException("tipoIdentificacion");
-
-            if (nroIdentificacion == null)
-                throw new System.ArgumentNullException("nroIdentificacion");
-
-            if (fechaExpedicion == null)
-                throw new System.ArgumentNullException("fechaExpedicion");
-
-            var client_ = _httpClient;
-            var disposeClient_ = false;
             try
             {
-                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                if (tipoIdentificacion == null)
+                    throw new System.ArgumentNullException("tipoIdentificacion");
+
+                if (nroIdentificacion == null)
+                    throw new System.ArgumentNullException("nroIdentificacion");
+
+                if (fechaExpedicion == null)
+                    throw new System.ArgumentNullException("fechaExpedicion");
+
+                using var client_ = _httpClient;
+                client_.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                var url = $"{_baseUrl}api/Persona/GetIdAll/{tipoIdentificacion}/{nroIdentificacion}/{fechaExpedicion}";
+                var response = await client_.GetAsync(url, cancellationToken);
+                if (response.IsSuccessStatusCode)
                 {
-
-                    if (apiKey == null)
-                        throw new System.ArgumentNullException("apiKey");
-                    request_.Headers.TryAddWithoutValidation("ApiKey", ConvertToString(apiKey, System.Globalization.CultureInfo.InvariantCulture));
-                    request_.Method = new System.Net.Http.HttpMethod("GET");
-                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("text/plain"));
-
-                    var urlBuilder_ = new System.Text.StringBuilder();
-                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
-                    // Operation Path: "api/Persona/GetIdAll/{TipoIdentificacion}/{NroIdentificacion}/{FechaExpedicion}"
-                    urlBuilder_.Append("api/Persona/GetIdAll/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(tipoIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(nroIdentificacion, System.Globalization.CultureInfo.InvariantCulture)));
-                    urlBuilder_.Append('/');
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(fechaExpedicion, System.Globalization.CultureInfo.InvariantCulture)));
-
-                    PrepareRequest(client_, request_, urlBuilder_);
-
-                    var url_ = urlBuilder_.ToString();
-                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-
-                    PrepareRequest(client_, request_, url_);
-
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                    var disposeResponse_ = true;
-                    try
-                    {
-                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                        foreach (var item_ in response_.Headers)
-                            headers_[item_.Key] = item_.Value;
-                        if (response_.Content != null && response_.Content.Headers != null)
-                        {
-                            foreach (var item_ in response_.Content.Headers)
-                                headers_[item_.Key] = item_.Value;
-                        }
-
-                        ProcessResponse(client_, response_);
-
-                        var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<VIdentificacionPersona>>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
-                    }
-                    finally
-                    {
-                        if (disposeResponse_)
-                            response_.Dispose();
-                    }
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var result = JsonConvert.DeserializeObject<ICollection<VIdentificacionPersona>>(content, JsonSerializerSettings);
+                    return result;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new ApiException($"Error: {response.StatusCode}, {errorContent}", (int)response.StatusCode, errorContent, null, null);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                if (disposeClient_)
-                    client_.Dispose();
+                throw new ApiException($"Error en GetIdVigenteAsync: {ex.Message}", 404, ex.Message, null, ex);
             }
         }
 

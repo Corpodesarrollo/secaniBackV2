@@ -4,13 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios
 {
-    class EAPBRepo(ApplicationDbContext db) : IEAPBRepo
+    public class EAPBRepo(ApplicationDbContext db) : IEAPBRepo
     {
         IQueryable<TPEAPBDto> GetSelect()
         {
             var query = from eapb in db.TPEAPB
                         select new TPEAPBDto
                         {
+                            Id = eapb.Id,
                             Codigo = eapb.Codigo,
                             Nombre = eapb.Nombre,
                             Descripcion = eapb.Descripcion,
@@ -23,17 +24,17 @@ namespace Infra.Repositorios
             return query;
         }
 
-        public Task<List<TPEAPBDto>> GetEAPB()
+        public async Task<List<TPEAPBDto>> GetEAPB()
         {
             var query = GetSelect();
-            var result = query.Where(x => x.Tipo == 2).ToListAsync();
+            var result = await query.Where(x => x.Tipo == 2).ToListAsync();
             return result;
         }
 
-        public Task<List<TPEAPBDto>> GetET()
+        public async Task<List<TPEAPBDto>> GetET()
         {
             var query = GetSelect();
-            var result = query.Where(x => x.Tipo == 1).ToListAsync();
+            var result = await query.Where(x => x.Tipo == 1).ToListAsync();
             return result;
         }
     }

@@ -13,7 +13,7 @@ namespace Core.Services
 
         public async Task<(bool, ContactoEntidadResponse)> AddAsync(ContactoEntidadRequest entity, CancellationToken cancellationToken)
         {
-            var contactoEntidad = entity.Adapt<ContactoEntidad>();
+            var contactoEntidad = entity.Adapt<ContactoEntidades>();
             var result = await _repository.AddAsync(contactoEntidad);
             return result.Adapt<(bool, ContactoEntidadResponse)>();
         }
@@ -40,7 +40,7 @@ namespace Core.Services
 
         public async Task<bool> DeleteAsync(ContactoEntidadResponse entity, CancellationToken cancellationToken)
         {
-            var contactoEntidad = entity.Adapt<ContactoEntidad>();
+            var contactoEntidad = entity.Adapt<ContactoEntidades>();
             contactoEntidad.IsDeleted = true;
             var (isDeleted, _) = await _repository.UpdateAsync(contactoEntidad);
             return isDeleted;
@@ -61,6 +61,9 @@ namespace Core.Services
         public async Task<IEnumerable<ContactoEntidadResponse>> GetAllAsync(CancellationToken cancellationToken)
         {
             var result = await _repository.GetAllAsync(cancellationToken);
+            if (result != null)
+                result = result.Where(x => x.Activo == true && x.Estado == "Activo").ToArray();
+
             return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
         }
 
