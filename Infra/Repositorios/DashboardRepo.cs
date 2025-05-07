@@ -766,7 +766,7 @@ namespace Infra.Repositorios
                                  FechaNacimiento = n.FechaNacimiento,
                                  Diagnostico = c.Nombre,
                                  FechaSeguimiento = als.DateCreated,
-
+                                 NNaId = n.Id
                              }).Distinct().ToList();
 
 

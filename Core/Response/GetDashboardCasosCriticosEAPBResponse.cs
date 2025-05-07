@@ -13,5 +13,7 @@
    
         public DateTime? FechaSeguimiento { get; set; }
 
+
+        public long NNaId { get; set; }
     }
 }
