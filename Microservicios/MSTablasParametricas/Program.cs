@@ -88,11 +88,11 @@ builder.Services.AddHttpClient<TablaParametricaService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://192.168.110.11:8140", "http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+        builder => builder.AllowAnyOrigin()
                           .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials());
+                          .AllowAnyHeader());
 });
+
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
                 .AddCheck<CustomHealthCheck>("CustomHealthCheck");
