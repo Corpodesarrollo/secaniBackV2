@@ -3,7 +3,6 @@ using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Core.Response;
-using Infra;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -15,7 +14,7 @@ namespace MSSeguimiento.Api.Controllers
     {
         private readonly INotificacionRepo notificacionRepo;
 
-        
+
 
         public NotificacionController(INotificacionRepo notificacion)
         {
@@ -49,9 +48,10 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("OficioNotificacion")]
-        public string GenerarOficioNotificacion(OficioNotificacionRequest request)
+        public async Task<IActionResult> GenerarOficioNotificacion(OficioNotificacionRequest request)
         {
-            return notificacionRepo.GenerarOficioNotificacion(request);
+            var result = await notificacionRepo.GenerarOficioNotificacion(request);
+            return Ok(result);
         }
 
         [HttpPost("EliminarNotificacion")]
@@ -61,15 +61,17 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("EnviarOficioNotificacion")]
-        public async Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
+        public async Task<IActionResult> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
         {
-            return await notificacionRepo.EnviarOficioNotificacion(request);
+            var result = await notificacionRepo.EnviarOficioNotificacion(request);
+            return Ok(result);
         }
 
-        [HttpPost("VerOficioNotificacion")]
-        public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request)
+        [HttpPost("VerOficioNotificacion/{id}")]
+        public async Task<IActionResult> VerOficioNotificacion(long id)
         {
-            return notificacionRepo.VerOficioNotificacion(request);
+            var result = await notificacionRepo.VerOficioNotificacion(id);
+            return Ok(result);
         }
 
         [HttpPost("NotificacionRespuesta")]
@@ -97,7 +99,7 @@ namespace MSSeguimiento.Api.Controllers
 
 
         [HttpPost("EnviarCorreo")]
-        public async Task<IActionResult> EnviarCorreo( [FromBody] CorreoRequest correoRequest)
+        public async Task<IActionResult> EnviarCorreo([FromBody] CorreoRequest correoRequest)
         {
             if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
             {
@@ -120,7 +122,7 @@ namespace MSSeguimiento.Api.Controllers
         public async Task<IActionResult> NotificacionReporteSivigila([FromBody] NotificacionSigivilaRequest request)
         {
 
-            Task<string>  resultado =  notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId, request.userId);
+            Task<string> resultado = notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId, request.userId);
 
             /*
             if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
