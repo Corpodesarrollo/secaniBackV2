@@ -13,20 +13,20 @@ namespace MSTablasParametricas.Api.Controllers
         // Lista de tablas paramétricas permitidas (insensible a mayúsculas)
         private static readonly HashSet<string> TablasPermitidas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "CategoriaAlerta",
-            "CausaInasistencia",
-            "CIE10",
-            "EstadoAlerta",
-            "EstadoIngresoEstrategia",
-            "EstadoNNA",
-            "EstadoSeguimiento",
-            "Festivos",
-            "MalaAtencionIPS",
-            "MotivoCierreSolicitud",
-            "OrigenReporte",
-            "RazonesSinDiagnostico",
-            "SubCategoriaAlerta",
-            "TipoFallaLlamada"
+            "TPCategoriaAlerta",
+            "TPCausaInasistencia",
+            "TPCIE10",
+            "TPEstadoAlerta",
+            "TPEstadoIngresoEstrategia",
+            "TPEstadoNNA",
+            "TPEstadoSeguimiento",
+            "TPFestivos",
+            "TPMalaAtencionIPS",
+            "TPMotivoCierreSolicitud",
+            "TPOrigenReporte",
+            "TPRazonesSinDiagnostico",
+            "TPSubCategoriaAlerta",
+            "TPTipoFallaLlamada"
         };
 
         public HistoricoTransaccionController(IHistoricoTransaccionService historicoService)
