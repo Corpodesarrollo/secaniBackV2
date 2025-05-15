@@ -91,7 +91,7 @@ namespace Infra.Repositories
                                                  where ne.Id == request.Id
                                                  select ne).FirstOrDefaultAsync();
 
-                var entidad = await (from ent in _context.Entidades
+                var entidad = await (from ent in _context.TPEAPB
                                      where ent.Id == request.IdEntidad
                                      select ent).FirstOrDefaultAsync();
 
@@ -125,9 +125,8 @@ namespace Infra.Repositories
                 }
 
                 notificacionEntidad.EntidadId = request.IdEntidad;
-                //notificacionEntidad.Entidad = entidad;
                 notificacionEntidad.Ciudad = request.Ciudad;
-                //notificacionEntidad.AlertaSeguimiento = alerta;
+                notificacionEntidad.AlertaSeguimientoId = request.IdAlertaSeguimiento;
                 notificacionEntidad.Asunto = request.Asunto;
                 notificacionEntidad.Cierre = request.Cierre;
                 notificacionEntidad.CiudadEnvio = request.CiudadEnvio;
@@ -202,7 +201,7 @@ namespace Infra.Repositories
                                                                               join alseg in _context.AlertaSeguimientos on ne.AlertaSeguimientoId equals alseg.Id
                                                                               join al in _context.Alertas on alseg.AlertaId equals al.Id
                                                                               join nna in _context.NNAs on ne.NNAId equals nna.Id
-                                                                              where ne.Id == request.IdNotificacionEntidad
+                                                                              where ne.Id == request.IdNotificacion
                                                                               select new NotificacionEntidadPlantilla()
                                                                               {
                                                                                   Asunto = ne.Asunto,

@@ -124,14 +124,6 @@ namespace MSSeguimiento.Api.Controllers
 
             Task<string> resultado = notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId, request.userId);
 
-            /*
-            if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
-            {
-                return BadRequest("El cuerpo del mensaje no puede estar vacío");
-            }
-            */
-            // string resultado = notificacionRepo.NotificacionReporteSivigila();
-
             return Ok(new { mensaje = resultado });
         }
 
@@ -152,10 +144,6 @@ namespace MSSeguimiento.Api.Controllers
 
             return Ok(new { mensaje = resultado });
         }
-
-
-
-
     }
 }
 
