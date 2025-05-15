@@ -142,13 +142,26 @@ namespace Core.Services.MSUsuariosyRoles
 
         public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string Estado, IList<string> roles)> GetUserDetailsAsync(string userId)
         {
-            var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var user = await _userManager.Users
+                .Select(x => new ApplicationUser
+                {
+                    Id = x.Id,
+                    FullName = x.FullName,
+                    UserName = x.UserName,
+                    Email = x.Email,
+                    Telefonos = x.Telefonos,
+                    EntidadId = x.EntidadId,
+                    Cargo = x.Cargo,
+                    Estado = x.Estado
+                })
+                .FirstOrDefaultAsync(x => x.Id == userId);
+
             if (user == null)
             {
                 throw new NotFoundException("User not found");
             }
             var roles = await _userManager.GetRolesAsync(user);
-            return (user.Id, user.FullName, user.UserName, user.Email, user.Telefonos, user.EntidadId, user.Cargo, user.Estado, roles);
+            return (user.Id, user.FullName??string.Empty, user.UserName ?? string.Empty, user.Email ?? string.Empty, user.Telefonos ?? string.Empty, user.EntidadId ?? string.Empty, user.Cargo ?? string.Empty, user.Estado ?? string.Empty, roles ?? new List<string>());
         }
 
         public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string Estado, IList<string> roles)> GetUserDetailsByUserNameAsync(string userName)
