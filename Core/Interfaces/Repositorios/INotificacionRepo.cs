@@ -11,10 +11,7 @@ namespace Core.Interfaces.Repositorios
     {
         public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId);
         public int GetNumeroNotificacionUsuario(string AgenteDestinoId);
-        public string GenerarOficioNotificacion(OficioNotificacionRequest request);
         public void EliminarNotificacion(EliminarNotificacionRequest request);
-        public Task<string> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
-        public VerOficioNotificacionResponse VerOficioNotificacion(VerOficioNotificacionRequest request);
         List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
         List<GetListaCasosResponse> RepoListaCasosNotificacion(string eapbId, int epsId);
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId);
@@ -27,5 +24,8 @@ namespace Core.Interfaces.Repositorios
         Task RevisarYEnviarNotificaciones();
         Task EnviarNotificacionAsignacionCoordinadores(string[] para, List<UsuarioAsignado> asignados, List<UsuarioAsignado> reagendados, List<UsuarioAsignado> reasignados);
         Task EnviarNotificacionAsignacionAgentes(UserDto[] agentes, List<UsuarioAsignado> asignados);
+        Task<RespuestaResponse<long>> GenerarOficioNotificacion(OficioNotificacionRequest request);
+        Task<RespuestaResponse<string>> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
+        Task<RespuestaResponse<OficioNotificacionRequest>> VerOficioNotificacion(long id);
     }
 }

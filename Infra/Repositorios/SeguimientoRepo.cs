@@ -1341,12 +1341,14 @@ namespace Infra.Repositorios
             catch (PdfException exception)
             {
                 Console.WriteLine(exception.ToString());
-                response.Nombre = "Ha ocurrido un error";
+                response.Nombre = "Ha ocurrido un error - PdfException";
+                response.Base64 = exception.ToString();
             }
             catch (Exception exception)
             {
                 Console.WriteLine(exception.ToString());
-                response.Nombre = "Ha ocurrido un error";
+                response.Nombre = "Ha ocurrido un error - Exception";
+                response.Base64 = exception.ToString();
             }
 
             return response;

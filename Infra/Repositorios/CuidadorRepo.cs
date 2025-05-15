@@ -20,7 +20,7 @@ namespace Infra.Repositorios
 
         public async Task<IEnumerable<CuidadorDto>> GetAllCuidadores()
         {
-            var result = await db.ApplicationUser.Where(x => x.EsCuidador).Select(x => new CuidadorDto
+            var result = await db.ApplicationUser.Where(x => x.EsCuidador ?? false).Select(x => new CuidadorDto
             {
                 Id = x.Id,
                 Identificacion = x.Alias,
