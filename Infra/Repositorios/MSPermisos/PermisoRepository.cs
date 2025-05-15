@@ -22,7 +22,7 @@ namespace Infra.Repositorios.MSPermisos
         public async Task<IList<Permisos>> GetPermisosByModuloId(int ModuloId, CancellationToken cancellationToken)
         {
             var funcionalidades = await _context.TPModuloComponenteObjeto.Where(x => x.ModuloComponenteObjetoIdPadre == ModuloId).ToListAsync();
-            var listaIds = funcionalidades.Select(m => m.Id).ToList();
+            var listaIds = funcionalidades == null ? new List<int>() : funcionalidades.Select(m => m.Id).ToList();
 
             var permisosFiltrados = await _context.TPermisos
                                         .Where(p => listaIds.Contains(p.ModuloComponenteObjetoId ?? 0))
@@ -67,7 +67,7 @@ namespace Infra.Repositorios.MSPermisos
                 return (null, null, null);
             }
             var funcionalidad = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == permiso.ModuloComponenteObjetoId);
-            var modulo = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == funcionalidad.ModuloComponenteObjetoIdPadre);
+            var modulo = funcionalidad == null ? null : await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == funcionalidad.ModuloComponenteObjetoIdPadre);
             
             return (permiso, modulo, funcionalidad);
         }
@@ -79,7 +79,7 @@ namespace Infra.Repositorios.MSPermisos
                 return (null, null, null);
             }
             var funcionalidad = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == permiso.ModuloComponenteObjetoId);
-            var modulo = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == funcionalidad.ModuloComponenteObjetoIdPadre);
+            var modulo = funcionalidad == null ? null : await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == funcionalidad.ModuloComponenteObjetoIdPadre);
             return (permiso, modulo, funcionalidad);
         }
     }
