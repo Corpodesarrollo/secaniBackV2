@@ -62,7 +62,7 @@ namespace Core.Services
         {
             var result = await _repository.GetAllAsync(cancellationToken);
             if (result != null)
-                result = result.Where(x => x.Activo == true && x.Estado == "Activo").ToArray();
+                result = result.Where(x => x.Activo == true).ToArray();
 
             return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
         }

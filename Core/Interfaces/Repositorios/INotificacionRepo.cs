@@ -15,7 +15,7 @@ namespace Core.Interfaces.Repositorios
         List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
         List<GetListaCasosResponse> RepoListaCasosNotificacion(string eapbId, int epsId);
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId);
-        Task<bool?> NotificacionRespuesta(NotificacionRespuestaDto data);
+        Task<RespuestaResponse<bool>> NotificacionRespuesta(NotificacionRespuestaDto data);
 
         public Task<string> PlantillaCorreo(string[] Para, string[] ConCopia, string Asunto, string Body, string[] Adjuntos, Attachment AdjuntoPdf);
         Task<string> NotificacionReporteSivigila(long idReporteSivigila, string entidadId, string userId);
@@ -27,5 +27,6 @@ namespace Core.Interfaces.Repositorios
         Task<RespuestaResponse<long>> GenerarOficioNotificacion(OficioNotificacionRequest request);
         Task<RespuestaResponse<string>> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
         Task<RespuestaResponse<OficioNotificacionRequest>> VerOficioNotificacion(long id);
+        Task<RespuestaResponse<bool>> ValidarNotificacion(int id);
     }
 }

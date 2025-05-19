@@ -47,6 +47,13 @@ namespace MSSeguimiento.Api.Controllers
             return notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
         }
 
+        [HttpGet("ValidarNotificacion/{id}")]
+        public async Task<IActionResult> ValidarNotificacion(int id)
+        {
+            var result = await notificacionRepo.ValidarNotificacion(id);
+            return Ok(result);
+        }
+
         [HttpPost("OficioNotificacion")]
         public async Task<IActionResult> GenerarOficioNotificacion(OficioNotificacionRequest request)
         {
@@ -75,9 +82,10 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("NotificacionRespuesta")]
-        public async Task<bool?> NotificacionRespuesta([FromForm] NotificacionRespuestaDto data)
+        public async Task<IActionResult> NotificacionRespuesta([FromForm] NotificacionRespuestaDto data)
         {
-            return await notificacionRepo.NotificacionRespuesta(data);
+            var result = await notificacionRepo.NotificacionRespuesta(data);
+            return Ok(result);
         }
 
 
