@@ -1,5 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using SISPRO.TRV.Web.MVCCore;
@@ -9,7 +10,7 @@ using LicenseContext = OfficeOpenXml.LicenseContext;
 namespace MSAuthentication.Api.Controllers
 {
     [Route("[controller]")]
-    //[Authorize]
+    [Authorize]
     [ApiController]
     public class AuthController(IAuthRepo repo) : Controller
     {
