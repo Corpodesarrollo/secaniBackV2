@@ -678,6 +678,8 @@ namespace Infra.Repositorios
             var seguimientoActualizado = await _context.Seguimientos.FirstOrDefaultAsync(x => x.Id == idSeguimiento);
             if (seguimientoActualizado != null)
             {
+                seguimientoActualizado.UltimaActuacionFecha = fechaAsignacion;
+                seguimientoActualizado.UltimaActuacionAsunto = "Asignación automática";
                 seguimientoActualizado.FechaSeguimiento = fechaAsignacion;
                 seguimientoActualizado.UsuarioId = idUsuario;
                 _context.Seguimientos.Update(seguimientoActualizado);
