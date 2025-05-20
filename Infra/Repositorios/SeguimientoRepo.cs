@@ -655,7 +655,7 @@ namespace Infra.Repositorios
                     await _context.SaveChangesAsync();
 
                     //actualizar fecha seguimiento
-                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1);
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId);
 
                     seguimientosAsignados.Add(usuarioAsignado);
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
@@ -673,12 +673,13 @@ namespace Infra.Repositorios
             return seguimientosAsignados;
         }
 
-        private async Task ActulizarSeguimiento(DateTime? fechaAsignacion, long idSeguimiento)
+        private async Task ActulizarSeguimiento(DateTime? fechaAsignacion, long idSeguimiento, string idUsuario)
         {
             var seguimientoActualizado = await _context.Seguimientos.FirstOrDefaultAsync(x => x.Id == idSeguimiento);
             if (seguimientoActualizado != null)
             {
                 seguimientoActualizado.FechaSeguimiento = fechaAsignacion;
+                seguimientoActualizado.UsuarioId = idUsuario;
                 _context.Seguimientos.Update(seguimientoActualizado);
                 await _context.SaveChangesAsync();
             }
@@ -803,7 +804,7 @@ namespace Infra.Repositorios
                 await _context.SaveChangesAsync();
 
                 //actualizar fecha seguimiento
-                await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1);
+                await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId);
 
                 seguimientosReagendados.Add(usuarioAsignado);
                 seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
@@ -909,7 +910,7 @@ namespace Infra.Repositorios
                     await _context.SaveChangesAsync();
 
                     //actualizar fecha seguimiento
-                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1);
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId);
 
                     seguimientosAsignados.Add(usuarioAsignado);
 
