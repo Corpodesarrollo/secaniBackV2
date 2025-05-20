@@ -25,6 +25,7 @@ namespace Infra.Repositorios
         {
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
+                        join ua in _context.UsuarioAsignados on new { s.Id, s.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }
                         where s.UsuarioId == id
                         group s by s.NNAId into g
                         select new { id = g.Max(x => x.Id) };
