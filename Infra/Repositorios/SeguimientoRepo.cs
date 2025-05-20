@@ -25,7 +25,7 @@ namespace Infra.Repositorios
         {
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
-                        join ua in _context.UsuarioAsignados on new { s.Id, s.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }
+                        join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
                         where s.UsuarioId == id
                         group s by s.NNAId into g
                         select new { id = g.Max(x => x.Id) };
@@ -654,6 +654,9 @@ namespace Infra.Repositorios
                     _context.UsuarioAsignados.Add(usuarioAsignado);
                     await _context.SaveChangesAsync();
 
+                    //actualizar fecha seguimiento
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1);
+
                     seguimientosAsignados.Add(usuarioAsignado);
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
                 }
@@ -668,6 +671,17 @@ namespace Infra.Repositorios
             }
 
             return seguimientosAsignados;
+        }
+
+        private async Task ActulizarSeguimiento(DateTime? fechaAsignacion, long idSeguimiento)
+        {
+            var seguimientoActualizado = await _context.Seguimientos.FirstOrDefaultAsync(x => x.Id == idSeguimiento);
+            if (seguimientoActualizado != null)
+            {
+                seguimientoActualizado.FechaSeguimiento = fechaAsignacion;
+                _context.Seguimientos.Update(seguimientoActualizado);
+                await _context.SaveChangesAsync();
+            }
         }
 
         private static DateTime? BuscarEspacioHorario(DateTime fecha, UsuariosHorariosDto revisor, List<UsuarioAsignado> seguimientosAsignadosFecha)
@@ -788,6 +802,9 @@ namespace Infra.Repositorios
                 _context.UsuarioAsignados.Add(usuarioAsignado);
                 await _context.SaveChangesAsync();
 
+                //actualizar fecha seguimiento
+                await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1);
+
                 seguimientosReagendados.Add(usuarioAsignado);
                 seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
 
@@ -890,6 +907,9 @@ namespace Infra.Repositorios
 
                     _context.UsuarioAsignados.Add(usuarioAsignado);
                     await _context.SaveChangesAsync();
+
+                    //actualizar fecha seguimiento
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1);
 
                     seguimientosAsignados.Add(usuarioAsignado);
 
