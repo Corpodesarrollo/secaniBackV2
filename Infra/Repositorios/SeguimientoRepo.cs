@@ -655,7 +655,7 @@ namespace Infra.Repositorios
                     await _context.SaveChangesAsync();
 
                     //actualizar fecha seguimiento
-                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId);
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId, "Registro Inicial");
 
                     seguimientosAsignados.Add(usuarioAsignado);
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
@@ -673,13 +673,14 @@ namespace Infra.Repositorios
             return seguimientosAsignados;
         }
 
-        private async Task ActulizarSeguimiento(DateTime? fechaAsignacion, long idSeguimiento, string idUsuario)
+        private async Task ActulizarSeguimiento(DateTime? fechaAsignacion, long idSeguimiento, string idUsuario, string asunto = "")
         {
             var seguimientoActualizado = await _context.Seguimientos.FirstOrDefaultAsync(x => x.Id == idSeguimiento);
             if (seguimientoActualizado != null)
             {
+                seguimientoActualizado.EstadoId = 1;
                 seguimientoActualizado.UltimaActuacionFecha = fechaAsignacion;
-                seguimientoActualizado.UltimaActuacionAsunto = "Asignación automática";
+                seguimientoActualizado.UltimaActuacionAsunto = asunto;
                 seguimientoActualizado.FechaSeguimiento = fechaAsignacion;
                 seguimientoActualizado.UsuarioId = idUsuario;
                 _context.Seguimientos.Update(seguimientoActualizado);

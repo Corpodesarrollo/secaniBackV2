@@ -11,5 +11,6 @@ namespace Core.Modelos
         public string? Telefonos { get; set; }
         public string? TelefnosInactivos { get; set; }
         public bool Cuidador { get; set; } = false;
+        public bool? Estado { get; set; }
     }
 }

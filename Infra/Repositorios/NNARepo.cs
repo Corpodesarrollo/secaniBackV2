@@ -123,7 +123,8 @@ namespace Infra.Repositorios
                                             NNAId = c.NNAId,
                                             Nombres = c.Nombres,
                                             ParentescoId = c.ParentescoId,
-                                            Telefonos = c.Telefonos
+                                            Telefonos = c.Telefonos,
+                                            Estado = c.Estado,
                                         }).ToArray(),
                            CuidadorParentescoId = nna.CuidadorParentescoId,
                            CuidadorParentesco = p != null ? p.Nombre : "",
@@ -911,7 +912,7 @@ namespace Infra.Repositorios
                             NumeroIdentificacion = d.DepuracionProtocoloRequest.num_ide,
                             SexoId = d.DepuracionProtocoloRequest.sexo,
                             PaisId = d.DepuracionProtocoloRequest.cod_pais_r,
-                            ResidenciaOrigenMunicipioId = d.DepuracionProtocoloRequest.cod_mun_r,
+                            ResidenciaOrigenMunicipioId = d.DepuracionProtocoloRequest.cod_mun_o,
                             ResidenciaOrigenAreaId = d.DepuracionProtocoloRequest.area,
                             ResidenciaOrigenBarrio = d.DepuracionProtocoloRequest.bar_ver,
                             ResidenciaOrigenDireccion = d.DepuracionProtocoloRequest.dir_res,
@@ -927,11 +928,16 @@ namespace Infra.Repositorios
                             FechaNacimiento = d.DepuracionProtocoloRequest.fecha_nto,
                             MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte,
                             TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca,
-                            FechaInicioTratamiento = d.DepuracionProtocoloRequest.fec_initra,
+                            FechaInicioTratamiento = DateTime.MinValue == d.DepuracionProtocoloRequest.fec_initra ? null : d.DepuracionProtocoloRequest.fec_initra,
                             Recaida = d.DepuracionProtocoloRequest.recaida == "1",
                             FechaDiagnostico = d.DepuracionProtocoloRequest.fec_diag1a,
                             CuidadorTelefono = d.DepuracionProtocoloRequest.tel_cont_2,
-                            estadoId = 15
+                            estadoId = 15,
+                            FechaIngresoEstrategia = DateTime.Now,
+                            OrigenReporteId = 1,
+                            FechaConsultaOrigenReporte = DateTime.Now,
+                            EstadoIngresoEstrategiaId = string.IsNullOrEmpty(d.DepuracionProtocoloRequest.fec_def) ? 1 : 2,
+                            ResidenciaActualMunicipioId = d.DepuracionProtocoloRequest.nmun_resi,
                         };
                         insertNNA.Add(newNNA);
 
@@ -939,7 +945,7 @@ namespace Infra.Repositorios
                         {
                             NNAId = newNNA.Id,
                             Nombres = "Cuidador",
-                            Telefonos = d.DepuracionProtocoloRequest.tel_cont_2,
+                            Telefonos = d.DepuracionProtocoloRequest.telefono,
                             Cuidador = true,
                         };
                         insertContactoNNA.Add(contacto);

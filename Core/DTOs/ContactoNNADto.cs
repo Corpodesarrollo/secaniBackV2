@@ -12,5 +12,6 @@ namespace Core.DTOs
         public string? Telefonos { get; set; }
         public string? TelefnosInactivos { get; set; }
         public bool Cuidador { get; set; }
+        public bool? Estado { get; set; }
     }
 }

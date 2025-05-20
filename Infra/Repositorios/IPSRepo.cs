@@ -135,5 +135,19 @@ namespace Infra.Repositorios
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task<TPIPSDto[]?> Search(string cadena)
+        {
+            try
+            {
+                var result = await db.TPIPS.Where(x => x.Codigo.Contains(cadena) || x.Nombre.Contains(cadena)).Take(50).ToArrayAsync();
+                var data = GenericMapper.Map<TPIPS[], TPIPSDto[]>(result);
+                return data;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }

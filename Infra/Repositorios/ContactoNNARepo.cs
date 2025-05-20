@@ -91,6 +91,7 @@ namespace Infra.Repositorios
                 result.TelefnosInactivos = dto.TelefnosInactivos;
                 result.Cuidador = dto.Cuidador;
                 result.UpdatedByUserId = dto.UpdatedByUserId;
+                result.Estado = dto.Estado;
 
                 _context.ContactoNNAs.Update(result);
                 var success = await _context.SaveChangesAsync() > 0;

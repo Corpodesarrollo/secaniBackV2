@@ -23,5 +23,12 @@ namespace MSTablasParametricas.Api.Controllers
             var result = await service.GetAll();
             return Ok(result);
         }
+
+        [HttpGet("Search/{cadena}")]
+        public async Task<ActionResult<TPIPSDto[]>> Search(string cadena)
+        {
+            var result = await service.Search(cadena);
+            return Ok(result);
+        }
     }
 }
