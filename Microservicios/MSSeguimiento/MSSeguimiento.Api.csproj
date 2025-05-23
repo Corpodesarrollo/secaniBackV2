@@ -17,18 +17,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="PlantillaAlertas.html">
+    <Content Include="PlantillaAlertas.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="PlantillaContactos.html">
+      <Generator> </Generator>
+    </Content>
+    <Content Include="PlantillaContactos.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="PlantillaExportarSeguimiento.html">
+      <Generator> </Generator>
+    </Content>
+    <Content Include="PlantillaExportarSeguimiento.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="PlantillaSeguimientos.html">
+      <Generator> </Generator>
+    </Content>
+    <Content Include="PlantillaSeguimientos.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
+      <Generator> </Generator>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

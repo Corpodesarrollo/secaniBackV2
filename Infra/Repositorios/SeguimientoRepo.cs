@@ -506,11 +506,9 @@ namespace Infra.Repositorios
                                                }).FirstOrDefault();
 
             return response;
-
-
         }
 
-        public async Task<string> SetSeguimiento(SetSeguimientoRequest request)
+        public async Task<long> SetSeguimiento(SetSeguimientoRequest request)
         {
             try
             {
@@ -585,7 +583,7 @@ namespace Infra.Repositorios
                     }
                 }
 
-                return "Segumiento almacenado correctamente";
+                return seguimiento.Id;
             }
             catch (Exception ex)
             {

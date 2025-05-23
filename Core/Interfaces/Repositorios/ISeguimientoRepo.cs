@@ -29,7 +29,7 @@ namespace Core.Interfaces.Repositorios
         public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id);
         public Task<ExportarDetalleSeguimientoResponse> ExportarDetalleSeguimiento(long id);
         Task<long> GetCntSeguimientoByNNA(long id);
-        Task<string> SetSeguimiento(SetSeguimientoRequest request);
+        Task<long> SetSeguimiento(SetSeguimientoRequest request);
         Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
         Task<List<UsuarioAsignado>> AsignacionAutomatica();
         Task<SeguimientoDto[]> GetSeguimientosEstados(string id);

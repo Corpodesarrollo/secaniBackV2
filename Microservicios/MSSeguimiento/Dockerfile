@@ -12,7 +12,6 @@ WORKDIR /src
 
 # Copia el archivo nuget.config a la ubicación predeterminada de NuGet
 COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
-
 COPY ["Microservicios/MSSeguimiento/MSSeguimiento.Api.csproj", "Microservicios/MSSeguimiento/"]
 COPY ["Core/Core.csproj", "Core/"]
 COPY ["Infra/Infra.csproj", "Infra/"]

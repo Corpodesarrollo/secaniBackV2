@@ -143,8 +143,7 @@ namespace MSSeguimiento.Api.Controllers
         {
             try
             {
-                string response = await seguimientoRepo.SetSeguimiento(request);
-
+                var response = await seguimientoRepo.SetSeguimiento(request);
                 return Ok(response);
             }
             catch (Exception ex)
