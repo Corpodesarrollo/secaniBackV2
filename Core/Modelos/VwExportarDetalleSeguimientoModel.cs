@@ -13,9 +13,9 @@ namespace Core.Modelos
     {
         [Key]
         public long SeguimientoId { get; set; }
-        public long NNAId { get; set; }
-        public int SeguimientosRealizados { get; set; }
-        public int SeguimientosEnProceso { get; set; }
+        public long? NNAId { get; set; }
+        public int? SeguimientosRealizados { get; set; }
+        public int? SeguimientosEnProceso { get; set; }
         public string? Nombres { get; set; }
         public string? Edad { get; set; }
         public string? Diagnostico { get; set; }
@@ -43,7 +43,7 @@ namespace Core.Modelos
         public string? FechaInicioTratamiento { get; set; }
         public string? IpsTratamiento { get; set; }
         public string? Recaida { get; set; }
-        public int CantidadRecaidas { get; set; }
+        public int? CantidadRecaidas { get; set; }
         public string? FechaUltimaRecaida { get; set; }
         public string? ProcedenciaDepartamento { get; set; }
         public string? ProcedenciaMunicipio { get; set; }
@@ -80,7 +80,7 @@ namespace Core.Modelos
         public string? FallaMipres { get; set; }
         public string? FallaEapbIps { get; set; }
         public string? TransladoInstitucion { get; set; }
-        public int NumeroTraslado { get; set; }
+        public int? NumeroTraslado { get; set; }
         public string? IpsTraslado { get; set; }
         public string? AccionLegal { get; set; }
         public string? MotivoAccionLegal { get; set; }
