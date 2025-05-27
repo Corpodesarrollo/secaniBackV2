@@ -28,6 +28,14 @@ namespace MSAuthentication.Api.Controllers
             return Ok(ContactoEntidads);
         }
 
+        [HttpGet("Entidades/{idEntidad}")]
+        [ProducesResponseType(typeof(List<ContactoEntidadResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetContactosEntidadesByEntidad(string idEntidad, CancellationToken cancellationToken)
+        {
+            var ContactoEntidads = await _service.Entidades(cancellationToken, idEntidad);
+            return Ok(ContactoEntidads);
+        }
+
         /// <summary>
         /// Gets the ContactoEntidad with the specified identifier, if it exists.
         /// </summary>

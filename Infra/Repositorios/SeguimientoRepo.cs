@@ -574,6 +574,7 @@ namespace Infra.Repositorios
                         var alertaSeguimiento = await _context.AlertaSeguimientos.FirstOrDefaultAsync(x => x.AlertaId == item.Id);
                         if (alertaSeguimiento != null)
                         {
+                            alertaSeguimiento.SeguimientoId = seguimiento.Id;
                             alertaSeguimiento.EstadoId = item.Resuelta ?? false ? 4 : 3;
                             alertaSeguimiento.Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento";
                             alertaSeguimiento.UltimaFechaSeguimiento = DateTime.Now;

@@ -16,6 +16,7 @@ namespace MSNNA.Api.Controllers
         public async Task<ActionResult<UserDto>> Get()
         {
             var user = this.GetUser();
+
             return Ok(user);
         }
 
@@ -23,7 +24,6 @@ namespace MSNNA.Api.Controllers
         public IActionResult ExportControllersAsExcel()
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // Para evitar problemas con EPPlus
-
             // Obtener los controladores y métodos
             var controllers = Assembly.GetExecutingAssembly()
                 .GetTypes()

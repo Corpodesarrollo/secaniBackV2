@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using Core.DTOs;
+using Core.Interfaces;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
@@ -11,6 +12,7 @@ using Infra.Repositories.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using SISPRO.TRV.Entity;
 
 
 namespace Infra.Repositorios
@@ -22,13 +24,16 @@ namespace Infra.Repositorios
         private readonly GenericRepository<TPCIE10> _repositoryCie10;
         private readonly INotificacionRepo _notificacionRepo;
         private readonly ISeguimientoRepo _seguimientoRepo;
+        private readonly ICurrentUserProvider _currentUserProvider;
+        private readonly User _user;
 
         public NNARepo(
             ApplicationDbContext context,
             ISeguimientoRepo seguimientoRepo,
             GenericRepository<NNAs> repository,
             GenericRepository<TPCIE10> repositoryCie10,
-            INotificacionRepo notificacionRepo
+            INotificacionRepo notificacionRepo,
+            ICurrentUserProvider currentUserProvider
             )
         {
             _context = context;
@@ -36,6 +41,8 @@ namespace Infra.Repositorios
             _repository = repository;
             _repositoryCie10 = repositoryCie10;
             _notificacionRepo = notificacionRepo;
+            _currentUserProvider = currentUserProvider;
+            _user = _currentUserProvider.CurrentUser;
         }
 
 
@@ -901,7 +908,7 @@ namespace Infra.Repositorios
                         var newNNA = new NNAs()
                         {
                             DateCreated = DateTime.Now,
-                            CreatedByUserId = "1",
+                            CreatedByUserId = _user.ID.ToString(),
                             FechaNotificacionSIVIGILA = d.DepuracionProtocoloRequest.fec_not,
                             EPSId = 0,//verificar de donde sale el id de la eps
                             PrimerNombre = d.DepuracionProtocoloRequest.pri_nom,
@@ -916,7 +923,15 @@ namespace Infra.Repositorios
                             ResidenciaOrigenAreaId = d.DepuracionProtocoloRequest.area,
                             ResidenciaOrigenBarrio = d.DepuracionProtocoloRequest.bar_ver,
                             ResidenciaOrigenDireccion = d.DepuracionProtocoloRequest.dir_res,
-                            TipoRegimenSSId = d.DepuracionProtocoloRequest.tip_ss,
+                            TipoRegimenSSId = d.DepuracionProtocoloRequest.tip_ss switch
+                            {
+                                "C" => "2",
+                                "S" => "1",
+                                "P" => "4",
+                                "E" => "3",
+                                "N" => "5",
+                                "I" => "6",
+                            },
                             EtniaId = d.DepuracionProtocoloRequest.per_etn,
                             ResidenciaOrigenEstratoId = d.DepuracionProtocoloRequest.estrato,
                             GrupoPoblacionId = "", //verificar como se asocia a un grupo poblacional
@@ -938,6 +953,9 @@ namespace Infra.Repositorios
                             FechaConsultaOrigenReporte = DateTime.Now,
                             EstadoIngresoEstrategiaId = string.IsNullOrEmpty(d.DepuracionProtocoloRequest.fec_def) ? 1 : 2,
                             ResidenciaActualMunicipioId = d.DepuracionProtocoloRequest.nmun_resi,
+                            DateUpdated = DateTime.Now,
+                            UpdatedByUserId = _user.ID.ToString(),
+                            DiagnosticoId = int.TryParse(d.DepuracionProtocoloRequest.tipo_ca, out int diagnosticoId) ? diagnosticoId : (int?)null,
                         };
                         insertNNA.Add(newNNA);
 

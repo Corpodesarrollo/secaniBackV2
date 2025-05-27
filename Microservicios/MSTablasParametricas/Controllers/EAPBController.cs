@@ -16,5 +16,12 @@ namespace MSTablasParametricas.Api.Controllers
             var result = await service.GetEAPB();
             return Ok(result);
         }
+
+        [HttpGet("Entidades")]
+        public async Task<ActionResult> Entidates(CancellationToken cancellationToken)
+        {
+            var result = await service.Entidates();
+            return Ok(result);
+        }
     }
 }

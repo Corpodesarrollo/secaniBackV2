@@ -37,5 +37,12 @@ namespace Infra.Repositorios
             var result = await query.Where(x => x.Tipo == 1).ToListAsync();
             return result;
         }
+
+        public async Task<List<TPEAPBDto>> Entidates()
+        {
+            var query = GetSelect();
+            var result = await query.ToListAsync();
+            return result;
+        }
     }
 }

@@ -1,6 +1,4 @@
-﻿using Core.Modelos;
-using Core.Modelos.Common;
-using DocumentFormat.OpenXml.Spreadsheet;
+﻿using Core.Modelos.Common;
 using System.Text.Json;
 
 namespace Core.Services.MSTablasParametricas

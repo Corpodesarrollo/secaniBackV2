@@ -13,6 +13,7 @@ using Core.Services.Reportes;
 using Core.Services.StorageService;
 using Core.Validators.MSPermisos;
 using Infra;
+using Infra.Middleware;
 using Infra.Repositories;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
@@ -72,6 +73,8 @@ builder.Services.AddScoped<IReporteDinamicoEAPBRepository, ReporteDinamicoEAPBRe
 builder.Services.AddScoped<IReporteDinamicoEAPBService, ReporteDinamicoEAPBService>();
 builder.Services.AddHttpClient();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
 
 builder.Services.AddCors(options =>
 {
