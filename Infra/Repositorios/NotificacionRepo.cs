@@ -5,7 +5,10 @@ using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using Core.Services.PDF;
 using Core.Services.StorageService;
+using iText.Kernel.Geom;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using PuppeteerSharp;
 using PuppeteerSharp.Media;
@@ -20,6 +23,7 @@ namespace Infra.Repositories
 {
     public class NotificacionRepo : INotificacionRepo
     {
+        private readonly IWebHostEnvironment _env;
         private readonly ApplicationDbContext _context;
         private readonly IAdjuntosRepo _adjuntosRepo;
         private readonly IStorageService _storageService;
@@ -27,12 +31,13 @@ namespace Infra.Repositories
         private readonly SmtpClient clienteSmtp;
         private readonly string fromMail;
 
-        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env)
         {
             _context = context;
             _adjuntosRepo = adjuntosRepo;
             _storageService = storageService;
             _reportesSIVIGILARepo = reportesSIVIGILARepo;
+            _env = env;
 
             // Obtener configuraciones de correo
             var emailConfigurations = _context.EmailConfigurations.ToList();
@@ -235,7 +240,6 @@ namespace Infra.Repositories
 
                     }
 
-
                     htmlContent = htmlContent.Replace("{{CiudadEnvio}}", notificacionEntidadPlantilla.CiudadEnvio)
                                              .Replace("{{FechaEnvio}}", notificacionEntidadPlantilla.FechaEnvio.ToString("yyyy/MM/dd"))
                                              .Replace("{{Membrete}}", notificacionEntidadPlantilla.Membrete)
@@ -254,37 +258,15 @@ namespace Infra.Repositories
                                              .Replace("{{Cierre}}", notificacionEntidadPlantilla.Cierre)
                                              .Replace("{{Firma}}", notificacionEntidadPlantilla.Firma);
 
-                    await new BrowserFetcher().DownloadAsync();
-
-                    await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+                    var config = new PdfConfig(2, 2, 1, 2)
                     {
-                        Headless = true
-                    });
+                        PageSize = PageSize.LETTER,
+                        RutaLogoEncabezado = Path.Combine(_env.WebRootPath, "assets", "footer.png"),
+                        MostrarNumeracion = true,
+                        RutaImagenPieDePagina = Path.Combine(_env.WebRootPath, "assets", "footer.png")
+                    };
 
-                    await using var page = await browser.NewPageAsync();
-                    await page.SetContentAsync(htmlContent);
-
-                    var pdfStream = await page.PdfStreamAsync(new PdfOptions
-                    {
-                        Format = PaperFormat.Letter,
-                        PrintBackground = true,
-                        MarginOptions = new MarginOptions
-                        {
-                            Top = "1cm",
-                            Right = "1cm",
-                            Bottom = "1cm",
-                            Left = "1cm"
-                        }
-                    });
-
-                    await browser.CloseAsync();
-
-                    pdfStream.Position = 0;
-                    var pdfBytes = new MemoryStream();
-                    await pdfStream.CopyToAsync(pdfBytes);
-                    pdfBytes.Position = 0;
-
-
+                    byte[] pdfBytes = PDFService.PdfToHtml(htmlContent, config);
 
                     List<EmailConfiguration> emailConfigurations = _context.EmailConfigurations.ToList();
 
@@ -387,6 +369,7 @@ namespace Infra.Repositories
                 };
             }
         }
+
 
         public async Task<RespuestaResponse<OficioNotificacionRequest>> VerOficioNotificacion(long id)
         {

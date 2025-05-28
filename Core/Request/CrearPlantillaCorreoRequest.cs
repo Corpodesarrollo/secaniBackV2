@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Request
+﻿namespace Core.Request
 {
     public class CrearPlantillaCorreoRequest
     {
@@ -16,8 +10,8 @@ namespace Core.Request
         public string Estado { get; set; }
         public string Mensaje { get; set; }
         public string Cierre { get; set; }
-        public string? Comentario {  get; set; }
-        public string IdUsuario {  get; set; }
-        public string Rol {  get; set; }
+        public string? Comentario { get; set; }
+        public string IdUsuario { get; set; }
+        public string Rol { get; set; }
     }
 }
