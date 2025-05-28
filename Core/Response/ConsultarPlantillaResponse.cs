@@ -8,7 +8,7 @@ namespace Core.Response
 {
     public class ConsultarPlantillaResponse
     {
-        public string Id { get; set; }
+        public long Id { get; set; }
         public DateTime FechaCreacion { get; set; }
         public string Nombre { get; set; }
         public string Asunto { get; set; }

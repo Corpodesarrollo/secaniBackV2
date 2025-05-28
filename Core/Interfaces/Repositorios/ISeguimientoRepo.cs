@@ -26,6 +26,7 @@ namespace Core.Interfaces.Repositorios
         public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request);
         public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
         public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo();
+        public PlantillaCorreo ConsultarUnaPlantillasCorreo(long id);
         public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id);
         public Task<ExportarDetalleSeguimientoResponse> ExportarDetalleSeguimiento(long id);
         Task<long> GetCntSeguimientoByNNA(long id);

@@ -1060,7 +1060,6 @@ namespace Infra.Repositorios
                 {
                     plantillaCorreo = new PlantillaCorreo()
                     {
-                        Id = request.Id,
                         Asunto = request.Asunto,
                         Cierre = request.Cierre,
                         Estado = request.Estado,
@@ -1178,6 +1177,15 @@ namespace Infra.Repositorios
                                                          }).ToList();
 
             return response;
+        }
+
+        public PlantillaCorreo ConsultarUnaPlantillasCorreo(long id)
+        {
+            PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
+                                                where p.Id == id
+                                                select p).FirstOrDefault();
+
+            return plantillaCorreo;
         }
 
         public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id)

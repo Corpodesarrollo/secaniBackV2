@@ -856,7 +856,7 @@ namespace Infra.Repositories
             /*
              * paso 2:  consultar los datos de la plantilla 
              */
-            string idPlantilla = "3";
+            long idPlantilla = 3;
             PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
                                                 where p.Id == idPlantilla
                                                 select p).FirstOrDefault();
@@ -1048,7 +1048,7 @@ namespace Infra.Repositories
             };
 
 
-            string idPlantilla = "4";
+            long idPlantilla = 4;
             PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
                                                 where p.Id == idPlantilla
                                                 select p).FirstOrDefault();

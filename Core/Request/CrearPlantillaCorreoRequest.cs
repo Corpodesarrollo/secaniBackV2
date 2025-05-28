@@ -8,7 +8,7 @@ namespace Core.Request
 {
     public class CrearPlantillaCorreoRequest
     {
-        public string Id { get; set; }
+        public long? Id { get; set; }
         public string Nombre { get; set; }
         public string Asunto { get; set; }
         public string TipoPlantilla { get; set; }

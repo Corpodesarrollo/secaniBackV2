@@ -12,7 +12,7 @@ namespace Core.Modelos
     public class PlantillaCorreo
     {
         [Key]
-        public string Id { get; set; }
+        public long Id { get; set; }
         public DateTime FechaCreacion { get; set; }
         public string Nombre { get; set; }
         public string Asunto { get; set; }
