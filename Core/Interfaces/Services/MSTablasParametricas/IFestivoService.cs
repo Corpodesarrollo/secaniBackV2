@@ -9,5 +9,8 @@ namespace Core.Interfaces.MSTablasParametricas
         public Task<IEnumerable<FestivoDTO>> GetFestivosByAnoAndMesAsync(int ano, int mes, CancellationToken cancellationToken);
         public Task<FestivoDTO?> GetFestivoByDateAsync(DateOnly date, CancellationToken cancellationToken);
         public Task<(bool, FestivoDTO?)> EsFestivoAsync(DateOnly date, CancellationToken cancellationToken);
+        Task<(bool success, FestivoDTO? data)> CreateAsync(CreateFestivoRequest request, CancellationToken cancellationToken);
+        Task<(bool success, FestivoDTO? data)> UpdateAsync(UpdateFestivoRequest request, CancellationToken cancellationToken);
+
     }
 }

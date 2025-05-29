@@ -18,17 +18,13 @@ namespace Core.Services.MSTablasParametricas
         public async Task<(bool, FestivoDTO?)> EsFestivoAsync(DateOnly date, CancellationToken cancellationToken)
         {
             var (success, response) = await _repository.EsFestivoAsync(date, cancellationToken);
-            return (success, response.Adapt<FestivoDTO>());
+            return (success, response?.Adapt<FestivoDTO>());
         }
 
         public async Task<FestivoDTO?> GetFestivoByDateAsync(DateOnly date, CancellationToken cancellationToken)
         {
             var response = await _repository.GetFestivoByDateAsync(date, cancellationToken);
-            if (response == null)
-            {
-                return null;
-            }
-            return response.Adapt<FestivoDTO>();
+            return response?.Adapt<FestivoDTO>();
         }
 
         public async Task<IEnumerable<FestivoDTO>> GetFestivosByAnoAndMesAsync(int ano, int mes, CancellationToken cancellationToken)
@@ -42,5 +38,19 @@ namespace Core.Services.MSTablasParametricas
             var response = await _repository.GetFestivosByAnoAsync(ano, cancellationToken);
             return response.Adapt<IEnumerable<FestivoDTO>>();
         }
+
+        // ✅ Nuevo método de creación desde CreateFestivoRequest
+        public async Task<(bool success, FestivoDTO? data)> CreateAsync(CreateFestivoRequest request, CancellationToken cancellationToken)
+        {
+            (bool success, TPFestivos? entity) = await _repository.AddAsync(request);
+            return (success, entity?.Adapt<FestivoDTO>());
+        }
+
+        public async Task<(bool success, FestivoDTO? data)> UpdateAsync(UpdateFestivoRequest request, CancellationToken cancellationToken)
+        {
+            (bool success, TPFestivos? entity) = await _repository.UpdateAsync(request);
+            return (success, entity?.Adapt<FestivoDTO>());
+        }
+
     }
 }

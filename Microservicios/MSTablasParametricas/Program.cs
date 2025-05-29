@@ -7,6 +7,7 @@ using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.StorageService;
+using Core.Utilities;
 using Core.Validators;
 using Core.Validators.MSPermisos;
 using FluentValidation;
@@ -24,6 +25,7 @@ using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
@@ -96,6 +98,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
                 .AddCheck<CustomHealthCheck>("CustomHealthCheck");
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+        options.JsonSerializerOptions.Converters.Add(new TimeOnlyJsonConverter());
+    });
+
 
 WebApplication app = builder.Build();
 
