@@ -8,45 +8,35 @@ namespace Core.Services.PDF
         public bool Horizontal { get; set; } = false;
 
         // Márgenes en centímetros
-        public float MarginTopCm { get; set; } = 2.0f;
-        public float MarginRightCm { get; set; } = 2.0f;
-        public float MarginBottomCm { get; set; } = 2.0f;
-        public float MarginLeftCm { get; set; } = 2.0f;
+        public float MarginTop { get; set; } = 2.0f;
+        public float MarginRight { get; set; } = 2.0f;
+        public float MarginBottom { get; set; } = 2.0f;
+        public float MarginLeft { get; set; } = 2.0f;
 
-        public string Encabezado { get; set; } = "Encabezado del Documento";
-        public string RutaLogoEncabezado { get; set; } = "";
-        public string PieDePagina { get; set; } = "Pie de Página del Documento";
-        public string RutaImagenPieDePagina { get; set; } = "";
+        public string HeaderHtmlContent { get; set; } = "Encabezado del Documento";
+        public string FooterHtmlContent { get; set; } = "Pie de Página del Documento";
         public bool MostrarNumeracion { get; set; } = true;
-
-        // Propiedades auxiliares para conversión a puntos
-        public float MarginTop => CmToPt(MarginTopCm);
-        public float MarginRight => CmToPt(MarginRightCm);
-        public float MarginBottom => CmToPt(MarginBottomCm);
-        public float MarginLeft => CmToPt(MarginLeftCm);
 
         public PdfConfig() { }
 
-        public PdfConfig(PageSize pageSize, bool horizontal, float marginTopCm, float marginRightCm, float marginBottomCm, float marginLeftCm, string encabezado, bool mostrarNumeracion)
+        public PdfConfig(PageSize pageSize, bool horizontal, float marginTop, float marginRight, float marginBottom, float marginLeft, string encabezado, bool mostrarNumeracion)
         {
             PageSize = pageSize;
             Horizontal = horizontal;
-            MarginTopCm = marginTopCm;
-            MarginRightCm = marginRightCm;
-            MarginBottomCm = marginBottomCm;
-            MarginLeftCm = marginLeftCm;
-            Encabezado = encabezado;
+            MarginTop = marginTop;
+            MarginRight = marginRight;
+            MarginBottom = marginBottom;
+            MarginLeft = marginLeft;
+            HeaderHtmlContent = HeaderHtmlContent;
             MostrarNumeracion = mostrarNumeracion;
         }
 
-        public PdfConfig(float marginTopCm, float marginRightCm, float marginBottomCm, float marginLeftCm)
+        public PdfConfig(float marginTop, float marginRight, float marginBottom, float marginLeft)
         {
-            MarginTopCm = marginTopCm;
-            MarginRightCm = marginRightCm;
-            MarginBottomCm = marginBottomCm;
-            MarginLeftCm = marginLeftCm;
+            MarginTop = marginTop;
+            MarginRight = marginRight;
+            MarginBottom = marginBottom;
+            MarginLeft = marginLeft;
         }
-
-        private float CmToPt(float cm) => cm * 28.35f;
     }
 }
