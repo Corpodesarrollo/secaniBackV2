@@ -4,6 +4,7 @@ using Core.DTOs.MSTablasParametricas;
 using Core.DTOs.Reportes;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios.Reportes;
+using Core.Modelos;
 using Core.Modelos.TablasParametricas;
 using Core.Services.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,7 @@ namespace Infra.Repositorios.Reportes
             {
                 try
                 {
+                    var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == item.Id);
                     var nna = await _context.NNAs.FirstOrDefaultAsync(n => n.Id == item.NNAId, cancellationToken);
                     if (nna == null) continue;
                     var dto = new ReporteDinamicoSeguimientoDTO
@@ -63,7 +65,7 @@ namespace Infra.Repositorios.Reportes
                         ObservacionAgente = item.ObservacionAgente,
                         EstadoId = item.EstadoId,
                         Estado = (await _origenReporteService.GetByIdAsync(item.EstadoId, default))?.Nombre ?? string.Empty,
-
+                        TipoSeguimiento = (seguimiento == null) ? string.Empty : (await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default))?.Nombre ?? string.Empty,
                         //NNA
                         NNAId = nna.Id,
                         PrimerNombre = nna.PrimerNombre,
