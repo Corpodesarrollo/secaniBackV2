@@ -5,6 +5,7 @@
         //NNA
         public long SeguimientoId { get; set; }
         public string? TipoSeguimiento { get; set; } //calculado
+        public string? UltimaActuacionAsunto { get; set; }
         public long NNAId { get; set; }
         public string? PrimerNombre { get; set; }
         public string? SegundoNombre { get; set; }

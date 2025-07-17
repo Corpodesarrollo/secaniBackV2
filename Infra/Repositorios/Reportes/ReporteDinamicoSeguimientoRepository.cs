@@ -66,6 +66,7 @@ namespace Infra.Repositorios.Reportes
                         EstadoId = item.EstadoId,
                         Estado = (await _origenReporteService.GetByIdAsync(item.EstadoId, default))?.Nombre ?? string.Empty,
                         TipoSeguimiento = (seguimiento == null) ? string.Empty : (await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default))?.Nombre ?? string.Empty,
+                        UltimaActuacionAsunto = (seguimiento == null) ? string.Empty : seguimiento.UltimaActuacionAsunto ?? string.Empty,
                         //NNA
                         NNAId = nna.Id,
                         PrimerNombre = nna.PrimerNombre,
