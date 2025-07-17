@@ -537,6 +537,18 @@ namespace Infra.Repositorios
                 _context.Seguimientos.Add(seguimiento);
                 await _context.SaveChangesAsync();
 
+                var usuarioAsignado = new UsuarioAsignado()
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = request.FechaSeguimiento,
+                    Observaciones = "Asignación automática",
+                    SeguimientoId = seguimiento.Id,
+                    UsuarioId = request.UsuarioId,
+                };
+                _context.UsuarioAsignados.Add(usuarioAsignado);
+                await _context.SaveChangesAsync();
+
                 if (request.Alertas != null)
                 {
                     foreach (var item in request.Alertas)
@@ -574,7 +586,22 @@ namespace Infra.Repositorios
                         var alertaSeguimiento = await _context.AlertaSeguimientos.FirstOrDefaultAsync(x => x.AlertaId == item.Id);
                         if (alertaSeguimiento != null)
                         {
-                            alertaSeguimiento.SeguimientoId = seguimiento.Id;
+                            if ((item.Resuelta ?? false) == false)
+                            {
+                                var alertaSeguimiento2 = new AlertaSeguimiento()
+                                {
+                                    AlertaId = item.Id ?? 0,
+                                    CreatedByUserId = "1",
+                                    DateCreated = DateTime.Now,
+                                    EstadoId = item.Resuelta ?? false ? 4 : 3,
+                                    SeguimientoId = seguimiento.Id,
+                                    Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento",
+                                    UltimaFechaSeguimiento = DateTime.Now
+                                };
+                                _context.AlertaSeguimientos.Add(alertaSeguimiento2);
+                                await _context.SaveChangesAsync();
+                            }
+
                             alertaSeguimiento.EstadoId = item.Resuelta ?? false ? 4 : 3;
                             alertaSeguimiento.Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento";
                             alertaSeguimiento.UltimaFechaSeguimiento = DateTime.Now;
