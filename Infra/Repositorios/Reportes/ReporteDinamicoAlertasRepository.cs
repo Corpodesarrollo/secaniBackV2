@@ -58,79 +58,82 @@ namespace Infra.Repositorios.Reportes
                     var alerta = await _context.Alertas.FirstOrDefaultAsync(a => a.Id == item.AlertaId, cancellationToken);
                     var subAlerta = (alerta != null) ? (await _subCategoriaAlertaService.GetByIdAsync(alerta.SubcategoriaId, default)) : null;
                     var notificacion = ObtenerUltimaNotificacion(item.AlertaSeguimientoId);
-                    int tratamientoCausasInasistenciaId = int.TryParse(nna.TratamientoCausasInasistenciaId?.ToString(), out int id) ? id : 0;
+                    int tratamientoCausasInasistenciaId = nna != null && int.TryParse(nna.TratamientoCausasInasistenciaId?.ToString(), out int id) ? id : 0;
 
-                    var dto = new ReporteDinamicoAlertasDTO
+                    if (nna != null)
                     {
-                        //Seguimiento
-                        FechaNotificacion = item.UltimaFechaSeguimiento,
-                        FechaResolucion = (item.EstadoId == 6) ? (DateTime?)item.UltimaFechaSeguimiento : null,
-                        Notificaciones = _context.Notificacions.Count(n => n.AlertaSeguimientoId == item.AlertaSeguimientoId),
+                        var dto = new ReporteDinamicoAlertasDTO
+                        {
+                            //Seguimiento
+                            FechaNotificacion = item.UltimaFechaSeguimiento,
+                            FechaResolucion = (item.EstadoId == 6) ? (DateTime?)item.UltimaFechaSeguimiento : null,
+                            Notificaciones = _context.Notificacions.Count(n => n.AlertaSeguimientoId == item.AlertaSeguimientoId),
 
-                        //NNA
-                        NNAId = nna.Id,
-                        PrimerNombre = nna.PrimerNombre,
-                        SegundoNombre = nna.SegundoNombre,
-                        PrimerApellido = nna.PrimerApellido,
-                        SegundoApellido = nna.SegundoApellido,
-                        DiagnosticoId = nna.DiagnosticoId,
-                        Diagnostico = nna.DiagnosticoId.HasValue
-                            ? (await _diagnosticoService.GetByIdAsync(nna.DiagnosticoId ?? 0, cancellationToken))?.Nombre ?? string.Empty
-                            : string.Empty,
-                        Edad = nna.FechaNacimiento.HasValue
-                            ? (int)((DateTime.Now - nna.FechaNacimiento.Value).TotalDays / 365.25)
-                            : 0,
-                        ResidenciaActualMunicipioId = nna.ResidenciaActualMunicipioId,
-                        ResidenciaActualDepartamento =
-                            !string.IsNullOrEmpty(nna.ResidenciaActualMunicipioId) &&
-                            nna.ResidenciaActualMunicipioId.Length >= 2 &&
-                            int.TryParse(nna.ResidenciaActualMunicipioId.Substring(0, 2), out int codigoDepartamento3)
-                                ? (await _tablaParametricaService.GetBynomTREFCodigo(
-                                    "Departamento",
-                                    codigoDepartamento3,
-                                    cancellationToken))?.FirstOrDefault()?.Nombre
+                            //NNA
+                            NNAId = nna.Id,
+                            PrimerNombre = nna.PrimerNombre,
+                            SegundoNombre = nna.SegundoNombre,
+                            PrimerApellido = nna.PrimerApellido,
+                            SegundoApellido = nna.SegundoApellido,
+                            DiagnosticoId = nna.DiagnosticoId,
+                            Diagnostico = nna.DiagnosticoId.HasValue
+                                ? (await _diagnosticoService.GetByIdAsync(nna.DiagnosticoId ?? 0, cancellationToken))?.Nombre ?? string.Empty
                                 : string.Empty,
-                        ResidenciaActualMunicipio =
-                            !string.IsNullOrEmpty(nna.ResidenciaActualMunicipioId) &&
-                            int.TryParse(nna.ResidenciaActualMunicipioId, out int municipioId3)
-                                ? (await _tablaParametricaService.GetBynomTREFCodigo(
-                                    "Municipio",
-                                    municipioId3,
-                                    cancellationToken))?.FirstOrDefault()?.Nombre
+                            Edad = nna.FechaNacimiento.HasValue
+                                ? (int)((DateTime.Now - nna.FechaNacimiento.Value).TotalDays / 365.25)
+                                : 0,
+                            ResidenciaActualMunicipioId = nna.ResidenciaActualMunicipioId,
+                            ResidenciaActualDepartamento =
+                                !string.IsNullOrEmpty(nna.ResidenciaActualMunicipioId) &&
+                                nna.ResidenciaActualMunicipioId.Length >= 2 &&
+                                int.TryParse(nna.ResidenciaActualMunicipioId.Substring(0, 2), out int codigoDepartamento3)
+                                    ? (await _tablaParametricaService.GetBynomTREFCodigo(
+                                        "Departamento",
+                                        codigoDepartamento3,
+                                        cancellationToken))?.FirstOrDefault()?.Nombre
+                                    : string.Empty,
+                            ResidenciaActualMunicipio =
+                                !string.IsNullOrEmpty(nna.ResidenciaActualMunicipioId) &&
+                                int.TryParse(nna.ResidenciaActualMunicipioId, out int municipioId3)
+                                    ? (await _tablaParametricaService.GetBynomTREFCodigo(
+                                        "Municipio",
+                                        municipioId3,
+                                        cancellationToken))?.FirstOrDefault()?.Nombre
+                                    : string.Empty,
+                            ResidenciaActualDireccion = nna.ResidenciaActualDireccion,
+                            TrasladosQuienAsumioCostosTraslado = nna.TrasladosQuienAsumioCostosTraslado,
+                            TrasladosQuienAsumioCostosVivienda = nna.TrasladosQuienAsumioCostosVivienda,
+                            TratamientoHaDejadodeAsistir = nna.TratamientoHaDejadodeAsistir,
+                            TipoSeguimiento = (seguimiento == null) ? string.Empty : (await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default))?.Nombre ?? string.Empty,
+                            Agente = await GetAgente(seguimiento.UsuarioId),
+                            EPSId = nna.EPSId,
+                            EPS = nna.EPSId.HasValue
+                                ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.EPSId, cancellationToken))?.FirstOrDefault()?.Nombre
                                 : string.Empty,
-                        ResidenciaActualDireccion = nna.ResidenciaActualDireccion,
-                        TrasladosQuienAsumioCostosTraslado = nna.TrasladosQuienAsumioCostosTraslado,
-                        TrasladosQuienAsumioCostosVivienda = nna.TrasladosQuienAsumioCostosVivienda,
-                        TratamientoHaDejadodeAsistir = nna.TratamientoHaDejadodeAsistir,
-                        TipoSeguimiento = (seguimiento == null) ? string.Empty : (await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default))?.Nombre ?? string.Empty,
-                        Agente = await GetAgente(seguimiento.UsuarioId),
-                        EPSId = nna.EPSId,
-                        EPS = nna.EPSId.HasValue
-                            ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.EPSId, cancellationToken))?.FirstOrDefault()?.Nombre
-                            : string.Empty,
-                        CuidadorEmail = nna.CuidadorEmail,
-                        TratamientoCuantoTiemposinAsistir = nna.TratamientoCuantoTiemposinAsistir,
-                        TratamientoUnidadMedidaIdTiempoId = nna.TratamientoUnidadMedidaIdTiempoId,
-                        TratamientoUnidadMedidaTiempo = nna.TratamientoUnidadMedidaIdTiempoId, //pendiente de la tabla parametrica
-                        TratamientoCausasInasistenciaId = tratamientoCausasInasistenciaId.ToString(),
-                        TratamientoCausasInasistencia = (await _causaInasistenciaReporteService.GetByIdAsync(tratamientoCausasInasistenciaId, default))?.Nombre ?? string.Empty,
-                        CategoriaAlerta = (alerta != null) ? alerta.Descripcion ?? string.Empty : string.Empty,
-                        SubCategoriaAlerta = (subAlerta != null) ? subAlerta.Nombre ?? string.Empty : string.Empty,
-                        EstadoAlerta = (alerta == null) ? string.Empty : (await _estadoAlertaService.GetByIdAsync(item.EstadoId, default))?.Nombre ?? string.Empty,
-                        TratamientoEstudiaActualmente = nna.TratamientoEstudiaActualmente,
-                        TratamientoHaDejadodeAsistirColegio = nna.TratamientoHaDejadodeAsistirColegio,
-                        TratamientoTiempoInasistenciaColegio = nna.TratamientoTiempoInasistenciaColegio,
-                        TratamientoTiempoInasistenciaUnidadMedidaId = nna.TratamientoTiempoInasistenciaUnidadMedidaId,
-                        TratamientoTiempoInasistenciaUnidadMedida = nna.TratamientoTiempoInasistenciaUnidadMedidaId, //pendiente de la tabla parametrica
-                        RespuestaEntidad = (notificacion == null) ? string.Empty : notificacion.RespuestaEntidad ?? string.Empty,
-                        FechaRespuesta = notificacion?.FechaRespuesta ?? DateTime.MinValue,
-                        TratamientoHaSidoInformadoClaramente = nna.TratamientoHaSidoInformadoClaramente,
-                        TrasladosHaSolicitadoApoyoFundacion = nna.TrasladosHaSolicitadoApoyoFundacion,
-                        TrasladosNombreFundacion = nna.TrasladosNombreFundacion,
-                        TrasladosApoyoRecibidoxFundacion = nna.TrasladosApoyoRecibidoxFundacion,
-                        TrasladosHaSidoTrasladadodeInstitucion = nna.TrasladosHaSidoTrasladadodeInstitucion,
-                    };
+                            CuidadorEmail = nna.CuidadorEmail,
+                            TratamientoCuantoTiemposinAsistir = nna.TratamientoCuantoTiemposinAsistir,
+                            TratamientoUnidadMedidaIdTiempoId = nna.TratamientoUnidadMedidaIdTiempoId,
+                            TratamientoUnidadMedidaTiempo = nna.TratamientoUnidadMedidaIdTiempoId, //pendiente de la tabla parametrica
+                            TratamientoCausasInasistenciaId = tratamientoCausasInasistenciaId.ToString(),
+                            TratamientoCausasInasistencia = (await _causaInasistenciaReporteService.GetByIdAsync(tratamientoCausasInasistenciaId, default))?.Nombre ?? string.Empty,
+                            CategoriaAlerta = (alerta != null) ? alerta.Descripcion ?? string.Empty : string.Empty,
+                            SubCategoriaAlerta = (subAlerta != null) ? subAlerta.Nombre ?? string.Empty : string.Empty,
+                            EstadoAlerta = (alerta == null) ? string.Empty : (await _estadoAlertaService.GetByIdAsync(item.EstadoId, default))?.Nombre ?? string.Empty,
+                            TratamientoEstudiaActualmente = nna.TratamientoEstudiaActualmente,
+                            TratamientoHaDejadodeAsistirColegio = nna.TratamientoHaDejadodeAsistirColegio,
+                            TratamientoTiempoInasistenciaColegio = nna.TratamientoTiempoInasistenciaColegio,
+                            TratamientoTiempoInasistenciaUnidadMedidaId = nna.TratamientoTiempoInasistenciaUnidadMedidaId,
+                            TratamientoTiempoInasistenciaUnidadMedida = nna.TratamientoTiempoInasistenciaUnidadMedidaId, //pendiente de la tabla parametrica
+                            RespuestaEntidad = (notificacion == null) ? string.Empty : notificacion.RespuestaEntidad ?? string.Empty,
+                            FechaRespuesta = notificacion?.FechaRespuesta ?? DateTime.MinValue,
+                            TratamientoHaSidoInformadoClaramente = nna.TratamientoHaSidoInformadoClaramente,
+                            TrasladosHaSolicitadoApoyoFundacion = nna.TrasladosHaSolicitadoApoyoFundacion,
+                            TrasladosNombreFundacion = nna.TrasladosNombreFundacion,
+                            TrasladosApoyoRecibidoxFundacion = nna.TrasladosApoyoRecibidoxFundacion,
+                            TrasladosHaSidoTrasladadodeInstitucion = nna.TrasladosHaSidoTrasladadodeInstitucion,
+                        };
                     reporte.Add(dto);
+                    }
                 }
                 catch (Exception ex)
                 {
