@@ -12,7 +12,7 @@ namespace MSTablasParametricas.Api.Controllers
     [ApiController]
     public class EstadoSeguimientoController : GenericController<TPEstadoSeguimiento, GenericTPDTO>
     {
-        public EstadoSeguimientoController(IGenericService<TPEstadoSeguimiento, GenericTPDTO> service, 
+        public EstadoSeguimientoController(IGenericService<TPEstadoSeguimiento, GenericTPDTO> service,
                 IHistoricoTransaccionService historicoService) : base(service, historicoService)
         {
         }

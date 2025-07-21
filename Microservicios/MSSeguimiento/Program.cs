@@ -4,38 +4,29 @@ using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.Llamadas;
-using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Base;
-using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
 using Core.Interfaces.Repositorios.Reportes;
 using Core.Interfaces.Services.Llamadas;
-using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Interfaces.Services.Reportes;
 using Core.Modelos;
-using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
 using Core.Services.Llamadas;
 using Core.Services.MSTablasParametricas;
-using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
 using Core.Validators.MSPermisos;
-using DinkToPdf;
-using DinkToPdf.Contracts;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
 using Infra.Repositorios.Llamadas;
-using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
-using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
 using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Api.Extensions;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
+using SISPRO.TRV.Entity.Helpers;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
@@ -120,21 +111,17 @@ builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Q
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://192.168.110.11:8140", "http://localhost:4200", "https://localhost:4200", "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+        builder => builder.WithOrigins(
+            "http://192.168.152.17:8140",
+            "https://secani.sispropreprod.gov.co",
+            "http://192.168.110.11:8140",
+            "http://localhost:4200",
+            "https://localhost:4200",
+            "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-        .AddEntityFrameworkStores<ApplicationDbContext>()
-        .AddDefaultTokenProviders();
-
-builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
-builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
-builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
-builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
                 .AddCheck<CustomHealthCheck>("CustomHealthCheck");
@@ -155,9 +142,7 @@ app.UseHealthChecks("/health", new HealthCheckOptions
 });
 
 app.UseCors("AllowSpecificOrigin");
-
 app.UseCustomConfigure();
 app.UseCustomSwagger();
-app.UseStaticFiles();
 
 app.Run();

@@ -18,10 +18,18 @@ using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
 using Infra.Repositorios.Procesos;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Quartz;
+using SISPRO.TRV.Entity.Exceptions;
+using SISPRO.TRV.Entity.Helpers;
 using SISPRO.TRV.General;
+using SISPRO.TRV.General.Helpers;
+using SISPRO.TRV.Web.MVCCore;
+using SISPRO.TRV.Web.MVCCore.Extensions;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
 using System.Text.Json;
@@ -90,23 +98,20 @@ builder.Services.AddHttpClient<TablaParametricaService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.AllowAnyOrigin()
+        builder => builder.WithOrigins(
+            "http://192.168.152.17:8140",
+            "https://secani.sispropreprod.gov.co",
+            "http://192.168.110.11:8140",
+            "http://localhost:4200",
+            "https://localhost:4200",
+            "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
-                          .AllowAnyHeader());
+                          .AllowAnyHeader()
+                          .AllowCredentials());
 });
-
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
                 .AddCheck<CustomHealthCheck>("CustomHealthCheck");
-
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
-        options.JsonSerializerOptions.Converters.Add(new TimeOnlyJsonConverter());
-    });
-
 
 WebApplication app = builder.Build();
 

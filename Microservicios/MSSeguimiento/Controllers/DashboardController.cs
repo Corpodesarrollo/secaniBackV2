@@ -18,7 +18,7 @@ namespace MSSeguimiento.Api.Controllers
 
 
         [HttpGet("GetTotalCasos")]
-        public GetTotalDashboardResponse GetTotalCasos(DateTime FechaInicial, DateTime FechaFinal )
+        public GetTotalDashboardResponse GetTotalCasos(DateTime FechaInicial, DateTime FechaFinal)
         {
 
             GetTotalDashboardResponse response = _dashboardRepo.RepoDashboardTotalCasos(FechaInicial, FechaFinal);
@@ -162,7 +162,7 @@ namespace MSSeguimiento.Api.Controllers
         public List<GetDashboardCasosCriticosEapbResponse> GetCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal)
         {
 
-            List<GetDashboardCasosCriticosEapbResponse> response = _dashboardRepo.RepoDashboardCasosCriticosEAPB( EntidadId!, FechaInicial, FechaFinal);
+            List<GetDashboardCasosCriticosEapbResponse> response = _dashboardRepo.RepoDashboardCasosCriticosEAPB(EntidadId!, FechaInicial, FechaFinal);
             return response;
         }
 

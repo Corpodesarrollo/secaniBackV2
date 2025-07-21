@@ -34,19 +34,19 @@ namespace MSAuthentication.Api.Controllers
             return Ok(items);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var result = await _service.GetByIdAsync(id, cancellationToken: default);
-            return Ok(result);
-        }
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetById(int id)
+        //{
+        //    var result = await _service.GetByIdAsync(id, cancellationToken: default);
+        //    return Ok(result);
+        //}
 
-        [HttpPost]
-        public async Task<IActionResult> Add(ModuloRequestDTO dto)
-        {
-            var (success, response) = await _service.AddAsync(dto, cancellationToken: default);
-            return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
-        }
+        //[HttpPost]
+        //public async Task<IActionResult> Add(ModuloRequestDTO dto)
+        //{
+        //    var (success, response) = await _service.AddAsync(dto, cancellationToken: default);
+        //    return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
+        //}
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(ModuloResponseDTO dto)

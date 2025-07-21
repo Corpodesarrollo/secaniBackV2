@@ -30,6 +30,17 @@ namespace MSAuthentication.Api.Controllers
             return response;
         }
 
+        [HttpOptions("MenuXRolId")]
+        public IActionResult Options()
+        {
+            return Ok();
+        }
+
+        [HttpGet("MenuXRolId")]
+        public IActionResult Options2()
+        {
+            return Ok();
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
