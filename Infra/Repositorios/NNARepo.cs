@@ -1165,7 +1165,6 @@ namespace Infra.Repositorios
                         NNAId = nna.Id,
                         TieneDiagnosticos = true,
                         Telefono = nna.CuidadorTelefono,
-                        ObservacionesSolicitante = "Generado automáticamente",
                         EstadoId = 1
                     };
                     _context.Seguimientos.Add(seguimiento);

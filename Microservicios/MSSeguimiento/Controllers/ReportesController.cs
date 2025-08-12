@@ -51,27 +51,123 @@ namespace MSSeguimiento.Api.Controllers
             return await _reporteDinamicoAlertasService.GetReporteDinamicoAlertasAsync(FechaInicial, FechaFinal, default);
         }
 
-        [HttpPost("ReporteCasosEAPB")]
-        public async Task<List<ReporteCasosEAPBDto>> ReporteCasosEAPB(ReporteCasosEAPBRequestDto request)
+        [HttpGet("ReporteCasosEAPB/{fechaInicial}/{fechaFinal}/{idEAPB}")]
+        public async Task<List<ReporteCasosEAPBDto>> ReporteCasosEAPB(DateTime fechaInicial, DateTime fechaFinal, int idEAPB)
         {
+            var request = new ReporteCasosEAPBRequestDto
+            {
+                FechaInicial = fechaInicial,
+                FechaFinal = fechaFinal,
+                EAPB = idEAPB,
+                DiagnosticoNNA = true,
+                AreaProcedencia = true,
+                CategoriaAlerta = true,
+                DepartamentoProcedencia = true,
+                DireccionProcedencia = true,
+                SubcategoriaAlerta = true,
+                Respuesta = true,
+                MunicipioProcedencia = true,
+                DepartamentoActual = true,
+                Observaciones = true,
+                TipoIdentificacion = true,
+                BarrioProcedencia = true,
+                NumeroIdentificacion = true,
+                RegimenAfiliacion = true,
+                EstadoNNA = true,
+                IdCicloVida = 1,
+                FechaEnvioRespuesta = true
+            };
+
             return await _dinamicoSeguimientoService.GetReporteCasosEAPBAsync(request);
         }
 
-        [HttpPost("ReporteCasosEAPBExcel")]
-        public async Task<string> ReporteCasosEAPBExcel(ReporteCasosEAPBRequestDto request)
+        [HttpGet("ReporteCasosEAPBExcel/{fechaInicial}/{fechaFinal}/{idEAPB}")]
+        public async Task<string> ReporteCasosEAPBExcel(DateTime fechaInicial, DateTime fechaFinal, int idEAPB)
         {
+            var request = new ReporteCasosEAPBRequestDto
+            {
+                FechaInicial = fechaInicial,
+                FechaFinal = fechaFinal,
+                EAPB = idEAPB,
+                DiagnosticoNNA = true,
+                AreaProcedencia = true,
+                CategoriaAlerta = true,
+                DepartamentoProcedencia = true,
+                DireccionProcedencia = true,
+                SubcategoriaAlerta = true,
+                Respuesta = true,
+                MunicipioProcedencia = true,
+                DepartamentoActual = true,
+                Observaciones = true,
+                TipoIdentificacion = true,
+                BarrioProcedencia = true,
+                NumeroIdentificacion = true,
+                RegimenAfiliacion = true,
+                EstadoNNA = true,
+                IdCicloVida = 1,
+                FechaEnvioRespuesta = true
+            };
+
             return await _dinamicoSeguimientoService.GetReporteCasosEAPBExcelAsync(request);
         }
 
-        [HttpPost("ReporteCasosEntidad")]
-        public async Task<List<ReporteCasosEAPBDto>> ReporteCasosEntidad(ReporteCasosEntidadRequestDto request)
+        [HttpGet("ReporteCasosEntidad/{fechaInicial}/{fechaFinal}/{idEntidad}")]
+        public async Task<List<ReporteCasosEAPBDto>> ReporteCasosEntidad(DateTime fechaInicial, DateTime fechaFinal, int idEntidad)
         {
+            var request = new ReporteCasosEntidadRequestDto
+            {
+                FechaInicial = fechaInicial,
+                FechaFinal = fechaFinal,
+                Entidad = idEntidad,
+                AreaProcedencia = true,
+                CategoriaAlerta = true,
+                DepartamentoProcedencia = true,
+                DireccionProcedencia = true,
+                SubcategoriaAlerta = true,
+                Respuesta = true,
+                MunicipioProcedencia = true,
+                DepartamentoActual = true,
+                Observaciones = true,
+                TipoIdentificacion = true,
+                BarrioProcedencia = true,
+                EAPB = true,
+                NumeroIdentificacion = true,
+                RegimenAfiliacion = true,
+                EstadoNNA = true,
+                IdCicloVida = 1,
+                FechaEnvioRespuesta = true
+            };
+
             return await _dinamicoSeguimientoService.GetReporteCasosEntidadAsync(request);
         }
 
-        [HttpPost("ReporteCasosEntidadExcel")]
-        public async Task<string> ReporteCasosEAPBExcel(ReporteCasosEntidadRequestDto request)
+        [HttpGet("ReporteCasosEntidadExcel/{fechaInicial}/{fechaFinal}/{idEntidad}")]
+        public async Task<string> ReporteCasosEntidadExcel(DateTime fechaInicial, DateTime fechaFinal, int idEntidad)
         {
+            var request = new ReporteCasosEntidadRequestDto
+            {
+                FechaInicial = fechaInicial,
+                FechaFinal = fechaFinal,
+                Entidad = idEntidad,
+                AreaProcedencia = true,
+                CategoriaAlerta = true,
+                DepartamentoProcedencia = true,
+                DireccionProcedencia = true,
+                SubcategoriaAlerta = true,
+                Respuesta = true,
+                MunicipioProcedencia = true,
+                DepartamentoActual = true,
+                Observaciones = true,
+                TipoIdentificacion = true,
+                BarrioProcedencia = true,
+                EAPB = true,
+                NumeroIdentificacion = true,
+                RegimenAfiliacion = true,
+                EstadoNNA = true,
+                IdCicloVida = 1,
+                FechaEnvioRespuesta = true
+            };
+
             return await _dinamicoSeguimientoService.GetReporteCasosEntidadExcelAsync(request);
         }
     }

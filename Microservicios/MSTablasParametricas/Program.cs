@@ -7,7 +7,6 @@ using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.StorageService;
-using Core.Utilities;
 using Core.Validators;
 using Core.Validators.MSPermisos;
 using FluentValidation;
@@ -18,22 +17,13 @@ using Infra.Repositories.MSTablasParametricas;
 using Infra.Repositorios;
 using Infra.Repositorios.MSTablasParametricas;
 using Infra.Repositorios.Procesos;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Quartz;
-using SISPRO.TRV.Entity.Exceptions;
-using SISPRO.TRV.Entity.Helpers;
 using SISPRO.TRV.General;
-using SISPRO.TRV.General.Helpers;
-using SISPRO.TRV.Web.MVCCore;
-using SISPRO.TRV.Web.MVCCore.Extensions;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
@@ -51,7 +41,7 @@ builder
 builder.Services.AddControllersWithViews();
 
 //builder.Services.AddHostedService<TareaEnSegundoPlano>();
-builder.Services.AddHostedService<ProcesadorTareasAutomaticas>();
+//builder.Services.AddHostedService<ProcesadorTareasAutomaticas>();
 builder.Services.AddScoped<IProcesoAutomatico, ProcesoActualizarEAPB>();
 builder.Services.AddScoped<IProcesoAutomatico, ProcesoRevisarEnviarNotificaciones>();
 

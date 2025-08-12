@@ -6,11 +6,14 @@ using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.Llamadas;
 using Core.Interfaces.Repositorios.Reportes;
 using Core.Interfaces.Services.Llamadas;
+using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Interfaces.Services.Reportes;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
 using Core.Services.Llamadas;
 using Core.Services.MSTablasParametricas;
+using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
 using Core.Validators.MSPermisos;
@@ -21,12 +24,11 @@ using Infra.Repositorios;
 using Infra.Repositorios.Llamadas;
 using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using MSSeguimiento.Api.Extensions;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
-using SISPRO.TRV.Entity.Helpers;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
@@ -35,6 +37,13 @@ using System.Text.Json;
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
 ReadConfig.FixLoadAppSettings(builder.Configuration);
+
+// Registro de los servicios
+builder.CustomConfigureServices();
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddCustomConfigureServicesPreviousMvc();
 builder
@@ -50,20 +59,14 @@ builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
-
-// Registro de los servicios
-builder.CustomConfigureServices();
-
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
 builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped<IGenericRepository<TPCIE10>, GenericRepository<TPCIE10>>();
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
@@ -96,13 +99,6 @@ builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
 builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
 
 var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
-
-// Register the jobs and triggers
-//builder.Services.AddSingleton<AsignacionAutomaticaJob>();
-//builder.Services.AddSingleton(new JobSchedule(
-//    jobType: typeof(AsignacionAutomaticaJob),
-//    cronExpression: temporizadorAsignacionAutomatica,
-//timeZone: timeZone));
 
 builder.Services.AddHostedService<QuartzHostedService>();
 

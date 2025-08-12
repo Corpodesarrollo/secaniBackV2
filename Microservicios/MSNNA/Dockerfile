@@ -3,19 +3,25 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
+
 EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG FEED_ACCESSTOKEN
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-
+RUN curl -L https://raw.githubusercontent.com/Microsoft/artifacts-credprovider/master/helpers/installcredprovider.sh | sh
 # Copia el archivo nuget.config a la ubicación predeterminada de NuGet
 COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
 
 COPY ["Microservicios/MSNNA/MSNNA.Api.csproj", "Microservicios/MSNNA/"]
 COPY ["Infra/Infra.csproj", "Infra/"]
 COPY ["Core/Core.csproj", "Core/"]
+
+ENV FEED_ACCESSTOKEN=${FEED_ACCESSTOKEN}
+ENV VSS_NUGET_EXTERNAL_FEED_ENDPOINTS="{\"endpointCredentials\": [{\"endpoint\":\"https://saturno.minsalud.gov.co/tfs/DefaultCollection/_packaging/SISPRO.TRV/nuget/v3/index.json\", \"username\":\"docker\", \"password\":\"${FEED_ACCESSTOKEN}\"}]}"
+
 RUN dotnet restore "./Microservicios/MSNNA/MSNNA.Api.csproj" --configfile /root/.nuget/NuGet/nuget.config --disable-parallel --ignore-failed-sources --force --no-cache
 
 COPY . .

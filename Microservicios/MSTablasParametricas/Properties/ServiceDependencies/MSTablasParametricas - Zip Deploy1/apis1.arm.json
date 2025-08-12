@@ -36,7 +36,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat(parameters('resourceGroupName'), 'Deployment', uniqueString(concat('MSAuthenticationApi', subscription().subscriptionId)))]",
+      "name": "[concat(parameters('resourceGroupName'), 'Deployment', uniqueString(concat('MSTablasParametricasApi', subscription().subscriptionId)))]",
       "resourceGroup": "[parameters('resourceGroupName')]",
       "apiVersion": "2019-10-01",
       "dependsOn": [
@@ -49,7 +49,7 @@
           "contentVersion": "1.0.0.0",
           "resources": [
             {
-              "name": "MSAuthenticationApiapi",
+              "name": "MSTablasParametricasApi",
               "type": "Microsoft.ApiManagement/service",
               "location": "[parameters('resourceLocation')]",
               "properties": {
@@ -59,7 +59,7 @@
                 "hostnameConfigurations": [
                   {
                     "type": "Proxy",
-                    "hostName": "msauthenticationapiapi.azure-api.net",
+                    "hostName": "mstablasparametricasapi.azure-api.net",
                     "encodedCertificate": null,
                     "keyVaultId": null,
                     "certificatePassword": null,
@@ -82,6 +82,7 @@
                 },
                 "virtualNetworkType": "None",
                 "certificates": null,
+                "enableClientCertificate": false,
                 "disableGateway": false,
                 "apiVersionConstraint": {
                   "minApiVersion": null
@@ -95,9 +96,9 @@
             },
             {
               "type": "Microsoft.ApiManagement/service/apis",
-              "name": "MSAuthenticationApiapi/MSAuthenticationApi",
+              "name": "MSTablasParametricasApi/MSTablasParametricasApi",
               "properties": {
-                "displayName": "MSAuthenticationApi",
+                "displayName": "MSTablasParametricasApi",
                 "apiRevision": "1",
                 "description": null,
                 "subscriptionRequired": true,
@@ -118,7 +119,7 @@
               },
               "apiVersion": "2019-12-01",
               "dependsOn": [
-                "MSAuthenticationApiapi"
+                "MSTablasParametricasApi"
               ]
             }
           ]

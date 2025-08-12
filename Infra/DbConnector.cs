@@ -16,7 +16,7 @@ namespace Infra
         public IDbConnection CreateConnection()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
-            return new SqlConnection(connectionString);
+            return new SqlConnection();
         }
     }
 }

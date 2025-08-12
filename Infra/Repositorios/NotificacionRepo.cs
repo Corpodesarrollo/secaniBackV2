@@ -33,25 +33,32 @@ namespace Infra.Repositories
 
         public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env)
         {
-            _context = context;
-            _adjuntosRepo = adjuntosRepo;
-            _storageService = storageService;
-            _reportesSIVIGILARepo = reportesSIVIGILARepo;
-            _env = env;
-
-            // Obtener configuraciones de correo
-            var emailConfigurations = _context.EmailConfigurations.ToList();
-
-            if (emailConfigurations.Count > 0)
+            try
             {
-                var emailConfiguration = emailConfigurations[0];
-                fromMail = emailConfiguration.UserName;
-                clienteSmtp = new SmtpClient(emailConfiguration.SmtpServer)
+                _context = context;
+                _adjuntosRepo = adjuntosRepo;
+                _storageService = storageService;
+                _reportesSIVIGILARepo = reportesSIVIGILARepo;
+                _env = env;
+
+                // Obtener configuraciones de correo
+                var emailConfigurations = _context.EmailConfigurations.ToList();
+
+                if (emailConfigurations.Count > 0)
                 {
-                    Port = 587,
-                    Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                    EnableSsl = emailConfiguration.EnableSsl
-                };
+                    var emailConfiguration = emailConfigurations[0];
+                    fromMail = emailConfiguration.UserName;
+                    clienteSmtp = new SmtpClient(emailConfiguration.SmtpServer)
+                    {
+                        Port = 587,
+                        Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
+                        EnableSsl = emailConfiguration.EnableSsl
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 

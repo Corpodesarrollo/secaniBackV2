@@ -1,16 +1,17 @@
+#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-# Imagen base para la ejecución
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
+
 EXPOSE 8080
 EXPOSE 8081
 
-# Imagen base para la construcción
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG FEED_ACCESSTOKEN
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-
+RUN curl -L https://raw.githubusercontent.com/Microsoft/artifacts-credprovider/master/helpers/installcredprovider.sh | sh
 # Copia el archivo nuget.config a la ubicación predeterminada de NuGet
 COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
 
@@ -18,6 +19,9 @@ COPY ["nuget.config", "/root/.nuget/NuGet/nuget.config"]
 COPY ["Microservicios/MSAuthentication/MSAuthentication.Api.csproj", "Microservicios/MSAuthentication/"]
 COPY ["Core/Core.csproj", "Core/"]
 COPY ["Infra/Infra.csproj", "Infra/"]
+
+ENV FEED_ACCESSTOKEN=${FEED_ACCESSTOKEN}
+ENV VSS_NUGET_EXTERNAL_FEED_ENDPOINTS="{\"endpointCredentials\": [{\"endpoint\":\"https://saturno.minsalud.gov.co/tfs/DefaultCollection/_packaging/SISPRO.TRV/nuget/v3/index.json\", \"username\":\"docker\", \"password\":\"${FEED_ACCESSTOKEN}\"}]}"
 
 # Restaurar los paquetes de NuGet
 RUN dotnet restore "Microservicios/MSAuthentication/MSAuthentication.Api.csproj" --configfile /root/.nuget/NuGet/nuget.config --disable-parallel --ignore-failed-sources --force --no-cache

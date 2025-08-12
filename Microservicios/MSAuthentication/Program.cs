@@ -1,4 +1,5 @@
 using Core.Common;
+using Core.CQRS.MSUsuariosyRoles.Queries.User;
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
@@ -15,6 +16,7 @@ using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
 using Core.Services.Llamadas;
+using Core.Services.MSPermisos;
 using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
@@ -97,16 +99,32 @@ builder.Services.AddCustomAuthentication(true);
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-// Registro de los servicios
-builder.CustomConfigureServices();
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetUserQuery).Assembly);
+    // Agrega otros assemblies según necesites
+});
 
+builder.Services.AddSingleton<ITokenGenerator>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    return new TokenGenerator(
+        config["JwtSettings:Secret"],
+        config["JwtSettings:Issuer"],
+        config["JwtSettings:Audience"],
+        config["JwtSettings:ExpiryMinutes"]);
+});
+builder.CustomConfigureServices();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
-
+builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();
+builder.Services.AddScoped<IModuloService, ModuloService>();
+builder.Services.AddScoped<IModuloRepository, ModuloRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
 builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
+builder.Services.AddScoped<IFuncionalidadService, FuncionalidadService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
 builder.Services.AddScoped<IGenericRepository<TPCIE10>, GenericRepository<TPCIE10>>();
