@@ -3,11 +3,12 @@ using Core.Interfaces;
 using Core.Modelos;
 using Core.Modelos.Common;
 using Core.Response;
+using Core.Services.StorageService;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Repositorios
 {
-    public class GestionarAlertasRepo(ApplicationDbContext db) : IGestionarAlertas
+    public class GestionarAlertasRepo(ApplicationDbContext db, IStorageService _storageService) : IGestionarAlertas
     {
         public List<GestionarAlertasDto> ObtenerAlertas(string alias)
         {
@@ -32,6 +33,7 @@ namespace Infra.Repositorios
                                {
                                    IdAlerta = ea.Id,
                                    IdAlertaSeguimiento = als.Id,
+                                   IdSeguimiento = s.Id,
                                    Alerta = sca.CategoriaAlertaId + "." + sca.Indicador,
                                    NombreNNA = $"{n.PrimerNombre ?? ""} {n.SegundoNombre ?? ""} {n.PrimerApellido ?? ""} {n.SegundoApellido ?? ""}",
                                    NombreEAPB = eapb == null ? "" : eapb.Nombre,
@@ -96,6 +98,34 @@ namespace Infra.Repositorios
         {
             try
             {
+                var respuestaAlerta = new RespuestasAlerta
+                {
+                    IdAlerta = dto.IdAlerta,
+                    Para = dto.Para,
+                    ConCopia = dto.Cc != null ? string.Join(",", dto.Cc) : null,
+                    Asunto = dto.Asunto,
+                    Mensaje = dto.Mensaje,
+                    Firma = dto.Firma
+                };
+
+                db.RespuestasAlerta.Add(respuestaAlerta);
+                await db.SaveChangesAsync();
+
+                if (dto.Archivo != null)
+                {
+                    var nombreArchivo = $"AdjuntoRespuesta-{Guid.NewGuid()}.{dto.Archivo.FileExtension}";
+                    var archivoAdjunto = new Adjuntos
+                    {
+                        NombreArchivo = nombreArchivo,
+                        Referencia = respuestaAlerta.IdAlerta,
+                        Tipo = TipoAdjunto.Respuesta,
+                    };
+                    db.Adjuntos.Add(archivoAdjunto);
+                    await db.SaveChangesAsync();
+
+                    await _storageService.UploadFileAsync(dto.Archivo.File, nombreArchivo);
+                }
+
                 var emailConfigurations = await db.EmailConfigurations.FirstOrDefaultAsync();
                 if (emailConfigurations == null)
                     return new() { Estado = false, Descripcion = "No se ha configurado el envío de correos electrónicos" };

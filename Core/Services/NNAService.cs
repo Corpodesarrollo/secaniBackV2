@@ -57,5 +57,31 @@ namespace Core.Services
             }
 
         }
+
+        public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)
+        {
+            var transaction = await _repository.BeginTransactionAsync();
+            try
+            {
+                var entity = GenericMapper.Map<NNADto, NNAs>(dto);
+                entity.TrasladosIPSId = dto.TrasladosIPSId != null
+                    ? string.Join(",", dto.TrasladosIPSId)
+                    : string.Empty;
+                var (success, entitys) = await _repository.UpdateAsync(entity);
+
+                //si el estado es fallecido [10], el seguimiento cambia a estado culminado [3]
+                if (success && dto.estadoId == 10)
+                    await _repository.ActualizarFallecido(dto);
+
+                await _repository.CommitTransactionAsync(transaction);
+
+                return (success, entitys);
+            }
+            catch (Exception ex)
+            {
+                await _repository.RollbackTransactionAsync(transaction);
+                throw;
+            }
+        }
     }
 }

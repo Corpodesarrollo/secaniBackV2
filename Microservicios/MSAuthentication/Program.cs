@@ -152,6 +152,7 @@ builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlerta
 builder.Services.AddScoped<IResumenLlamadasRepository, ResumenLlamadasRepository>();
 builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 
 // Register Quartz services
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();

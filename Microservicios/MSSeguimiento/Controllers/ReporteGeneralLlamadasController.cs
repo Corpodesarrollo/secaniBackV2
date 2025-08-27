@@ -1,15 +1,11 @@
-﻿using Core.DTOs.Reportes;
+﻿using Core.Common;
 using Core.Interfaces.Services.Llamadas;
-using Core.Interfaces.Services.Reportes;
 using Core.Modelos;
-using Core.Services.Llamadas;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class ReporteGeneralLlamadasController(IResumenLlamadasService service): ControllerBase
+    public class ReporteGeneralLlamadasController(IResumenLlamadasService service) : BaseController
     {
         private readonly IResumenLlamadasService _service = service;
 

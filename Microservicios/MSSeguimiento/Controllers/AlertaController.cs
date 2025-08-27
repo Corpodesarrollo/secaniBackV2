@@ -1,4 +1,5 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
@@ -6,10 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class AlertaController : ControllerBase
+    public class AlertaController : BaseController
     {
         private readonly IAlertaRepo alertaRepo;
 
@@ -46,6 +44,19 @@ namespace MSSeguimiento.Api.Controllers
         public async Task<AlertaSeguimientoDto[]> ConsultarAlertasUltimoSeguimiento(int idNNA)
         {
             return await alertaRepo.ConsultarAlertasUltimoSeguimiento(idNNA);
+        }
+
+        [HttpGet("Exportar/{idAlerta}")]
+        public async Task<IActionResult> Exportar(int idAlerta)
+        {
+            var result = await alertaRepo.Exportar(idAlerta);
+
+            if (result.Item1 == null)
+                return NotFound("El archivo no existe o está vacío.");
+
+            return File(result.Item1,
+                        "application/zip",
+                        $"{Path.GetFileNameWithoutExtension(result.Item2)}.zip");
         }
     }
 }

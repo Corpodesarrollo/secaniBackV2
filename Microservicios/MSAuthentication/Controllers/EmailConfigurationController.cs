@@ -1,13 +1,11 @@
-﻿using Core.Interfaces;
+﻿using Core.Common;
+using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace MSAuthentication.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class EmailConfigurationController(IEmailConfigurationRepo service) : ControllerBase
+    public class EmailConfigurationController(IEmailConfigurationRepo service) : BaseController
     {
         [HttpGet]
         public async Task<ActionResult> Get()

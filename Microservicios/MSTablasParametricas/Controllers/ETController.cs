@@ -1,14 +1,11 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-
-    [Route("[controller]")]
-    //[Authorize]
-    [ApiController]
-    public class ETController(IEAPBRepo service) : ControllerBase
+    public class ETController(IEAPBRepo service) : BaseController
     {
         [HttpGet]
         public async Task<ActionResult<List<TPEAPBDto>>> GetET(CancellationToken cancellationToken)

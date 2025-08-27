@@ -78,6 +78,8 @@ builder.Services.AddScoped<IReporteDinamicoEAPBRepository, ReporteDinamicoEAPBRe
 builder.Services.AddScoped<IReporteDinamicoEAPBService, ReporteDinamicoEAPBService>();
 builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
 builder.Services.AddScoped<IResumenLlamadasRepository, ResumenLlamadasRepository>();
+builder.Services.AddScoped<IIpsRepo, IpsRepo>();
+builder.Services.AddScoped<IEAPBRepo, EAPBRepo>();
 builder.Services.AddHttpClient();
 
 builder.Services.AddHttpContextAccessor();

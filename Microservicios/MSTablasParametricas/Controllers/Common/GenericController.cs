@@ -1,13 +1,12 @@
-﻿using Core.Interfaces.MSTablasParametricas;
+﻿using Core.Common;
+using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
 namespace MSTablasParametricas.Api.Controllers.Common
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class GenericController<T1, T2> : ControllerBase where T1 : class where T2 : class
+    public class GenericController<T1, T2> : BaseController where T1 : class where T2 : class
     {
         private readonly IGenericService<T1, T2> _service;
         private readonly IHistoricoTransaccionService _historicoService;

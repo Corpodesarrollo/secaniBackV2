@@ -1,13 +1,11 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSNNA.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class ReportesSIVIGILAController : Controller
+    public class ReportesSIVIGILAController : BaseController
     {
         private readonly IReportesSIVIGILARepo _reportesSIVIGILARepo;
 

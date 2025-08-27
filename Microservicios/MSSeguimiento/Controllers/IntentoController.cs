@@ -1,14 +1,12 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.Common;
+using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class IntentoController : ControllerBase
+    public class IntentoController : BaseController
     {
         private readonly IIntentoRepo _intentoRepo;
 

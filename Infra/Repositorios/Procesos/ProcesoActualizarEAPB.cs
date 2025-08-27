@@ -116,7 +116,8 @@ namespace Infra.Repositorios.Procesos
 
             if (extra_IX.StartsWith("1") || extra_IX.StartsWith("2"))
                 return 1; // ET
-            else if (extra_IX.StartsWith("10") || extra_IX.StartsWith("4") || extra_IX.StartsWith("5") || extra_IX.StartsWith("7") || extra_IX.StartsWith("8") || extra_IX.StartsWith("9"))
+            else if (extra_IX.StartsWith("10") || extra_IX.StartsWith("4") ||
+                    extra_IX.StartsWith("5") || extra_IX.StartsWith("7") || extra_IX.StartsWith("8") || extra_IX.StartsWith("9"))
                 return 2; // EAPB
             else
                 return null; // No se puede determinar el tipo

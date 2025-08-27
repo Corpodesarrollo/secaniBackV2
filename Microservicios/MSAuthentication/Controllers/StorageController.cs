@@ -1,14 +1,12 @@
-﻿using Core.Request;
+﻿using Core.Common;
+using Core.Request;
 using Core.Services.StorageService;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace MSAuthentication.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class StorageController(IStorageService service) : ControllerBase
+    public class StorageController(IStorageService service) : BaseController
     {
         [HttpGet("{fileName}")]
         public async Task<ActionResult<byte[]?>> DownloadFile(string fileName)

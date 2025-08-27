@@ -1,4 +1,5 @@
-﻿using Core.DTOs.MSTablasParametricas;
+﻿using Core.Common;
+using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Modelos;
@@ -7,9 +8,7 @@ using System.Text.Json;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class FestivosController : ControllerBase
+    public class FestivosController : BaseController
     {
         private readonly IFestivoService _service;
         private readonly IHistoricoTransaccionService _historicoService;

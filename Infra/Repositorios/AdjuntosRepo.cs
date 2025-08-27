@@ -17,7 +17,9 @@ namespace Infra.Repositorios
                 Id = adjunto.Id,
                 NombreArchivo = adjunto.NombreArchivo,
                 Descripcion = adjunto.Descripcion,
-                Url = adjunto.Url
+                Url = adjunto.Url,
+                Referencia = adjunto.Referencia,
+                Tipo = adjunto.Tipo
             };
         }
 
@@ -27,7 +29,9 @@ namespace Infra.Repositorios
             {
                 NombreArchivo = adjunto.NombreArchivo,
                 Descripcion = adjunto.Descripcion,
-                Url = adjunto.Url
+                Url = adjunto.Url,
+                Referencia = adjunto.Referencia,
+                Tipo = adjunto.Tipo
             };
 
             db.Adjuntos.Add(adjuntoEntity);
