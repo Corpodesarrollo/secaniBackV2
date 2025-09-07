@@ -195,7 +195,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("HistoricoPlantillaCorreo/{id}")]
-        public IActionResult HistoricoPlantillaCorreo(string id)
+        public IActionResult HistoricoPlantillaCorreo(long id)
         {
             var response = seguimientoRepo.HistoricoPlantillaCorreo(id);
 
