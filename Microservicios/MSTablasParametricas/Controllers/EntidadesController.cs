@@ -1,13 +1,11 @@
-﻿using Core.Modelos.Common;
+﻿using Core.Common;
+using Core.Modelos.Common;
 using Core.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class EntidadesController : ControllerBase
+    public class EntidadesController : BaseController
     {
         private readonly TablaParametricaService _service;
 

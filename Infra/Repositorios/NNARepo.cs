@@ -22,6 +22,8 @@ namespace Infra.Repositorios
         private readonly ApplicationDbContext _context;
         private readonly GenericRepository<NNAs> _repository;
         private readonly GenericRepository<TPCIE10> _repositoryCie10;
+        private readonly IEAPBRepo _eapbRepo;
+        private readonly IIpsRepo _ipsRepo;
         private readonly INotificacionRepo _notificacionRepo;
         private readonly ISeguimientoRepo _seguimientoRepo;
         private readonly ICurrentUserProvider _currentUserProvider;
@@ -32,6 +34,8 @@ namespace Infra.Repositorios
             ISeguimientoRepo seguimientoRepo,
             GenericRepository<NNAs> repository,
             GenericRepository<TPCIE10> repositoryCie10,
+            IEAPBRepo eapbRepo,
+            IIpsRepo ipsRepo,
             INotificacionRepo notificacionRepo,
             ICurrentUserProvider currentUserProvider
             )
@@ -42,6 +46,8 @@ namespace Infra.Repositorios
             _repositoryCie10 = repositoryCie10;
             _notificacionRepo = notificacionRepo;
             _currentUserProvider = currentUserProvider;
+            _eapbRepo = eapbRepo;
+            _ipsRepo = ipsRepo;
             _user = _currentUserProvider.CurrentUser;
         }
 
@@ -170,7 +176,7 @@ namespace Infra.Repositorios
                            DifRemisionInstitucionesEspecializadas = nna.DifRemisionInstitucionesEspecializadas,
                            TrasladosHaSidoTrasladadodeInstitucion = nna.TrasladosHaSidoTrasladadodeInstitucion,
                            TrasladosNumerodeTraslados = nna.TrasladosNumerodeTraslados,
-                           TrasladosIPSId = nna.TrasladosIPSId,
+                           TrasladosIPS = nna.TrasladosIPSId,
                            TratamientoCausasInasistenciaId = nna.TratamientoCausasInasistenciaId,
                            TratamientoCausasInasistenciaOtra = nna.TratamientoCausasInasistenciaOtra,
                            TratamientoHaSidoInformadoClaramente = nna.TratamientoHaSidoInformadoClaramente,
@@ -208,6 +214,11 @@ namespace Infra.Repositorios
             try
             {
                 var nna = await SelectBase().FirstOrDefaultAsync(x => x.Id == id);
+                if (nna != null)
+                    nna.TrasladosIPSId = nna.TrasladosIPS?
+                    .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(int.Parse)
+                    .ToArray();
                 return nna;
             }
             catch (Exception ex)
@@ -232,10 +243,6 @@ namespace Infra.Repositorios
             try
             {
                 var (success, response) = await _repository.UpdateAsync(entity);
-                if (!success)
-                {
-                    throw new KeyNotFoundException("cannot update entity");
-                }
                 return (success, response);
             }
             catch (Exception ex)
@@ -273,15 +280,19 @@ namespace Infra.Repositorios
             {
                 var query = from s in _context.Seguimientos
                             join n in _context.NNAs on s.NNAId equals n.Id
-                            group s by s.NNAId into g
-                            select new { id = g.Max(x => x.Id) };
+                            group s by new { s.NNAId } into g
+                            select new { id = g.Max(x => x.Id), g.Key.NNAId };
+
+                var queryUA = from u in _context.UsuarioAsignados
+                              group u by new { u.UsuarioId, u.SeguimientoId } into g
+                              select new { id = g.Max(x => x.Id), g.Key.UsuarioId, g.Key.SeguimientoId };
 
                 var queryResult = from q in query
                                   join s in _context.Seguimientos on q.id equals s.Id
                                   join n in _context.NNAs on s.NNAId equals n.Id
                                   join e in _context.TPEstadoNNA on n.estadoId equals e.Id
 
-                                  join au in _context.UsuarioAsignados on s.Id equals au.SeguimientoId into auJoin
+                                  join au in queryUA on s.Id equals au.SeguimientoId into auJoin
                                   from au in auJoin.DefaultIfEmpty()
 
                                   join a in _context.Users on au.UsuarioId equals a.Id into aJoin
@@ -905,12 +916,16 @@ namespace Infra.Repositorios
                     }
                     else
                     {
+                        var eps = await _eapbRepo.GetEAPBByCode(d.DepuracionProtocoloRequest.cod_ase);
+                        var ips = await _ipsRepo.GetIPSByCode(d.DepuracionProtocoloRequest.cod_pre);
+
                         var newNNA = new NNAs()
                         {
                             DateCreated = DateTime.Now,
                             CreatedByUserId = _user.ID.ToString(),
                             FechaNotificacionSIVIGILA = d.DepuracionProtocoloRequest.fec_not,
-                            EPSId = 0,//verificar de donde sale el id de la eps
+                            EAPBId = eps?.Id,
+                            IPSId = ips?.Id,
                             PrimerNombre = d.DepuracionProtocoloRequest.pri_nom,
                             SegundoNombre = d.DepuracionProtocoloRequest.seg_nom,
                             PrimerApellido = d.DepuracionProtocoloRequest.pri_ape,
@@ -957,7 +972,8 @@ namespace Infra.Repositorios
                             UpdatedByUserId = _user.ID.ToString(),
                             DiagnosticoId = int.TryParse(d.DepuracionProtocoloRequest.tipo_ca, out int diagnosticoId) ? diagnosticoId : (int?)null,
                         };
-                        insertNNA.Add(newNNA);
+                        _context.NNAs.Add(newNNA);
+                        await _context.SaveChangesAsync();
 
                         var contacto = new ContactoNNA()
                         {
@@ -965,13 +981,13 @@ namespace Infra.Repositorios
                             Nombres = "Cuidador",
                             Telefonos = d.DepuracionProtocoloRequest.telefono,
                             Cuidador = true,
+                            Estado = true
                         };
                         insertContactoNNA.Add(contacto);
                     }
                 }
 
                 _context.NNAs.UpdateRange(updateNNA);
-                _context.NNAs.AddRange(insertNNA);
                 _context.ContactoNNAs.AddRange(insertContactoNNA);
                 await _context.SaveChangesAsync();
 
@@ -1442,13 +1458,12 @@ namespace Infra.Repositorios
                             var currentRow = worksheet.Row(row);
                             string xlSexo = currentRow.Cell(17).GetValue<string>();
                             if (xlSexo.Trim().ToLower().Equals("masculino") || xlSexo.Trim().ToLower().Equals("hombre"))
-                            {
                                 xlSexo = "H";
-                            }
-                            if (xlSexo.Trim().ToLower().Equals("femenino") || xlSexo.Trim().ToLower().Equals("mujer"))
-                            {
+                            else if (xlSexo.Trim().ToLower().Equals("femenino") || xlSexo.Trim().ToLower().Equals("mujer"))
                                 xlSexo = "M";
-                            }
+
+                            if (!(new string[] { "M", "H" }).Contains(xlSexo))
+                                xlSexo = "";
 
                             DepuracionProtocoloRequest depuracion = new()
                             {
@@ -1711,6 +1726,27 @@ namespace Infra.Repositorios
         public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
         {
             await transaction.RollbackAsync();
+        }
+
+        public Task ActualizarFallecido(NNADto data)
+        {
+            //buscar ultimo seguimiento y cambiar estado a culminado [3]
+            var seguimiento = (from seg in _context.Seguimientos
+                               where seg.NNAId == data.Id
+                               orderby seg.FechaSolicitud descending
+                               select seg).FirstOrDefault();
+
+            if (seguimiento != null)
+            {
+                seguimiento.ObservacionAgente = data.TratamientoObservaciones;
+                seguimiento.EstadoId = 3; // Estado culminado
+                _context.Seguimientos.Update(seguimiento);
+                return _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new Exception("No se encontró un seguimiento para el NNA especificado.");
+            }
         }
     }
 }

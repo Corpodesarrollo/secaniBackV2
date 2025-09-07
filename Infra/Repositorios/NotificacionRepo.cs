@@ -203,7 +203,6 @@ namespace Infra.Repositories
         }
 
         public async Task<RespuestaResponse<string>> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
-
         {
             try
             {
@@ -415,6 +414,20 @@ namespace Infra.Repositories
                             foreach (var item in request.ConCopia)
                                 mensaje.CC.Add(item);
 
+                        // Agregar el archivo adjunto del oficio de notificación
+                        var nombreOficio = $"OficioNotificacion-{Guid.NewGuid()}.pdf";
+                        var adjuntoOficio = new Adjuntos
+                        {
+                            NombreArchivo = nombreOficio,
+                            Tipo = TipoAdjunto.Notificacion,
+                            Referencia = request.IdNotificacion
+                        };
+                        _context.Adjuntos.Add(adjuntoOficio);
+                        await _context.SaveChangesAsync();
+
+                        // Guardar el archivo adjunto en el almacenamiento
+                        await _storageService.UploadFileAsync(pdfBytes, nombreOficio);
+
                         // Crear y agregar el archivo adjunto desde byte[]
                         using var ms = new MemoryStream(pdfBytes.ToArray());
                         Attachment adjunto = new(ms, "OficioNotificacion.pdf", MediaTypeNames.Application.Octet);
@@ -425,6 +438,20 @@ namespace Infra.Repositories
 
                         if (request.Adjunto != null)
                         {
+                            // Agregar el archivo adjunto adicional
+                            var nombreAdjunto = $"AdjuntoEmail-{Guid.NewGuid()}.pdf";
+                            var adjuntoEmail = new Adjuntos
+                            {
+                                NombreArchivo = nombreAdjunto,
+                                Tipo = TipoAdjunto.Notificacion,
+                                Referencia = request.IdNotificacion
+                            };
+                            _context.Adjuntos.Add(adjuntoEmail);
+                            await _context.SaveChangesAsync();
+
+                            // Guardar el archivo adjunto adicional en el almacenamiento
+                            await _storageService.UploadFileAsync(request.Adjunto.File, nombreAdjunto);
+
                             using var ms2 = new MemoryStream(request.Adjunto.File);
                             Attachment adjunto2 = new(ms2, $"{request.Adjunto.FileName}.pdf", MediaTypeNames.Application.Octet);
                             mensaje.Attachments.Add(adjunto2);
@@ -529,17 +556,16 @@ namespace Infra.Repositories
                 _context.NotificacionRespuesta.Add(entityNotificacion);
                 await _context.SaveChangesAsync();
 
-                var id = entityNotificacion.Id;
                 // cargar el adjunto con adjuntorepo
                 if (data.Archivo != null)
                 {
                     var ext = Path.GetExtension(data.Archivo.FileName);
-                    var nameFile = $"adjunto-{id}{ext}";
+                    var nombreAdjunto = $"AdjuntoRespuestaNotificacion-{Guid.NewGuid()}{ext}";
                     AdjuntosDto adjunto = new()
                     {
-                        NombreArchivo = nameFile,
-                        Descripcion = "",
-                        Url = $"NotificacionRespuesta/{nameFile}",
+                        NombreArchivo = nombreAdjunto,
+                        Tipo = TipoAdjunto.RespuestaNotificacion,
+                        Referencia = data.IdNotificacion
                     };
 
                     var idAdjunto = await _adjuntosRepo.AddAdjunto(adjunto);
@@ -551,7 +577,8 @@ namespace Infra.Repositories
                     using var stream = new MemoryStream();
                     await data.Archivo.CopyToAsync(stream);
                     var fileByte = stream.ToArray();
-                    await _storageService.UploadFileAsync(fileByte, nameFile);
+
+                    await _storageService.UploadFileAsync(fileByte, nombreAdjunto);
                 }
 
                 return new()

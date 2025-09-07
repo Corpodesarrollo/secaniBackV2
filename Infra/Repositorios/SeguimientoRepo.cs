@@ -137,13 +137,26 @@ namespace Infra.Repositorios
                                         NombreCompleto = string.Join(" ", n.PrimerNombre, n.SegundoNombre, n.PrimerApellido, n.SegundoApellido),
                                         Diagnostico = diagnostico.Nombre,
                                         FechaNacimiento = n.FechaNacimiento,
-                                        FechaIngresoEstrategia = n.FechaIngresoEstrategia,
-                                        FechaInicioSeguimiento = _context.Seguimientos.Where(s => s.NNAId == id).Select(s => s.FechaSeguimiento).FirstOrDefault(),
-                                        SeguimientosRealizados = _context.Seguimientos.Count(s => s.NNAId == id)
+                                        FechaIngresoEstrategia = n.FechaIngresoEstrategia
                                     }).FirstOrDefaultAsync();
 
                 if (result != null)
                 {
+                    var seguimiento = await (from s in _context.Seguimientos
+                                             join e in _context.TPEstadoSeguimiento on s.EstadoId equals e.Id
+                                             where s.NNAId == id
+                                             orderby s.FechaSeguimiento descending
+                                             select new
+                                             {
+                                                 s.FechaSeguimiento,
+                                                 s.FechaSolicitud,
+                                                 s.EstadoId,
+                                                 Estado = e.Nombre
+                                             }).FirstOrDefaultAsync();
+
+                    result.FechaInicioSeguimiento = seguimiento?.FechaSeguimiento;
+                    result.Estado = seguimiento?.Estado;
+                    result.SeguimientosRealizados = await _context.Seguimientos.CountAsync(s => s.NNAId == id);
                     result.Edad = Funciones.CalcularEdad(result.FechaNacimiento);
                     result.TiempoTranscurrido = Funciones.CalcularTiempoTrascurrido(result.FechaInicioSeguimiento!.Value);
                 }
@@ -386,11 +399,6 @@ namespace Infra.Repositorios
                                                                join en in _context.Entidades on na.EntidadId equals en.Id
                                                                where als.SeguimientoId == s.Id
                                                                select en.Nombre).ToArray()),
-                            //FechaRespuesta = (from als in _context.RespuestaAlerta
-                            //                  join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
-                            //                  join en in _context.Entidades on na.EntidadId equals en.Id
-                            //                  where als.SeguimientoId == s.Id
-                            //                  select en.Nombre).ToArray(),
                             Estado = new TPEstadoNNADto()
                             {
                                 Nombre = e.Nombre,
@@ -513,7 +521,19 @@ namespace Infra.Repositorios
         {
             try
             {
-                var ultimaFechaSeguimiento = await _context.Seguimientos.Where(s => s.NNAId == request.NNAId).OrderByDescending(x => x.FechaSeguimiento).Select(s => s.FechaSeguimiento).FirstOrDefaultAsync();
+                var ultimoSeguimiento = await _context.Seguimientos.Where(s => s.NNAId == request.NNAId).OrderByDescending(x => x.FechaSeguimiento).FirstOrDefaultAsync();
+                if (ultimoSeguimiento != null)
+                {
+                    ultimoSeguimiento.ObservacionAgente = request.ObservacionAgente;
+                    ultimoSeguimiento.ObservacionesSolicitante = request.ObservacionesSolicitante;
+                    ultimoSeguimiento.UltimaActuacionFecha = DateTime.Now;
+                    ultimoSeguimiento.UltimaActuacionAsunto = request.UltimaActuacionAsunto;
+                    ultimoSeguimiento.FechaSeguimiento = DateTime.Now;
+                    ultimoSeguimiento.UpdatedByUserId = request.UsuarioId;
+                    ultimoSeguimiento.DateUpdated = DateTime.Now;
+
+                    _context.Seguimientos.Update(ultimoSeguimiento);
+                }
 
                 var seguimiento = new Seguimiento()
                 {
@@ -526,9 +546,6 @@ namespace Infra.Repositorios
                     SolicitanteId = request.SolicitanteId,
                     FechaSolicitud = request.FechaSolicitud,
                     TieneDiagnosticos = request.TieneDiagnosticos,
-                    ObservacionesSolicitante = request.ObservacionesSolicitante,
-                    ObservacionAgente = request.ObservacionAgente,
-                    UltimaActuacionAsunto = request.UltimaActuacionAsunto,
                     UltimaActuacionFecha = request.UltimaActuacionFecha,
                     NombreRechazo = request.NombreRechazo,
                     ParentescoRechazo = request.ParentescoRechazo,
@@ -573,7 +590,7 @@ namespace Infra.Repositorios
                             AlertaId = alerta.Id,
                             SeguimientoId = seguimiento.Id,
                             Observaciones = "Alerta generada por seguimiento",
-                            UltimaFechaSeguimiento = ultimaFechaSeguimiento
+                            UltimaFechaSeguimiento = ultimoSeguimiento.FechaSeguimiento
                         };
                         _context.AlertaSeguimientos.Add(alertaSeguimiento);
                         await _context.SaveChangesAsync();
@@ -720,6 +737,10 @@ namespace Infra.Repositorios
             var fechaAsignacion = fecha.Date + revisor.HoraEntrada.GetValueOrDefault();
             var fechaSalida = fecha.Date + revisor.HoraSalida.GetValueOrDefault();
             var fechaEncontrada = false;
+
+            if (fechaAsignacion < DateTime.Now)
+                fechaAsignacion = DateTime.Now;
+
             while (!fechaEncontrada && fechaAsignacion < fechaSalida)
             {
                 var proxFechaAsignacion = fechaAsignacion.AddSeconds(640);
@@ -802,7 +823,9 @@ namespace Infra.Repositorios
                     continue;
 
                 //validamos los seguimientos asignados al revisor en la fecha
-                var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
+                var fechaIni = fecha;
+                var fechaFin = fechaIni.AddDays(1).AddSeconds(-1);
+                var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion >= fechaIni && x.FechaAsignacion <= fechaFin).ToListAsync();
                 if (seguimientosAsignadosFecha.Count > 0)
                     revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
 
@@ -810,11 +833,34 @@ namespace Infra.Repositorios
                 if (revisor.CantidadSeguimientosDisponibles <= 0)
                     continue;
 
+                var seguimiento = seguimientosReagendamiento[0];
+                var continuar = true;
+                do
+                {
+                    // validacion para verificar que el seguimiento no haya sido reagendado previamente
+                    var seguimientosReasignados = await _context.UsuarioAsignados
+                        .Where(x => x.SeguimientoId == seguimiento.Item1 && x.FechaAsignacion > fecha)
+                        .AnyAsync();
+
+                    if (seguimientosReasignados)
+                    {
+                        seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                        if (seguimientosReagendamiento.Count > 0)
+                            seguimiento = seguimientosReagendamiento[0];
+                        else
+                            continuar = false;
+                    }
+                    else
+                        continuar = false;
+
+                } while (continuar);
+
+                if (seguimientosReagendamiento.Count == 0)
+                    break;
+
                 var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
                 if (fechaAsignacion == null)
                     continue;
-
-                var seguimiento = seguimientosReagendamiento[0];
 
                 //asignar seguimiento al revisor
                 var usuarioAsignado = new UsuarioAsignado
@@ -918,11 +964,34 @@ namespace Infra.Repositorios
                     if (seguimientosReasignacion.Count == 0)
                         break;
 
+                    var seguimiento = seguimientosReasignacion[0];
+                    var continuar = true;
+                    do
+                    {
+                        // validacion para verificar que el seguimiento no haya sido reagendado previamente
+                        var seguimientosReasignados = await _context.UsuarioAsignados
+                            .Where(x => x.SeguimientoId == seguimiento.Item1 && x.FechaAsignacion > fecha)
+                            .AnyAsync();
+
+                        if (seguimientosReasignados)
+                        {
+                            seguimientosReasignacion.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                            if (seguimientosReasignacion.Count > 0)
+                                seguimiento = seguimientosReasignacion[0];
+                            else
+                                continuar = false;
+                        }
+                        else
+                            continuar = false;
+
+                    } while (continuar);
+
+                    if (seguimientosReasignacion.Count == 0)
+                        break;
+
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
                     if (fechaAsignacion == null)
                         continue;
-
-                    var seguimiento = seguimientosReasignacion[0];
 
                     //asignar seguimiento al revisor
                     var usuarioAsignado = new UsuarioAsignado

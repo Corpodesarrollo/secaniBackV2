@@ -1,4 +1,5 @@
-﻿using Core.DTOs.MSPermisos;
+﻿using Core.Common;
+using Core.DTOs.MSPermisos;
 using Core.Interfaces.Repositorios;
 using Core.request;
 using Core.response;
@@ -7,10 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MSAuthentication.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class PermisosController : ControllerBase
+    public class PermisosController : BaseController
     {
         private IPermisosRepo _service;
 

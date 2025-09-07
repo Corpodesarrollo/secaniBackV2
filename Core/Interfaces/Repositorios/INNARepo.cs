@@ -31,5 +31,6 @@ namespace Core.Interfaces.Repositorios
         Task<IDbContextTransaction> BeginTransactionAsync();
         Task CommitTransactionAsync(IDbContextTransaction transaction);
         Task RollbackTransactionAsync(IDbContextTransaction transaction);
+        Task ActualizarFallecido(NNADto data);
     }
 }

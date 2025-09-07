@@ -1,13 +1,12 @@
-﻿using Core.DTOs.Reportes;
+﻿using Core.Common;
 using Core.DTOs;
+using Core.DTOs.Reportes;
 using Core.Interfaces.Services.Reportes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSNNA.Api.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ReporteInconsistenciaPersonaController : ControllerBase
+    public class ReporteInconsistenciaPersonaController : BaseController
     {
         private readonly IReporteInconsistenciaPersonaService _reporteService;
 

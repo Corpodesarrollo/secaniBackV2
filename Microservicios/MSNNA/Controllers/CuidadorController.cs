@@ -1,12 +1,10 @@
-﻿using Core.Interfaces;
+﻿using Core.Common;
+using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSNNA.Api.Controllers
 {
-    [Route("[controller]")]
-    //[Authorize]
-    [ApiController]
-    public class CuidadorController(ICuidadorRepo repo) : Controller
+    public class CuidadorController(ICuidadorRepo repo) : BaseController
     {
         [HttpPut("SetCuidador/{id}")]
         public async Task<ActionResult> SetUserCuidador(string id)

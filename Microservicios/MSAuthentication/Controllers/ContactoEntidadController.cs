@@ -1,14 +1,12 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSAuthentication.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public sealed class ContactoEntidadController(IContactoEntidadService service, IValidator<ContactoEntidadRequest> validator) : ControllerBase
+    public sealed class ContactoEntidadController(IContactoEntidadService service, IValidator<ContactoEntidadRequest> validator) : BaseController
     {
         private readonly IContactoEntidadService _service = service;
         private readonly IValidator<ContactoEntidadRequest> _validator = validator;

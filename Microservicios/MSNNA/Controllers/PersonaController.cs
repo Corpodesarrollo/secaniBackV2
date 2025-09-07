@@ -1,11 +1,10 @@
-﻿using Core.Interfaces.Services;
+﻿using Core.Common;
+using Core.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class PersonaController : ControllerBase
+    public class PersonaController : BaseController
     {
         private readonly IPersonaService _personaService;
 

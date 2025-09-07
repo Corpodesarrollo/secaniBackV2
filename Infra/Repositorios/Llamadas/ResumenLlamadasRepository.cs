@@ -122,7 +122,7 @@ namespace Infra.Repositorios.Llamadas
             var reporte = resumenLlamadas.Select(r => new ResumenLlamadasDTO
             {
                 AgenteId = r.AgenteId,
-                Agente = _context.ApplicationUser.FirstOrDefault(x => x.Id == r.AgenteId)?.UserName ?? string.Empty,
+                Agente = _context.ApplicationUser.FirstOrDefault(x => x.Id == r.AgenteId)?.FullName ?? string.Empty,
                 FechaIntento = r.FechaIntento,
                 LlamadasExitosas = r.LlamadasExitosas,
                 LlamadasFallidas = r.LlamadasFallidas,

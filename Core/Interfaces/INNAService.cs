@@ -1,15 +1,16 @@
 ﻿using Core.DTOs;
+using Core.Modelos;
 using Core.Response;
-using System.Reflection;
 
 namespace Core.Interfaces
 {
     public interface INNAService
     {
         //Consultas
-        
+
 
         //Operaciones     
-        Task<RespuestaResponse<NNADto>> AddAsync(NNADto dto);   
+        Task<RespuestaResponse<NNADto>> AddAsync(NNADto dto);
+        Task<(bool, NNAs?)> UpdateAsync(NNADto dto);
     }
 }

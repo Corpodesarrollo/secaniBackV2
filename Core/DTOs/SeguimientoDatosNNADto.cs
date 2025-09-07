@@ -11,5 +11,6 @@
         public DateTime? FechaInicioSeguimiento { get; set; }
         public string? TiempoTranscurrido { get; set; }
         public int? SeguimientosRealizados { get; set; }
+        public string? Estado { get; set; }
     }
 }

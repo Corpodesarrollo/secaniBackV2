@@ -31,6 +31,20 @@ namespace Infra.Repositorios
             return result;
         }
 
+        public async Task<List<TPEAPBDto>> Search(string cadena)
+        {
+            var query = GetSelect();
+            var result = await query.Where(x => x.Codigo.Contains(cadena) || x.Nombre.Contains(cadena)).Take(50).ToListAsync();
+            return result;
+        }
+
+        public async Task<TPEAPBDto?> GetEAPBByCode(string code)
+        {
+            var query = GetSelect();
+            var result = await query.Where(x => x.Codigo.Equals(code)).FirstOrDefaultAsync();
+            return result;
+        }
+
         public async Task<List<TPEAPBDto>> GetET()
         {
             var query = GetSelect();

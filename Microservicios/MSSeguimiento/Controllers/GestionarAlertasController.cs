@@ -1,14 +1,12 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces;
 using Core.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class GestionarAlertasController(IGestionarAlertas repo) : Controller
+    public class GestionarAlertasController(IGestionarAlertas repo) : BaseController
     {
         [HttpGet("ConsultarAlertas/{alias}")]
         public List<GestionarAlertasDto> ConsultarAlertas(string alias)

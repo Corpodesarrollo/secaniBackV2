@@ -11,5 +11,6 @@ namespace Core.Interfaces.Repositorios
         Task<AlertaSeguimientoDto[]> ConsultarAlertasUltimoSeguimiento(int idNNA);
         List<AlertaSeguimiento> ConsultarAlertaSeguimiento(ConsultarAlertasRequest request);
         List<AlertaSeguimiento> ConsultarAlertaEstados(ConsultarAlertasEstadosRequest request);
+        Task<(byte[], string)> Exportar(int idAlerta);
     }
 }
