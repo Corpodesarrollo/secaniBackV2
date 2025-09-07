@@ -13,6 +13,7 @@ using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Infra.Repositorios
 {
@@ -1100,13 +1101,17 @@ namespace Infra.Repositorios
                     _context.PlantillaCorreos.Add(plantillaCorreo);
                     _context.SaveChanges();
 
+                    string registroNuevo = JsonConvert.SerializeObject(plantillaCorreo);
+
                     HistoricoPlantilla historicoPlantilla = new()
                     {
+                        IdPlantilla = plantillaCorreo.Id,
                         Transaccion = "Creacion",
-                        Comentario = request.Comentario,
+                        Comentario = "Creacion",
                         FechaCreacion = DateTime.Now,
-                        UsuarioOrigen = request.IdUsuario,
-                        UsuarioRol = request.Rol
+                        UsuarioOrigen = "Juan Manuel",
+                        UsuarioRol = "Coordinador Admin",
+                        RegistroNuevo = registroNuevo
                     };
 
                     _context.HistoricosPlantilla.Add(historicoPlantilla);
@@ -1116,6 +1121,38 @@ namespace Infra.Repositorios
                 }
                 else
                 {
+                    string registroAnterior = JsonConvert.SerializeObject(plantillaCorreo);
+                    List<string> listComentario = new List<string>();
+                    if (plantillaCorreo.Asunto != request.Asunto)
+                    {
+                        listComentario.Add("Asunto");
+                    }
+                    if (plantillaCorreo.Cierre != request.Cierre)
+                    {
+                        listComentario.Add("Cierre");
+                    }
+                    if (plantillaCorreo.Estado != request.Estado)
+                    {
+                        listComentario.Add("Estado");
+                    }
+                    if (plantillaCorreo.Firmante != request.Firmante)
+                    {
+                        listComentario.Add("Firmante");
+                    }
+                    if (plantillaCorreo.Mensaje != request.Mensaje)
+                    {
+                        listComentario.Add("Mensaje");
+                    }
+                    if (plantillaCorreo.Nombre != request.Nombre)
+                    {
+                        listComentario.Add("Nombre");
+                    }
+                    if (plantillaCorreo.TipoPlantilla != request.TipoPlantilla)
+                    {
+                        listComentario.Add("Tipo Plantilla");
+                    }
+                    string comentario = string.Join(", ", listComentario);
+
                     plantillaCorreo.Asunto = request.Asunto;
                     plantillaCorreo.Cierre = request.Cierre;
                     plantillaCorreo.Estado = request.Estado;
@@ -1127,13 +1164,18 @@ namespace Infra.Repositorios
                     _context.PlantillaCorreos.Update(plantillaCorreo);
                     _context.SaveChanges();
 
+                    string registroNuevo = JsonConvert.SerializeObject(plantillaCorreo);
+
                     HistoricoPlantilla historicoPlantilla = new()
                     {
+                        IdPlantilla = plantillaCorreo.Id,
                         Transaccion = "Modificacion",
-                        Comentario = request.Comentario,
+                        Comentario = comentario,
                         FechaCreacion = DateTime.Now,
-                        UsuarioOrigen = request.IdUsuario,
-                        UsuarioRol = request.Rol
+                        UsuarioOrigen = "Juan Manuel",
+                        UsuarioRol = "Coordinador Admin",
+                        RegistroAnterior = registroAnterior,
+                        RegistroNuevo = registroNuevo
                     };
 
                     _context.HistoricosPlantilla.Add(historicoPlantilla);
@@ -1142,8 +1184,11 @@ namespace Infra.Repositorios
                     return "Plantilla modificada exitosamente";
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine("An error occurred:");
+                Console.WriteLine($"Message: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
                 return "Se presento un problema en el proceso";
             }
 
@@ -1159,16 +1204,20 @@ namespace Infra.Repositorios
 
                 if (plantillaCorreo != null)
                 {
+                    string registroAnterior = JsonConvert.SerializeObject(plantillaCorreo);
+
                     _context.PlantillaCorreos.Remove(plantillaCorreo);
                     _context.SaveChanges();
 
                     HistoricoPlantilla historicoPlantilla = new()
                     {
+                        IdPlantilla = plantillaCorreo.Id,
                         Transaccion = "Eliminacion",
-                        Comentario = request.Comentario,
+                        Comentario = "Eliminacion",
                         FechaCreacion = DateTime.Now,
-                        UsuarioOrigen = request.IdUsuario,
-                        UsuarioRol = request.Rol
+                        UsuarioOrigen = "Juan Manuel",
+                        UsuarioRol = "Coordinador Admin",
+                        RegistroAnterior = registroAnterior
                     };
 
                     _context.HistoricosPlantilla.Add(historicoPlantilla);
@@ -1215,12 +1264,13 @@ namespace Infra.Repositorios
             return plantillaCorreo;
         }
 
-        public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(string id)
+        public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(long id)
         {
             List<HistoricoPlantillaCorreoResponse> response = (from h in _context.HistoricosPlantilla
+                                                               where h.IdPlantilla == id
                                                                select new HistoricoPlantillaCorreoResponse()
                                                                {
-                                                                   Id = h.Id,
+                                                                   Id = h.Id.ToString(),
                                                                    FechaCreacion = h.FechaCreacion,
                                                                    Comentario = h.Comentario,
                                                                    Transaccion = h.Transaccion,
