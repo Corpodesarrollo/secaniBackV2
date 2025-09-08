@@ -7,6 +7,8 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Layout.Element;
 using Canvas = iText.Layout.Canvas;
 using Document = iText.Layout.Document;
+using PageSize = iText.Kernel.Geom.PageSize;
+using Paragraph = iText.Layout.Element.Paragraph;
 using TextAlignment = iText.Layout.Properties.TextAlignment;
 
 namespace Core.Services.PDF
@@ -17,13 +19,13 @@ namespace Core.Services.PDF
         {
             using var pdfStream = new MemoryStream();
             var headerHeight = 85.14f;
-            var footerHeight = 112f;
+            var footerHeight = 85.14f;
 
             float cm = 28.35f; // 1 cm ≈ 28.35 pt
 
             var writer = new PdfWriter(pdfStream);
             var pdf = new PdfDocument(writer);
-            var document = new Document(pdf, PageSize.A4);
+            var document = new Document(pdf, PageSize.LETTER);
 
             var properties = new ConverterProperties();
             var fontProvider = new DefaultFontProvider(true, true, true);
@@ -55,7 +57,6 @@ namespace Core.Services.PDF
                         // Configuración especial para imágenes
                         var headerProperties = new ConverterProperties();
                         headerProperties.SetFontProvider(fontProvider);
-                        //headerProperties.SetBaseUri(config.LogoHeaderRoute); // Asegúrate de configurar la ruta base
                         // Convertir HTML a elementos
                         var headerElements = HtmlConverter.ConvertToElements(processedHeaderHtml, headerProperties);
                         // Crear canvas para el encabezado
@@ -85,7 +86,6 @@ namespace Core.Services.PDF
                 }));
             }
 
-            // Footer con HTML
             if (!string.IsNullOrEmpty(config.FooterHtmlContent))
             {
                 pdf.AddEventHandler(PdfDocumentEvent.END_PAGE, new CustomEventHandler(evt =>
@@ -144,7 +144,8 @@ namespace Core.Services.PDF
                     }
                 }));
             }
-            else if (config.MostrarNumeracion || !string.IsNullOrEmpty(config.FooterHtmlContent))
+
+            if (config.MostrarNumeracion || !string.IsNullOrEmpty(config.FooterHtmlContent))
             {
                 pdf.AddEventHandler(PdfDocumentEvent.END_PAGE, new CustomEventHandler(evt =>
                 {
@@ -154,9 +155,9 @@ namespace Core.Services.PDF
                     // Numeración
                     if (config.MostrarNumeracion)
                     {
-                        canvas.ShowTextAligned($"Página {pageNum}",
+                        canvas.ShowTextAligned($"Pág {pageNum} de {pdf.GetNumberOfPages()}",
                             pageSize.GetWidth() - config.MarginRight,
-                            config.MarginBottom,
+                            config.MarginBottom - 20,
                             TextAlignment.RIGHT);
                     }
 

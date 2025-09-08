@@ -72,7 +72,7 @@ namespace MSSeguimiento.Api.Controllers
             return Ok(result);
         }
 
-        [HttpPost("VerOficioNotificacion/{id}")]
+        [HttpGet("VerOficioNotificacion/{id}")]
         public async Task<IActionResult> VerOficioNotificacion(long id)
         {
             var result = await notificacionRepo.VerOficioNotificacion(id);

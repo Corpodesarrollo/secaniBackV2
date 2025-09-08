@@ -456,6 +456,7 @@ namespace Infra.Repositorios
                            {
                                AlertaId = alert.AlertaId,
                                EstadoId = alert.EstadoId,
+                               IdAlertaSeguimiento = alert.Id,
                                Observaciones = alert.Observaciones,
                                SeguimientoId = alert.SeguimientoId,
                                UltimaFechaSeguimiento = (DateTime)alert.UltimaFechaSeguimiento,
@@ -524,6 +525,7 @@ namespace Infra.Repositorios
                 var ultimoSeguimiento = await _context.Seguimientos.Where(s => s.NNAId == request.NNAId).OrderByDescending(x => x.FechaSeguimiento).FirstOrDefaultAsync();
                 if (ultimoSeguimiento != null)
                 {
+                    ultimoSeguimiento.Telefono = request.Telefono;
                     ultimoSeguimiento.ObservacionAgente = request.ObservacionAgente;
                     ultimoSeguimiento.ObservacionesSolicitante = request.ObservacionesSolicitante;
                     ultimoSeguimiento.UltimaActuacionFecha = DateTime.Now;
@@ -541,7 +543,6 @@ namespace Infra.Repositorios
                     FechaSeguimiento = request.FechaSeguimiento,
                     EstadoId = request.EstadoId,
                     ContactoNNAId = request.ContactoNNAId,
-                    Telefono = request.Telefono,
                     UsuarioId = request.UsuarioId,
                     SolicitanteId = request.SolicitanteId,
                     FechaSolicitud = request.FechaSolicitud,

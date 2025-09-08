@@ -5,7 +5,21 @@ namespace Core.Request
     public class SetSeguimientoRequest
     {
         public long NNAId { get; set; }
-        public DateTime FechaSeguimiento { get; set; }
+
+        DateTime fechaSeguimiento = DateTime.Now;
+        public DateTime FechaSeguimiento
+        {
+            get
+            {
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+                var fechaColombia = TimeZoneInfo.ConvertTimeFromUtc(fechaSeguimiento.ToUniversalTime(), timeZone);
+                return fechaColombia;
+            }
+            set
+            {
+                fechaSeguimiento = value;
+            }
+        }
         public int EstadoId { get; set; }
         public long ContactoNNAId { get; set; }
         public string? Telefono { get; set; }

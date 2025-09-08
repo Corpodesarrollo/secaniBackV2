@@ -7,6 +7,7 @@ using Core.response;
 using Core.Response;
 using Core.Services.PDF;
 using Core.Services.StorageService;
+using Core.Utilities;
 using iText.Kernel.Geom;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -137,7 +138,6 @@ namespace Infra.Repositories
                 }
 
                 notificacionEntidad.EntidadId = request.IdEntidad;
-                notificacionEntidad.Ciudad = request.Ciudad;
                 notificacionEntidad.AlertaSeguimientoId = request.IdAlertaSeguimiento;
                 notificacionEntidad.Asunto = request.Asunto;
                 notificacionEntidad.Cierre = request.Cierre;
@@ -155,18 +155,19 @@ namespace Infra.Repositories
                 {
                     notificacionEntidad.CreatedByUserId = user.Id;
                     notificacionEntidad.DateCreated = DateTime.Now;
+
+                    _context.NotificacionesEntidad.Add(notificacionEntidad);
                 }
                 else
                 {
                     notificacionEntidad.UpdatedByUserId = user.Id;
                     notificacionEntidad.DateUpdated = DateTime.Now;
+
+                    _context.NotificacionesEntidad.Update(notificacionEntidad);
                 }
 
-                _context.NotificacionesEntidad.Add(notificacionEntidad);
                 _context.SaveChanges();
 
-
-                //return "Oficio creado correctamente";
                 return new()
                 {
                     Estado = true,
@@ -210,12 +211,12 @@ namespace Infra.Repositories
                         <!DOCTYPE html>
                         <html>
                         <head>
-                            <meta charset=""UTF-8"">
+                            <meta charset='UTF-8'>
                             <style>
                                 @page {
                                   margin-top: 5cm;
                                   margin-right: 2cm;
-                                  margin-bottom: 5cm;
+                                  margin-bottom: 3cm;
                                   margin-left: 2cm;
                                 }
                                 body { 
@@ -234,37 +235,37 @@ namespace Infra.Repositories
                             </style>
                         </head>
                         <body>
-                            <div style=""margin-bottom: 20px;"">
-                                <p>{CiudadEnvio}, {FechaEnvio}</p>
+                            <div style='margin-bottom: 20px;'>
+                                <p>{Ciudad}, {FechaEnvio}</p>
                             </div>
 
-                            <div style=""margin-bottom: 20px;"">
+                            <div style='margin-bottom: 20px;'>
                                 {Membrete}<br>
                                 {NombreEntidad}<br>
-                                {CiudadEntidad}
+                                {CiudadEnvio}
                             </div>
 
-                            <div style=""margin: 20px 0;"">
+                            <div style='margin: 20px 0;'>
                                 <strong>Asunto:</strong> {Asunto}
                             </div>
 
-                            <div style=""margin-bottom: 15px;"">
+                            <div style='margin-bottom: 15px; text-align: justify;'>
                                 {Mensaje}
                             </div>
 
-                            <div style=""margin-bottom: 15px;"">
+                            <div style='margin-bottom: 15px; text-align: justify;'>
                                 En este sentido el Ministerio de Salud y Protección Social en el marco de la <strong>Estrategia de Seguimiento Nacional de Cáncer Infantil</strong> ha identificado a través del padre, acudiante o representante legal {NombrePariente} la siguiente barrera:
                             </div>
 
-                            <div class=""barrera"">
-                                <strong>{Alerta}:</strong> {DescripciónAlerta}
+                            <div class='barrera' style='margin-bottom: 15px; text-align: justify;'>
+                                <strong>{Alerta}:</strong> {DescripcionAlerta}
                             </div>
 
-                            <div style=""margin-bottom: 15px;"">
+                            <div style='margin-bottom: 15px; text-align: justify;'>
                                 {Comentario}
                             </div>
 
-                            <div style=""margin: 20px 0;"">
+                            <div style='margin: 20px 0;'>
                                 <div><strong>Nombre:</strong> {NombreNNA}</div>
                                 <div><strong>Identificación:</strong> {IdentificaciónNNA}</div>
                                 <div><strong>Edad:</strong> {EdadNNA}</div>
@@ -272,9 +273,15 @@ namespace Infra.Repositories
                                 <div><strong>Teléfono del acudiente:</strong> {TelefonoNNA}</div>
                             </div>
 
-                            <div>
+                            <div style='margin-bottom: 15px; text-align: justify;'>
                                 {Cierre}
                             </div>
+
+                            <div style='margin-bottom: 15px; text-align: justify;'>
+                                {Firma}
+                            </div>
+
+                            <div style='margin-bottom: 15px;'></div>
                         </body>
                         </html>
                     ";
@@ -282,60 +289,63 @@ namespace Infra.Repositories
                 var notificacionEntidadPlantilla = (from ne in _context.NotificacionesEntidad
                                                     join ent in _context.TPEAPB on ne.EntidadId equals ent.Id
                                                     join alseg in _context.AlertaSeguimientos on ne.AlertaSeguimientoId equals alseg.Id
+                                                    join s in _context.Seguimientos on alseg.SeguimientoId equals s.Id
+                                                    join c in _context.ContactoNNAs on s.ContactoNNAId equals c.Id
                                                     join al in _context.Alertas on alseg.AlertaId equals al.Id
+                                                    join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
+                                                    join ca in _context.TPCategoriaAlerta on sca.CategoriaAlertaId equals ca.Id
                                                     join nna in _context.NNAs on ne.NNAId equals nna.Id
+                                                    join d in _context.CIE10s on nna.DiagnosticoId equals d.Id
                                                     where ne.Id == request.IdNotificacion
                                                     select new NotificacionEntidadPlantilla()
                                                     {
                                                         Asunto = ne.Asunto,
                                                         Cierre = ne.Cierre,
+                                                        Ciudad = ne.Ciudad,
                                                         CiudadEnvio = ne.CiudadEnvio,
                                                         ComentarioNotificacion = ne.Comentario,
-                                                        DescripcionAlerta = al.Descripcion,
-                                                        DiagnosticoNNA = nna.DiagnosticoId,
-                                                        DocumentoNNA = nna.NumeroIdentificacion,
+                                                        Alerta = ca.Id + ". " + ca.Nombre,
+                                                        DescripcionAlerta = sca.Indicador + ". " + sca.SubCategoriaAlerta,
+                                                        DiagnosticoNNA = d.Nombre,
+                                                        DocumentoNNA = nna.TipoIdentificacionId + " " + nna.NumeroIdentificacion,
                                                         FechaNacimientoNNA = nna.FechaNacimiento,
                                                         FechaEnvio = ne.FechaEnvio ?? DateTime.Now,
                                                         Firma = ne.Firmajpg,
                                                         Membrete = ne.Membrete,
                                                         Mensaje = ne.Mensaje,
+                                                        NombrePariente = c.Nombres,
                                                         NombreEntidad = ent.Nombre,
-                                                        CiudadEntidad = ent.Descripcion,
-                                                        ObservacionAlerta = alseg.Observaciones,
                                                         PrimerApellidoNNA = nna.PrimerApellido,
                                                         PrimerNombreNNA = nna.PrimerNombre,
                                                         SegundoApellidoNNA = nna.SegundoApellido,
                                                         SegundoNombreNNA = nna.SegundoNombre,
-                                                        TelefonoAcudienteNNA = nna.CuidadorTelefono
+                                                        TelefonoAcudienteNNA = c.Telefonos
                                                     }).FirstOrDefault();
 
                 if (notificacionEntidadPlantilla != null)
                 {
-                    if (notificacionEntidadPlantilla.FechaNacimientoNNA != null)
-                    {
-                        DateTime fechaNacimiento = notificacionEntidadPlantilla.FechaNacimientoNNA.Value;
-                        notificacionEntidadPlantilla.EdadNNA = DateTime.Today.Year - fechaNacimiento.Year -
-                        (DateTime.Today.DayOfYear < fechaNacimiento.DayOfYear ? 1 : 0);
 
-                    }
+                    bodyHtml = bodyHtml.Replace("{Ciudad}", notificacionEntidadPlantilla.Ciudad)
+                                        .Replace("{FechaEnvio}", notificacionEntidadPlantilla.FechaEnvio.ToString("MMMM dd 'de' yyyy", new CultureInfo("es-ES")))
+                                        .Replace("{Membrete}", notificacionEntidadPlantilla.Membrete ?? "")
+                                        .Replace("{NombreEntidad}", notificacionEntidadPlantilla.NombreEntidad ?? "")
+                                        .Replace("{CiudadEnvio}", notificacionEntidadPlantilla.CiudadEnvio ?? "")
+                                        .Replace("{Asunto}", notificacionEntidadPlantilla.Asunto ?? "")
+                                        .Replace("{Mensaje}", notificacionEntidadPlantilla.Mensaje ?? "")
+                                        .Replace("{NombrePariente}", notificacionEntidadPlantilla.NombrePariente ?? "")
+                                        .Replace("{Alerta}", notificacionEntidadPlantilla.Alerta ?? "")
+                                        .Replace("{DescripcionAlerta}", notificacionEntidadPlantilla.DescripcionAlerta ?? "")
+                                        .Replace("{Comentario}", notificacionEntidadPlantilla.ComentarioNotificacion ?? "")
+                                        .Replace("{NombreNNA}", string.Concat(notificacionEntidadPlantilla.PrimerNombreNNA, " ", notificacionEntidadPlantilla.SegundoNombreNNA, " ",
+                                        notificacionEntidadPlantilla.PrimerApellidoNNA, " ", notificacionEntidadPlantilla.SegundoApellidoNNA))
+                                        .Replace("{IdentificaciónNNA}", notificacionEntidadPlantilla.DocumentoNNA ?? "")
+                                        .Replace("{EdadNNA}", Funciones.CalcularEdad(notificacionEntidadPlantilla.FechaNacimientoNNA))
+                                        .Replace("{DiagnosticoNNA}", notificacionEntidadPlantilla.DiagnosticoNNA.ToString())
+                                        .Replace("{TelefonoNNA}", notificacionEntidadPlantilla.TelefonoAcudienteNNA ?? "")
+                                        .Replace("{Cierre}", notificacionEntidadPlantilla.Cierre ?? "")
+                                        .Replace("{Firma}", notificacionEntidadPlantilla.Firma ?? "");
 
-                    bodyHtml = bodyHtml.Replace("{CiudadEnvio}", notificacionEntidadPlantilla.CiudadEnvio)
-                                             .Replace("{FechaEnvio}", notificacionEntidadPlantilla.FechaEnvio.ToString("MMMM dd 'de' yyyy", new CultureInfo("es-ES")))
-                                             .Replace("{Membrete}", notificacionEntidadPlantilla.Membrete ?? "")
-                                             .Replace("{NombreEntidad}", notificacionEntidadPlantilla.NombreEntidad ?? "")
-                                             .Replace("{Asunto}", notificacionEntidadPlantilla.Asunto ?? "")
-                                             .Replace("{Mensaje}", notificacionEntidadPlantilla.Mensaje ?? "")
-                                             .Replace("{Alerta}", notificacionEntidadPlantilla.DescripcionAlerta ?? "")
-                                             .Replace("{ObservacionAlerta}", notificacionEntidadPlantilla.ObservacionAlerta ?? "")
-                                             .Replace("{Comentario}", notificacionEntidadPlantilla.ComentarioNotificacion ?? "")
-                                             .Replace("{NombreNNA}", string.Concat(notificacionEntidadPlantilla.PrimerNombreNNA, " ", notificacionEntidadPlantilla.SegundoNombreNNA, " ",
-                                             notificacionEntidadPlantilla.PrimerApellidoNNA, " ", notificacionEntidadPlantilla.SegundoApellidoNNA))
-                                             .Replace("{IdentificaciónNNA}", notificacionEntidadPlantilla.DocumentoNNA ?? "")
-                                             .Replace("{EdadNNA}", notificacionEntidadPlantilla.EdadNNA.ToString())
-                                             .Replace("{DiagnosticoNNA}", notificacionEntidadPlantilla.DiagnosticoNNA.ToString())
-                                             .Replace("{TelefonoNNA}", notificacionEntidadPlantilla.TelefonoAcudienteNNA ?? "")
-                                             .Replace("{Cierre}", notificacionEntidadPlantilla.Cierre ?? "")
-                                             .Replace("{Firma}", notificacionEntidadPlantilla.Firma ?? "");
+                    bodyHtml = bodyHtml.Replace("<p", "<div style='margin:0;padding:0'").Replace("</p>", "</div>").Replace("\u00A0", " ").Replace("&nbsp;", " ");
 
                     // Cargar las imágenes del encabezado y pie de página
                     string imagePathHeader = Path.Combine(_env.WebRootPath, "assets", "header.png");
@@ -358,7 +368,7 @@ namespace Infra.Repositories
                         </div>
                     ";
 
-                    var config = new PdfConfig(56, 56, 20, 56)
+                    var config = new PdfConfig(56, 56, 56, 56) // margen inferior 100px o más
                     {
                         PageSize = PageSize.LETTER,
                         HeaderHtmlContent = headerHtml,
@@ -453,7 +463,7 @@ namespace Infra.Repositories
                             await _storageService.UploadFileAsync(request.Adjunto.File, nombreAdjunto);
 
                             using var ms2 = new MemoryStream(request.Adjunto.File);
-                            Attachment adjunto2 = new(ms2, $"{request.Adjunto.FileName}.pdf", MediaTypeNames.Application.Octet);
+                            Attachment adjunto2 = new(ms2, $"{request.Adjunto.FileName}", MediaTypeNames.Application.Octet);
                             mensaje.Attachments.Add(adjunto2);
 
                             // Guardar el archivo en el almacenamiento
@@ -498,11 +508,10 @@ namespace Infra.Repositories
             }
         }
 
-
         public async Task<RespuestaResponse<OficioNotificacionRequest>> VerOficioNotificacion(long id)
         {
             var notificacion = await (from ne in _context.NotificacionesEntidad
-                                      where ne.Id == id
+                                      where ne.AlertaSeguimientoId == id
                                       select ne).FirstOrDefaultAsync();
 
             if (notificacion == null)
