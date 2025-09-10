@@ -26,7 +26,23 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
         public async Task<int> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
             var result = await _identityService.CreateUserAsync(request.Email, request.Identificacion, request.Email, request.FullName, request.Roles, request.Telefonos, request.EntidadId, request.Cargo);
-            return result.isSucceed ? 1 : 0;
+            if (!result.isSucceed)
+            {
+                // ✅ Escribir errores en consola
+                if (result.errors != null && result.errors.Any())
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("❌ Errores al crear usuario:");
+                    foreach (var error in result.errors)
+                    {
+                        Console.WriteLine($"   - {error}");
+                    }
+                    Console.ResetColor();
+                }
+                return 0;
+            }
+
+            return 1;
         }
     }
 }

@@ -44,9 +44,17 @@ namespace Core.Services.MSUsuariosyRoles
 
 
         // Return multiple value
-        public async Task<(bool isSucceed, string userId)> CreateUserAsync(string userName, string identificacion, string email, string fullName, List<string> roles, string Telefonos = "", string EntidadId = "", string Cargo = "")
+        public async Task<(bool isSucceed, string userId, List<string> errors)> CreateUserAsync(
+            string userName,
+            string identificacion,
+            string email,
+            string fullName,
+            List<string> roles,
+            string Telefonos = "",
+            string EntidadId = "",
+            string Cargo = "")
         {
-            var user = new ApplicationUser()
+            var user = new ApplicationUser
             {
                 FullName = fullName,
                 UserName = email,
@@ -55,24 +63,47 @@ namespace Core.Services.MSUsuariosyRoles
                 EntidadId = EntidadId,
                 Cargo = Cargo,
                 Activo = true,
-                Estado = "Activo"
+                Estado = "Activo",
+                EstadoUsuarioId = 0
             };
 
-            //identificacion es el password
-            var result = await _userManager.CreateAsync(user, identificacion);
+            var errors = new List<string>();
 
-            if (!result.Succeeded)
+            // ✅ Validar roles
+            var missingRoles = new List<string>();
+            foreach (var role in roles.Distinct())
             {
-                throw new ValidationException(result.Errors);
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    missingRoles.Add(role);
+                }
+            }
+            if (missingRoles.Any())
+            {
+                errors.Add($"Roles not found: {string.Join(", ", missingRoles)}");
+                return (false, "", errors);
             }
 
+            // ✅ Crear usuario
+            var result = await _userManager.CreateAsync(user, identificacion);
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors.Select(e => e.Description));
+                return (false, "", errors);
+            }
+
+            // ✅ Asignar roles
             var addUserRole = await _userManager.AddToRolesAsync(user, roles);
             if (!addUserRole.Succeeded)
             {
-                throw new ValidationException(addUserRole.Errors);
+                errors.AddRange(addUserRole.Errors.Select(e => e.Description));
+                return (false, "", errors);
             }
-            return (result.Succeeded, user.Id);
+
+            return (true, user.Id, errors);
         }
+
+
 
         public async Task<bool> DeleteRoleAsync(string roleId)
         {
@@ -161,7 +192,7 @@ namespace Core.Services.MSUsuariosyRoles
                 throw new NotFoundException("User not found");
             }
             var roles = await _userManager.GetRolesAsync(user);
-            return (user.Id, user.FullName??string.Empty, user.UserName ?? string.Empty, user.Email ?? string.Empty, user.Telefonos ?? string.Empty, user.EntidadId ?? string.Empty, user.Cargo ?? string.Empty, user.Estado ?? string.Empty, roles ?? new List<string>());
+            return (user.Id, user.FullName ?? string.Empty, user.UserName ?? string.Empty, user.Email ?? string.Empty, user.Telefonos ?? string.Empty, user.EntidadId ?? string.Empty, user.Cargo ?? string.Empty, user.Estado ?? string.Empty, roles ?? new List<string>());
         }
 
         public async Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string Estado, IList<string> roles)> GetUserDetailsByUserNameAsync(string userName)

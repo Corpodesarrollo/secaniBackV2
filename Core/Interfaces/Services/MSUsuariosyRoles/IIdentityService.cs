@@ -3,7 +3,7 @@
     public interface IIdentityService
     {
         // User section
-        Task<(bool isSucceed, string userId)> CreateUserAsync(string userName, string password, string email, string fullName, List<string> roles, string Telefonos = "", string EntidadId = "", string Cargo = "");
+        Task<(bool isSucceed, string userId, List<string> errors)> CreateUserAsync(string userName, string password, string email, string fullName, List<string> roles, string Telefonos = "", string EntidadId = "", string Cargo = "");
         Task<bool> SigninUserAsync(string userName, string password);
         Task<string> GetUserIdAsync(string userName);
         Task<(string userId, string fullName, string UserName, string email, string telefonos, string entidadId, string cargo, string Estado, IList<string> roles)> GetUserDetailsAsync(string userId);
