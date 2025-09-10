@@ -1,13 +1,11 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.Common;
+using Core.Interfaces.Repositorios;
 using Core.response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class DashboardController : ControllerBase
+    public class DashboardController : BaseController
     {
         private readonly IDashboardRepo _dashboardRepo;
 

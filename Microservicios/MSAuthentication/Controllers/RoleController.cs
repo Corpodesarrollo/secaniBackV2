@@ -1,4 +1,5 @@
-﻿using Core.CQRS.MSUsuariosyRoles.Commands.Role;
+﻿using Core.Common;
+using Core.CQRS.MSUsuariosyRoles.Commands.Role;
 using Core.CQRS.MSUsuariosyRoles.Queries.Role;
 using Core.DTOs.MSUsuariosyRoles;
 using MediatR;
@@ -7,12 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MSAuthentication.Api.Controllers
 {
-    [Route("[controller]")]
-    //[Authorize]
-    [ApiController]
-    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    //[Authorize(Roles = "Admin, Management")]
-    public class RoleController : ControllerBase
+    public class RoleController : BaseController
     {
         public readonly IMediator _mediator;
 

@@ -1,13 +1,11 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [Route("[controller]")]
-    //[Authorize]
-    [ApiController]
-    public class ParentescosController(ITPParentescos service) : Controller
+    public class ParentescosController(ITPParentescos service) : BaseController
     {
         private ITPParentescos _service = service;
 

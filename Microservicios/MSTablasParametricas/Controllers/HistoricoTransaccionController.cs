@@ -1,12 +1,10 @@
-﻿using Core.DTOs.MSTablasParametricas;
+﻿using Core.Common;
 using Core.Interfaces.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class HistoricoTransaccionController : ControllerBase
+    public class HistoricoTransaccionController : BaseController
     {
         private readonly IHistoricoTransaccionService _historicoService;
 

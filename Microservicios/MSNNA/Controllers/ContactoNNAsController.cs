@@ -1,3 +1,4 @@
+using Core.Common;
 using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Response;
@@ -6,10 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class ContactoNNAsController(IContactoNNARepo service) : ControllerBase
+    public class ContactoNNAsController(IContactoNNARepo service) : BaseController
     {
         private IContactoNNARepo _service = service;
 

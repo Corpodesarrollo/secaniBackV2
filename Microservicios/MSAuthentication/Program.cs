@@ -152,11 +152,13 @@ builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlerta
 builder.Services.AddScoped<IResumenLlamadasRepository, ResumenLlamadasRepository>();
 builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 
 // Register Quartz services
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
 builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
 builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
+builder.Services.AddScoped<IEmailConfigurationRepo, EmailConfigurationRepo>();
 
 var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
 
@@ -248,50 +250,6 @@ app.UseRequestLocalization();
 app.UseResponseCompression();
 app.UseResponseCaching();
 app.UseForwardedHeaders();
-
-// DEBUG: Middleware para logging de CORS
-app.Use(async (context, next) =>
-{
-    Console.WriteLine($"=== CORS DEBUG ===");
-    Console.WriteLine($"Method: {context.Request.Method}");
-    Console.WriteLine($"Path: {context.Request.Path}");
-    Console.WriteLine($"Origin: {context.Request.Headers["Origin"]}");
-    Console.WriteLine($"Access-Control-Request-Method: {context.Request.Headers["Access-Control-Request-Method"]}");
-    Console.WriteLine($"Access-Control-Request-Headers: {context.Request.Headers["Access-Control-Request-Headers"]}");
-
-    await next();
-
-    Console.WriteLine($"Response Status: {context.Response.StatusCode}");
-    Console.WriteLine($"CORS Headers: {string.Join(", ", context.Response.Headers.Where(h => h.Key.StartsWith("Access-Control")).Select(h => $"{h.Key}:{h.Value}"))}");
-    Console.WriteLine($"=================");
-});
-
-// Middleware global para manejar OPTIONS (SOLO como fallback si CORS no funciona)
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == "OPTIONS")
-    {
-        Console.WriteLine("=== OPTIONS REQUEST INTERCEPTED ===");
-        // Dejar que CORS maneje primero
-        await next();
-
-        // Si CORS no manejó (status 404), manejar manualmente
-        if (context.Response.StatusCode == 404)
-        {
-            Console.WriteLine("CORS didn't handle OPTIONS, handling manually");
-            context.Response.StatusCode = 200;
-            context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"].ToString());
-            context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-            context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-            return;
-        }
-    }
-    else
-    {
-        await next();
-    }
-});
 
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();

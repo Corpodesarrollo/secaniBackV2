@@ -6,9 +6,6 @@ using MSTablasParametricas.Api.Controllers.Common;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [Route("[controller]")]
-    //[Authorize]
-    [ApiController]
     public class CategoriaAlertaController : GenericController<TPCategoriaAlerta, CategoriaAlertaDTO>
     {
         private readonly ICategoriaAlertaService _service;

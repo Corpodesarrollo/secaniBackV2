@@ -1,20 +1,17 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
-using Mapster;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class NNAController(INNAService service, INNARepo nNARepo, TablaParametricaService tablaParametrica) : ControllerBase
+    public class NNAController(INNAService service, INNARepo nNARepo, TablaParametricaService tablaParametrica) : BaseController
     {
         private INNARepo _nNARepo = nNARepo;
         private INNAService _nNAService = service;
@@ -34,10 +31,9 @@ namespace Api.Controllers
         }
 
         [HttpPut("Actualizar")]
-        public async Task<(bool, NNAs)> UpdateAsync(NNADto dto)
+        public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)
         {
-            var entity = dto.Adapt<NNAs>();
-            return await _nNARepo.UpdateAsync(entity);
+            return await _nNAService.UpdateAsync(dto);
         }
 
         [HttpPost("ConsultarNNAFiltro")]

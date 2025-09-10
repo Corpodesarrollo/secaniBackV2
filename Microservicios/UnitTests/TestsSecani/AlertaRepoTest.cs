@@ -25,7 +25,7 @@ namespace TestsSecani
             .Options;
 
             Context = new ApplicationDbContext(options);
-            AlertaRepo = new AlertaRepo(Context);
+            //AlertaRepo = new AlertaRepo(Context);
         }
 
         [Fact]

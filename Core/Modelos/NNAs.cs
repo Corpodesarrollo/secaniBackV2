@@ -79,7 +79,7 @@ namespace Core.Modelos
         public int? SubcategoriaAlertaId { get; set; }
         public bool? TrasladosHaSidoTrasladadodeInstitucion { get; set; }
         public int? TrasladosNumerodeTraslados { get; set; }
-        public int? TrasladosIPSId { get; set; }
+        public string? TrasladosIPSId { get; set; }
         public bool? TrasladosHaRecurridoAccionLegal { get; set; }
         public string? TrasladosTipoAccionLegalId { get; set; }
         public bool? TratamientoHaDejadodeAsistir { get; set; }

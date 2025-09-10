@@ -1,13 +1,11 @@
-﻿using Core.DTOs.MSPermisos;
+﻿using Core.Common;
+using Core.DTOs.MSPermisos;
 using Core.Services.MSPermisos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSAuthentication.Api.Controllers
 {
-    [Route("[controller]")]
-    //[Authorize]
-    [ApiController]
-    public class FuncionalidadesController(IFuncionalidadService service) : ControllerBase
+    public class FuncionalidadesController(IFuncionalidadService service) : BaseController
     {
         private readonly IFuncionalidadService _service = service;
 

@@ -1,13 +1,11 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class IPSController(IIpsRepo service) : Controller
+    public class IPSController(IIpsRepo service) : BaseController
     {
 
         [HttpGet("{codeMunicipio}")]
@@ -21,6 +19,13 @@ namespace MSTablasParametricas.Api.Controllers
         public async Task<ActionResult<TPIPSDto[]>> GetAll()
         {
             var result = await service.GetAll();
+            return Ok(result);
+        }
+
+        [HttpGet("GetById/{id}")]
+        public async Task<ActionResult<TPIPSDto>> GetById(long id)
+        {
+            var result = await service.GetById(id);
             return Ok(result);
         }
 

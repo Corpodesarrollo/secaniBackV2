@@ -6,19 +6,19 @@
         public DateTime FechaEnvio { get; set; }
         public string? Membrete { get; set; }
         public string? NombreEntidad { get; set; }
-        public string? CiudadEntidad { get; set; }
+        public string? Ciudad { get; set; }
         public string? Asunto { get; set; }
         public string? Mensaje { get; set; }
+        public string? NombrePariente { get; set; }
+        public string? Alerta { get; set; }
         public string? DescripcionAlerta { get; set; }
-        public string? ObservacionAlerta { get; set; }
         public string? ComentarioNotificacion { get; set; }
         public string? PrimerNombreNNA { get; set; }
         public string? SegundoNombreNNA { get; set; }
         public string? PrimerApellidoNNA { get; set; }
         public string? SegundoApellidoNNA { get; set; }
         public string? DocumentoNNA { get; set; }
-        public int EdadNNA { get; set; }
-        public int? DiagnosticoNNA { get; set; }
+        public string? DiagnosticoNNA { get; set; }
         public string? TelefonoAcudienteNNA { get; set; }
         public string? Cierre { get; set; }
         public string? Firma { get; set; }

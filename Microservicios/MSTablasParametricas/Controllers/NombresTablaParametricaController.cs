@@ -1,12 +1,11 @@
-﻿using Core.DTOs.MSTablasParametricas;
+﻿using Core.Common;
+using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class NombresTablaParametricaController : ControllerBase
+    public class NombresTablaParametricaController : BaseController
     {
         private readonly INombreTablaParametricaService _nombreTablaParametricaService;
 

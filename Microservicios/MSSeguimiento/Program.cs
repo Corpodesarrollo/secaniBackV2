@@ -1,4 +1,4 @@
-using Core.Common;
+﻿using Core.Common;
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
@@ -106,17 +106,22 @@ builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Q
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins(
-            "http://192.168.152.17:8140",
-            "https://secani.sispropreprod.gov.co",
-            "http://192.168.110.11:8140",
-            "http://localhost:4200",
-            "https://localhost:4200",
-            "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials());
+    // En Program.cs, modifica la política:
+    options.AddPolicy("AllowSpecificOrigin", builder =>
+    {
+        builder.WithOrigins(
+                "http://192.168.152.17:8140",
+                "https://secani.sispropreprod.gov.co",
+                "http://192.168.110.11:8140",
+                "http://localhost:4200",
+                "https://localhost:4200",
+                "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10)) // Cache preflight
+            .WithExposedHeaders("Content-Disposition", "Set-Cookie"); // Headers expuestos
+    });
 });
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
@@ -134,6 +139,28 @@ app.UseHealthChecks("/health", new HealthCheckOptions
             status = "El servicio esta disponible"
         });
         await context.Response.WriteAsync(result);
+    }
+});
+
+app.Use(async (context, next) =>
+{
+    var origin = context.Request.Headers["Origin"].ToString();
+    var hasOrigin = !string.IsNullOrEmpty(origin);
+    var isPreflight = context.Request.Method == "OPTIONS";
+
+    Console.WriteLine($"🌐 Request: {context.Request.Method} {context.Request.Path}");
+    Console.WriteLine($"🌐 Origin: {(hasOrigin ? origin : "NO ORIGIN")}");
+    Console.WriteLine($"🌐 Preflight: {isPreflight}");
+    Console.WriteLine($"🌐 Cookies: {context.Request.Headers["Cookie"]}");
+    Console.WriteLine($"🌐 Auth: {context.Request.Headers["Authorization"]}");
+
+    await next();
+
+    Console.WriteLine($"🌐 Response Status: {context.Response.StatusCode}");
+    foreach (var header in context.Response.Headers)
+    {
+        if (header.Key.StartsWith("Access-Control-") || header.Key == "Set-Cookie")
+            Console.WriteLine($"   {header.Key}: {header.Value}");
     }
 });
 

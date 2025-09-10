@@ -1,4 +1,5 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
@@ -8,10 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class SeguimientoController : ControllerBase
+    public class SeguimientoController : BaseController
     {
         private readonly ISeguimientoRepo seguimientoRepo;
         private readonly IWebHostEnvironment _env;
@@ -197,7 +195,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("HistoricoPlantillaCorreo/{id}")]
-        public IActionResult HistoricoPlantillaCorreo(string id)
+        public IActionResult HistoricoPlantillaCorreo(long id)
         {
             var response = seguimientoRepo.HistoricoPlantillaCorreo(id);
 

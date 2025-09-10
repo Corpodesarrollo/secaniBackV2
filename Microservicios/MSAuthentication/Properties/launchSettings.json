@@ -24,7 +24,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7084;http://localhost:15200;https://auth.sisprodesa.local:9000",
+      "applicationUrl": "https://localhost:7084;http://localhost:15200",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

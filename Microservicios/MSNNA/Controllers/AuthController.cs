@@ -1,5 +1,5 @@
-﻿using Core.DTOs;
-using Microsoft.AspNetCore.Authorization;
+﻿using Core.Common;
+using Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using SISPRO.TRV.Web.MVCCore;
@@ -8,10 +8,7 @@ using LicenseContext = OfficeOpenXml.LicenseContext;
 
 namespace MSNNA.Api.Controllers
 {
-    [Route("[controller]")]
-    [Authorize]
-    [ApiController]
-    public class AuthController : Controller
+    public class AuthController : BaseController
     {
         [HttpGet]
         public async Task<ActionResult<UserDto>> Get()

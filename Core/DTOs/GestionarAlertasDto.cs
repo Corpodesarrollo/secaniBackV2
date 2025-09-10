@@ -5,7 +5,7 @@
         public long IdAlerta { get; set; }
         public string? Alerta { get; set; }
         public long IdAlertaSeguimiento { get; set; }
-
+        public long IdSeguimiento { get; set; }
         public string? TextoEstado { get; set; }
         public string? ColorEstado { get; set; }
         public DateTime? FechaNotificacion { get; set; }

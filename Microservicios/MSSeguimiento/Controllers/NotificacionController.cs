@@ -1,4 +1,5 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
@@ -7,10 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
-    public class NotificacionController : ControllerBase
+    public class NotificacionController : BaseController
     {
         private readonly INotificacionRepo notificacionRepo;
 
@@ -74,7 +72,7 @@ namespace MSSeguimiento.Api.Controllers
             return Ok(result);
         }
 
-        [HttpPost("VerOficioNotificacion/{id}")]
+        [HttpGet("VerOficioNotificacion/{id}")]
         public async Task<IActionResult> VerOficioNotificacion(long id)
         {
             var result = await notificacionRepo.VerOficioNotificacion(id);

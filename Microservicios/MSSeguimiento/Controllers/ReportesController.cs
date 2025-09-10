@@ -1,19 +1,17 @@
-﻿using Core.DTOs;
+﻿using Core.Common;
+using Core.DTOs;
 using Core.DTOs.Reportes;
 using Core.Interfaces.Services.Reportes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    //[Authorize]
-    [Route("[controller]")]
     public class ReportesController(
         IReporteDepuracionService depuracionService,
         IReporteDinamicoNNAService dinamicoNNAService,
         IReporteDinamicoSeguimientoService dinamicoSeguimientoService,
         IReporteDetalleRegDepuradosService reporteDepuradosService,
-        IReporteDinamicoAlertasService reporteDinamicoAlertasService) : ControllerBase
+        IReporteDinamicoAlertasService reporteDinamicoAlertasService) : BaseController
     {
         private readonly IReporteDepuracionService _depuracionService = depuracionService;
         private readonly IReporteDinamicoNNAService _dinamicoNNAService = dinamicoNNAService;
