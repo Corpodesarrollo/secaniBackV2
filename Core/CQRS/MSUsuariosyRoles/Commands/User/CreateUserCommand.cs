@@ -4,7 +4,8 @@ using System.Data;
 
 namespace Core.CQRS.MSUsuariosyRoles.Commands.User
 {
-    public class CreateUserCommand : IRequest<int>
+    // Cambia la interfaz implementada por CreateUserCommand de IRequest<int> a IRequest<string>
+    public class CreateUserCommand : IRequest<string>
     {
         public string FullName { get; set; }
         public string Email { get; set; }
@@ -13,36 +14,21 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
         public string Telefonos { get; set; } = "";
         public string? EntidadId { get; set; }
         public string Cargo { get; set; }
+        public string Alias { get; set; }
         public List<string> Roles { get; set; }
     }
 
-    public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
+    public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, string>
     {
         private readonly IIdentityService _identityService;
         public CreateUserCommandHandler(IIdentityService identityService)
         {
             _identityService = identityService;
         }
-        public async Task<int> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+        public async Task<string> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var result = await _identityService.CreateUserAsync(request.Email, request.Identificacion, request.Email, request.FullName, request.Roles, request.Telefonos, request.EntidadId, request.Cargo);
-            if (!result.isSucceed)
-            {
-                // ✅ Escribir errores en consola
-                if (result.errors != null && result.errors.Any())
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("❌ Errores al crear usuario:");
-                    foreach (var error in result.errors)
-                    {
-                        Console.WriteLine($"   - {error}");
-                    }
-                    Console.ResetColor();
-                }
-                return 0;
-            }
-
-            return 1;
+            var result = await _identityService.CreateUserAsync(request.Email, request.Identificacion, request.Email, request.FullName, request.Roles, request.Alias, request.Telefonos, request.EntidadId, request.Cargo);
+            return result.isSucceed? result.userId : "";
         }
     }
 }

@@ -2,6 +2,8 @@
 using Core.CQRS.MSUsuariosyRoles.Commands.User;
 using Core.CQRS.MSUsuariosyRoles.Queries.User;
 using Core.DTOs.MSUsuariosyRoles;
+using Core.Interfaces.Repositorios;
+using Core.Response;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +13,12 @@ namespace MSAuthentication.Api.Controllers
     public class UserController : BaseController
     {
         private readonly IMediator _mediator;
+        private readonly IUsurioRepo _usurioRepo;
 
-        public UserController(IMediator mediator)
+        public UserController(IMediator mediator, IUsurioRepo usurioRepo)
         {
             _mediator = mediator;
+            _usurioRepo = usurioRepo;
         }
 
         [HttpPost("Create")]
@@ -96,5 +100,13 @@ namespace MSAuthentication.Api.Controllers
                 return BadRequest();
             }
         }
+
+        [HttpGet("GetUserRole/{userId}")]
+        public IActionResult GetUserRole(string userId)
+        {
+            var result = _usurioRepo.UltimoRolPorIdUsuario(userId);
+            return Ok(result);
+        }
+
     }
 }

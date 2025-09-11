@@ -44,19 +44,12 @@ namespace Core.Services.MSUsuariosyRoles
 
 
         // Return multiple value
-        public async Task<(bool isSucceed, string userId, List<string> errors)> CreateUserAsync(
-            string userName,
-            string identificacion,
-            string email,
-            string fullName,
-            List<string> roles,
-            string Telefonos = "",
-            string EntidadId = "",
-            string Cargo = "")
+        public async Task<(bool isSucceed, string userId)> CreateUserAsync(string userName, string identificacion, string email, string fullName, List<string> roles, string alias, string Telefonos = "", string EntidadId = "", string Cargo = "")
         {
-            var user = new ApplicationUser
+            var user = new ApplicationUser()
             {
                 FullName = fullName,
+                Alias = alias,
                 UserName = email,
                 Email = email,
                 Telefonos = Telefonos,
@@ -67,43 +60,23 @@ namespace Core.Services.MSUsuariosyRoles
                 EstadoUsuarioId = 0
             };
 
-            var errors = new List<string>();
-
-            // ✅ Validar roles
-            var missingRoles = new List<string>();
-            foreach (var role in roles.Distinct())
-            {
-                if (!await _roleManager.RoleExistsAsync(role))
-                {
-                    missingRoles.Add(role);
-                }
-            }
-            if (missingRoles.Any())
-            {
-                errors.Add($"Roles not found: {string.Join(", ", missingRoles)}");
-                return (false, "", errors);
-            }
-
-            // ✅ Crear usuario
+            //identificacion es el password
             var result = await _userManager.CreateAsync(user, identificacion);
+
             if (!result.Succeeded)
             {
-                errors.AddRange(result.Errors.Select(e => e.Description));
-                return (false, "", errors);
+                Console.WriteLine(result);
+                Console.WriteLine(result.Errors);
+                throw new ValidationException(result.Errors);
             }
 
-            // ✅ Asignar roles
             var addUserRole = await _userManager.AddToRolesAsync(user, roles);
             if (!addUserRole.Succeeded)
             {
-                errors.AddRange(addUserRole.Errors.Select(e => e.Description));
-                return (false, "", errors);
+                throw new ValidationException(addUserRole.Errors);
             }
-
-            return (true, user.Id, errors);
+            return (result.Succeeded, user.Id);
         }
-
-
 
         public async Task<bool> DeleteRoleAsync(string roleId)
         {
