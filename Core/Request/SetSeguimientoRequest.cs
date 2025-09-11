@@ -20,6 +20,7 @@ namespace Core.Request
                 fechaSeguimiento = value;
             }
         }
+
         public int EstadoId { get; set; }
         public long ContactoNNAId { get; set; }
         public string? Telefono { get; set; }

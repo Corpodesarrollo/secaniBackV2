@@ -2,6 +2,7 @@
 {
     public class NotificacionEntidadPlantilla
     {
+        public long IdSeguimiento { get; set; }
         public string CiudadEnvio { get; set; }
         public DateTime FechaEnvio { get; set; }
         public string? Membrete { get; set; }

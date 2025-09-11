@@ -1181,6 +1181,7 @@ namespace Infra.Repositorios
                         NNAId = nna.Id,
                         TieneDiagnosticos = true,
                         Telefono = nna.CuidadorTelefono,
+                        UltimaActuacionAsunto = "Registro inicial",
                         EstadoId = 1
                     };
                     _context.Seguimientos.Add(seguimiento);

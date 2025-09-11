@@ -299,6 +299,7 @@ namespace Infra.Repositories
                                                     where ne.Id == request.IdNotificacion
                                                     select new NotificacionEntidadPlantilla()
                                                     {
+                                                        IdSeguimiento = s.Id,
                                                         Asunto = ne.Asunto,
                                                         Cierre = ne.Cierre,
                                                         Ciudad = ne.Ciudad,
@@ -348,13 +349,13 @@ namespace Infra.Repositories
                     bodyHtml = bodyHtml.Replace("<p", "<div style='margin:0;padding:0'").Replace("</p>", "</div>").Replace("\u00A0", " ").Replace("&nbsp;", " ");
 
                     // Cargar las imágenes del encabezado y pie de página
-                    string imagePathHeader = Path.Combine(_env.WebRootPath, "assets", "header.png");
-                    byte[] imageBytesHeader = File.ReadAllBytes(imagePathHeader);
-                    string base64ImageHeader = Convert.ToBase64String(imageBytesHeader);
+                    var imagePathHeader = Path.Combine(_env.WebRootPath, "assets", "header.png");
+                    var imageBytesHeader = File.ReadAllBytes(imagePathHeader);
+                    var base64ImageHeader = Convert.ToBase64String(imageBytesHeader);
 
-                    string imagePathFooter = Path.Combine(_env.WebRootPath, "assets", "footer.png");
-                    byte[] imageBytesFooter = File.ReadAllBytes(imagePathFooter);
-                    string base64ImageFooter = Convert.ToBase64String(imageBytesFooter);
+                    var imagePathFooter = Path.Combine(_env.WebRootPath, "assets", "footer.png");
+                    var imageBytesFooter = File.ReadAllBytes(imagePathFooter);
+                    var base64ImageFooter = Convert.ToBase64String(imageBytesFooter);
 
                     var headerHtml = $@"
                         <div style='width: 100%; text-align:right; margin-bottom: 20px;'>
