@@ -1585,5 +1585,59 @@ namespace Infra.Repositorios
                               AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
                           }).ToArrayAsync();
         }
+
+        public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
+        {
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        where s.SolicitanteId == id
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+            return await (from q in query
+                          join s in _context.Seguimientos on q.id equals s.Id
+                          join n in _context.NNAs on s.NNAId equals n.Id
+
+                          join p in _context.TPParentescos on n.CuidadorParentescoId equals p.Id into parentesco
+                          from p in parentesco.DefaultIfEmpty()
+
+                          join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
+                          from d in diagnostico.DefaultIfEmpty()
+
+                          join a in _context.UsuarioAsignados on s.Id equals a.SeguimientoId into asignado
+                          from a in asignado.DefaultIfEmpty()
+
+                          join ea in _context.TPEAPB on n.EAPBId equals ea.Id into eapb
+                          from ea in eapb.DefaultIfEmpty()
+
+                          join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                          select new SeguimientoDto()
+                          {
+                              Id = s.Id,
+                              NoCaso = s.NNAId,
+                              PrimerNombre = n.PrimerNombre,
+                              SegundoNombre = n.SegundoNombre,
+                              PrimerApellido = n.PrimerApellido,
+                              SegundoApellido = n.SegundoApellido,
+                              Sexo = n.SexoId == "1" ? "Masculino" : "Femenino",
+                              FechaNacimiento = n.FechaNacimiento,
+                              FechaNotificacion = n.FechaNotificacionSIVIGILA,
+
+                              FechaSolicitud = s.FechaSolicitud, // solicitado
+                              FechaAsignacion = a != null ? a.FechaAsignacion : null, // fecha asignacion
+                              FechaSeguimiento = s.FechaSeguimiento, // agendado
+                              FechaUltimaActuacion = s.UltimaActuacionFecha, // contacto
+
+                              EstadoSeguimiento = (s.UltimaActuacionFecha != null ? "Contactado" : (s.FechaSeguimiento != null ? "Agendado" : (a.FechaAsignacion != null ? "Asignado" : (s.FechaSolicitud != null ? "Solicitado" : "")))),
+
+                              TipoIdentificacion = n.TipoIdentificacionId,
+                              NumeroIdentificacion = n.NumeroIdentificacion,
+                              Parentesco = p != null ? p.Nombre : "",
+                              Diagnostico = d != null ? d.Nombre : "",
+                              Aseguradora = ea != null ? ea.Nombre : "",
+                              AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                          }).ToArrayAsync();
+        }
+
     }
 }

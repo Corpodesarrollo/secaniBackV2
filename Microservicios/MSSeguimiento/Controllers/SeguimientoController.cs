@@ -222,6 +222,20 @@ namespace MSSeguimiento.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("GetSeguimientosCuidador/{id}")]
+        public async Task<ActionResult> GetSeguimientosCuidador(string id)
+        {
+            try
+            {
+                var response = await seguimientoRepo.GetSeguimientosCuidador(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
 
