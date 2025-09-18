@@ -2,15 +2,18 @@
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.AusenciasUsuario;
 using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.Llamadas;
 using Core.Interfaces.Repositorios.Reportes;
+using Core.Interfaces.Services.AusenciasUsuario;
 using Core.Interfaces.Services.Llamadas;
 using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Interfaces.Services.Reportes;
 using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
+using Core.Services.AusenciasService;
 using Core.Services.Llamadas;
 using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
@@ -21,6 +24,7 @@ using Infra;
 using Infra.Repositories;
 using Infra.Repositories.Common;
 using Infra.Repositorios;
+using Infra.Repositorios.AusenciasUsuario;
 using Infra.Repositorios.Llamadas;
 using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -91,6 +95,10 @@ builder.Services.AddScoped<IReporteDinamicoAlertasRepository, ReporteDinamicoAle
 builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlertasService>();
 builder.Services.AddScoped<IResumenLlamadasRepository, ResumenLlamadasRepository>();
 builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
+
+builder.Services.AddScoped<IAusenciasRepository, AusenciasRepository>();
+builder.Services.AddScoped<IAusenciasService, AusenciasService>();
+
 builder.Services.AddHttpClient();
 
 // Register Quartz services
