@@ -98,6 +98,8 @@ builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
 
 builder.Services.AddScoped<IAusenciasRepository, AusenciasRepository>();
 builder.Services.AddScoped<IAusenciasService, AusenciasService>();
+builder.Services.AddScoped<IHorarioLaboralAgenteRepository, HorarioLaboralAgenteRepository>();
+builder.Services.AddScoped<IHorarioLaboralAgenteService, HorarioLaboralAgenteService>();
 
 builder.Services.AddHttpClient();
 
