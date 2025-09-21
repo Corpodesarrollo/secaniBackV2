@@ -20,11 +20,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetNotification/{agenteDestinoId}")]
-        public List<GetNotificacionResponse> GetNotifications(string agenteDestinoId)
+        public async Task<List<GetNotificacionResponse>> GetNotifications(string agenteDestinoId)
         {
-            List<GetNotificacionResponse> response;
-
-            response = notificacionRepo.GetNotificacionUsuario(agenteDestinoId);
+            var response = await notificacionRepo.GetNotificacionUsuario(agenteDestinoId);
 
             return response;
         }
@@ -40,9 +38,16 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
-        public int GetNumeroNotifications(string agenteDestinoId)
+        public async Task<int> GetNumeroNotificationsAsync(string agenteDestinoId)
         {
-            return notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
+            return await notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
+        }
+
+        [HttpPost("SetNotification")]
+        public async Task<IActionResult> SetNotification(GetNotificacionResponse request)
+        {
+            var result = await notificacionRepo.SetNotificacion(request);
+            return Ok(result);
         }
 
         [HttpGet("ValidarNotificacion/{id}")]

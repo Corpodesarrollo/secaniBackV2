@@ -18,6 +18,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Text.Json;
+using static Core.Common.Estructuras;
 using Path = System.IO.Path;
 
 namespace Infra.Repositories
@@ -63,37 +64,116 @@ namespace Infra.Repositories
             }
         }
 
-        public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId)
+        public async Task<List<GetNotificacionResponse>> GetNotificacionUsuario(string AgenteDestinoId)
         {
-            List<GetNotificacionResponse> response = (from un in _context.NotificacionesUsuarios
-                                                      join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
-                                                      join uOrigen in _context.Users on un.AgenteOrigenId equals uOrigen.Id
-                                                      where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
-                                                      select new GetNotificacionResponse()
-                                                      {
-                                                          IdNotificacion = un.Id,
-                                                          TextoNotificacion = string.Join("", "El Agente de seguimiento ", uOrigen.FullName ?? string.Empty,
-                                                          " le ha asignado el caso No. ", un.SeguimientoId.ToString() ?? "N/A"),
-                                                          FechaNotificacion = un.FechaNotificacion,
-                                                          URLNotificacion = un.Url == null ? "" : un.Url
-                                                      }).ToList();
+            var response = await (from un in _context.NotificacionesUsuarios
+                                  join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
+                                  join ruDestino in _context.UserRoles on uDestino.Id equals ruDestino.UserId
+                                  join rDestino in _context.Roles on ruDestino.RoleId equals rDestino.Id
+                                  join uOrigen in _context.Users on un.AgenteOrigenId equals uOrigen.Id
+                                  join ruOrigen in _context.UserRoles on uOrigen.Id equals ruOrigen.UserId
+                                  join rOrigen in _context.Roles on ruOrigen.RoleId equals rOrigen.Id
+                                  where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
+                                  orderby un.IsDeleted, un.FechaNotificacion descending
+                                  select new GetNotificacionResponse()
+                                  {
+                                      IdNotificacion = un.Id,
+                                      IdSeguimiento = un.SeguimientoId,
+                                      TipoNotificacion = (TipoNotificacion)un.TipoNotificacionId,
+                                      AgenteDestino = uDestino.FullName,
+                                      RolAgenteDestino = rDestino.Name,
+                                      AgenteOrigen = uOrigen.FullName,
+                                      RolAgenteOrigen = rOrigen.Name,
+                                      FechaNotificacion = un.FechaNotificacion,
+                                      TextoNotificacion = un.Asunto,
+                                      Leida = un.IsDeleted,
+                                  }).Take(10).ToListAsync();
+
+            response.ForEach(n =>
+            {
+                switch (n.TipoNotificacion)
+                {
+                    case TipoNotificacion.AsignacionReasignacion:
+                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} le ha asignado el caso No. {n.IdSeguimiento:000000}";
+                        break;
+
+                    case TipoNotificacion.Manual:
+                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} le ha asignado el caso No. {n.IdSeguimiento:000000} al {n.RolAgenteDestino} - {n.AgenteDestino}";
+                        break;
+
+                    case TipoNotificacion.AsignacionSolicitudesCuidadores:
+                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} le ha solicitado un seguimiento sobre el caso No. {n.IdSeguimiento:000000}";
+                        break;
+
+                    case TipoNotificacion.RespuestasNotificacionesAlertas:
+                        n.TextoNotificacion = $"La alerta -Indicador categoría.Indicador subcategoría- No. {n.IdNotificacion:000000} del caso No. {n.IdSeguimiento:000000} del NNA -Nombres y apellidos- ha recibido una respuesta.";
+                        break;
+
+                    case TipoNotificacion.DiasAusencia:
+                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} ha reportado una ausencia para el -DD/MM/AAAA-";
+                        break;
+
+                    default:
+                        break;
+                }
+
+                switch (n.TipoNotificacion)
+                {
+                    case TipoNotificacion.AsignacionReasignacion or
+                    TipoNotificacion.Manual or
+                    TipoNotificacion.AsignacionSolicitudesCuidadores or
+                    TipoNotificacion.RespuestasNotificacionesAlertas:
+                        n.Url = $"/gestion/detalle_seguimiento/{n.IdSeguimiento}";
+                        break;
+
+                    case TipoNotificacion.DiasAusencia or
+                    TipoNotificacion.ActivacionInactivacionPerfil:
+                        n.Url = $"/usuarios/agentes-seguimiento/{n.IdSeguimiento}";
+                        break;
+
+                    default:
+                        break;
+                }
+            });
 
             return response;
         }
 
-        public int GetNumeroNotificacionUsuario(string AgenteDestinoId)
+        public async Task<int> GetNumeroNotificacionUsuario(string AgenteDestinoId)
         {
-            List<GetNotificacionResponse> response = (from un in _context.NotificacionesUsuarios
-                                                      join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
-                                                      join uOrigen in _context.Users on un.AgenteDestinoId equals uOrigen.Id
-                                                      where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
-                                                      select new GetNotificacionResponse()
-                                                      {
-                                                          TextoNotificacion = string.Join("", "El Agente de seguimiento ", uOrigen.FullName,
-                                                          " le ha asignado el caso No. ", un.SeguimientoId)
-                                                      }).ToList();
+            var count = await _context.NotificacionesUsuarios.Where(x => x.AgenteDestinoId == AgenteDestinoId && !x.IsDeleted).CountAsync();
+            return count;
+        }
 
-            return response.Count;
+        public async Task<bool> SetNotificacion(GetNotificacionResponse data)
+        {
+            try
+            {
+                if (data.TipoNotificacion == TipoNotificacion.ActivacionInactivacionPerfil)
+                {
+                    var user = await (from us in _context.Users
+                                      join ur in _context.UserRoles on us.Id equals ur.UserId
+                                      join r in _context.Roles on ur.RoleId equals r.Id
+                                      where us.Id == data.IdAgenteDestino
+                                      select new { us.FullName, us.Activo, r.Name }).FirstOrDefaultAsync();
+
+                    _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                    {
+                        TipoNotificacionId = (int)data.TipoNotificacion,
+                        AgenteOrigenId = data.IdAgenteOrigen,
+                        Asunto = $"El {user.Name} {user.FullName} se ha {(user.Activo == true ? "activado" : "inactivado")} en el sistema ",
+                        Url = $"/administracion/permisos"
+                    });
+                }
+
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
         public async Task<RespuestaResponse<long>> GenerarOficioNotificacion(OficioNotificacionRequest request)

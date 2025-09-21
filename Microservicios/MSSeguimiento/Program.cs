@@ -45,7 +45,7 @@ ReadConfig.FixLoadAppSettings(builder.Configuration);
 // Registro de los servicios
 builder.CustomConfigureServices();
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -149,28 +149,6 @@ app.UseHealthChecks("/health", new HealthCheckOptions
             status = "El servicio esta disponible"
         });
         await context.Response.WriteAsync(result);
-    }
-});
-
-app.Use(async (context, next) =>
-{
-    var origin = context.Request.Headers["Origin"].ToString();
-    var hasOrigin = !string.IsNullOrEmpty(origin);
-    var isPreflight = context.Request.Method == "OPTIONS";
-
-    Console.WriteLine($"🌐 Request: {context.Request.Method} {context.Request.Path}");
-    Console.WriteLine($"🌐 Origin: {(hasOrigin ? origin : "NO ORIGIN")}");
-    Console.WriteLine($"🌐 Preflight: {isPreflight}");
-    Console.WriteLine($"🌐 Cookies: {context.Request.Headers["Cookie"]}");
-    Console.WriteLine($"🌐 Auth: {context.Request.Headers["Authorization"]}");
-
-    await next();
-
-    Console.WriteLine($"🌐 Response Status: {context.Response.StatusCode}");
-    foreach (var header in context.Response.Headers)
-    {
-        if (header.Key.StartsWith("Access-Control-") || header.Key == "Set-Cookie")
-            Console.WriteLine($"   {header.Key}: {header.Value}");
     }
 });
 

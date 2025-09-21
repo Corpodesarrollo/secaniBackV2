@@ -6,13 +6,13 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
 {
     public class EditUserProfileCommand : IRequest<int>
     {
-        public string Id { get; set; }
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string Telefonos { get; set; } = string.Empty;
-        public string EntidadId { get; set; } = string.Empty;
-        public string Cargo { get; set; } = string.Empty;
-        public string Estado { get; set; } = string.Empty;
+        public string? Id { get; set; }
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? Telefonos { get; set; } = string.Empty;
+        public string? EntidadId { get; set; } = string.Empty;
+        public string? Cargo { get; set; } = string.Empty;
+        public bool? Estado { get; set; }
     }
 
     public class EditUserProfileCommandHandler : IRequestHandler<EditUserProfileCommand, int>
@@ -28,7 +28,7 @@ namespace Core.CQRS.MSUsuariosyRoles.Commands.User
 
         public async Task<int> Handle(EditUserProfileCommand request, CancellationToken cancellationToken)
         {
-            if (request.Estado != "Activo")
+            if (request.Estado != true)
             {
                 var reasignados = await _seguimientoRepo.AsignacionAutomaticaReasignacion();
             }

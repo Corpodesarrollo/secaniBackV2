@@ -115,6 +115,11 @@ builder.Services.AddSingleton<ITokenGenerator>(provider =>
         config["JwtSettings:Audience"],
         config["JwtSettings:ExpiryMinutes"]);
 });
+
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
 builder.CustomConfigureServices();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
@@ -173,19 +178,6 @@ var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Q
 builder.Services.AddHostedService<QuartzHostedService>();
 
 builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Quartz"));
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    // Solo dígitos
-    options.Password.RequireDigit = false;             // Requiere al menos un dígito
-    options.Password.RequireLowercase = false;        // No requiere minúsculas
-    options.Password.RequireUppercase = false;        // No requiere mayúsculas
-    options.Password.RequireNonAlphanumeric = false;  // No requiere símbolos
-    options.Password.RequiredLength = 3;              // Mínimo 3 caracteres
-    options.Password.RequiredUniqueChars = 0;         // Al menos un carácter único
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));

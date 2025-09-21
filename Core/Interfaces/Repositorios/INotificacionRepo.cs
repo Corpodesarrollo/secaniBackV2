@@ -9,8 +9,8 @@ namespace Core.Interfaces.Repositorios
 {
     public interface INotificacionRepo
     {
-        public List<GetNotificacionResponse> GetNotificacionUsuario(string AgenteDestinoId);
-        public int GetNumeroNotificacionUsuario(string AgenteDestinoId);
+        public Task<List<GetNotificacionResponse>> GetNotificacionUsuario(string AgenteDestinoId);
+        public Task<int> GetNumeroNotificacionUsuario(string AgenteDestinoId);
         public void EliminarNotificacion(EliminarNotificacionRequest request);
         List<GetNotificacionesEntidadResponse> RepoNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId);
         List<GetListaCasosResponse> RepoListaCasosNotificacion(string eapbId, int epsId);
@@ -28,5 +28,6 @@ namespace Core.Interfaces.Repositorios
         Task<RespuestaResponse<string>> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request);
         Task<RespuestaResponse<OficioNotificacionRequest>> VerOficioNotificacion(long id);
         Task<RespuestaResponse<bool>> ValidarNotificacion(int id);
+        Task<bool> SetNotificacion(GetNotificacionResponse data);
     }
 }
