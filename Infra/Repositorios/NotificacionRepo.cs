@@ -154,7 +154,7 @@ namespace Infra.Repositories
                     var user = await (from us in _context.Users
                                       join ur in _context.UserRoles on us.Id equals ur.UserId
                                       join r in _context.Roles on ur.RoleId equals r.Id
-                                      where us.Id == data.IdAgenteDestino
+                                      where us.Id == data.IdAgenteOrigen
                                       select new { us.FullName, us.Activo, r.Name }).FirstOrDefaultAsync();
 
                     _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
@@ -165,9 +165,25 @@ namespace Infra.Repositories
                         Url = $"/administracion/permisos"
                     });
                 }
+                else if (data.TipoNotificacion == TipoNotificacion.DiasAusencia)
+                {
+                    var user = await (from us in _context.Users
+                                      join ur in _context.UserRoles on us.Id equals ur.UserId
+                                      join r in _context.Roles on ur.RoleId equals r.Id
+                                      where us.Id == data.IdAgenteOrigen
+                                      select new { us.FullName, r.Name }).FirstOrDefaultAsync();
 
+                    _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                    {
+                        TipoNotificacionId = (int)data.TipoNotificacion,
+                        AgenteOrigenId = data.IdAgenteOrigen,
+                        Asunto = $"El {user.Name} {user.FullName} {data.TextoNotificacion}",
+                        Url = $"/administracion/permisos"
+                    });
+                }
 
                 await _context.SaveChangesAsync();
+
                 return true;
             }
             catch (Exception ex)
