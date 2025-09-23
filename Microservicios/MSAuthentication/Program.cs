@@ -33,21 +33,14 @@ using Infra.Repositorios.MSPermisos;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
 using Infra.Repositorios.Reportes;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MSEntidad.Api.Extensions;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
-using SISPRO.TRV.Entity.Exceptions;
 using SISPRO.TRV.Entity.Helpers;
 using SISPRO.TRV.General;
-using SISPRO.TRV.General.Helpers;
-using SISPRO.TRV.Web.MVCCore;
 using SISPRO.TRV.Web.MVCCore.Extensions;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
@@ -106,16 +99,6 @@ builder.Services.AddMediatR(cfg =>
     // Agrega otros assemblies según necesites
 });
 
-builder.Services.AddSingleton<ITokenGenerator>(provider =>
-{
-    var config = provider.GetRequiredService<IConfiguration>();
-    return new TokenGenerator(
-        config["JwtSettings:Secret"],
-        config["JwtSettings:Issuer"],
-        config["JwtSettings:Audience"],
-        config["JwtSettings:ExpiryMinutes"]);
-});
-
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
@@ -130,7 +113,6 @@ builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
 builder.Services.AddScoped(typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IFuncionalidadService, FuncionalidadService>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
 builder.Services.AddScoped<IGenericRepository<TPCIE10>, GenericRepository<TPCIE10>>();
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
@@ -138,7 +120,6 @@ builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
 builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
 builder.Services.AddScoped<IDashboardRepo, DashboardRepo>();
-builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IReporteDepuracionRepository, ReporteDepuracionRepository>();
@@ -168,13 +149,6 @@ builder.Services.AddScoped<IEmailConfigurationRepo, EmailConfigurationRepo>();
 
 var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
 
-// Register the jobs and triggers
-//builder.Services.AddSingleton<AsignacionAutomaticaJob>();
-//builder.Services.AddSingleton(new JobSchedule(
-//    jobType: typeof(AsignacionAutomaticaJob),
-//    cronExpression: temporizadorAsignacionAutomatica,
-//timeZone: timeZone));
-
 builder.Services.AddHostedService<QuartzHostedService>();
 
 builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Quartz"));
@@ -193,51 +167,6 @@ WebApplication app = builder.Build();
 app.SetLogger();
 ReadConfig.SetCultures();
 app.UseHsts();
-app.UseExceptionHandler(delegate (IApplicationBuilder errorApp)
-{
-    errorApp.Run(async delegate (HttpContext pContext)
-    {
-        Exception ex = pContext.Features.Get<IExceptionHandlerPathFeature>()?.Error;
-        SISPRO.TRV.General.Log.Error(ex);
-        pContext.Response.StatusCode = (int)ex.GetHttpStatusCode();
-        RequestHeaders reqHeaders = pContext.Request.GetTypedHeaders();
-        if (ex.GetBaseException() is UserSessionIsClosedException)
-        {
-            CookieOptions cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                Domain = ReadConfig.PageDomain,
-                SameSite = SameSiteMode.Lax
-            };
-            pContext.Response.Cookies.Delete(ReadConfig.TicketName, cookieOptions);
-        }
-
-        string messageContents;
-        if (reqHeaders.AcceptJSONFirst())
-        {
-            pContext.Response.ContentType = "application/json";
-            messageContents = ex.GetBasicErrorMessage().SerializeJSON();
-        }
-        else if (reqHeaders.AcceptXMLFirst())
-        {
-            pContext.Response.ContentType = "application/xml";
-            messageContents = SerializeHelper.SerializeXML(ex.GetBasicErrorMessage(), false, true, true, null);
-        }
-        else if (reqHeaders.AcceptHTMLFirst())
-        {
-            pContext.Response.ContentType = "text/html";
-            messageContents = ex.GetBasicErrorMessageHTML();
-        }
-        else
-        {
-            pContext.Response.ContentType = "text/plain";
-            messageContents = ex.GetClientExtendedMessage();
-        }
-
-        await pContext.Response.WriteAsync(messageContents);
-    });
-});
 app.UseRouting();
 app.UseRequestLocalization();
 app.UseResponseCompression();
@@ -247,34 +176,6 @@ app.UseForwardedHeaders();
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == HttpMethods.Options)
-    {
-        context.Response.StatusCode = 204; // No Content
-        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-        return;
-    }
-
-    await next();
-});
-app.UseEndpoints(delegate (IEndpointRouteBuilder endpoints)
-{
-    endpoints.MapControllers();
-    endpoints.MapHealthChecks("/Health", new HealthCheckOptions
-    {
-        AllowCachingResponses = false,
-        ResultStatusCodes =
-                {
-                    [HealthStatus.Healthy] = 200,
-                    [HealthStatus.Degraded] = 200,
-                    [HealthStatus.Unhealthy] = 503
-                }
-    }).AllowAnonymous();
-});
 app.UseCustomSwagger();
 
 app.UseStaticFiles();
