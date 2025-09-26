@@ -2,7 +2,6 @@
 using Core.DTOs.MSPermisos;
 using Core.Interfaces.Repositorios;
 using Core.request;
-using Core.response;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -19,19 +18,11 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpPost("MenuXRolId")]
-        public List<GetVwMenuResponse> MenuXRolId(GetVwMenuRequest request)
+        public IActionResult MenuXRolId(GetVwMenuRequest request)
         {
-            List<GetVwMenuResponse> response = new();
+            var result = _service.MenuXRolId(request, cancellationToken: default);
 
-            response = _service.MenuXRolId(request, cancellationToken: default);
-
-            return response;
-        }
-
-        [HttpOptions("MenuXRolId")]
-        public IActionResult Options()
-        {
-            return Ok();
+            return Ok(result);
         }
 
         [HttpGet("MenuXRolId")]

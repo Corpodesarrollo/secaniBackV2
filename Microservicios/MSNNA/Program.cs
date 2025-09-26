@@ -14,8 +14,6 @@ using Core.Services.Llamadas;
 using Core.Services.MSTablasParametricas;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
-using Core.Validators.MSPermisos;
-using Infra;
 using Infra.Middleware;
 using Infra.Repositories;
 using Infra.Repositories.Common;
@@ -23,7 +21,6 @@ using Infra.Repositorios;
 using Infra.Repositorios.Llamadas;
 using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using MSNNA.Api.Controllers;
 using MSNNA.Api.Extensions;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
@@ -89,6 +86,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins(
+            "https://secani.sispro.gov.co",
             "http://192.168.152.17:8140",
             "https://secani.sispropreprod.gov.co",
             "http://192.168.110.11:8140",
@@ -99,9 +97,6 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
-
-builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
-                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
 
 WebApplication app = builder.Build();
 

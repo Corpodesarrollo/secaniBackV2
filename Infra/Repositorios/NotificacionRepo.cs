@@ -149,6 +149,12 @@ namespace Infra.Repositories
         {
             try
             {
+                var coordinadores = await (from u in _context.Users
+                                           join ur in _context.UserRoles on u.Id equals ur.UserId
+                                           join r in _context.Roles on ur.RoleId equals r.Id
+                                           where r.Id == "311882D4-EAD0-4B0B-9C5D-4A434D49D16D" //rol coordinador
+                                           select u).ToListAsync();
+
                 if (data.TipoNotificacion == TipoNotificacion.ActivacionInactivacionPerfil)
                 {
                     var user = await (from us in _context.Users
@@ -157,13 +163,15 @@ namespace Infra.Repositories
                                       where us.Id == data.IdAgenteOrigen
                                       select new { us.FullName, us.Activo, r.Name }).FirstOrDefaultAsync();
 
-                    _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
-                    {
-                        TipoNotificacionId = (int)data.TipoNotificacion,
-                        AgenteOrigenId = data.IdAgenteOrigen,
-                        Asunto = $"El {user.Name} {user.FullName} se ha {(user.Activo == true ? "activado" : "inactivado")} en el sistema ",
-                        Url = $"/administracion/permisos"
-                    });
+                    foreach (var coord in coordinadores)
+                        _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                        {
+                            TipoNotificacionId = (int)data.TipoNotificacion,
+                            AgenteDestinoId = coord.Id,
+                            AgenteOrigenId = data.IdAgenteOrigen,
+                            Asunto = $"El {user.Name} {user.FullName} se ha {(user.Activo == true ? "activado" : "inactivado")} en el sistema ",
+                            Url = $"/administracion/permisos"
+                        });
                 }
                 else if (data.TipoNotificacion == TipoNotificacion.DiasAusencia)
                 {
@@ -173,13 +181,15 @@ namespace Infra.Repositories
                                       where us.Id == data.IdAgenteOrigen
                                       select new { us.FullName, r.Name }).FirstOrDefaultAsync();
 
-                    _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
-                    {
-                        TipoNotificacionId = (int)data.TipoNotificacion,
-                        AgenteOrigenId = data.IdAgenteOrigen,
-                        Asunto = $"El {user.Name} {user.FullName} {data.TextoNotificacion}",
-                        Url = $"/administracion/permisos"
-                    });
+                    foreach (var coord in coordinadores)
+                        _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                        {
+                            TipoNotificacionId = (int)data.TipoNotificacion,
+                            AgenteDestinoId = coord.Id,
+                            AgenteOrigenId = data.IdAgenteOrigen,
+                            Asunto = $"El {user.Name} {user.FullName} {data.TextoNotificacion}",
+                            Url = $"/administracion/permisos"
+                        });
                 }
 
                 await _context.SaveChangesAsync();

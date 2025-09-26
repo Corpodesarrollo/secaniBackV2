@@ -19,7 +19,6 @@ using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
-using Core.Validators.MSPermisos;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositories.Common;
@@ -120,6 +119,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin", builder =>
     {
         builder.WithOrigins(
+                "https://secani.sispro.gov.co",
                 "http://192.168.152.17:8140",
                 "https://secani.sispropreprod.gov.co",
                 "http://192.168.110.11:8140",
@@ -133,9 +133,6 @@ builder.Services.AddCors(options =>
             .WithExposedHeaders("Content-Disposition", "Set-Cookie"); // Headers expuestos
     });
 });
-
-builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
-                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
 
 WebApplication app = builder.Build();
 

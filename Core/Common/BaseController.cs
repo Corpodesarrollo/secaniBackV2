@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Core.Common
 {
 
     [Route("[controller]")]
-    //[Authorize]
+    [Authorize]
     [ApiController]
     public class BaseController() : Controller { }
 }
