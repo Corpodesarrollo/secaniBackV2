@@ -8,7 +8,7 @@ using MSSeguimiento.Core.Modelos;
 
 namespace Infra
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
             : base(dbContextOptions)
@@ -85,6 +85,8 @@ namespace Infra
 
             modelBuilder.Entity<BiStgMunicipio>()
                 .HasNoKey();
+
+            modelBuilder.Entity<ApplicationRole>().ToTable("AspNetRoles");
 
             // Configuración para `FiltroNNA`
             modelBuilder.Entity<FiltroNNA>(entity =>

@@ -17,6 +17,7 @@ namespace Core.Modelos
         public DateTime FechaNotificacion { get; set; }
         public string Accion { get; set; }
         public bool CoordinadorOAdministrador { get; set; }
-        public string? Url {  get; set; }
+        public string? Asunto { get; set; }
+        public string? Url { get; set; }
     }
 }

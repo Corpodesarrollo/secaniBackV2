@@ -3,7 +3,6 @@ using Core.CQRS.MSUsuariosyRoles.Commands.User;
 using Core.CQRS.MSUsuariosyRoles.Queries.User;
 using Core.DTOs.MSUsuariosyRoles;
 using Core.Interfaces.Repositorios;
-using Core.Response;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,8 +46,15 @@ namespace MSAuthentication.Api.Controllers
         [ProducesDefaultResponseType(typeof(UserDetailsResponseDTO))]
         public async Task<IActionResult> GetUserDetails(string userId)
         {
-            var result = await _mediator.Send(new GetUserDetailsQuery() { UserId = userId });
-            return Ok(result);
+            try
+            {
+                var result = await _mediator.Send(new GetUserDetailsQuery() { UserId = userId });
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("GetUserDetailsByUserName/{userName}")]

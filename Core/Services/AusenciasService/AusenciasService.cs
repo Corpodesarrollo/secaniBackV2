@@ -1,17 +1,22 @@
 ﻿using Core.DTOs.AusenciasUsuario;
+using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.AusenciasUsuario;
 using Core.Interfaces.Services.AusenciasUsuario;
 using Core.Modelos;
+using static Core.Common.Estructuras;
 
 namespace Core.Services.AusenciasService
 {
     public class AusenciasService : IAusenciasService
     {
         private readonly IAusenciasRepository _repo;
+        private readonly INotificacionRepo _notificacionRepo;
+        private Task<bool> _;
 
-        public AusenciasService(IAusenciasRepository repo)
+        public AusenciasService(IAusenciasRepository repo, INotificacionRepo notificacionRepo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _notificacionRepo = notificacionRepo;
         }
 
         // ---------------- Mapeos ----------------
@@ -45,6 +50,15 @@ namespace Core.Services.AusenciasService
 
             var entity = ToEntity(dto);
             var result = await _repo.CreateAsync(entity, ct);
+
+            var noti = await _notificacionRepo.SetNotificacion(new()
+            {
+                IdAgenteOrigen = dto.UsuarioId,
+                TipoNotificacion = TipoNotificacion.DiasAusencia,
+                TextoNotificacion = $"ha reportado una ausencia para el {dto.FechaAusencia:dd/MM/yyyy}",
+                FechaNotificacion = DateTime.UtcNow
+            });
+
             return result.Map(ToDto);
         }
 
