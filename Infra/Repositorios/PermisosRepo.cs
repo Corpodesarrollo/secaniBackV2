@@ -197,6 +197,21 @@ namespace Infra.Repositories
             return entitiesDto;
         }
 
+        public async Task<PermisoResponseDTO> CansByPathAndRoleId(string path, string roleId, CancellationToken cancellationToken)
+        {
+            var (permiso, modulo) = await _repository.CansByPathAndRoleId(path, roleId, cancellationToken);
+            var permisoDto = new PermisoResponseDTO();
+            permisoDto.FuncionalidadId = (int)permiso.Id;
+            permisoDto.ModuloComponenteObjetoId = permiso.ModuloComponenteObjetoId;
+            permisoDto.RoleId = roleId;
+            permisoDto.Funcionalidad = modulo;
+            permisoDto.CanAdd = (permiso.CanAdd != null && permiso.CanAdd == true);
+            permisoDto.CanEdit = (permiso.CanEdit != null && permiso.CanEdit == true);
+            permisoDto.CanDele = (permiso.CanDele != null && permiso.CanDele == true);
+            permisoDto.CanView = (permiso.CanView != null && permiso.CanView == true);
+            return permisoDto;
+        }
+
         public async Task<PermisoResponseDTO> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             var cacheKeyId = cacheKey + id.ToString();

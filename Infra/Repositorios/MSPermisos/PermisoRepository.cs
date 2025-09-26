@@ -30,6 +30,16 @@ namespace Infra.Repositorios.MSPermisos
             return permisosFiltrados;
         }
 
+        public async Task<(Permisos, TPModuloComponenteObjeto)> CansByPathAndRoleId(string path, string roleId, CancellationToken cancellationToken)
+        {
+            var permiso = await (from p in _context.TPermisos
+                                 join mco in _context.TPModuloComponenteObjeto on p.ModuloComponenteObjetoId equals mco.Id
+                                 where p.RoleId == roleId && mco.Path == path
+                                 select p).FirstOrDefaultAsync();
+            var modulo = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Path == path);
+            return (permiso, modulo);
+        }
+
         public async Task<IList<Permisos>> GetPermisosByRoleandModulo(string RoleId, int ModuloId, CancellationToken cancellationToken)
         {
             var funcionalidades = await _context.TPModuloComponenteObjeto.Where(x => x.ModuloComponenteObjetoIdPadre == ModuloId).ToListAsync();
