@@ -73,6 +73,12 @@ namespace MSAuthentication.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("CansByPathAndRoleId/{path}/{roleId}")]
+        public async Task<IActionResult> CansByPathAndRoleId(string path, string roleId)
+        {
+            var result = await _service.CansByPathAndRoleId(path, roleId, cancellationToken: default);
+            return Ok(result);
+        }
 
         [HttpPost]
         public async Task<IActionResult> Add(PermisoRequestDTO dto)

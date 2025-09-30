@@ -15,6 +15,7 @@ namespace Core.Interfaces.Repositorios
         Task<IEnumerable<PermisoResponseDTO>> GetAllByModuloIdAsync(int ModuloId, CancellationToken cancellationToken);
         Task<IEnumerable<PermisoResponseDTO>> GetAllByModuloPadreIdAsync(int ModuloId, CancellationToken cancellationToken);
         Task<IEnumerable<PermisoResponseDTO>> GetAllByModuloandRoleAsync(string RoleId, int ModuloId, CancellationToken cancellationToken);
+        Task<PermisoResponseDTO> CansByPathAndRoleId(string path, string roleId, CancellationToken cancellationToken);
 
         //Commands
         Task<(bool, PermisoResponseDTO)> AddAsync(PermisoRequestDTO entity, CancellationToken cancellationToken);
