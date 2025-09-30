@@ -200,6 +200,21 @@ namespace Infra.Repositories
         public async Task<PermisoResponseDTO> CansByPathAndRoleId(string path, string roleId, CancellationToken cancellationToken)
         {
             var (permiso, modulo) = await _repository.CansByPathAndRoleId(path, roleId, cancellationToken);
+            if (permiso == null || modulo == null)
+            {
+                return new PermisoResponseDTO
+                {
+                    FuncionalidadId = 0,
+                    ModuloComponenteObjetoId = 0,
+                    RoleId = roleId,
+                    Funcionalidad = null,
+                    CanAdd = false,
+                    CanEdit = false,
+                    CanDele = false,
+                    CanView = false
+                };
+            }
+
             var permisoDto = new PermisoResponseDTO();
             permisoDto.FuncionalidadId = (int)permiso.Id;
             permisoDto.ModuloComponenteObjetoId = permiso.ModuloComponenteObjetoId;
