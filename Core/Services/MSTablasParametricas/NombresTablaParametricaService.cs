@@ -20,7 +20,7 @@ namespace Core.Services.MSTablasParametricas
         {
             var items = await _repository.GetAllAsync();
 
-            var itemsDTO = items.Adapt<IEnumerable<TablaParametricaDTO>>();
+            var itemsDTO = items.Adapt<List<TablaParametricaDTO>>();
             foreach ( var item in itemsDTO ) {
                 var itemPadre = item.TablaPadre == null ? null : await _repository.GetByIdAsync(item.TablaPadre);
                 if (itemPadre != null)

@@ -79,7 +79,7 @@ namespace Infra.Repositorios.MSPermisos
                 .Where(m =>
                     m.ModuloComponenteObjetoIdPadre == padreId &&
                     m.Nombre != null &&
-                    EF.Functions.Like(m.Nombre.ToLower(), $"%{hijoNombre.ToLower()}%"))
+                    EF.Functions.Like(m.Path.ToLower(), $"%{hijoNombre.ToLower()}%"))
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (hijo == null) return (null, null);
