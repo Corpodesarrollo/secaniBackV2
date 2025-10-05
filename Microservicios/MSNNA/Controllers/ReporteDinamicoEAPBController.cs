@@ -1,10 +1,12 @@
 ﻿using Core.Common;
 using Core.DTOs.Reportes;
 using Core.Interfaces.Services.Reportes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSNNA.Api.Controllers
 {
+    [AllowAnonymous]
     public class ReporteDinamicoEAPBController(IReporteDinamicoEAPBService service) : BaseController
     {
         private readonly IReporteDinamicoEAPBService _service = service;

@@ -53,9 +53,13 @@ namespace Infra.Repositorios.Reportes
                 {
                     int? eapbIdInt = grupo.Key ?? 0;
 
-                    var eapbName = grupo.Key == null
-                        ? string.Empty
-                        : (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", eapbIdInt, cancellationToken))?.FirstOrDefault()?.Nombre ?? string.Empty;
+
+                    var eapbName = string.Empty;
+                    if(grupo.Key != null)
+                    {
+                        var list = await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", eapbIdInt, cancellationToken);
+                        eapbName = (list is null) ? string.Empty : list.FirstOrDefault()?.Nombre ?? string.Empty;
+                    }
 
                     reporte.Add(new ReporteDinamicoEAPBDTO
                     {
