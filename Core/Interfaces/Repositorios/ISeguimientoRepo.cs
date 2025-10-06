@@ -1,5 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -32,7 +33,7 @@ namespace Core.Interfaces.Repositorios
         Task<long> GetCntSeguimientoByNNA(long id);
         Task<long> SetSeguimiento(SetSeguimientoRequest request);
         Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
-        Task<List<UsuarioAsignado>> AsignacionAutomatica();
+        Task<List<UsuarioAsignado>> AsignacionAutomatica((long, string, string)? seguimientoDef = null, ApplicationUser? user = null);
         Task<SeguimientoDto[]> GetSeguimientosEstados(string id);
         Task<SeguimientoDto[]> GetSeguimientosCuidador(string id);
         Task<List<UsuarioAsignado>> AsignacionAutomaticaReagendar();

@@ -2,6 +2,7 @@
 using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Microsoft.AspNetCore.Mvc;
+using SISPRO.TRV.Web.MVCCore;
 
 namespace MSNNA.Api.Controllers
 {
@@ -45,7 +46,8 @@ namespace MSNNA.Api.Controllers
         [HttpPost]
         public async Task<ActionResult> AddAsync(ReportesSIVIGILADto data)
         {
-            var (success, response) = await _reportesSIVIGILARepo.AddAsync(data);
+            var user = this.GetUser();
+            var (success, response) = await _reportesSIVIGILARepo.AddAsync(data, user);
             if (!success)
                 return BadRequest();
 

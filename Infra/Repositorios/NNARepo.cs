@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using SISPRO.TRV.Entity;
+using static Core.Common.Estructuras;
 
 
 namespace Infra.Repositorios
@@ -1391,7 +1392,7 @@ namespace Infra.Repositorios
 
         }
 
-        public void AsignacionManual(AsignacionManualRequest request)
+        public async Task AsignacionManual(AsignacionManualRequest request)
         {
             UsuarioAsignado usuarioAsignado;
             List<UsuarioAsignado> usuarios = new();
@@ -1411,6 +1412,17 @@ namespace Infra.Repositorios
 
             _context.UsuarioAsignados.AddRange(usuarios);
             _context.SaveChanges();
+
+            foreach (int i in request.Segumientos)
+            {
+                var noti = await _notificacionRepo.SetNotificacion(new()
+                {
+                    TipoNotificacion = TipoNotificacion.RespuestasNotificacionesAlertas,
+                    IdAgenteOrigen = request.IdUsuarioOrigen,
+                    IdAgenteDestino = request.IdUsuario,
+                    IdSeguimiento = i
+                });
+            }
         }
 
         public async Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file)
@@ -1749,5 +1761,6 @@ namespace Infra.Repositorios
                 throw new Exception("No se encontró un seguimiento para el NNA especificado.");
             }
         }
+
     }
 }

@@ -32,8 +32,9 @@ namespace Infra.Repositories
         private readonly IReportesSIVIGILARepo _reportesSIVIGILARepo;
         private readonly SmtpClient clienteSmtp;
         private readonly string fromMail;
+        private readonly ISeguimientoRepo _seguimientoRepo;
 
-        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env, ISeguimientoRepo seguimientoRepo)
         {
             try
             {
@@ -41,6 +42,7 @@ namespace Infra.Repositories
                 _adjuntosRepo = adjuntosRepo;
                 _storageService = storageService;
                 _reportesSIVIGILARepo = reportesSIVIGILARepo;
+                _seguimientoRepo = seguimientoRepo;
                 _env = env;
 
                 // Obtener configuraciones de correo
@@ -89,53 +91,6 @@ namespace Infra.Repositories
                                       Leida = un.IsDeleted,
                                   }).Take(10).ToListAsync();
 
-            response.ForEach(n =>
-            {
-                switch (n.TipoNotificacion)
-                {
-                    case TipoNotificacion.AsignacionReasignacion:
-                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} le ha asignado el caso No. {n.IdSeguimiento:000000}";
-                        break;
-
-                    case TipoNotificacion.Manual:
-                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} le ha asignado el caso No. {n.IdSeguimiento:000000} al {n.RolAgenteDestino} - {n.AgenteDestino}";
-                        break;
-
-                    case TipoNotificacion.AsignacionSolicitudesCuidadores:
-                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} le ha solicitado un seguimiento sobre el caso No. {n.IdSeguimiento:000000}";
-                        break;
-
-                    case TipoNotificacion.RespuestasNotificacionesAlertas:
-                        n.TextoNotificacion = $"La alerta -Indicador categoría.Indicador subcategoría- No. {n.IdNotificacion:000000} del caso No. {n.IdSeguimiento:000000} del NNA -Nombres y apellidos- ha recibido una respuesta.";
-                        break;
-
-                    case TipoNotificacion.DiasAusencia:
-                        n.TextoNotificacion = $"El {n.RolAgenteOrigen} - {n.AgenteOrigen} ha reportado una ausencia para el -DD/MM/AAAA-";
-                        break;
-
-                    default:
-                        break;
-                }
-
-                switch (n.TipoNotificacion)
-                {
-                    case TipoNotificacion.AsignacionReasignacion or
-                    TipoNotificacion.Manual or
-                    TipoNotificacion.AsignacionSolicitudesCuidadores or
-                    TipoNotificacion.RespuestasNotificacionesAlertas:
-                        n.Url = $"/gestion/detalle_seguimiento/{n.IdSeguimiento}";
-                        break;
-
-                    case TipoNotificacion.DiasAusencia or
-                    TipoNotificacion.ActivacionInactivacionPerfil:
-                        n.Url = $"/usuarios/agentes-seguimiento/{n.IdSeguimiento}";
-                        break;
-
-                    default:
-                        break;
-                }
-            });
-
             return response;
         }
 
@@ -155,7 +110,78 @@ namespace Infra.Repositories
                                            where r.Id == "311882D4-EAD0-4B0B-9C5D-4A434D49D16D" //rol coordinador
                                            select u).ToListAsync();
 
-                if (data.TipoNotificacion == TipoNotificacion.ActivacionInactivacionPerfil)
+                if (data.TipoNotificacion == TipoNotificacion.AsignacionSolicitudesCuidadores)
+                {
+                    var userOrigen = await (from us in _context.Users
+                                            join ur in _context.UserRoles on us.Id equals ur.UserId
+                                            join r in _context.Roles on ur.RoleId equals r.Id
+                                            where us.Id == data.IdAgenteOrigen
+                                            select new { us.FullName, r.Name }).FirstOrDefaultAsync();
+
+                    var userDestino = await (from us in _context.Users
+                                             join ur in _context.UserRoles on us.Id equals ur.UserId
+                                             join r in _context.Roles on ur.RoleId equals r.Id
+                                             where us.Id == data.IdAgenteDestino
+                                             select new { us.FullName, r.Name }).FirstOrDefaultAsync();
+
+                    var asunto = data.TextoNotificacion
+                            .Replace("-RolOrigen-", userOrigen.Name)
+                            .Replace("-NombresOrigen-", userOrigen.Name)
+                            .Replace("-RolDestino-", userDestino.Name)
+                            .Replace("-NombresDestino-", userDestino.FullName);
+
+                    if (data.Administrador)
+                        foreach (var coord in coordinadores)
+                            _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                            {
+                                TipoNotificacionId = (int)data.TipoNotificacion,
+                                AgenteDestinoId = coord.Id,
+                                AgenteOrigenId = data.IdAgenteOrigen,
+                                Asunto = asunto,
+                                Url = $"/gestion/detalle_seguimiento/{data.IdSeguimiento}"
+                            });
+                    else
+                        _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                        {
+                            TipoNotificacionId = (int)data.TipoNotificacion,
+                            AgenteDestinoId = data.IdAgenteDestino,
+                            AgenteOrigenId = data.IdAgenteOrigen,
+                            Asunto = asunto,
+                            Url = $"/gestion/detalle_seguimiento/{data.IdSeguimiento}"
+                        });
+
+                }
+                else if (data.TipoNotificacion == TipoNotificacion.Manual)
+                {
+                    var userOrigen = await (from us in _context.Users
+                                            join ur in _context.UserRoles on us.Id equals ur.UserId
+                                            join r in _context.Roles on ur.RoleId equals r.Id
+                                            where us.Id == data.IdAgenteOrigen
+                                            select new { us.FullName, r.Name }).FirstOrDefaultAsync();
+
+                    var userDestino = await (from us in _context.Users
+                                             join ur in _context.UserRoles on us.Id equals ur.UserId
+                                             join r in _context.Roles on ur.RoleId equals r.Id
+                                             where us.Id == data.IdAgenteDestino
+                                             select new { us.FullName, r.Name }).FirstOrDefaultAsync();
+
+                    var nna = await (from s in _context.Seguimientos
+                                     join n in _context.NNAs on s.NNAId equals n.Id
+                                     where s.Id == data.IdSeguimiento
+                                     select new { n.Id }).FirstOrDefaultAsync();
+
+
+                    _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                    {
+                        TipoNotificacionId = (int)data.TipoNotificacion,
+                        AgenteDestinoId = data.IdAgenteDestino,
+                        AgenteOrigenId = data.IdAgenteOrigen,
+                        Asunto = $"El {userOrigen.Name} {userOrigen.FullName} le ha asignado el caso No. {nna.Id:000000} al {userDestino.Name} {userDestino.FullName}",
+                        Url = $"/gestion/detalle_seguimiento/{data.IdSeguimiento}",
+                    });
+
+                }
+                else if (data.TipoNotificacion == TipoNotificacion.ActivacionInactivacionPerfil)
                 {
                     var user = await (from us in _context.Users
                                       join ur in _context.UserRoles on us.Id equals ur.UserId

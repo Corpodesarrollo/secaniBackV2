@@ -1,6 +1,7 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -12,6 +13,7 @@ using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
@@ -660,14 +662,14 @@ namespace Infra.Repositorios
             }
         }
 
-        public async Task<List<UsuarioAsignado>> AsignacionAutomatica()
+        public async Task<List<UsuarioAsignado>> AsignacionAutomatica((long, string, string)? seguimientoDef = null, ApplicationUser? user = null)
         {
             var seguimientosAsignados = new List<UsuarioAsignado>();
 
-            var seguimientosNoAsignados = await CargarSeguimientos();
+            var seguimientosNoAsignados = seguimientoDef != null ? [seguimientoDef.Value] : await CargarSeguimientos();
 
             var fecha = DateTime.Now.Date;
-            var revisores = await CargarRevisores(fecha);
+            var revisores = await CargarRevisores(fecha, user);
 
             while (seguimientosNoAsignados.Count > 0)
             {
@@ -1112,28 +1114,48 @@ namespace Infra.Repositorios
                           }).AnyAsync();
         }
 
-        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha)
+        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha, IdentityUser? user)
         {
             var fechaValidar = fecha;
             var diaSemana = (int)fechaValidar.DayOfWeek;
 
-            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
-            return await (from ur in _context.UserRoles
-                          join r in _context.Roles on ur.RoleId equals r.Id
-                          join u in _context.Users on ur.UserId equals u.Id
-                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
-                          join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
-                          from aus in a.DefaultIfEmpty()
-                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
-                          select new UsuariosHorariosDto
-                          {
-                              UserId = u.Id,
-                              Nombre = u.FullName,
-                              Email = u.Email,
-                              Fecha = h.Fecha,
-                              HoraEntrada = h.HoraEntrada,
-                              HoraSalida = h.HoraSalida
-                          }).ToListAsync();
+            if (user != null)
+            {
+                return await (from u in _context.Users
+                              join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                              join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                              from aus in a.DefaultIfEmpty()
+                              where u.Id == user.Id && u.Activo == true && h.Dia == diaSemana && aus == null
+                              select new UsuariosHorariosDto
+                              {
+                                  UserId = u.Id,
+                                  Nombre = u.FullName,
+                                  Email = u.Email,
+                                  Fecha = h.Fecha,
+                                  HoraEntrada = h.HoraEntrada,
+                                  HoraSalida = h.HoraSalida
+                              }).ToListAsync();
+            }
+            else
+            {
+                //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+                return await (from ur in _context.UserRoles
+                              join r in _context.Roles on ur.RoleId equals r.Id
+                              join u in _context.Users on ur.UserId equals u.Id
+                              join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                              join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                              from aus in a.DefaultIfEmpty()
+                              where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
+                              select new UsuariosHorariosDto
+                              {
+                                  UserId = u.Id,
+                                  Nombre = u.FullName,
+                                  Email = u.Email,
+                                  Fecha = h.Fecha,
+                                  HoraEntrada = h.HoraEntrada,
+                                  HoraSalida = h.HoraSalida
+                              }).ToListAsync();
+            }
         }
 
         public async Task<UserDto[]> CargarRevisores()

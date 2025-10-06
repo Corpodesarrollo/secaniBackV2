@@ -5,7 +5,10 @@ using Core.Modelos.Common;
 using Core.Request;
 using Core.Services.StorageService;
 using Infra.Repositories.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SISPRO.TRV.Entity;
+using static Core.Common.Estructuras;
 
 namespace Infra.Repositorios
 {
@@ -15,14 +18,20 @@ namespace Infra.Repositorios
         private readonly GenericRepository<ReportesSIVIGILA> _repository;
         private readonly IStorageService _storageService;
         private readonly Lazy<INotificacionRepo> _notificacionRepo;
+        private INotificacionRepo notificacionRepo;
+        private readonly ISeguimientoRepo _seguimientoRepo;
 
-        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService, IServiceProvider serviceProvider)
+
+        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService, IServiceProvider serviceProvider, INotificacionRepo notificacionRepo, ISeguimientoRepo seguimientoRepo)
         {
             _context = context;
             GenericRepository<ReportesSIVIGILA> repository = new(_context);
             _repository = repository;
             _storageService = storageService;
             _notificacionRepo = new Lazy<INotificacionRepo>(() => serviceProvider.GetRequiredService<INotificacionRepo>());
+            this.notificacionRepo = notificacionRepo;
+            _seguimientoRepo = seguimientoRepo;
+
         }
 
         public async Task<IEnumerable<ReportesSIVIGILADto>> GetAll(CancellationToken cancellationToken)
@@ -63,7 +72,7 @@ namespace Infra.Repositorios
             return dto;
         }
 
-        public async Task<(bool, ReportesSIVIGILA)> AddAsync(ReportesSIVIGILADto data)
+        public async Task<(bool, ReportesSIVIGILA)> AddAsync(ReportesSIVIGILADto data, User user)
         {
 
             var entity = GenericMapper.Map<ReportesSIVIGILADto, ReportesSIVIGILA>(data);
@@ -72,6 +81,7 @@ namespace Infra.Repositorios
 
             if (success)
             {
+                await CrearSeguimiento(data, user);
                 if (data.EvidenciaDiagnostico != null)
                     await _storageService.UploadFileAsync(data.EvidenciaDiagnostico?.FileBytes, $"RS-EvidenciaDiagnostico-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaDiagnostico.Extension}", true);
 
@@ -82,6 +92,81 @@ namespace Infra.Repositorios
             }
 
             return (success, response);
+        }
+
+        async Task<bool> CrearSeguimiento(ReportesSIVIGILADto data, User user)
+        {
+            var nna = await _context.NNAs.FirstOrDefaultAsync(x => x.TipoIdentificacionId == data.TipoIdentificacionId && x.NumeroIdentificacion == data.NumeroIdentificacion);
+            if (nna == null)
+                return false;
+
+            var contactos = await _context.ContactoNNAs.Where(x => x.NNAId == nna.Id && x.Cuidador).ToListAsync();
+            var contacto = contactos.FirstOrDefault(x => x.Cuidador) ?? contactos.FirstOrDefault();
+
+            var fechaValidar = DateTime.Now.Date.AddDays(1);
+            var diaSemana = (int)fechaValidar.DayOfWeek;
+
+            var usuario = await (from ua in _context.UsuarioAsignados
+                                 join u in _context.Users on ua.UsuarioId equals u.Id
+                                 join s in _context.Seguimientos on ua.SeguimientoId equals s.Id
+                                 join n in _context.NNAs on s.NNAId equals n.Id
+                                 where n.Id == nna.Id && u.Activo == true
+                                 orderby ua.FechaAsignacion descending
+                                 select u).FirstOrDefaultAsync();
+
+            var seguimiento = new SetSeguimientoRequest()
+            {
+                NNAId = nna.Id,
+                FechaSeguimiento = DateTime.Now,
+                EstadoId = 1, // Estado inicial
+                ContactoNNAId = contacto != null ? contacto.Id : 0,
+                UsuarioId = usuario.Id,
+                SolicitanteId = user.Alias,
+                FechaSolicitud = DateTime.Now,
+                TieneDiagnosticos = true,
+                UltimaActuacionFecha = DateTime.Now
+            };
+
+            var seguimientoId = await _seguimientoRepo.SetSeguimiento(seguimiento);
+            var asignanciones = await _seguimientoRepo.AsignacionAutomatica(
+                (seguimientoId, $"{nna.PrimerNombre ?? ""} {nna.SegundoNombre ?? ""} {nna.PrimerApellido ?? ""} {nna.SegundoApellido ?? ""}", nna.NumeroIdentificacion ?? ""), usuario);
+
+            await CrearNotificacion(data, user, asignanciones[0]);
+
+            return seguimientoId > 0;
+        }
+
+        async Task<bool> CrearNotificacion(ReportesSIVIGILADto data, User userOrigen, UsuarioAsignado asignado)
+        {
+            var usuario = await _context.Users.FirstOrDefaultAsync(x => x.Id == asignado.UsuarioId);
+            if (usuario == null)
+                return false;
+
+            var nna = await _context.NNAs.FirstOrDefaultAsync(x => x.TipoIdentificacionId == data.TipoIdentificacionId && x.NumeroIdentificacion == data.NumeroIdentificacion);
+            if (nna == null)
+                return false;
+
+            var noti = await notificacionRepo.SetNotificacion(new()
+            {
+                IdSeguimiento = nna.Id,
+                AgenteOrigen = userOrigen.Alias,
+                AgenteDestino = usuario.Id,
+                Administrador = true,
+                TipoNotificacion = TipoNotificacion.AsignacionSolicitudesCuidadores,
+                TextoNotificacion = $"El -RolOrigen- -NombresOrigen- ha solicitado un seguimiento sobre el caso No. {nna.Id:000000} y este le fue asignado al -RolDestino- -NombresDestino-"
+            });
+
+            var noti2 = await notificacionRepo.SetNotificacion(new()
+            {
+                IdSeguimiento = nna.Id,
+                AgenteOrigen = userOrigen.Alias,
+                AgenteDestino = usuario.Id,
+                Administrador = false,
+                TipoNotificacion = TipoNotificacion.AsignacionSolicitudesCuidadores,
+                TextoNotificacion = $"El -RolOrigen- -NombresOrigen- e ha solicitado un seguimiento sobre el caso No. {nna.Id:000000}"
+            });
+
+            return true;
         }
 
         public async Task<UploadFileRequest?> EvidenciaDiagnostico(long id)
