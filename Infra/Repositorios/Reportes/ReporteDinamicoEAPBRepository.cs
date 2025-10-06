@@ -55,10 +55,24 @@ namespace Infra.Repositorios.Reportes
 
 
                     var eapbName = string.Empty;
-                    if(grupo.Key != null)
+                    if (grupo.Key != null)
                     {
+                        //busca por EAPB de sispro
                         var list = await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", eapbIdInt, cancellationToken);
                         eapbName = (list is null) ? string.Empty : list.FirstOrDefault()?.Nombre ?? string.Empty;
+                        //si no encuentra busca en la tabla de eapb local
+                        if (eapbName == string.Empty)
+                        {
+                            var eapb = await _context.TPEAPB.FirstOrDefaultAsync(x => x.Id == eapbIdInt);
+                            if (eapb != null)
+                                eapbName = eapb?.Nombre ?? string.Empty;
+                            else
+                            {
+                                eapb = (await _context.TPEAPB.ToListAsync()).FirstOrDefault(x => int.TryParse(x.Codigo, out var c) && c == eapbIdInt);
+                                if (eapb != null)
+                                    eapbName = eapb?.Nombre ?? string.Empty;
+                            }
+                        }
                     }
 
                     reporte.Add(new ReporteDinamicoEAPBDTO
