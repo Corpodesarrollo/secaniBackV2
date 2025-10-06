@@ -18,18 +18,16 @@ namespace Infra.Repositorios
         private readonly GenericRepository<ReportesSIVIGILA> _repository;
         private readonly IStorageService _storageService;
         private readonly Lazy<INotificacionRepo> _notificacionRepo;
-        private INotificacionRepo notificacionRepo;
         private readonly ISeguimientoRepo _seguimientoRepo;
 
 
-        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService, IServiceProvider serviceProvider, INotificacionRepo notificacionRepo, ISeguimientoRepo seguimientoRepo)
+        public ReportesSIVIGILARepo(ApplicationDbContext context, IStorageService storageService, IServiceProvider serviceProvider, ISeguimientoRepo seguimientoRepo)
         {
             _context = context;
             GenericRepository<ReportesSIVIGILA> repository = new(_context);
             _repository = repository;
             _storageService = storageService;
             _notificacionRepo = new Lazy<INotificacionRepo>(() => serviceProvider.GetRequiredService<INotificacionRepo>());
-            this.notificacionRepo = notificacionRepo;
             _seguimientoRepo = seguimientoRepo;
 
         }
@@ -146,7 +144,7 @@ namespace Infra.Repositorios
             if (nna == null)
                 return false;
 
-            var noti = await notificacionRepo.SetNotificacion(new()
+            var noti = await _notificacionRepo.Value.SetNotificacion(new()
             {
                 IdSeguimiento = nna.Id,
                 AgenteOrigen = userOrigen.Alias,
@@ -156,7 +154,7 @@ namespace Infra.Repositorios
                 TextoNotificacion = $"El -RolOrigen- -NombresOrigen- ha solicitado un seguimiento sobre el caso No. {nna.Id:000000} y este le fue asignado al -RolDestino- -NombresDestino-"
             });
 
-            var noti2 = await notificacionRepo.SetNotificacion(new()
+            var noti2 = await _notificacionRepo.Value.SetNotificacion(new()
             {
                 IdSeguimiento = nna.Id,
                 AgenteOrigen = userOrigen.Alias,

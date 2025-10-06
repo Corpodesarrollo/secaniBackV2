@@ -151,6 +151,8 @@ builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>)
 builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
 builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
+
 
 WebApplication app = builder.Build();
 
