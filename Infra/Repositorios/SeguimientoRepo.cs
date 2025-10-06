@@ -731,7 +731,7 @@ namespace Infra.Repositorios
                 }
 
                 fecha = fecha.AddDays(1);
-                revisores = await CargarRevisores(fecha);
+                revisores = await CargarRevisores(fecha, user);
 
                 //validar si hay disponibilidad de revisores
                 var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
@@ -1114,7 +1114,7 @@ namespace Infra.Repositorios
                           }).AnyAsync();
         }
 
-        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha, IdentityUser? user)
+        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha, IdentityUser? user = null)
         {
             var fechaValidar = fecha;
             var diaSemana = (int)fechaValidar.DayOfWeek;
