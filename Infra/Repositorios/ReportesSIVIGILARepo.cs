@@ -2,6 +2,7 @@
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Modelos.Common;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.Services.StorageService;
 using Infra.Repositories.Common;
@@ -72,69 +73,86 @@ namespace Infra.Repositorios
 
         public async Task<(bool, ReportesSIVIGILA)> AddAsync(ReportesSIVIGILADto data, User user)
         {
-
-            var entity = GenericMapper.Map<ReportesSIVIGILADto, ReportesSIVIGILA>(data);
-            entity.Estado = 0;
-            var (success, response) = await _repository.AddAsync(entity);
-
-            if (success)
+            try
             {
-                await CrearSeguimiento(data, user);
-                if (data.EvidenciaDiagnostico != null)
-                    await _storageService.UploadFileAsync(data.EvidenciaDiagnostico?.FileBytes, $"RS-EvidenciaDiagnostico-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaDiagnostico.Extension}", true);
+                var entity = GenericMapper.Map<ReportesSIVIGILADto, ReportesSIVIGILA>(data);
+                entity.Estado = 0;
+                entity.Id = 0;
+                var (success, response) = await _repository.AddAsync(entity);
 
-                if (data.EvidenciaParentesco != null)
-                    await _storageService.UploadFileAsync(data.EvidenciaParentesco?.FileBytes, $"RS-EvidenciaParentesco-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaParentesco.Extension}", true);
+                if (success)
+                {
+                    await CrearSeguimiento(data, user);
+                    if (data.EvidenciaDiagnostico != null)
+                        await _storageService.UploadFileAsync(data.EvidenciaDiagnostico?.FileBytes, $"RS-EvidenciaDiagnostico-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaDiagnostico.Extension}", true);
 
-                await _notificacionRepo.Value.RevisarYEnviarNotificaciones();
+                    if (data.EvidenciaParentesco != null)
+                        await _storageService.UploadFileAsync(data.EvidenciaParentesco?.FileBytes, $"RS-EvidenciaParentesco-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaParentesco.Extension}", true);
+
+                    await _notificacionRepo.Value.RevisarYEnviarNotificaciones();
+                }
+
+                return (success, response);
             }
-
-            return (success, response);
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         async Task<bool> CrearSeguimiento(ReportesSIVIGILADto data, User user)
         {
-            var nna = await _context.NNAs.FirstOrDefaultAsync(x => x.TipoIdentificacionId == data.TipoIdentificacionId && x.NumeroIdentificacion == data.NumeroIdentificacion);
-            if (nna == null)
-                return false;
-
-            var contactos = await _context.ContactoNNAs.Where(x => x.NNAId == nna.Id && x.Cuidador).ToListAsync();
-            var contacto = contactos.FirstOrDefault(x => x.Cuidador) ?? contactos.FirstOrDefault();
-
-            var fechaValidar = DateTime.Now.Date.AddDays(1);
-            var diaSemana = (int)fechaValidar.DayOfWeek;
-
-            var usuario = await (from ua in _context.UsuarioAsignados
-                                 join u in _context.Users on ua.UsuarioId equals u.Id
-                                 join s in _context.Seguimientos on ua.SeguimientoId equals s.Id
-                                 join n in _context.NNAs on s.NNAId equals n.Id
-                                 where n.Id == nna.Id && u.Activo == true
-                                 orderby ua.FechaAsignacion descending
-                                 select u).FirstOrDefaultAsync();
-
-            var seguimiento = new SetSeguimientoRequest()
+            try
             {
-                NNAId = nna.Id,
-                FechaSeguimiento = DateTime.Now,
-                EstadoId = 1, // Estado inicial
-                ContactoNNAId = contacto != null ? contacto.Id : 0,
-                UsuarioId = usuario.Id,
-                SolicitanteId = user.Alias,
-                FechaSolicitud = DateTime.Now,
-                TieneDiagnosticos = true,
-                UltimaActuacionFecha = DateTime.Now
-            };
+                var nna = await _context.NNAs.FirstOrDefaultAsync(x => x.TipoIdentificacionId == data.TipoIdentificacionId && x.NumeroIdentificacion == data.NumeroIdentificacion);
+                if (nna == null)
+                    return false;
 
-            var seguimientoId = await _seguimientoRepo.SetSeguimiento(seguimiento);
-            var asignanciones = await _seguimientoRepo.AsignacionAutomatica(
-                (seguimientoId, $"{nna.PrimerNombre ?? ""} {nna.SegundoNombre ?? ""} {nna.PrimerApellido ?? ""} {nna.SegundoApellido ?? ""}", nna.NumeroIdentificacion ?? ""), usuario);
+                var contactos = await _context.ContactoNNAs.Where(x => x.NNAId == nna.Id && x.Cuidador).ToListAsync();
+                var contacto = contactos.FirstOrDefault(x => x.Cuidador) ?? contactos.FirstOrDefault();
 
-            await CrearNotificacion(data, user, asignanciones[0]);
+                var fechaValidar = DateTime.Now.Date.AddDays(1);
+                var diaSemana = (int)fechaValidar.DayOfWeek;
 
-            return seguimientoId > 0;
+                var usuario = await (from ua in _context.UsuarioAsignados
+                                     join u in _context.Users on ua.UsuarioId equals u.Id
+                                     join s in _context.Seguimientos on ua.SeguimientoId equals s.Id
+                                     join n in _context.NNAs on s.NNAId equals n.Id
+                                     where n.Id == nna.Id && u.Activo == true
+                                     orderby ua.FechaAsignacion descending
+                                     select u).FirstOrDefaultAsync();
+
+                var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == user.Alias);
+
+                var seguimiento = new SetSeguimientoRequest()
+                {
+                    NNAId = nna.Id,
+                    FechaSeguimiento = DateTime.Now,
+                    EstadoId = 1, // Estado inicial
+                    ContactoNNAId = contacto != null ? contacto.Id : 0,
+                    UsuarioId = usuario.Id,
+                    SolicitanteId = usuarioOrigen?.Id,
+                    FechaSolicitud = DateTime.Now,
+                    TieneDiagnosticos = true,
+                    UltimaActuacionFecha = DateTime.Now
+                };
+
+                var seguimientoId = await _seguimientoRepo.SetSeguimiento(seguimiento);
+                var asignanciones = await _seguimientoRepo.AsignacionAutomatica(
+                    (seguimientoId, $"{nna.PrimerNombre ?? ""} {nna.SegundoNombre ?? ""} {nna.PrimerApellido ?? ""} {nna.SegundoApellido ?? ""}", nna.NumeroIdentificacion ?? ""), usuario);
+
+                await CrearNotificacion(data, usuarioOrigen, asignanciones[0]);
+
+                return seguimientoId > 0;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
         }
 
-        async Task<bool> CrearNotificacion(ReportesSIVIGILADto data, User userOrigen, UsuarioAsignado asignado)
+        async Task<bool> CrearNotificacion(ReportesSIVIGILADto data, ApplicationUser userOrigen, UsuarioAsignado asignado)
         {
             var usuario = await _context.Users.FirstOrDefaultAsync(x => x.Id == asignado.UsuarioId);
             if (usuario == null)
@@ -147,7 +165,7 @@ namespace Infra.Repositorios
             var noti = await _notificacionRepo.Value.SetNotificacion(new()
             {
                 IdSeguimiento = nna.Id,
-                AgenteOrigen = userOrigen.Alias,
+                AgenteOrigen = userOrigen.Id,
                 AgenteDestino = usuario.Id,
                 Administrador = true,
                 TipoNotificacion = TipoNotificacion.AsignacionSolicitudesCuidadores,
@@ -157,7 +175,7 @@ namespace Infra.Repositorios
             var noti2 = await _notificacionRepo.Value.SetNotificacion(new()
             {
                 IdSeguimiento = nna.Id,
-                AgenteOrigen = userOrigen.Alias,
+                AgenteOrigen = userOrigen.Id,
                 AgenteDestino = usuario.Id,
                 Administrador = false,
                 TipoNotificacion = TipoNotificacion.AsignacionSolicitudesCuidadores,

@@ -115,18 +115,18 @@ namespace Infra.Repositories
                     var userOrigen = await (from us in _context.Users
                                             join ur in _context.UserRoles on us.Id equals ur.UserId
                                             join r in _context.Roles on ur.RoleId equals r.Id
-                                            where us.Id == data.IdAgenteOrigen
+                                            where us.Id == data.AgenteOrigen
                                             select new { us.FullName, r.Name }).FirstOrDefaultAsync();
 
                     var userDestino = await (from us in _context.Users
                                              join ur in _context.UserRoles on us.Id equals ur.UserId
                                              join r in _context.Roles on ur.RoleId equals r.Id
-                                             where us.Id == data.IdAgenteDestino
+                                             where us.Id == data.AgenteDestino
                                              select new { us.FullName, r.Name }).FirstOrDefaultAsync();
 
                     var asunto = data.TextoNotificacion
                             .Replace("-RolOrigen-", userOrigen.Name)
-                            .Replace("-NombresOrigen-", userOrigen.Name)
+                            .Replace("-NombresOrigen-", userOrigen.FullName)
                             .Replace("-RolDestino-", userDestino.Name)
                             .Replace("-NombresDestino-", userDestino.FullName);
 
@@ -136,7 +136,7 @@ namespace Infra.Repositories
                             {
                                 TipoNotificacionId = (int)data.TipoNotificacion,
                                 AgenteDestinoId = coord.Id,
-                                AgenteOrigenId = data.IdAgenteOrigen,
+                                AgenteOrigenId = data.AgenteOrigen,
                                 Asunto = asunto,
                                 Url = $"/gestion/detalle_seguimiento/{data.IdSeguimiento}"
                             });
@@ -144,8 +144,8 @@ namespace Infra.Repositories
                         _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
                         {
                             TipoNotificacionId = (int)data.TipoNotificacion,
-                            AgenteDestinoId = data.IdAgenteDestino,
-                            AgenteOrigenId = data.IdAgenteOrigen,
+                            AgenteDestinoId = data.AgenteDestino,
+                            AgenteOrigenId = data.AgenteOrigen,
                             Asunto = asunto,
                             Url = $"/gestion/detalle_seguimiento/{data.IdSeguimiento}"
                         });
@@ -156,13 +156,13 @@ namespace Infra.Repositories
                     var userOrigen = await (from us in _context.Users
                                             join ur in _context.UserRoles on us.Id equals ur.UserId
                                             join r in _context.Roles on ur.RoleId equals r.Id
-                                            where us.Id == data.IdAgenteOrigen
+                                            where us.Id == data.AgenteOrigen
                                             select new { us.FullName, r.Name }).FirstOrDefaultAsync();
 
                     var userDestino = await (from us in _context.Users
                                              join ur in _context.UserRoles on us.Id equals ur.UserId
                                              join r in _context.Roles on ur.RoleId equals r.Id
-                                             where us.Id == data.IdAgenteDestino
+                                             where us.Id == data.AgenteDestino
                                              select new { us.FullName, r.Name }).FirstOrDefaultAsync();
 
                     var nna = await (from s in _context.Seguimientos
@@ -174,8 +174,8 @@ namespace Infra.Repositories
                     _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
                     {
                         TipoNotificacionId = (int)data.TipoNotificacion,
-                        AgenteDestinoId = data.IdAgenteDestino,
-                        AgenteOrigenId = data.IdAgenteOrigen,
+                        AgenteDestinoId = data.AgenteDestino,
+                        AgenteOrigenId = data.AgenteOrigen,
                         Asunto = $"El {userOrigen.Name} {userOrigen.FullName} le ha asignado el caso No. {nna.Id:000000} al {userDestino.Name} {userDestino.FullName}",
                         Url = $"/gestion/detalle_seguimiento/{data.IdSeguimiento}",
                     });
@@ -1056,13 +1056,13 @@ namespace Infra.Repositories
             foreach (var registro in registros)
             {
                 int siguienteEnvio = (byte)(registro.TotalEnvios + 1);
-                DateTime fechaEsperadaEnvio = registro.DateCreated.AddDays(siguienteEnvio * 3).Date;
+                DateTime? fechaEsperadaEnvio = registro.DateCreated?.AddDays(siguienteEnvio * 3).Date;
 
                 if (hoy >= fechaEsperadaEnvio) // Si ya pasaron los días necesarios
                 {
                     try
                     {
-                        string resultado = await OperacionReporteSivigila(registro.IdReporteSivigila, registro.EntidadId, siguienteEnvio.ToString());
+                        string resultado = await OperacionReporteSivigila(registro.IdReporteSivigila ?? 0, registro.EntidadId, siguienteEnvio.ToString());
 
                         if (resultado == "Exito")
                         {
