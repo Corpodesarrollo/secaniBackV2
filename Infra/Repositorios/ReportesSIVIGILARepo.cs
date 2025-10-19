@@ -122,7 +122,8 @@ namespace Infra.Repositorios
                                      orderby ua.FechaAsignacion descending
                                      select u).FirstOrDefaultAsync();
 
-                var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == user.Alias);
+                var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == "CC3216549872");
+                //var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == user.Alias);
 
                 var seguimiento = new SetSeguimientoRequest()
                 {
@@ -140,6 +141,9 @@ namespace Infra.Repositorios
                 var seguimientoId = await _seguimientoRepo.SetSeguimiento(seguimiento);
                 var asignanciones = await _seguimientoRepo.AsignacionAutomatica(
                     (seguimientoId, $"{nna.PrimerNombre ?? ""} {nna.SegundoNombre ?? ""} {nna.PrimerApellido ?? ""} {nna.SegundoApellido ?? ""}", nna.NumeroIdentificacion ?? ""), usuario);
+
+                if (asignanciones.Count == 0)
+                    return false;
 
                 await CrearNotificacion(data, usuarioOrigen, asignanciones[0]);
 
@@ -179,7 +183,7 @@ namespace Infra.Repositorios
                 AgenteDestino = usuario.Id,
                 Administrador = false,
                 TipoNotificacion = TipoNotificacion.AsignacionSolicitudesCuidadores,
-                TextoNotificacion = $"El -RolOrigen- -NombresOrigen- e ha solicitado un seguimiento sobre el caso No. {nna.Id:000000}"
+                TextoNotificacion = $"El -RolOrigen- -NombresOrigen- ha solicitado un seguimiento sobre el caso No. {nna.Id:000000}"
             });
 
             return true;

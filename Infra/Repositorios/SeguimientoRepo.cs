@@ -701,8 +701,10 @@ namespace Infra.Repositorios
                     //el revisor entra a las horaentrada y sale a la horasalida. se debe asignar el seguimiento en un rango de 640 segundos,
                     //si el seguimiento se cruza con otro se debe aumentar 640 segundos  y volver a verificar hasta lograr agendar el seguimiento
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
-                    if (fechaAsignacion == null)
+                    if (fechaAsignacion == null && user == null)
                         continue;
+                    else if (fechaAsignacion == null && user != null)
+                        break;
 
                     var seguimiento = seguimientosNoAsignados[0];
 
@@ -730,13 +732,24 @@ namespace Infra.Repositorios
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
                 }
 
-                fecha = fecha.AddDays(1);
-                revisores = await CargarRevisores(fecha, user);
+                var sw = false;
+                for (int i = 0; i < 10; i++)
+                {
+                    fecha = fecha.AddDays(1);
+                    revisores = await CargarRevisores(fecha, user);
 
-                //validar si hay disponibilidad de revisores
-                var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
-                if (!revisoresDisponibles)
+                    //validar si hay disponibilidad de revisores
+                    var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
+                    if (revisoresDisponibles)
+                    {
+                        sw = true;
+                        break;
+                    }
+                }
+
+                if (!sw)
                     break;
+
             }
 
             return seguimientosAsignados;
