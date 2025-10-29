@@ -33,5 +33,21 @@ namespace MSNNA.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("DownloadManualCuidador")]
+        public IActionResult DownloadManualCuidador()
+        {
+            try
+            {
+                var filePath = "Resources/Manual_Cuidador.pdf";
+                var fileBytes = System.IO.File.ReadAllBytes(filePath);
+                var fileName = "Manual_Cuidador.pdf";
+                return File(fileBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

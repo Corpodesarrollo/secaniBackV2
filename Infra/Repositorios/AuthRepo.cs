@@ -20,17 +20,17 @@ namespace Infra.Repositorios
             {
                 isCoordinadorAdmin = true;
                 rolSecani = "CoordinadorAdmin";
-            } 
+            }
             else if (data.UserGroups.Any(x => x.Code == "SECANI-AgenteSeguimiento"))
             {
                 isAgenteSeguimiento = true;
                 rolSecani = "AgentesDeSeguimiento";
-            } 
+            }
             else if (data.Enterprise.Identification.TypeCode == "CC")
             {
                 isCuidador = true;
                 rolSecani = "Cuidador";
-            } 
+            }
             else if (data.Enterprise.Identification.TypeCode == "MU" || data.Enterprise.Identification.TypeCode == "DE" || data.Enterprise.Identification.TypeCode == "DI")
             {
                 isET = true;
@@ -48,7 +48,7 @@ namespace Infra.Repositorios
             }
             return new UserDto
             {
-                Id = (user != null)? user.Id:"",
+                Id = (user != null) ? user.Id : "",
                 IdRol = rolSecani,
                 Alias = data.Alias,
                 Email = data.Email,
