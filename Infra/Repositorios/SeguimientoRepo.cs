@@ -1216,7 +1216,7 @@ namespace Infra.Repositorios
                     plantillaCorreo = new PlantillaCorreo()
                     {
                         Asunto = request.Asunto,
-                        Cierre = request.Cierre,
+                        Cierre = request.Cierre ?? "",
                         Estado = request.Estado,
                         FechaCreacion = DateTime.Now,
                         Firmante = request.Firmante,
@@ -1281,7 +1281,7 @@ namespace Infra.Repositorios
                     string comentario = string.Join(", ", listComentario);
 
                     plantillaCorreo.Asunto = request.Asunto;
-                    plantillaCorreo.Cierre = request.Cierre;
+                    plantillaCorreo.Cierre = request.Cierre ?? "";
                     plantillaCorreo.Estado = request.Estado;
                     plantillaCorreo.Firmante = request.Firmante;
                     plantillaCorreo.Mensaje = request.Mensaje;

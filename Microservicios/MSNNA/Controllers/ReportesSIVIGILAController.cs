@@ -54,6 +54,17 @@ namespace MSNNA.Api.Controllers
             return Ok(response);
         }
 
+        [HttpPost("CrearSeguimiento")]
+        public async Task<ActionResult> CrearSeguimiento(SeguimientoDto data)
+        {
+            var user = this.GetUser();
+            var result = await _reportesSIVIGILARepo.CrearSeguimiento(data, user);
+            if (!result)
+                return BadRequest();
+
+            return Ok(result);
+        }
+
         [HttpPut]
         public async Task<ActionResult> UpdateAsync(ReportesSIVIGILADto entity)
         {

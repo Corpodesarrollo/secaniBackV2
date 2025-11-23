@@ -82,7 +82,7 @@ namespace Infra.Repositorios
 
                 if (success)
                 {
-                    await CrearSeguimiento(data, user);
+                    //await CrearSeguimiento(data, user);
                     if (data.EvidenciaDiagnostico != null)
                         await _storageService.UploadFileAsync(data.EvidenciaDiagnostico?.FileBytes, $"RS-EvidenciaDiagnostico-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaDiagnostico.Extension}", true);
 
@@ -100,11 +100,11 @@ namespace Infra.Repositorios
             }
         }
 
-        async Task<bool> CrearSeguimiento(ReportesSIVIGILADto data, User user)
+        public async Task<bool> CrearSeguimiento(SeguimientoDto data, User user)
         {
             try
             {
-                var nna = await _context.NNAs.FirstOrDefaultAsync(x => x.TipoIdentificacionId == data.TipoIdentificacionId && x.NumeroIdentificacion == data.NumeroIdentificacion);
+                var nna = await _context.NNAs.FirstOrDefaultAsync(x => x.TipoIdentificacionId == data.TipoIdentificacion && x.NumeroIdentificacion == data.NumeroIdentificacion);
                 if (nna == null)
                     return false;
 
@@ -145,7 +145,11 @@ namespace Infra.Repositorios
                 if (asignanciones.Count == 0)
                     return false;
 
-                await CrearNotificacion(data, usuarioOrigen, asignanciones[0]);
+                await CrearNotificacion(new()
+                {
+                    TipoIdentificacionId = nna.TipoIdentificacionId,
+                    NumeroIdentificacion = nna.NumeroIdentificacion
+                }, usuarioOrigen, asignanciones[0]);
 
                 return seguimientoId > 0;
             }

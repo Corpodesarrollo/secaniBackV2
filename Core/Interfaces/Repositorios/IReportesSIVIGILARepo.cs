@@ -13,5 +13,6 @@ namespace Core.Interfaces.Repositorios
         Task<IEnumerable<ReportesSIVIGILADto>> GetAll(CancellationToken cancellationToken);
         Task<ReportesSIVIGILADto?> GetById(long id);
         Task<(bool, ReportesSIVIGILA)> UpdateAsync(ReportesSIVIGILADto data);
+        Task<bool> CrearSeguimiento(SeguimientoDto data, User user);
     }
 }
