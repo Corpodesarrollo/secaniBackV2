@@ -7,6 +7,7 @@ using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
+using SISPRO.TRV.Web.MVCCore;
 
 
 namespace Api.Controllers
@@ -27,13 +28,15 @@ namespace Api.Controllers
         [HttpPost("Crear")]
         public async Task<ActionResult<RespuestaResponse<NNADto>>> AddAsync(NNADto dto)
         {
-            return await _nNAService.AddAsync(dto);
+            var user = this.GetUser();
+            return await _nNAService.AddAsync(dto, user);
         }
 
         [HttpPut("Actualizar")]
         public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)
         {
-            return await _nNAService.UpdateAsync(dto);
+            var user = this.GetUser();
+            return await _nNAService.UpdateAsync(dto, user);
         }
 
         [HttpPost("ConsultarNNAFiltro")]

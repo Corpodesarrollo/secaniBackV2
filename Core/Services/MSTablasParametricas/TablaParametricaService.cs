@@ -18,30 +18,38 @@ namespace Core.Services.MSTablasParametricas
 
         public async Task<List<TPExternalEntityBase>> GetBynomTREF(string nomTREF, CancellationToken cancellationToken)
         {
-            var response = await _httpClient.GetAsync(_baseUrl + nomTREF, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions
+            try
             {
-                PropertyNameCaseInsensitive = true
-            };
+                var response = await _httpClient.GetAsync(_baseUrl + nomTREF, cancellationToken);
+                response.EnsureSuccessStatusCode();
 
-            var result = JsonDocument.Parse(responseBody);
-            var items = result.RootElement.GetProperty("items");
-
-            var entities = new List<TPExternalEntityBase>();
-            foreach (var item in items.EnumerateArray())
-            {
-                entities.Add(new TPExternalEntityBase
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
                 {
-                    Codigo = item.GetProperty("codigo").GetString(),
-                    Nombre = item.GetProperty("nombre").GetString(),
-                    Descripcion = item.GetProperty("descripcion").GetString()
-                });
-            }
+                    PropertyNameCaseInsensitive = true
+                };
 
-            return entities;
+                var result = JsonDocument.Parse(responseBody);
+                var items = result.RootElement.GetProperty("items");
+
+                var entities = new List<TPExternalEntityBase>();
+                foreach (var item in items.EnumerateArray())
+                {
+                    entities.Add(new TPExternalEntityBase
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString()
+                    });
+                }
+
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener la entidad del sitio externo sispro: {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<List<TPExternalEntityBase>> GetTipoIdentificaciones(CancellationToken cancellationToken)
