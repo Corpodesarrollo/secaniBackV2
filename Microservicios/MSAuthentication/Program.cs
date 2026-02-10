@@ -91,9 +91,18 @@ builder.Services.AddMediatR(cfg =>
     // Agrega otros assemblies según necesites
 });
 
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredUniqueChars = 1;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
 
 builder.CustomConfigureServices();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
