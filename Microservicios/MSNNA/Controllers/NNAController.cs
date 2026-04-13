@@ -18,7 +18,7 @@ namespace Api.Controllers
         private INNAService _nNAService = service;
         private readonly TablaParametricaService tablaParametricaService = tablaParametrica;
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById(long id)
         {
             var response = await _nNARepo.GetById(id);

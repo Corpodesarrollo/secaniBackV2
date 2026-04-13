@@ -12,6 +12,9 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardTotalCasos(DateTime FechaInicial, DateTime FechaFinal)
         {
+            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
+            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
+
             DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
             DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
 
@@ -38,6 +41,8 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardTotalRegistros(DateTime FechaInicial, DateTime FechaFinal, string? EntidadId)
         {
+            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
+            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
 
             DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
             DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
@@ -67,6 +72,8 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardMisCasos(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
+            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
+            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
 
             DateTime FechaInicialSemanaAnterior = FechaInicial.AddDays(-7);
             DateTime FechaFinalSemanaAnterior = FechaFinal.AddDays(-7);
@@ -130,6 +137,8 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardAlertas(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
+            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
+            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
 
             DateTime FechaInicialSemanaAnterior = FechaInicial.AddDays(-7);
             DateTime FechaFinalSemanaAnterior = FechaFinal.AddDays(-7);
@@ -456,6 +465,9 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardTotalSeguimientosCuidador(DateTime FechaInicial, DateTime FechaFinal)
         {
+            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
+            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
+
             DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
             DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
 
@@ -510,6 +522,9 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardRegistrosPropios(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
+            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
+            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
+
             DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
             DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
 
