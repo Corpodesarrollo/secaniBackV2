@@ -132,7 +132,7 @@ namespace Infra.Repositorios
                     EstadoId = 1, // Estado inicial
                     ContactoNNAId = contacto != null ? contacto.Id : 0,
                     UsuarioId = usuario.Id,
-                    SolicitanteId = usuarioOrigen?.Id,
+                    SolicitanteId = long.TryParse(usuarioOrigen?.Id, out long solicitante) ? solicitante : null,
                     FechaSolicitud = DateTime.Now,
                     TieneDiagnosticos = true,
                     UltimaActuacionFecha = DateTime.Now

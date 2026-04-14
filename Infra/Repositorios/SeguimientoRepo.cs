@@ -215,7 +215,7 @@ namespace Infra.Repositorios
                                                          ContactoNNAId = g.Key.ContactoNNAId,
                                                          Telefono = g.Key.Telefono,
                                                          UsuarioId = g.Key.UsuarioId,
-                                                         SolicitanteId = g.Key.SolicitanteId,
+                                                         SolicitanteId = g.Key.SolicitanteId.ToString(),
                                                          FechaSolicitud = g.Key.FechaSolicitud ?? new(),
                                                          TieneDiagnosticos = g.Key.TieneDiagnosticos ?? false,
                                                          ObservacionesSolicitante = g.Key.ObservacionesSolicitante,
@@ -568,7 +568,7 @@ namespace Infra.Repositorios
                     EstadoId = request.EstadoId,
                     ContactoNNAId = request.ContactoNNAId,
                     UsuarioId = request.UsuarioId,
-                    SolicitanteId = request.SolicitanteId,
+                    SolicitanteId = long.TryParse(request.SolicitanteId, out long solId) ? solId : null,
                     FechaSolicitud = request.FechaSolicitud,
                     TieneDiagnosticos = request.TieneDiagnosticos,
                     UltimaActuacionFecha = request.UltimaActuacionFecha,
@@ -1645,9 +1645,10 @@ namespace Infra.Repositorios
 
         public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
         {
+            long.TryParse(id, out long solicitanteId);
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
-                        where s.SolicitanteId == id
+                        where s.SolicitanteId == solicitanteId
                         group s by s.NNAId into g
                         select new { id = g.Max(x => x.Id) };
 
