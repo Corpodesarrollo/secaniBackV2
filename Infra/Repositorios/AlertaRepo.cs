@@ -195,11 +195,21 @@ namespace Infra.Repositories
                     if (adjuntos != null)
                         nombreArchivoAdjunto = adjuntos.NombreArchivo ?? "";
 
-                    var respuestaAdjunto = await _storageService.DownloadFileAsync(nombreArchivoAdjunto);
-                    var entry = zip.CreateEntry(nombreArchivoAdjunto, System.IO.Compression.CompressionLevel.Fastest);
-                    using (var entryStream = entry.Open())
+                    if (!string.IsNullOrEmpty(nombreArchivoAdjunto))
                     {
-                        await entryStream.WriteAsync(respuestaAdjunto, 0, respuestaAdjunto.Length);
+                        try
+                        {
+                            var respuestaAdjunto = await _storageService.DownloadFileAsync(nombreArchivoAdjunto);
+                            if (respuestaAdjunto != null && respuestaAdjunto.Length > 0)
+                            {
+                                var entry = zip.CreateEntry(nombreArchivoAdjunto, System.IO.Compression.CompressionLevel.Fastest);
+                                using (var entryStream = entry.Open())
+                                {
+                                    await entryStream.WriteAsync(respuestaAdjunto, 0, respuestaAdjunto.Length);
+                                }
+                            }
+                        }
+                        catch { /* Archivo no encontrado en storage */ }
                     }
 
                     // Cargar Notificacion 
@@ -218,11 +228,21 @@ namespace Infra.Repositories
                             {
                                 var nombreArchivoNotificacion = item.NombreArchivo ?? "";
                                 nombresArchivos.Add(nombreArchivoNotificacion);
-                                var notificacionAdjunto = await _storageService.DownloadFileAsync(nombreArchivoNotificacion);
-                                var notificacionEntry = zip.CreateEntry(nombreArchivoNotificacion, System.IO.Compression.CompressionLevel.Fastest);
-                                using (var notificacionEntryStream = notificacionEntry.Open())
+                                if (!string.IsNullOrEmpty(nombreArchivoNotificacion))
                                 {
-                                    await notificacionEntryStream.WriteAsync(notificacionAdjunto, 0, notificacionAdjunto.Length);
+                                    try
+                                    {
+                                        var notificacionAdjunto = await _storageService.DownloadFileAsync(nombreArchivoNotificacion);
+                                        if (notificacionAdjunto != null && notificacionAdjunto.Length > 0)
+                                        {
+                                            var notificacionEntry = zip.CreateEntry(nombreArchivoNotificacion, System.IO.Compression.CompressionLevel.Fastest);
+                                            using (var notificacionEntryStream = notificacionEntry.Open())
+                                            {
+                                                await notificacionEntryStream.WriteAsync(notificacionAdjunto, 0, notificacionAdjunto.Length);
+                                            }
+                                        }
+                                    }
+                                    catch { /* Archivo no encontrado en storage */ }
                                 }
                             }
                         }
@@ -239,11 +259,21 @@ namespace Infra.Repositories
                         if (adjuntoRespuestaNotificacion != null)
                         {
                             nombreArchivoRespuestaNotificacion = adjuntoRespuestaNotificacion.NombreArchivo ?? "";
-                            var respuestaNotificacionAdjunto = await _storageService.DownloadFileAsync(nombreArchivoRespuestaNotificacion);
-                            var respuestaEntry = zip.CreateEntry(nombreArchivoRespuestaNotificacion, System.IO.Compression.CompressionLevel.Fastest);
-                            using (var respuestaEntryStream = respuestaEntry.Open())
+                            if (!string.IsNullOrEmpty(nombreArchivoRespuestaNotificacion))
                             {
-                                await respuestaEntryStream.WriteAsync(respuestaNotificacionAdjunto, 0, respuestaNotificacionAdjunto.Length);
+                                try
+                                {
+                                    var respuestaNotificacionAdjunto = await _storageService.DownloadFileAsync(nombreArchivoRespuestaNotificacion);
+                                    if (respuestaNotificacionAdjunto != null && respuestaNotificacionAdjunto.Length > 0)
+                                    {
+                                        var respuestaEntry = zip.CreateEntry(nombreArchivoRespuestaNotificacion, System.IO.Compression.CompressionLevel.Fastest);
+                                        using (var respuestaEntryStream = respuestaEntry.Open())
+                                        {
+                                            await respuestaEntryStream.WriteAsync(respuestaNotificacionAdjunto, 0, respuestaNotificacionAdjunto.Length);
+                                        }
+                                    }
+                                }
+                                catch { /* Archivo no encontrado en storage */ }
                             }
                         }
                     }

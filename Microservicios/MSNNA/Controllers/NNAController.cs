@@ -136,9 +136,9 @@ namespace Api.Controllers
         }
 
         [HttpPost("CasosAbiertos")]
-        public IActionResult ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        public async Task<IActionResult> ConsultaCasosAbiertos(CasosAbiertosRequest request)
         {
-            var response = _nNARepo.ConsultaCasosAbiertos(request);
+            var response = await _nNARepo.ConsultaCasosAbiertos(request);
             return Ok(response);
         }
 
@@ -156,3 +156,4 @@ namespace Api.Controllers
         }
     }
 }
+
