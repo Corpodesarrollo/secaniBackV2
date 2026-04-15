@@ -58,7 +58,7 @@ builder
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-// Asegurar que CORS maneje OPTIONS automáticamente
+// Asegurar que CORS maneje OPTIONS automï¿½ticamente
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
@@ -66,12 +66,13 @@ builder.Services.AddCors(options =>
             "https://secani.sispro.gov.co",
             "http://192.168.152.17:8140",
             "https://secani.sispropreprod.gov.co",
-            "https://nna.sispropreprod.gov.co", // Agregando el dominio de la API también
+            "https://nna.sispropreprod.gov.co", // Agregando el dominio de la API tambiï¿½n
             "http://192.168.110.11:8140",
             "http://localhost:4200",
             "https://localhost:4200",
+            "http://54.90.124.49:9110",
             "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
-                          .AllowAnyMethod()  // Esto incluye OPTIONS automáticamente
+                          .AllowAnyMethod()  // Esto incluye OPTIONS automï¿½ticamente
                           .AllowAnyHeader()
                           .AllowCredentials()
                           .SetPreflightMaxAge(TimeSpan.FromMinutes(30))); // Cache preflight por 30 min
@@ -88,7 +89,7 @@ builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetUserQuery).Assembly);
-    // Agrega otros assemblies según necesites
+    // Agrega otros assemblies segï¿½n necesites
 });
 
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
