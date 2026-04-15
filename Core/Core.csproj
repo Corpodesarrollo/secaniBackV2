@@ -29,4 +29,8 @@
     <PackageReference Include="System.IO.Packaging" Version="8.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="CQRS\MSUsuariosyRoles\Commands\Auth\" />
+  </ItemGroup>
+
 </Project>

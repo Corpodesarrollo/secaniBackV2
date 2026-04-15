@@ -14,8 +14,6 @@ using Core.Services.Llamadas;
 using Core.Services.MSTablasParametricas;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
-using Core.Validators.MSPermisos;
-using Infra;
 using Infra.Middleware;
 using Infra.Repositories;
 using Infra.Repositories.Common;
@@ -23,7 +21,6 @@ using Infra.Repositorios;
 using Infra.Repositorios.Llamadas;
 using Infra.Repositorios.Reportes;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using MSNNA.Api.Controllers;
 using MSNNA.Api.Extensions;
 using SISPRO.TRV.General;
 using SISPRO.TRV.Web.MVCCore.Helpers;
@@ -78,30 +75,31 @@ builder.Services.AddScoped<IReporteDinamicoEAPBRepository, ReporteDinamicoEAPBRe
 builder.Services.AddScoped<IReporteDinamicoEAPBService, ReporteDinamicoEAPBService>();
 builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
 builder.Services.AddScoped<IResumenLlamadasRepository, ResumenLlamadasRepository>();
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<IIpsRepo, IpsRepo>();
 builder.Services.AddScoped<IEAPBRepo, EAPBRepo>();
 builder.Services.AddHttpClient();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
+builder.Services.AddScoped<INNARepo, NNARepo>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins(
+            "https://secani.sispro.gov.co",
             "http://192.168.152.17:8140",
             "https://secani.sispropreprod.gov.co",
             "http://192.168.110.11:8140",
             "http://localhost:4200",
             "https://localhost:4200",
+            "http://54.90.124.49:9110",
             "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
-
-builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
-                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
 
 WebApplication app = builder.Build();
 

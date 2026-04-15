@@ -2,6 +2,7 @@
 using Core.Modelos;
 using Infra.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace Infra.Repositorios.MSPermisos
 {
@@ -9,7 +10,7 @@ namespace Infra.Repositorios.MSPermisos
     {
         private readonly ApplicationDbContext _context;
 
-        public PermisoRepository(ApplicationDbContext context): base(context) 
+        public PermisoRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
         }
@@ -30,15 +31,67 @@ namespace Infra.Repositorios.MSPermisos
             return permisosFiltrados;
         }
 
-        public async Task<(Permisos, TPModuloComponenteObjeto)> CansByPathAndRoleId(string path, string roleId, CancellationToken cancellationToken)
+        public async Task<(Permisos?, TPModuloComponenteObjeto?)> CansByPathAndRoleId(
+            string path,
+            string roleId,
+            CancellationToken cancellationToken)
         {
-            var permiso = await (from p in _context.TPermisos
-                                 join mco in _context.TPModuloComponenteObjeto on p.ModuloComponenteObjetoId equals mco.Id
-                                 where p.RoleId == roleId && mco.Path == path
-                                 select p).FirstOrDefaultAsync();
-            var modulo = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Path == path);
-            return (permiso, modulo);
+            var decoded = WebUtility.UrlDecode(path ?? string.Empty)?.Trim('/') ?? string.Empty;
+            var parts = decoded.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            // ===== CASO 1: SIN "/"  -> módulo raíz (Padre = 0) =====
+            if (parts.Length == 1)
+            {
+                var raiz = parts[0];
+
+                // Buscar módulo raíz por Path
+                var moduloRaiz = await _context.TPModuloComponenteObjeto
+                    .Where(m => m.ModuloComponenteObjetoIdPadre == 0
+                                && m.Path != null
+                                && m.Path.ToLower() == raiz.ToLower())
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (moduloRaiz == null)
+                    return (null, null);
+
+                var permisoRes = await _context.TPermisos
+                    .FirstOrDefaultAsync(p => p.ModuloComponenteObjetoId == moduloRaiz.Id
+                                           && p.RoleId == roleId, cancellationToken);
+
+                return (permisoRes, moduloRaiz);
+            }
+
+            // ===== CASO 2: CON "/" -> padre/hijo =====
+            var padreNombre = parts[0];
+            var hijoNombre = parts[1];
+
+            // Padre por Path 
+            var padre = await _context.TPModuloComponenteObjeto
+                .Where(m => m.Path != null && m.Path.ToLower() == padreNombre.ToLower())
+                .Select(m => new { m.Id })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (padre == null) return (null, null);
+            var padreId = padre.Id;
+
+            // Hijo: Nombre contiene hijoNombre (CI) y Padre = padreId
+            var hijo = await _context.TPModuloComponenteObjeto
+                .Where(m =>
+                    m.ModuloComponenteObjetoIdPadre == padreId &&
+                    m.Nombre != null &&
+                    EF.Functions.Like(m.Path.ToLower(), $"%{hijoNombre.ToLower()}%"))
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (hijo == null) return (null, null);
+
+            var permisoFinal = await _context.TPermisos
+                .FirstOrDefaultAsync(p => p.ModuloComponenteObjetoId == hijo.Id
+                                       && p.RoleId == roleId, cancellationToken);
+
+            var moduloFinal = hijo;
+            return (permisoFinal, moduloFinal);
         }
+
 
         public async Task<IList<Permisos>> GetPermisosByRoleandModulo(string RoleId, int ModuloId, CancellationToken cancellationToken)
         {
@@ -78,7 +131,7 @@ namespace Infra.Repositorios.MSPermisos
             }
             var funcionalidad = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == permiso.ModuloComponenteObjetoId);
             var modulo = funcionalidad == null ? null : await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == funcionalidad.ModuloComponenteObjetoIdPadre);
-            
+
             return (permiso, modulo, funcionalidad);
         }
 

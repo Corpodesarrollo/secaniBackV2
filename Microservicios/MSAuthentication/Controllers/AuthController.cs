@@ -14,13 +14,19 @@ namespace MSAuthentication.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<UserDto>> Get()
         {
-            var user = this.GetUser();
-            var result = await repo.GetUser(user);
+            try
+            {
+                var user = this.GetUser();
+                var response = await repo.GetUser(user);
+                if (response == null)
+                    return BadRequest();
 
-            if (result == null)
-                return BadRequest();
-
-            return Ok(result);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("export-xls")]

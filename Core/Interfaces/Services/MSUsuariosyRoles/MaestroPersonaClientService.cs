@@ -76,7 +76,9 @@
                     throw new System.ArgumentNullException("nroIdentificacion");
 
                 using var client_ = _httpClient;
+                client_.DefaultRequestHeaders.Remove("ApiKey");
                 client_.DefaultRequestHeaders.Add("ApiKey", apiKey);
+
                 var url = $"{_baseUrl}api/Persona/GetIdVigente/{tipoIdentificacion}/{nroIdentificacion}";
                 var response = await client_.GetAsync(url, cancellationToken);
                 if (response.IsSuccessStatusCode)

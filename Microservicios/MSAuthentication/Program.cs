@@ -1,4 +1,3 @@
-using Core.Common;
 using Core.CQRS.MSUsuariosyRoles.Queries.User;
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
@@ -21,7 +20,6 @@ using Core.Services.MSTablasParametricas;
 using Core.Services.MSUsuariosyRoles;
 using Core.Services.Reportes;
 using Core.Services.StorageService;
-using Core.Validators.MSPermisos;
 using DinkToPdf;
 using DinkToPdf.Contracts;
 using Infra;
@@ -33,6 +31,7 @@ using Infra.Repositorios.MSPermisos;
 using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
 using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
 using Infra.Repositorios.Reportes;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MSEntidad.Api.Extensions;
@@ -41,10 +40,10 @@ using Quartz.Impl;
 using Quartz.Spi;
 using SISPRO.TRV.Entity.Helpers;
 using SISPRO.TRV.General;
-using SISPRO.TRV.Web.MVCCore.Extensions;
 using SISPRO.TRV.Web.MVCCore.Helpers;
 using SISPRO.TRV.Web.MVCCore.StartupExtensions;
 using System.Text.Json;
+
 
 WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
@@ -56,30 +55,24 @@ builder
     .AddCustomMvcControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new ByteArrayConverter());
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-// Configurar routing para permitir OPTIONS globalmente
-builder.Services.Configure<RouteOptions>(options =>
-{
-    options.LowercaseUrls = true;
-    options.LowercaseQueryStrings = true;
-});
-
-// Asegurar que CORS maneje OPTIONS automáticamente
+// Asegurar que CORS maneje OPTIONS automï¿½ticamente
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         policy => policy.WithOrigins(
+            "https://secani.sispro.gov.co",
             "http://192.168.152.17:8140",
             "https://secani.sispropreprod.gov.co",
-            "https://nna.sispropreprod.gov.co", // Agregando el dominio de la API también
+            "https://nna.sispropreprod.gov.co", // Agregando el dominio de la API tambiï¿½n
             "http://192.168.110.11:8140",
             "http://localhost:4200",
             "https://localhost:4200",
+            "http://54.90.124.49:9110",
             "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
-                          .AllowAnyMethod()  // Esto incluye OPTIONS automáticamente
+                          .AllowAnyMethod()  // Esto incluye OPTIONS automï¿½ticamente
                           .AllowAnyHeader()
                           .AllowCredentials()
                           .SetPreflightMaxAge(TimeSpan.FromMinutes(30))); // Cache preflight por 30 min
@@ -96,12 +89,21 @@ builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetUserQuery).Assembly);
-    // Agrega otros assemblies según necesites
+    // Agrega otros assemblies segï¿½n necesites
 });
 
-builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredUniqueChars = 1;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
 
 builder.CustomConfigureServices();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
@@ -141,6 +143,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 builder.Services.AddScoped<IUsurioRepo, UsuarioRepo>();
 
+
 // Register Quartz services
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
 builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
@@ -158,26 +161,26 @@ builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>)
 builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
 builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 
-builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
-                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
 
 WebApplication app = builder.Build();
 
-app.SetLogger();
-ReadConfig.SetCultures();
-app.UseHsts();
-app.UseRouting();
-app.UseRequestLocalization();
-app.UseResponseCompression();
-app.UseResponseCaching();
-app.UseForwardedHeaders();
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 app.UseCors("AllowSpecificOrigin");
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseCustomConfigure();
 app.UseCustomSwagger();
-
-app.UseStaticFiles();
 
 app.Run();

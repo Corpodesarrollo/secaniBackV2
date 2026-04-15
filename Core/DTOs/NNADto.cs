@@ -41,8 +41,8 @@
             {
                 return SexoId switch
                 {
-                    "M" or "1" => "Masculino",
-                    "F" or "2" => "Femenino",
+                    "H" or "1" => "Masculino",
+                    "M" or "2" => "Femenino",
                     _ => "Otro"
                 };
             }

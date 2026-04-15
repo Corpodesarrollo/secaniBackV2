@@ -45,6 +45,24 @@ namespace Infra.Repositorios
             return result;
         }
 
+        public async Task<TPEAPBDto?> GetEAPBByCodeOrId(string value)
+        {
+            var query = GetSelect();
+            var result = await query.Where(x => x.Codigo.Equals(value)).FirstOrDefaultAsync();
+            if (result == null && int.TryParse(value, out var id))
+            {
+                result = await query.Where(x => x.Id == id).FirstOrDefaultAsync();
+            }
+            return result;
+        }
+
+        public async Task<TPEAPBDto?> GetEAPBById(int id)
+        {
+            var query = GetSelect();
+            var result = await query.Where(x => x.Id == id).FirstOrDefaultAsync();
+            return result;
+        }
+
         public async Task<List<TPEAPBDto>> GetET()
         {
             var query = GetSelect();

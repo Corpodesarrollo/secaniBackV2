@@ -7,6 +7,7 @@ using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
 using Microsoft.AspNetCore.Mvc;
+using SISPRO.TRV.Web.MVCCore;
 
 
 namespace Api.Controllers
@@ -17,7 +18,7 @@ namespace Api.Controllers
         private INNAService _nNAService = service;
         private readonly TablaParametricaService tablaParametricaService = tablaParametrica;
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:long}")]
         public async Task<IActionResult> GetById(long id)
         {
             var response = await _nNARepo.GetById(id);
@@ -27,13 +28,15 @@ namespace Api.Controllers
         [HttpPost("Crear")]
         public async Task<ActionResult<RespuestaResponse<NNADto>>> AddAsync(NNADto dto)
         {
-            return await _nNAService.AddAsync(dto);
+            var user = this.GetUser();
+            return await _nNAService.AddAsync(dto, user);
         }
 
         [HttpPut("Actualizar")]
         public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)
         {
-            return await _nNAService.UpdateAsync(dto);
+            var user = this.GetUser();
+            return await _nNAService.UpdateAsync(dto, user);
         }
 
         [HttpPost("ConsultarNNAFiltro")]
@@ -133,9 +136,9 @@ namespace Api.Controllers
         }
 
         [HttpPost("CasosAbiertos")]
-        public IActionResult ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        public async Task<IActionResult> ConsultaCasosAbiertos(CasosAbiertosRequest request)
         {
-            var response = _nNARepo.ConsultaCasosAbiertos(request);
+            var response = await _nNARepo.ConsultaCasosAbiertos(request);
             return Ok(response);
         }
 
@@ -153,3 +156,4 @@ namespace Api.Controllers
         }
     }
 }
+

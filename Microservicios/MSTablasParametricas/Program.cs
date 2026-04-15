@@ -8,7 +8,6 @@ using Core.Services;
 using Core.Services.MSTablasParametricas;
 using Core.Services.StorageService;
 using Core.Validators;
-using Core.Validators.MSPermisos;
 using FluentValidation;
 using Infra;
 using Infra.Repositories;
@@ -89,19 +88,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins(
+            "https://secani.sispro.gov.co",
             "http://192.168.152.17:8140",
             "https://secani.sispropreprod.gov.co",
             "http://192.168.110.11:8140",
             "http://localhost:4200",
             "https://localhost:4200",
+            "http://54.90.124.49:9110",
             "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
-
-builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()
-                .AddCheck<CustomHealthCheck>("CustomHealthCheck");
 
 WebApplication app = builder.Build();
 

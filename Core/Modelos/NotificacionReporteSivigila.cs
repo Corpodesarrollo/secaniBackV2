@@ -1,5 +1,4 @@
-﻿using Core.Modelos.Common;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Core.Modelos
 {
@@ -7,10 +6,11 @@ namespace Core.Modelos
     {
         [Key]
         public long Id { get; set; }
-        public int IdReporteSivigila { get; set; }
-        public string EntidadId { get; set; }
-        public byte TotalEnvios { get; set; }
-        public string CreatedByUserId { get; set; }
-        public DateTime DateCreated { get; set; }
+        public int? IdReporteSivigila { get; set; }
+        public string? EntidadId { get; set; }
+        public byte? TotalEnvios { get; set; }
+        public string? CreatedByUserId { get; set; }
+        public DateTime? DateCreated { get; set; }
+
     }
 }

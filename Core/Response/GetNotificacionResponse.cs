@@ -14,6 +14,7 @@ namespace Core.response
         public string? AgenteOrigen { get; set; }
         public string? RolAgenteOrigen { get; set; }
         public string? TextoNotificacion { get; set; }
+        public bool Administrador { get; set; }
         public string? Url { get; set; }
         public DateTime FechaNotificacion { get; set; }
         public bool Leida { get; set; }

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using SISPRO.TRV.Entity;
+using static Core.Common.Estructuras;
 
 
 namespace Infra.Repositorios
@@ -228,8 +229,22 @@ namespace Infra.Repositorios
             }
         }
 
-        public async Task<(bool, NNAs)> AddAsync(NNAs entity)
+        public async Task<(bool, NNAs)> AddAsync(NNAs entity, User user)
         {
+            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+            entity.CreatedByUserId = usuario != null ? usuario.Id : "";
+            entity.DateCreated = DateTime.UtcNow;
+            entity.estadoId = 15; // Registrado
+            if (entity.OrigenReporteId == 1)
+                entity.FechaNotificacionSIVIGILA = entity.FechaIngresoEstrategia;
+
+            var eps = await _eapbRepo.GetEAPBById(entity.EAPBId ?? 0);
+            if (eps != null)
+            {
+                entity.EPSId = eps.Id;
+                entity.EAPBId = eps.Id;
+            }
+
             var (success, response) = await _repository.AddAsync(entity);
             if (!success)
             {
@@ -238,10 +253,13 @@ namespace Infra.Repositorios
             return (success, response);
         }
 
-        public async Task<(bool, NNAs)> UpdateAsync(NNAs entity)
+        public async Task<(bool, NNAs)> UpdateAsync(NNAs entity, User user)
         {
             try
             {
+                var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+                entity.UpdatedByUserId = usuario != null ? usuario.Id : "";
+                entity.DateUpdated = DateTime.UtcNow;
                 var (success, response) = await _repository.UpdateAsync(entity);
                 return (success, response);
             }
@@ -1391,7 +1409,7 @@ namespace Infra.Repositorios
 
         }
 
-        public void AsignacionManual(AsignacionManualRequest request)
+        public async Task AsignacionManual(AsignacionManualRequest request)
         {
             UsuarioAsignado usuarioAsignado;
             List<UsuarioAsignado> usuarios = new();
@@ -1411,6 +1429,17 @@ namespace Infra.Repositorios
 
             _context.UsuarioAsignados.AddRange(usuarios);
             _context.SaveChanges();
+
+            foreach (int i in request.Segumientos)
+            {
+                var noti = await _notificacionRepo.SetNotificacion(new()
+                {
+                    TipoNotificacion = TipoNotificacion.RespuestasNotificacionesAlertas,
+                    IdAgenteOrigen = request.IdUsuarioOrigen,
+                    IdAgenteDestino = request.IdUsuario,
+                    IdSeguimiento = i
+                });
+            }
         }
 
         public async Task<DepuracionProtocoloResponse> CargarArchivoNNA(IFormFile file)
@@ -1749,5 +1778,6 @@ namespace Infra.Repositorios
                 throw new Exception("No se encontró un seguimiento para el NNA especificado.");
             }
         }
+
     }
 }

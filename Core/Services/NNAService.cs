@@ -5,6 +5,7 @@ using Core.Interfaces.Services.Reportes;
 using Core.Modelos;
 using Core.Modelos.Common;
 using Core.Response;
+using SISPRO.TRV.Entity;
 
 namespace Core.Services
 {
@@ -21,14 +22,13 @@ namespace Core.Services
             _reporteInconsistenciaPersonaService = reporteInconsistenciaPersonaService;
         }
 
-        public async Task<RespuestaResponse<NNADto>> AddAsync(NNADto dto)
+        public async Task<RespuestaResponse<NNADto>> AddAsync(NNADto dto, User user)
         {
             var transaction = await _repository.BeginTransactionAsync();
             try
             {
-                dto.CreatedByUserId = "1";
                 var entity = GenericMapper.Map<NNADto, NNAs>(dto);
-                var (success, entitys) = await _repository.AddAsync(entity);
+                var (success, entitys) = await _repository.AddAsync(entity, user);
                 if (success && dto.Contactos != null && dto.Contactos.Length > 0)
                 {
                     foreach (var item in dto.Contactos)
@@ -58,7 +58,7 @@ namespace Core.Services
 
         }
 
-        public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)
+        public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto, User user)
         {
             var transaction = await _repository.BeginTransactionAsync();
             try
@@ -67,7 +67,7 @@ namespace Core.Services
                 entity.TrasladosIPSId = dto.TrasladosIPSId != null
                     ? string.Join(",", dto.TrasladosIPSId)
                     : string.Empty;
-                var (success, entitys) = await _repository.UpdateAsync(entity);
+                var (success, entitys) = await _repository.UpdateAsync(entity, user);
 
                 //si el estado es fallecido [10], el seguimiento cambia a estado culminado [3]
                 if (success && dto.estadoId == 10)

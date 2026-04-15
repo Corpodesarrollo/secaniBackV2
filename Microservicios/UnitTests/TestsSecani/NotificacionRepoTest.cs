@@ -5,6 +5,7 @@ using Core.response;
 using Core.Services.StorageService;
 using Infra;
 using Infra.Repositories;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
@@ -12,10 +13,12 @@ namespace TestsSecani
 {
     public class NotificationRepoTest
     {
-        private readonly NotificacionRepo NotificacionRepo;
+        private readonly NotificacionRepo notificacionRepo;
         private readonly ApplicationDbContext Context;
         private IAdjuntosRepo adjuntosRepo;
         private IStorageService storageService;
+        private IReportesSIVIGILARepo reportesSIVIGILARepo;
+        private IWebHostEnvironment webHostEnvironment;
 
         public NotificationRepoTest()
         {
@@ -26,7 +29,7 @@ namespace TestsSecani
             storageService = Substitute.For<IStorageService>();
 
             Context = new ApplicationDbContext(options);
-            //NotificacionRepo = new NotificacionRepo(Context,adjuntosRepo,storageService, new ReportesSIVIGILARepo(Context, storageService));
+            notificacionRepo = new NotificacionRepo(Context, adjuntosRepo, storageService, reportesSIVIGILARepo, webHostEnvironment);
         }
 
         [Fact]

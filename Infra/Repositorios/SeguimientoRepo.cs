@@ -1,6 +1,7 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
 using Core.response;
 using Core.Response;
@@ -12,6 +13,7 @@ using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
@@ -213,7 +215,7 @@ namespace Infra.Repositorios
                                                          ContactoNNAId = g.Key.ContactoNNAId,
                                                          Telefono = g.Key.Telefono,
                                                          UsuarioId = g.Key.UsuarioId,
-                                                         SolicitanteId = g.Key.SolicitanteId,
+                                                         SolicitanteId = g.Key.SolicitanteId.ToString(),
                                                          FechaSolicitud = g.Key.FechaSolicitud ?? new(),
                                                          TieneDiagnosticos = g.Key.TieneDiagnosticos ?? false,
                                                          ObservacionesSolicitante = g.Key.ObservacionesSolicitante,
@@ -566,7 +568,7 @@ namespace Infra.Repositorios
                     EstadoId = request.EstadoId,
                     ContactoNNAId = request.ContactoNNAId,
                     UsuarioId = request.UsuarioId,
-                    SolicitanteId = request.SolicitanteId,
+                    SolicitanteId = long.TryParse(request.SolicitanteId, out long solId) ? solId : null,
                     FechaSolicitud = request.FechaSolicitud,
                     TieneDiagnosticos = request.TieneDiagnosticos,
                     UltimaActuacionFecha = request.UltimaActuacionFecha,
@@ -660,14 +662,14 @@ namespace Infra.Repositorios
             }
         }
 
-        public async Task<List<UsuarioAsignado>> AsignacionAutomatica()
+        public async Task<List<UsuarioAsignado>> AsignacionAutomatica((long, string, string)? seguimientoDef = null, ApplicationUser? user = null)
         {
             var seguimientosAsignados = new List<UsuarioAsignado>();
 
-            var seguimientosNoAsignados = await CargarSeguimientos();
+            var seguimientosNoAsignados = seguimientoDef != null ? [seguimientoDef.Value] : await CargarSeguimientos();
 
             var fecha = DateTime.Now.Date;
-            var revisores = await CargarRevisores(fecha);
+            var revisores = await CargarRevisores(fecha, user);
 
             while (seguimientosNoAsignados.Count > 0)
             {
@@ -699,8 +701,10 @@ namespace Infra.Repositorios
                     //el revisor entra a las horaentrada y sale a la horasalida. se debe asignar el seguimiento en un rango de 640 segundos,
                     //si el seguimiento se cruza con otro se debe aumentar 640 segundos  y volver a verificar hasta lograr agendar el seguimiento
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
-                    if (fechaAsignacion == null)
+                    if (fechaAsignacion == null && user == null)
                         continue;
+                    else if (fechaAsignacion == null && user != null)
+                        break;
 
                     var seguimiento = seguimientosNoAsignados[0];
 
@@ -728,13 +732,24 @@ namespace Infra.Repositorios
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
                 }
 
-                fecha = fecha.AddDays(1);
-                revisores = await CargarRevisores(fecha);
+                var sw = false;
+                for (int i = 0; i < 10; i++)
+                {
+                    fecha = fecha.AddDays(1);
+                    revisores = await CargarRevisores(fecha, user);
 
-                //validar si hay disponibilidad de revisores
-                var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
-                if (!revisoresDisponibles)
+                    //validar si hay disponibilidad de revisores
+                    var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
+                    if (revisoresDisponibles)
+                    {
+                        sw = true;
+                        break;
+                    }
+                }
+
+                if (!sw)
                     break;
+
             }
 
             return seguimientosAsignados;
@@ -1112,28 +1127,48 @@ namespace Infra.Repositorios
                           }).AnyAsync();
         }
 
-        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha)
+        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha, IdentityUser? user = null)
         {
             var fechaValidar = fecha;
             var diaSemana = (int)fechaValidar.DayOfWeek;
 
-            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
-            return await (from ur in _context.UserRoles
-                          join r in _context.Roles on ur.RoleId equals r.Id
-                          join u in _context.Users on ur.UserId equals u.Id
-                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
-                          join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
-                          from aus in a.DefaultIfEmpty()
-                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
-                          select new UsuariosHorariosDto
-                          {
-                              UserId = u.Id,
-                              Nombre = u.FullName,
-                              Email = u.Email,
-                              Fecha = h.Fecha,
-                              HoraEntrada = h.HoraEntrada,
-                              HoraSalida = h.HoraSalida
-                          }).ToListAsync();
+            if (user != null)
+            {
+                return await (from u in _context.Users
+                              join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                              join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                              from aus in a.DefaultIfEmpty()
+                              where u.Id == user.Id && u.Activo == true && h.Dia == diaSemana && aus == null
+                              select new UsuariosHorariosDto
+                              {
+                                  UserId = u.Id,
+                                  Nombre = u.FullName,
+                                  Email = u.Email,
+                                  Fecha = h.Fecha,
+                                  HoraEntrada = h.HoraEntrada,
+                                  HoraSalida = h.HoraSalida
+                              }).ToListAsync();
+            }
+            else
+            {
+                //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+                return await (from ur in _context.UserRoles
+                              join r in _context.Roles on ur.RoleId equals r.Id
+                              join u in _context.Users on ur.UserId equals u.Id
+                              join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                              join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                              from aus in a.DefaultIfEmpty()
+                              where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
+                              select new UsuariosHorariosDto
+                              {
+                                  UserId = u.Id,
+                                  Nombre = u.FullName,
+                                  Email = u.Email,
+                                  Fecha = h.Fecha,
+                                  HoraEntrada = h.HoraEntrada,
+                                  HoraSalida = h.HoraSalida
+                              }).ToListAsync();
+            }
         }
 
         public async Task<UserDto[]> CargarRevisores()
@@ -1181,7 +1216,7 @@ namespace Infra.Repositorios
                     plantillaCorreo = new PlantillaCorreo()
                     {
                         Asunto = request.Asunto,
-                        Cierre = request.Cierre,
+                        Cierre = request.Cierre ?? "",
                         Estado = request.Estado,
                         FechaCreacion = DateTime.Now,
                         Firmante = request.Firmante,
@@ -1246,7 +1281,7 @@ namespace Infra.Repositorios
                     string comentario = string.Join(", ", listComentario);
 
                     plantillaCorreo.Asunto = request.Asunto;
-                    plantillaCorreo.Cierre = request.Cierre;
+                    plantillaCorreo.Cierre = request.Cierre ?? "";
                     plantillaCorreo.Estado = request.Estado;
                     plantillaCorreo.Firmante = request.Firmante;
                     plantillaCorreo.Mensaje = request.Mensaje;
@@ -1610,9 +1645,10 @@ namespace Infra.Repositorios
 
         public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
         {
+            long.TryParse(id, out long solicitanteId);
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
-                        where s.SolicitanteId == id
+                        where s.SolicitanteId == solicitanteId
                         group s by s.NNAId into g
                         select new { id = g.Max(x => x.Id) };
 
