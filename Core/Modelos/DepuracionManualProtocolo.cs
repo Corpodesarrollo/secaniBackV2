@@ -100,6 +100,8 @@
         public string nmun_resi { get; set; }
         public string ndep_notif { get; set; }
         public string nmun_notif { get; set; }
+        public int? recaidas { get; set; }
+        public int? segundasNeoplasias { get; set; }
         public DateTime FechaHora { get; set; }
     }
 }

@@ -4,8 +4,9 @@ namespace Core.Modelos
 {
     public class Plantilla : BaseEntity
     {
-        public string Headerjpg { get; set; }
-        public string Footerjpg { get; set; }
+        public string? Headerjpg { get; set; }
+        public string? Footerjpg { get; set; }
+        public string? Membrete { get; set; }
         public long ConfigurationEmailId { get; set; }
 
     }

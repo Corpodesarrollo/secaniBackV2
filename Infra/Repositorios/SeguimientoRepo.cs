@@ -600,7 +600,7 @@ namespace Infra.Repositorios
                         {
                             SubcategoriaId = item,
                             Descripcion = "Alerta generada por seguimiento",
-                            Alias = 'S',
+                            Alias = "S",
                             CreatedByUserId = "1",
                             DateCreated = DateTime.Now
                         };
