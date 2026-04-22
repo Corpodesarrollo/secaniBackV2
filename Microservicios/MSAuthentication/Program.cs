@@ -106,6 +106,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 
 
 builder.CustomConfigureServices();
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
 builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();

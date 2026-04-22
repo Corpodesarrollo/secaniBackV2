@@ -5,6 +5,8 @@ using Core.DTOs.MSUsuariosyRoles;
 using Core.Interfaces.Repositorios;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 
 namespace MSAuthentication.Api.Controllers
@@ -13,11 +15,56 @@ namespace MSAuthentication.Api.Controllers
     {
         private readonly IMediator _mediator;
         private readonly IUsurioRepo _usurioRepo;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public UserController(IMediator mediator, IUsurioRepo usurioRepo)
+        public UserController(IMediator mediator, IUsurioRepo usurioRepo, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _mediator = mediator;
             _usurioRepo = usurioRepo;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
+        }
+
+        // BUG-003: Consultar usuarios SISPRO (reemplaza GetAllUserDetails local)
+        [HttpGet("GetAllFromSispro")]
+        public async Task<IActionResult> GetAllFromSispro([FromQuery] string? role = null)
+        {
+            try
+            {
+                var baseUrl = _configuration["SisproApi:BaseUrl"];
+                var apiKey = _configuration["SisproApi:ApiKey"];
+
+                if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(apiKey))
+                {
+                    return StatusCode(500, new { error = "SisproApi config missing" });
+                }
+
+                var endpoint = string.IsNullOrEmpty(role)
+                    ? "api/UsuarioInstitucional/GetAllByApp"
+                    : $"api/UsuarioInstitucional/GetAllByRole?role={Uri.EscapeDataString(role)}";
+
+                var client = _httpClientFactory.CreateClient();
+                client.BaseAddress = new Uri(baseUrl);
+                client.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.Timeout = TimeSpan.FromSeconds(30);
+
+                var response = await client.GetAsync(endpoint);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    return StatusCode((int)response.StatusCode, new { error = "SISPRO API error", body });
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                return Ok(doc.RootElement.Clone());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [HttpPost("Create")]
