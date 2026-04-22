@@ -75,6 +75,8 @@ namespace Infra.Repositorios.Reportes
                             SegundoNombre = nna.SegundoNombre,
                             PrimerApellido = nna.PrimerApellido,
                             SegundoApellido = nna.SegundoApellido,
+                            NombreCompleto = string.Join(" ", new[] { nna.PrimerNombre, nna.SegundoNombre, nna.PrimerApellido, nna.SegundoApellido }.Where(s => !string.IsNullOrWhiteSpace(s))),
+                            Observacion = item.Observaciones ?? string.Empty,
                             DiagnosticoId = nna.DiagnosticoId,
                             Diagnostico = nna.DiagnosticoId.HasValue
                                 ? (await _diagnosticoService.GetByIdAsync(nna.DiagnosticoId ?? 0, cancellationToken))?.Nombre ?? string.Empty

@@ -10,6 +10,7 @@
         Task<bool> DeleteUserAsync(string userId);
         Task<bool> IsUniqueUserName(string userName);
         Task<bool> UpdateUserProfile(string id, string fullName, string email, string Telefonos = "", string EntidadId = "", string Cargo = "", bool? Activo = false);
+        Task<bool> IsUnicoAgenteActivo(string userId);
 
         // Role Section
         Task<bool> CreateRoleAsync(string roleName);

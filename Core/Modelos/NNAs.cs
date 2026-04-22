@@ -30,6 +30,7 @@ namespace Core.Modelos
         public string? NumeroIdentificacion { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public string? MunicipioNacimientoId { get; set; }
+        public string? DepartamentoNacimientoId { get; set; }
         public string? SexoId { get; set; }
         public string? TipoRegimenSSId { get; set; }
         public int? EAPBId { get; set; }

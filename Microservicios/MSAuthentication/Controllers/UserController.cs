@@ -143,18 +143,15 @@ namespace MSAuthentication.Api.Controllers
 
 
         [HttpPut("EditUserProfile/{id}")]
-        [ProducesDefaultResponseType(typeof(int))]
         public async Task<ActionResult> EditUserProfile(string id, [FromBody] EditUserProfileCommand command)
         {
-            if (id == command.Id)
+            if (id != command.Id) return BadRequest();
+            var result = await _mediator.Send(command);
+            if (result.Code == -1)
             {
-                var result = await _mediator.Send(command);
-                return Ok(result);
+                return BadRequest(new { field = "estado", message = result.Message });
             }
-            else
-            {
-                return BadRequest();
-            }
+            return Ok(result.Code);
         }
 
         [HttpGet("GetUserRole/{userId}")]

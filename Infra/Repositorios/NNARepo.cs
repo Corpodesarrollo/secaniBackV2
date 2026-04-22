@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using SISPRO.TRV.Entity;
+using System.Globalization;
 using static Core.Common.Estructuras;
 
 
@@ -918,7 +919,7 @@ namespace Infra.Repositorios
                             if (nna != null)
                             {
                                 nna.TipoCancerId = d.DepuracionProtocoloRequest.tipo_ca;
-                                nna.FechaDefuncion = DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out DateTime fechaDefuncion) ? fechaDefuncion : DateTime.MinValue;
+                                nna.FechaDefuncion = ParseFechaSivigila(d.DepuracionProtocoloRequest.fec_def);
                                 nna.MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte;
 
                                 if (d.DepuracionProtocoloRequest.recaida == "1")
@@ -952,10 +953,11 @@ namespace Infra.Repositorios
                             NumeroIdentificacion = d.DepuracionProtocoloRequest.num_ide,
                             SexoId = d.DepuracionProtocoloRequest.sexo,
                             PaisId = d.DepuracionProtocoloRequest.cod_pais_r,
-                            ResidenciaOrigenMunicipioId = d.DepuracionProtocoloRequest.cod_mun_o,
+                            ResidenciaOrigenMunicipioId = NormalizeCodMun(d.DepuracionProtocoloRequest.cod_dpto_o, d.DepuracionProtocoloRequest.cod_mun_o),
                             ResidenciaOrigenAreaId = d.DepuracionProtocoloRequest.area,
                             ResidenciaOrigenBarrio = d.DepuracionProtocoloRequest.bar_ver,
                             ResidenciaOrigenDireccion = d.DepuracionProtocoloRequest.dir_res,
+                            MunicipioNacimientoId = NormalizeCodMun(d.DepuracionProtocoloRequest.cod_dpto_r, d.DepuracionProtocoloRequest.cod_mun_r),
                             TipoRegimenSSId = d.DepuracionProtocoloRequest.tip_ss switch
                             {
                                 "C" => "2",
@@ -967,11 +969,12 @@ namespace Infra.Repositorios
                             },
                             EtniaId = d.DepuracionProtocoloRequest.per_etn,
                             ResidenciaOrigenEstratoId = d.DepuracionProtocoloRequest.estrato,
-                            GrupoPoblacionId = "", //verificar como se asocia a un grupo poblacional
+                            DepartamentoNacimientoId = NormalizeCodDpto(d.DepuracionProtocoloRequest.cod_dpto_r),
+                            GrupoPoblacionId = MapGrupoPoblacion(d.DepuracionProtocoloRequest),
                             FechaConsultaDiagnostico = d.DepuracionProtocoloRequest.fec_con,
                             FechaInicioSintomas = d.DepuracionProtocoloRequest.ini_sin,
                             FechaHospitalizacion = d.DepuracionProtocoloRequest.fec_hos,
-                            FechaDefuncion = DateTime.TryParse(d.DepuracionProtocoloRequest.fec_def, out DateTime fechaDefuncion) ? fechaDefuncion : DateTime.MinValue,
+                            FechaDefuncion = ParseFechaSivigila(d.DepuracionProtocoloRequest.fec_def),
                             ResidenciaOrigenTelefono = d.DepuracionProtocoloRequest.telefono,
                             FechaNacimiento = d.DepuracionProtocoloRequest.fecha_nto,
                             MotivoDefuncion = d.DepuracionProtocoloRequest.cbmte,
@@ -999,14 +1002,46 @@ namespace Infra.Repositorios
                             Nombres = "Cuidador",
                             Telefonos = d.DepuracionProtocoloRequest.telefono,
                             Cuidador = true,
-                            Estado = true
+                            Estado = true,
+                            CreatedByUserId = _user.ID.ToString(),
+                            DateCreated = DateTime.Now
                         };
-                        insertContactoNNA.Add(contacto);
+                        _context.ContactoNNAs.Add(contacto);
+                        await _context.SaveChangesAsync();
+
+                        // BUG-013: crear Seguimiento + UsuarioAsignados automatico
+                        var seguimiento = new Seguimiento()
+                        {
+                            NNAId = newNNA.Id,
+                            FechaSeguimiento = DateTime.Now,
+                            EstadoId = 1,
+                            ContactoNNAId = contacto.Id,
+                            Telefono = d.DepuracionProtocoloRequest.telefono,
+                            UsuarioId = _user.ID.ToString(),
+                            TieneDiagnosticos = !string.IsNullOrEmpty(d.DepuracionProtocoloRequest.tipo_ca),
+                            UltimaActuacionAsunto = "Registro inicial",
+                            UltimaActuacionFecha = DateTime.Now,
+                            CreatedByUserId = _user.ID.ToString(),
+                            DateCreated = DateTime.Now
+                        };
+                        _context.Seguimientos.Add(seguimiento);
+                        await _context.SaveChangesAsync();
+
+                        _context.UsuarioAsignados.Add(new UsuarioAsignado()
+                        {
+                            UsuarioId = _user.ID.ToString(),
+                            SeguimientoId = seguimiento.Id,
+                            FechaAsignacion = DateTime.Now,
+                            Observaciones = "Asignación automática cargue SIVIGILA",
+                            Activo = true,
+                            CreatedByUserId = _user.ID.ToString(),
+                            DateCreated = DateTime.Now
+                        });
+                        await _context.SaveChangesAsync();
                     }
                 }
 
                 _context.NNAs.UpdateRange(updateNNA);
-                _context.ContactoNNAs.AddRange(insertContactoNNA);
                 await _context.SaveChangesAsync();
 
                 List<DepuracionManualProtocolo> depuracionProtocolos = [];
@@ -1498,7 +1533,7 @@ namespace Infra.Repositorios
                             DepuracionProtocoloRequest depuracion = new()
                             {
                                 cod_eve = currentRow.Cell(1).GetValue<string>(),
-                                fec_not = DateTime.TryParse(currentRow.Cell(2).GetValue<string>(), out DateTime fec_not) ? fec_not : DateTime.MinValue,
+                                fec_not = ParseFechaSivigila(currentRow.Cell(2).GetValue<string>()),
                                 semana = currentRow.Cell(3).GetValue<int>(),
                                 anio = currentRow.Cell(4).GetValue<int>(),
                                 cod_pre = currentRow.Cell(5).GetValue<string>(),
@@ -1546,40 +1581,40 @@ namespace Infra.Repositorios
                                 cod_pais_r = currentRow.Cell(47).GetValue<string>(),
                                 cod_dpto_r = currentRow.Cell(48).GetValue<string>(),
                                 cod_mun_r = currentRow.Cell(49).GetValue<string>(),
-                                fec_con = DateTime.TryParse(currentRow.Cell(50).GetValue<string>(), out DateTime fec_con) ? fec_con : DateTime.MinValue,
-                                ini_sin = DateTime.TryParse(currentRow.Cell(51).GetValue<string>(), out DateTime ini_sin) ? ini_sin : DateTime.MinValue,
+                                fec_con = ParseFechaSivigila(currentRow.Cell(50).GetValue<string>()),
+                                ini_sin = ParseFechaSivigila(currentRow.Cell(51).GetValue<string>()),
                                 tip_cas = currentRow.Cell(52).GetValue<string>(),
                                 pac_hos = currentRow.Cell(53).GetValue<string>(),
-                                fec_hos = DateTime.TryParse(currentRow.Cell(54).GetValue<string>(), out DateTime fec_hos) ? fec_hos : DateTime.MinValue,
+                                fec_hos = ParseFechaSivigila(currentRow.Cell(54).GetValue<string>()),
                                 con_fin = currentRow.Cell(55).GetValue<String>(),
                                 fec_def = currentRow.Cell(56).GetValue<string>(),
                                 ajuste = currentRow.Cell(57).GetValue<string>(),
                                 telefono = currentRow.Cell(58).GetValue<string>(),
-                                fecha_nto = DateTime.TryParse(currentRow.Cell(59).GetValue<string>(), out DateTime fecha_nto) ? fecha_nto : DateTime.MinValue,
+                                fecha_nto = ParseFechaSivigila(currentRow.Cell(59).GetValue<string>()),
                                 cer_def = currentRow.Cell(60).GetValue<string>(),
                                 cbmte = currentRow.Cell(61).GetValue<string>(),
                                 uni_modif = currentRow.Cell(62).GetValue<string>(),
                                 nuni_modif = currentRow.Cell(63).GetValue<string>(),
-                                fec_arc_xl = DateTime.TryParse(currentRow.Cell(64).GetValue<string>(), out DateTime fec_arc_xl) ? fec_arc_xl : DateTime.MinValue,
+                                fec_arc_xl = ParseFechaSivigila(currentRow.Cell(64).GetValue<string>()),
                                 nom_dil_f = currentRow.Cell(65).GetValue<string>(),
                                 tel_dil_f = currentRow.Cell(66).GetValue<string>(),
-                                fec_aju = DateTime.TryParse(currentRow.Cell(67).GetValue<string>(), out DateTime fec_aju) ? fec_aju : DateTime.MinValue,
+                                fec_aju = ParseFechaSivigila(currentRow.Cell(67).GetValue<string>()),
                                 nit_upgd = currentRow.Cell(68).GetValue<string>(),
                                 fm_fuerza = currentRow.Cell(69).GetValue<string>(),
                                 fm_unidad = currentRow.Cell(70).GetValue<string>(),
                                 fm_grado = currentRow.Cell(71).GetValue<string>(),
                                 version = currentRow.Cell(72).GetValue<string>(),
                                 tipo_ca = currentRow.Cell(73).GetValue<string>(),
-                                fec_initra = DateTime.TryParse(currentRow.Cell(74).GetValue<string>(), out DateTime fec_initra) ? fec_initra : DateTime.MinValue,
+                                fec_initra = ParseFechaSivigila(currentRow.Cell(74).GetValue<string>()),
                                 consx2_neo = currentRow.Cell(75).GetValue<string>(),
                                 recaida = currentRow.Cell(76).GetValue<string>(),
-                                fec_diag1a = DateTime.TryParse(currentRow.Cell(77).GetValue<string>(), out DateTime fec_diag1a) ? fec_diag1a : DateTime.MinValue,
+                                fec_diag1a = ParseFechaSivigila(currentRow.Cell(77).GetValue<string>()),
                                 crit_dx_pr = currentRow.Cell(78).GetValue<string>(),
-                                fec_tomadp = DateTime.TryParse(currentRow.Cell(79).GetValue<string>(), out DateTime fec_tomadp) ? fec_tomadp : DateTime.MinValue,
-                                fec_res_dp = DateTime.TryParse(currentRow.Cell(80).GetValue<string>(), out DateTime fec_res_dp) ? fec_res_dp : DateTime.MinValue,
+                                fec_tomadp = ParseFechaSivigila(currentRow.Cell(79).GetValue<string>()),
+                                fec_res_dp = ParseFechaSivigila(currentRow.Cell(80).GetValue<string>()),
                                 crit_dx_de = currentRow.Cell(81).GetValue<string>(),
-                                fec_tomadd = DateTime.TryParse(currentRow.Cell(82).GetValue<string>(), out DateTime fec_tomadd) ? fec_tomadd : DateTime.MinValue,
-                                fec_res_dd = DateTime.TryParse(currentRow.Cell(83).GetValue<string>(), out DateTime fec_res_dd) ? fec_res_dd : DateTime.MinValue,
+                                fec_tomadd = ParseFechaSivigila(currentRow.Cell(82).GetValue<string>()),
+                                fec_res_dd = ParseFechaSivigila(currentRow.Cell(83).GetValue<string>()),
                                 nom_oncolo = currentRow.Cell(84).GetValue<string>(),
                                 tel_oncolo = currentRow.Cell(85).GetValue<string>(),
                                 tel_cont_2 = currentRow.Cell(86).GetValue<string>(),
@@ -1594,7 +1629,7 @@ namespace Infra.Repositorios
                                 nmun_resi = currentRow.Cell(95).GetValue<string>(),
                                 ndep_notif = currentRow.Cell(96).GetValue<string>(),
                                 nmun_notif = currentRow.Cell(97).GetValue<string>(),
-                                FechaHora = DateTime.TryParse(currentRow.Cell(98).GetValue<string>(), out DateTime FechaHora) ? FechaHora : DateTime.MinValue
+                                FechaHora = ParseFechaSivigila(currentRow.Cell(98).GetValue<string>())
                             };
 
                             DepuracionRequest.Add(depuracion);
@@ -1626,7 +1661,7 @@ namespace Infra.Repositorios
                             DepuracionProtocoloRequest depuracion = new()
                             {
                                 cod_eve = columns[0],
-                                fec_not = DateTime.TryParse(columns[1], out DateTime fec_not) ? fec_not : DateTime.MinValue,
+                                fec_not = ParseFechaSivigila(columns[1]),
                                 semana = int.Parse(columns[2]),
                                 anio = int.Parse(columns[3]),
                                 cod_pre = columns[4],
@@ -1674,40 +1709,40 @@ namespace Infra.Repositorios
                                 cod_pais_r = columns[46],
                                 cod_dpto_r = columns[47],
                                 cod_mun_r = columns[48],
-                                fec_con = DateTime.TryParse(columns[49], out DateTime fec_con) ? fec_con : DateTime.MinValue,
-                                ini_sin = DateTime.TryParse(columns[50], out DateTime ini_sin) ? ini_sin : DateTime.MinValue,
+                                fec_con = ParseFechaSivigila(columns[49]),
+                                ini_sin = ParseFechaSivigila(columns[50]),
                                 tip_cas = columns[51],
                                 pac_hos = columns[52],
-                                fec_hos = DateTime.TryParse(columns[53], out DateTime fec_hos) ? fec_hos : DateTime.MinValue,
+                                fec_hos = ParseFechaSivigila(columns[53]),
                                 con_fin = columns[54],
                                 fec_def = columns[55],
                                 ajuste = columns[56],
                                 telefono = columns[57],
-                                fecha_nto = DateTime.TryParse(columns[58], out DateTime fecha_nto) ? fecha_nto : DateTime.MinValue,
+                                fecha_nto = ParseFechaSivigila(columns[58]),
                                 cer_def = columns[59],
                                 cbmte = columns[60],
                                 uni_modif = columns[61],
                                 nuni_modif = columns[62],
-                                fec_arc_xl = DateTime.TryParse(columns[63], out DateTime fec_arc_xl) ? fec_arc_xl : DateTime.MinValue,
+                                fec_arc_xl = ParseFechaSivigila(columns[63]),
                                 nom_dil_f = columns[64],
                                 tel_dil_f = columns[65],
-                                fec_aju = DateTime.TryParse(columns[66], out DateTime fec_aju) ? fec_aju : DateTime.MinValue,
+                                fec_aju = ParseFechaSivigila(columns[66]),
                                 nit_upgd = columns[67],
                                 fm_fuerza = columns[68],
                                 fm_unidad = columns[69],
                                 fm_grado = columns[70],
                                 version = columns[71],
                                 tipo_ca = columns[72],
-                                fec_initra = DateTime.TryParse(columns[73], out DateTime fec_initra) ? fec_initra : DateTime.MinValue,
+                                fec_initra = ParseFechaSivigila(columns[73]),
                                 consx2_neo = columns[74],
                                 recaida = columns[75],
-                                fec_diag1a = DateTime.TryParse(columns[76], out DateTime fec_diag1a) ? fec_diag1a : DateTime.MinValue,
+                                fec_diag1a = ParseFechaSivigila(columns[76]),
                                 crit_dx_pr = columns[77],
-                                fec_tomadp = DateTime.TryParse(columns[78], out DateTime fec_tomadp) ? fec_tomadp : DateTime.MinValue,
-                                fec_res_dp = DateTime.TryParse(columns[79], out DateTime fec_res_dp) ? fec_res_dp : DateTime.MinValue,
+                                fec_tomadp = ParseFechaSivigila(columns[78]),
+                                fec_res_dp = ParseFechaSivigila(columns[79]),
                                 crit_dx_de = columns[80],
-                                fec_tomadd = DateTime.TryParse(columns[81], out DateTime fec_tomadd) ? fec_tomadd : DateTime.MinValue,
-                                fec_res_dd = DateTime.TryParse(columns[82], out DateTime fec_res_dd) ? fec_res_dd : DateTime.MinValue,
+                                fec_tomadd = ParseFechaSivigila(columns[81]),
+                                fec_res_dd = ParseFechaSivigila(columns[82]),
                                 nom_oncolo = columns[83],
                                 tel_oncolo = columns[84],
                                 tel_cont_2 = columns[85],
@@ -1722,7 +1757,7 @@ namespace Infra.Repositorios
                                 nmun_resi = columns[94],
                                 ndep_notif = columns[95],
                                 nmun_notif = columns[96],
-                                FechaHora = DateTime.TryParse(columns[97], out DateTime FechaHora) ? FechaHora : DateTime.MinValue
+                                FechaHora = ParseFechaSivigila(columns[97])
                             };
 
                             DepuracionRequest.Add(depuracion);
@@ -1756,6 +1791,59 @@ namespace Infra.Repositorios
         public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
         {
             await transaction.RollbackAsync();
+        }
+
+        // BUG-012: Parse fechas SIVIGILA con formatos es-CO + normalizar codigos dpto/municipio
+        private static readonly string[] _fechaFormats = new[]
+        {
+            "d/M/yyyy", "dd/MM/yyyy", "d/M/yyyy HH:mm", "dd/MM/yyyy HH:mm",
+            "M/d/yyyy", "MM/dd/yyyy",
+            "yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ss", "yyyy-MM-dd HH:mm:ss"
+        };
+
+        private static DateTime ParseFechaSivigila(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return DateTime.MinValue;
+            var trimmed = s.Trim();
+            if (DateTime.TryParseExact(trimmed, _fechaFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
+                return d;
+            if (DateTime.TryParse(trimmed, CultureInfo.GetCultureInfo("es-CO"), DateTimeStyles.None, out d))
+                return d;
+            return DateTime.MinValue;
+        }
+
+        private static string NormalizeCodDpto(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return s ?? string.Empty;
+            var t = s.Trim();
+            if (t.Length >= 2) return t.Substring(0, 2);
+            return t.PadLeft(2, '0');
+        }
+
+        // BUG-012: Mapeo gp_* SIVIGILA → BiStgLCETipoPoblacionEspecial.codigo
+        private static string MapGrupoPoblacion(DepuracionProtocoloRequest r)
+        {
+            if (r == null) return string.Empty;
+            if (r.gp_discapa == "1") return "29";
+            if (r.gp_desplaz == "1") return "24";
+            if (r.gp_migrant == "1") return "30";
+            if (r.gp_carcela == "1") return "14";
+            if (r.gp_indigen == "1") return "17";
+            if (r.gp_pobicbf == "1") return "25";
+            if (r.gp_mad_com == "1") return "23";
+            if (r.gp_desmovi == "1") return "8";
+            if (r.gp_vic_vio == "1") return "9";
+            return string.Empty;
+        }
+
+        private static string NormalizeCodMun(string? dpto, string? mun)
+        {
+            if (string.IsNullOrWhiteSpace(mun)) return mun ?? string.Empty;
+            var m = mun.Trim();
+            var dp = NormalizeCodDpto(dpto);
+            if (m.Length >= 5) return m.Substring(0, 5);
+            if (m.StartsWith(dp) && m.Length == 5) return m;
+            return dp + m.PadLeft(3, '0');
         }
 
         public Task ActualizarFallecido(NNADto data)

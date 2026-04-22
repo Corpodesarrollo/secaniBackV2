@@ -231,6 +231,26 @@ namespace Core.Services.MSUsuariosyRoles
 
         }
 
+        // BUG-015: placeholder
+        public async Task<bool> IsUnicoAgenteActivo(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return false;
+            var roles = await _userManager.GetRolesAsync(user);
+            var esAgente = roles.Any(r => r.Contains("Agente", StringComparison.OrdinalIgnoreCase));
+            if (!esAgente) return false;
+
+            var agentesActivos = 0;
+            var allUsers = _userManager.Users.Where(u => u.Activo == true && u.Id != userId).ToList();
+            foreach (var u in allUsers)
+            {
+                var r = await _userManager.GetRolesAsync(u);
+                if (r.Any(x => x.Contains("Agente", StringComparison.OrdinalIgnoreCase)))
+                    agentesActivos++;
+            }
+            return agentesActivos == 0;
+        }
+
         public async Task<bool> UpdateUserProfile(string id, string fullName, string email, string Telefonos = "", string EntidadId = "", string Cargo = "", bool? Activo = false)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -240,6 +260,9 @@ namespace Core.Services.MSUsuariosyRoles
             user.EntidadId = EntidadId;
             user.Cargo = Cargo;
             user.Activo = Activo;
+            // BUG-015: sincronizar columnas Estado + EstadoUsuarioId con Activo
+            user.Estado = (Activo == true) ? "Activo" : "Inactivo";
+            user.EstadoUsuarioId = (Activo == true) ? 1 : 2;
             var result = await _userManager.UpdateAsync(user);
 
             return result.Succeeded;

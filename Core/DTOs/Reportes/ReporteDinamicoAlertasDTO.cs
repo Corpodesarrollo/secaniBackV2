@@ -12,6 +12,8 @@
         public string? SegundoNombre { get; set; }
         public string? PrimerApellido { get; set; }
         public string? SegundoApellido { get; set; }
+        public string? NombreCompleto { get; set; }
+        public string? Observacion { get; set; }
         public int Edad { get; set; } //calculado
         public int? DiagnosticoId { get; set; }
         public string? Diagnostico { get; set; } //calculado
