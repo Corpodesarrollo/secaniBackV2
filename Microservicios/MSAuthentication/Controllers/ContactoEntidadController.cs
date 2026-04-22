@@ -67,7 +67,7 @@ namespace MSAuthentication.Api.Controllers
             var contactoEntidadResponse = await _service.GetByEmailAsync(request.Email, cancellationToken);
             if (contactoEntidadResponse != null)
             {
-                throw new Exception($"Contacto Entidad con email {request.Email} already exists");
+                return BadRequest(new { field = "email", message = "El correo ya existe" });
             }
             var (response, contactoEntidad) = await _service.AddAsync(request, cancellationToken);
             return CreatedAtAction(nameof(GetContactoEntidadById), new { Id = contactoEntidad.Id }, contactoEntidad);
@@ -88,6 +88,13 @@ namespace MSAuthentication.Api.Controllers
             if (!validationResult.IsValid)
             {
                 return BadRequest(validationResult.Errors);
+            }
+
+            // Validar email duplicado (otro contacto distinto al actual)
+            var existingByEmail = await _service.GetByEmailAsync(request.Email, cancellationToken);
+            if (existingByEmail != null && existingByEmail.Id != id)
+            {
+                return BadRequest(new { field = "email", message = "El correo ya existe" });
             }
 
             var (result, contacto) = await _service.UpdateAsync(id, request, cancellationToken);

@@ -218,7 +218,19 @@ namespace Infra.Repositorios.Reportes
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception(ex.Message);
+                    // Si enrichment falla (SISPRO 503, etc), agregar fila con campos basicos
+                    Console.WriteLine($"Error enriqueciendo NNA {nna.Id}: {ex.Message}");
+                    reporte.Add(new ReporteDinamicoNNADTO
+                    {
+                        Id = nna.Id,
+                        PrimerNombre = nna.PrimerNombre,
+                        SegundoNombre = nna.SegundoNombre,
+                        PrimerApellido = nna.PrimerApellido,
+                        SegundoApellido = nna.SegundoApellido,
+                        FechaNacimiento = nna.FechaNacimiento,
+                        NumeroIdentificacion = nna.NumeroIdentificacion,
+                        FechaIngresoEstrategia = nna.FechaIngresoEstrategia
+                    });
                 }
             }
 
