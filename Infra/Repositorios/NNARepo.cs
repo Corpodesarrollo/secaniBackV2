@@ -585,6 +585,9 @@ namespace Infra.Repositorios
             int segundaNeoplasia = 0;
             int duplicados = 0;
             int ingresados = 0;
+            // BUG-025-ext: contadores de exclusiones por mayor de edad / fallecido
+            int excluidosMayorEdad = 0;
+            int excluidosFallecidos = 0;
 
             List<ContactoNNA> insertContactoNNA = [];
             List<NNAs> insertNNA = [];
@@ -900,6 +903,20 @@ namespace Infra.Repositorios
 
                 foreach (DepuracionProtocolo d in insertarNNa)
                 {
+                    // BUG-025-ext: descartar fallecidos (con_fin == "2") y mayores de edad
+                    if (d.DepuracionProtocoloRequest.con_fin == "2")
+                    {
+                        excluidosFallecidos++;
+                        ingresados = Math.Max(0, ingresados - 1);
+                        continue;
+                    }
+                    if (EsMayorDeEdadDesdeFecha(d.DepuracionProtocoloRequest.fecha_nto))
+                    {
+                        excluidosMayorEdad++;
+                        ingresados = Math.Max(0, ingresados - 1);
+                        continue;
+                    }
+
                     if (d.DepuracionProtocoloRequest.consx2_neo == "1")
                     {
                         segundaNeoplasia += 1;
@@ -1207,9 +1224,9 @@ namespace Infra.Repositorios
             }
 
             if (insertNNA.Count == 0)
-                return new() { Estado = "Procesada" };
+                return new() { Estado = "Procesada", ExcluidosMayorEdad = excluidosMayorEdad, ExcluidosFallecidos = excluidosFallecidos };
             else
-                return new() { Estado = "Procesada", Nuevos = insertNNA.Count, Recaidas = recaidas, SegundasNeoplasias = segundaNeoplasia };
+                return new() { Estado = "Procesada", Nuevos = insertNNA.Count, Recaidas = recaidas, SegundasNeoplasias = segundaNeoplasia, ExcluidosMayorEdad = excluidosMayorEdad, ExcluidosFallecidos = excluidosFallecidos };
         }
 
 
@@ -1810,6 +1827,16 @@ namespace Infra.Repositorios
             if (DateTime.TryParse(trimmed, CultureInfo.GetCultureInfo("es-CO"), DateTimeStyles.None, out d))
                 return d;
             return DateTime.MinValue;
+        }
+
+        // BUG-025-ext: edad >= 18 desde DateTime de cargue masivo
+        private static bool EsMayorDeEdadDesdeFecha(DateTime fechaNacimiento)
+        {
+            if (fechaNacimiento == DateTime.MinValue) return false;
+            var hoy = DateTime.Now.Date;
+            var edad = hoy.Year - fechaNacimiento.Year;
+            if (fechaNacimiento.Date > hoy.AddYears(-edad)) edad--;
+            return edad >= 18;
         }
 
         private static string NormalizeCodDpto(string? s)

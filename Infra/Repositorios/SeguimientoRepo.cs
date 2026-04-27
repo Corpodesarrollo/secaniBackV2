@@ -701,10 +701,13 @@ namespace Infra.Repositorios
                     //el revisor entra a las horaentrada y sale a la horasalida. se debe asignar el seguimiento en un rango de 640 segundos,
                     //si el seguimiento se cruza con otro se debe aumentar 640 segundos  y volver a verificar hasta lograr agendar el seguimiento
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
-                    if (fechaAsignacion == null && user == null)
+                    if (fechaAsignacion == null)
+                    {
+                        // revisor sin slots disponibles hoy -> descartarlo para evitar loop infinito
+                        revisores.Remove(revisor);
+                        if (user != null) break;
                         continue;
-                    else if (fechaAsignacion == null && user != null)
-                        break;
+                    }
 
                     var seguimiento = seguimientosNoAsignados[0];
 
@@ -851,7 +854,9 @@ namespace Infra.Repositorios
 
         private async Task<DateTime> ReagendarSeguimientos(DateTime fecha, List<UsuarioAsignado> seguimientosReagendados, UsuariosHorariosDto revisor, List<(long, string, string)> seguimientosReagendamiento, string tipo)
         {
-            while (seguimientosReagendamiento.Count > 0)
+            int safetyMaxDays = 180; // cap para evitar loop infinito avanzando fechas
+            int iteraciones = 0;
+            while (seguimientosReagendamiento.Count > 0 && iteraciones++ < safetyMaxDays)
             {
                 fecha = fecha.Date.AddDays(1);
 
@@ -864,8 +869,8 @@ namespace Infra.Repositorios
                 var fechaIni = fecha;
                 var fechaFin = fechaIni.AddDays(1).AddSeconds(-1);
                 var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion >= fechaIni && x.FechaAsignacion <= fechaFin).ToListAsync();
-                if (seguimientosAsignadosFecha.Count > 0)
-                    revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
+                // reset disponibles cada dia nuevo (bug: se heredaba el valor del dia previo)
+                revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
 
                 //valida si el revisor tiene seguimeintos disponibles por asignar
                 if (revisor.CantidadSeguimientosDisponibles <= 0)
@@ -1029,7 +1034,11 @@ namespace Infra.Repositorios
 
                     var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
                     if (fechaAsignacion == null)
+                    {
+                        // revisor sin slots -> descartar para evitar loop infinito
+                        revisores.Remove(revisor);
                         continue;
+                    }
 
                     //asignar seguimiento al revisor
                     var usuarioAsignado = new UsuarioAsignado
