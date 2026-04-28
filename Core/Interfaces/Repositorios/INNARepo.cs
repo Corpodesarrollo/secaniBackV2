@@ -33,5 +33,6 @@ namespace Core.Interfaces.Repositorios
         Task RollbackTransactionAsync(IDbContextTransaction transaction);
         Task ActualizarFallecido(NNADto data);
         Task AsignacionManual(AsignacionManualRequest request);
+        Task CrearSeguimientoInicialNNA(long nnaId, long? contactoNNAId, string? telefono, string? userId);
     }
 }

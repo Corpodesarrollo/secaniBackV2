@@ -822,6 +822,7 @@ namespace Infra.Repositorios
                                                         join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                         join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                         where seg.FechaSeguimiento < fecha && ua.UsuarioId == revisor.UserId
+                                                              && nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value)
                                                         select new ValueTuple<long, string, string>(
                                                             seg.Id,
                                                             $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
@@ -840,6 +841,7 @@ namespace Infra.Repositorios
                                                         join nna in _context.NNAs on seg.NNAId equals nna.Id
                                                         join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
                                                         where ua.FechaAsignacion == fecha && ua.UsuarioId == revisor.UserId
+                                                              && nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value)
                                                         select new ValueTuple<long, string, string>(
                                                             seg.Id,
                                                             $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
@@ -966,17 +968,30 @@ namespace Infra.Repositorios
                                group s by s.NNAId into g
                                select new { id = g.Max(x => x.Id) };
 
-            var seguimientosReasignacion = await (from q in seguimientos
-                                                  join seg in _context.Seguimientos on q.id equals seg.Id
-                                                  join nna in _context.NNAs on seg.NNAId equals nna.Id
-                                                  join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
-                                                  join u in _context.Users on ua.UsuarioId equals u.Id
-                                                  where ua.FechaAsignacion == fecha && u.Activo == false
-                                                  select new ValueTuple<long, string, string>(
-                                                      seg.Id,
-                                                      $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
-                                                      nna.NumeroIdentificacion
-                                                  )).ToListAsync();
+            // RQ00-HU011: incluir UsuarioId/UserId del agente inactivo + filtro estados NNA abiertos
+            var seguimientosReasignacionRaw = await (from q in seguimientos
+                                                     join seg in _context.Seguimientos on q.id equals seg.Id
+                                                     join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                     join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                     join u in _context.Users on ua.UsuarioId equals u.Id
+                                                     where ua.FechaAsignacion == fecha && u.Activo == false
+                                                           && nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value)
+                                                     select new
+                                                     {
+                                                         SeguimientoId = seg.Id,
+                                                         NombreNNA = $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                         Documento = nna.NumeroIdentificacion ?? "",
+                                                         AgenteAnteriorId = u.Id,
+                                                         AgenteAnteriorNombre = u.FullName
+                                                     }).ToListAsync();
+
+            var seguimientosReasignacion = seguimientosReasignacionRaw
+                .Select(x => new ValueTuple<long, string, string>(x.SeguimientoId, x.NombreNNA, x.Documento))
+                .ToList();
+            // map seguimientoId -> agente anterior para historico
+            var agenteAnteriorMap = seguimientosReasignacionRaw
+                .GroupBy(x => x.SeguimientoId)
+                .ToDictionary(g => g.Key, g => (g.First().AgenteAnteriorId, g.First().AgenteAnteriorNombre));
 
             var revisores = await CargarRevisoresReasignacion(fecha);
 
@@ -1040,23 +1055,47 @@ namespace Infra.Repositorios
                         continue;
                     }
 
+                    // RQ00-HU011: histórico agente antiguo vs nuevo
+                    // Desactivar UsuarioAsignado anterior + dejar referencia en Observaciones del nuevo
+                    var asignacionesAnteriores = await _context.UsuarioAsignados
+                        .Where(x => x.SeguimientoId == seguimiento.Item1 && x.Activo)
+                        .ToListAsync();
+                    string nombreAgenteAnterior = "";
+                    string idAgenteAnterior = "";
+                    if (agenteAnteriorMap.TryGetValue(seguimiento.Item1, out var prev))
+                    {
+                        idAgenteAnterior = prev.AgenteAnteriorId ?? "";
+                        nombreAgenteAnterior = prev.AgenteAnteriorNombre ?? "";
+                    }
+                    foreach (var prevUa in asignacionesAnteriores)
+                    {
+                        prevUa.Activo = false;
+                    }
+                    if (asignacionesAnteriores.Count > 0)
+                        await _context.SaveChangesAsync();
+
                     //asignar seguimiento al revisor
                     var usuarioAsignado = new UsuarioAsignado
                     {
                         Activo = true,
                         DateCreated = DateTime.Now,
                         FechaAsignacion = fechaAsignacion,
-                        Observaciones = "Asignación automática",
+                        Observaciones = !string.IsNullOrEmpty(idAgenteAnterior)
+                            ? $"Reasignación automática. Agente anterior: {nombreAgenteAnterior} ({idAgenteAnterior}). Agente nuevo: {revisor.Nombre} ({revisor.UserId})."
+                            : "Reasignación automática",
                         SeguimientoId = seguimiento.Item1,
                         NombreNNA = seguimiento.Item2,
-                        UsuarioId = revisor.UserId
+                        DocumentoNNA = seguimiento.Item3,
+                        Criterio = "Reasignación",
+                        UsuarioId = revisor.UserId,
+                        NombreUsuario = revisor.Nombre
                     };
 
                     _context.UsuarioAsignados.Add(usuarioAsignado);
                     await _context.SaveChangesAsync();
 
                     //actualizar fecha seguimiento
-                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId);
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId, "Reasignación");
 
                     seguimientosAsignados.Add(usuarioAsignado);
 
@@ -1098,13 +1137,16 @@ namespace Infra.Repositorios
                           }).ToListAsync();
         }
 
+        // RQ00-HU011: solo NNA en estados abiertos (Sin diagnostico, Diagnostico confirmado, EP*, Valoracion, Trat finalizado, Registrado)
+        private static readonly int[] _estadosNNAAbiertos = new[] { 2, 3, 4, 5, 6, 7, 8, 9, 15 };
+
         private async Task<List<(long, string, string)>> CargarSeguimientos()
         {
             return await (from seg in _context.Seguimientos
                           join nna in _context.NNAs on seg.NNAId equals nna.Id
                           join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId into uaJoin
                           from uas in uaJoin.DefaultIfEmpty()
-                          where nna.estadoId == 15 && uas == null
+                          where nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value) && uas == null
                           select new ValueTuple<long, string, string>(
                               seg.Id,
                               $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",

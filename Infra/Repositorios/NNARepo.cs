@@ -232,8 +232,13 @@ namespace Infra.Repositorios
 
         public async Task<(bool, NNAs)> AddAsync(NNAs entity, User user)
         {
-            var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
-            entity.CreatedByUserId = usuario != null ? usuario.Id : "";
+            // BUG-028: preservar CreatedByUserId si viene del DTO (front qa-login envía localStorage user.id);
+            // fallback a lookup por Alias (SISPRO real)
+            if (string.IsNullOrEmpty(entity.CreatedByUserId))
+            {
+                var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+                entity.CreatedByUserId = usuario != null ? usuario.Id : "";
+            }
             entity.DateCreated = DateTime.UtcNow;
             entity.estadoId = 15; // Registrado
             if (entity.OrigenReporteId == 1)
@@ -1499,10 +1504,10 @@ namespace Infra.Repositorios
             List<DepuracionProtocoloRequest> DepuracionRequest = [];
             DepuracionProtocoloResponse response;
             if (file == null)
-                throw new ArgumentException("No se ha proporcionado un archivo.");
+                throw new ArgumentException("No se ha cargado ningún archivo. Seleccione un archivo .xls, .xlsx o .csv.");
 
             if (file.Length == 0)
-                throw new ArgumentException("El archivo está vacío.");
+                throw new ArgumentException("El archivo está vacío. Asegúrese de que contenga al menos un registro.");
 
             try
             {
@@ -1511,11 +1516,11 @@ namespace Infra.Repositorios
                     file.CopyToAsync(stream);
                     var formatosValidos = new[] { ".xls", ".xlsx", ".csv" };
                     var extension = Path.GetExtension(file.FileName);
-                    if (extension == null)
-                        throw new ArgumentException("El archivo no tiene una extensión válida.");
+                    if (string.IsNullOrEmpty(extension))
+                        throw new ArgumentException("El archivo no tiene una extensión válida. Solo se permiten archivos .xls, .xlsx o .csv.");
 
                     if (!formatosValidos.Contains(extension.ToLower()))
-                        throw new ArgumentException("El archivo no tiene un formato válido.");
+                        throw new ArgumentException("El formato del archivo no es válido. Solo se permiten archivos .xls, .xlsx o .csv.");
 
                     if (extension.ToLower() == ".xls" || extension.ToLower() == ".xlsx")
                     {
@@ -1526,13 +1531,21 @@ namespace Infra.Repositorios
 
                         var columnCount = worksheet.Row(1).CellsUsed().Count();
                         if (columnCount != 98)
-                            throw new ArgumentException("El archivo no tiene la cantidad de columnas correctas.");
+                            throw new ArgumentException($"El archivo debe contener exactamente 98 columnas. Se encontraron {columnCount}.");
 
                         if (lastRow.RowNumber() == 1)
-                            throw new ArgumentException("El archivo no tiene registros.");
+                            throw new ArgumentException("El archivo no contiene registros. Debe incluir al menos un registro además del encabezado.");
 
                         if (lastRow.RowNumber() > 501)
-                            throw new ArgumentException("El archivo excede la cantidad de registros permitidos.");
+                            throw new ArgumentException("El archivo excede el límite permitido de 500 registros.");
+
+                        // RQ-10-HU01: validar nombres de columnas (98 esperados)
+                        var headerCellsXls = Enumerable.Range(1, 98)
+                            .Select(c => worksheet.Cell(1, c).GetValue<string>())
+                            .ToList();
+                        var erroresHeaderXls = ValidarNombresEncabezados(headerCellsXls);
+                        if (erroresHeaderXls.Count > 0)
+                            throw new ArgumentException("El archivo no cumple con los nombres de columnas requeridos. " + string.Join(" | ", erroresHeaderXls));
 
                         // Recorrer las filas restantes
                         for (int row = firstRow.RowNumber() + 1; row <= lastRow.RowNumber(); row++)
@@ -1641,7 +1654,7 @@ namespace Infra.Repositorios
                                 npais_proce = currentRow.Cell(90).GetValue<string>(),
                                 ndep_proce = currentRow.Cell(91).GetValue<string>(),
                                 nmun_proce = currentRow.Cell(92).GetValue<string>(),
-                                //depuracion.npais_proce = currentRow.Cell(93).GetValue<string>();
+                                npais_resi = currentRow.Cell(93).GetValue<string>(),
                                 ndep_resi = currentRow.Cell(94).GetValue<string>(),
                                 nmun_resi = currentRow.Cell(95).GetValue<string>(),
                                 ndep_notif = currentRow.Cell(96).GetValue<string>(),
@@ -1654,27 +1667,36 @@ namespace Infra.Repositorios
                     }
                     else if (extension.ToLower() == ".csv")
                     {
-                        var registros = new List<DepuracionProtocoloRequest>();
-
                         // Configurar el stream para leer desde el principio
                         stream.Seek(0, SeekOrigin.Begin);
 
                         using var reader = new StreamReader(stream);
-                        string? line;
-                        int lineNumber = 0;
+                        var allLines = new List<string>();
+                        string? rl;
+                        while ((rl = reader.ReadLine()) != null) allLines.Add(rl);
 
+                        if (allLines.Count == 0)
+                            throw new ArgumentException("El archivo está vacío. Asegúrese de que contenga al menos un registro.");
 
-                        while ((line = reader.ReadLine()) != null)
+                        var headerCols = allLines[0].Split(',');
+                        if (headerCols.Length != 98)
+                            throw new ArgumentException($"El archivo debe contener exactamente 98 columnas. Se encontraron {headerCols.Length}.");
+
+                        if (allLines.Count == 1)
+                            throw new ArgumentException("El archivo no contiene registros. Debe incluir al menos un registro además del encabezado.");
+
+                        if (allLines.Count > 501)
+                            throw new ArgumentException("El archivo excede el límite permitido de 500 registros.");
+
+                        // RQ-10-HU01: validar nombres de columnas
+                        var erroresHeaderCsv = ValidarNombresEncabezados(headerCols);
+                        if (erroresHeaderCsv.Count > 0)
+                            throw new ArgumentException("El archivo no cumple con los nombres de columnas requeridos. " + string.Join(" | ", erroresHeaderCsv));
+
+                        for (int li = 1; li < allLines.Count; li++)
                         {
-                            // Saltar encabezado
-                            if (lineNumber == 0)
-                            {
-                                lineNumber++;
-                                continue;
-                            }
-
                             // Dividir la línea en columnas usando coma como separador
-                            var columns = line.Split(',');
+                            var columns = allLines[li].Split(',');
                             DepuracionProtocoloRequest depuracion = new()
                             {
                                 cod_eve = columns[0],
@@ -1769,7 +1791,7 @@ namespace Infra.Repositorios
                                 npais_proce = columns[89],
                                 ndep_proce = columns[90],
                                 nmun_proce = columns[91],
-                                //depuracion.npais_proce = columns[92];
+                                npais_resi = columns[92],
                                 ndep_resi = columns[93],
                                 nmun_resi = columns[94],
                                 ndep_notif = columns[95],
@@ -1827,6 +1849,54 @@ namespace Infra.Repositorios
             if (DateTime.TryParse(trimmed, CultureInfo.GetCultureInfo("es-CO"), DateTimeStyles.None, out d))
                 return d;
             return DateTime.MinValue;
+        }
+
+        // RQ-10-HU01 / HU04: nombres exactos de las 98 columnas SIVIGILA
+        private static readonly string[] _expectedHeaders = new[]
+        {
+            "cod_eve","fec_not","semana","año","cod_pre","cod_sub",
+            "pri_nom_","seg_nom_","pri_ape_","seg_ape_","tip_ide_","num_ide_",
+            "edad_","uni_med_","nacionali_","nombre_nacionalidad","sexo_",
+            "cod_pais_o","cod_dpto_o","cod_mun_o","area_","localidad_","cen_pobla_",
+            "vereda_","bar_ver_","dir_res_","ocupacion_","tip_ss_","cod_ase_",
+            "per_etn_","nom_grupo_","estrato_",
+            "gp_discapa","gp_desplaz","gp_migrant","gp_carcela","gp_gestan",
+            "sem_ges_","gp_indigen","gp_pobicbf","gp_mad_com","gp_desmovi",
+            "gp_psiquia","gp_vic_vio","gp_otros","fuente_",
+            "cod_pais_r","cod_dpto_r","cod_mun_r",
+            "fec_con_","ini_sin_","tip_cas_","pac_hos_","fec_hos_","con_fin_",
+            "fec_def_","ajuste_","telefono_","fecha_nto_","cer_def_","cbmte_",
+            "uni_modif","nuni_modif","fec_arc_xl","nom_dil_f_","tel_dil_f_","fec_aju_",
+            "nit_upgd","fm_fuerza","fm_unidad","fm_grado","version","tipo_ca",
+            "fec_initra","consx2_neo","recaida","fec_diag1a",
+            "crit_dx_pr","fec_tomadp","fec_res_dp","crit_dx_de","fec_tomadd","fec_res_dd",
+            "nom_oncolo","tel_oncolo","tel_cont_2","estrato_datos_complementarios",
+            "nom_eve","nom_upgd",
+            "npais_proce","ndep_proce","nmun_proce","npais_resi","ndep_resi","nmun_resi",
+            "ndep_notif","nmun_notif","FechaHora"
+        };
+
+        // Normaliza encabezados: quita espacios, guiones bajos finales, ignora mayusculas
+        private static string NormalizeHeader(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+            return s.Trim().TrimEnd('_').ToLowerInvariant();
+        }
+
+        // RQ-10-HU01: compara encabezados leidos contra _expectedHeaders y reporta diferencias por columna
+        private static List<string> ValidarNombresEncabezados(IEnumerable<string?> actual)
+        {
+            var actualList = actual.ToList();
+            var errores = new List<string>();
+            for (int i = 0; i < _expectedHeaders.Length; i++)
+            {
+                var encontrado = i < actualList.Count ? actualList[i] : null;
+                if (NormalizeHeader(_expectedHeaders[i]) != NormalizeHeader(encontrado))
+                {
+                    errores.Add($"Columna {i + 1}: se esperaba '{_expectedHeaders[i]}' y se encontró '{encontrado ?? string.Empty}'.");
+                }
+            }
+            return errores;
         }
 
         // BUG-025-ext: edad >= 18 desde DateTime de cargue masivo
@@ -1891,6 +1961,47 @@ namespace Infra.Repositorios
             else
             {
                 throw new Exception("No se encontró un seguimiento para el NNA especificado.");
+            }
+        }
+
+        // BUG-026: crear seguimiento inicial + UsuarioAsignados al crear NNA manual
+        // (cargue masivo ya crea seguimiento; manual no lo hacía y por eso no aparecía
+        // en Historico NNA, query une Seguimientos JOIN NNAs)
+        public async Task CrearSeguimientoInicialNNA(long nnaId, long? contactoNNAId, string? telefono, string? userId)
+        {
+            var existe = await _context.Seguimientos.AnyAsync(s => s.NNAId == nnaId);
+            if (existe) return;
+
+            var seguimiento = new Seguimiento()
+            {
+                NNAId = nnaId,
+                FechaSeguimiento = DateTime.Now,
+                EstadoId = 1,
+                ContactoNNAId = contactoNNAId ?? 0,
+                Telefono = telefono ?? string.Empty,
+                UsuarioId = userId ?? string.Empty,
+                TieneDiagnosticos = false,
+                UltimaActuacionAsunto = "Registro inicial",
+                UltimaActuacionFecha = DateTime.Now,
+                CreatedByUserId = userId ?? string.Empty,
+                DateCreated = DateTime.Now
+            };
+            _context.Seguimientos.Add(seguimiento);
+            await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _context.UsuarioAsignados.Add(new UsuarioAsignado()
+                {
+                    UsuarioId = userId,
+                    SeguimientoId = seguimiento.Id,
+                    FechaAsignacion = DateTime.Now,
+                    Observaciones = "Asignación inicial creación manual",
+                    Activo = true,
+                    CreatedByUserId = userId,
+                    DateCreated = DateTime.Now
+                });
+                await _context.SaveChangesAsync();
             }
         }
 
