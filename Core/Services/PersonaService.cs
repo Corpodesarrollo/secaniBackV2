@@ -3,6 +3,7 @@ using Core.Interfaces.Services.MSUsuariosyRoles;
 using Core.Interfaces.Services.Reportes;
 using Core.Services.MSTablasParametricas;
 using Core.Services.Reportes;
+using Microsoft.Extensions.Configuration;
 
 namespace Core.Services
 {
@@ -10,14 +11,20 @@ namespace Core.Services
     {
         private readonly Client _clienteServicio;
         private readonly TablaParametricaService _tpService;
-        private const string ApiKey = "fa90576d-05e9-48ad-8bcf-30371984a699";
+        // RQ-10-HU02: ApiKey leida desde appsettings/env var (SisproApi:ApiKey)
+        private readonly string _apiKey;
         private readonly IReporteDinamicoNNAService _nnaService;
 
-        public PersonaService(Client clienteServicio, TablaParametricaService tpService, IReporteDinamicoNNAService nnaService)
+        public PersonaService(Client clienteServicio, TablaParametricaService tpService, IReporteDinamicoNNAService nnaService, IConfiguration configuration)
         {
             _clienteServicio = clienteServicio;
             _tpService = tpService;
             _nnaService = nnaService;
+            _apiKey = configuration["SisproApi:ApiKey"] ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                Console.WriteLine("WARN: SisproApi:ApiKey vacia. Llamadas a Maestro Personas fallaran. Configurar via appsettings o env var SisproApi__ApiKey.");
+            }
         }
 
         public async Task<object> GetIdVigenteAsync(string tipoIdentificacion, string nroIdentificacion, string fechaExpedicion = null)
@@ -25,8 +32,8 @@ namespace Core.Services
             try
             {
                 return fechaExpedicion == null
-                    ? await _clienteServicio.GetIdVigenteAsync(ApiKey, tipoIdentificacion, nroIdentificacion)
-                    : await _clienteServicio.GetIdVigente2Async(ApiKey, tipoIdentificacion, nroIdentificacion, fechaExpedicion);
+                    ? await _clienteServicio.GetIdVigenteAsync(_apiKey, tipoIdentificacion, nroIdentificacion)
+                    : await _clienteServicio.GetIdVigente2Async(_apiKey, tipoIdentificacion, nroIdentificacion, fechaExpedicion);
             }
             catch (ApiException ex)
             {
@@ -39,8 +46,8 @@ namespace Core.Services
             try
             {
                 return fechaExpedicion == null
-                    ? await _clienteServicio.GetIdAllAsync(ApiKey, tipoIdentificacion, nroIdentificacion)
-                    : await _clienteServicio.GetIdAll2Async(ApiKey, tipoIdentificacion, nroIdentificacion, fechaExpedicion);
+                    ? await _clienteServicio.GetIdAllAsync(_apiKey, tipoIdentificacion, nroIdentificacion)
+                    : await _clienteServicio.GetIdAll2Async(_apiKey, tipoIdentificacion, nroIdentificacion, fechaExpedicion);
             }
             catch (ApiException ex)
             {
@@ -56,7 +63,7 @@ namespace Core.Services
 
                 foreach (var tipoIdentificacion in tipoIdentificacionList)
                 {
-                    var resultado = await _clienteServicio.GetIdVigenteAsync(ApiKey, tipoIdentificacion.Codigo, nroIdentificacion);
+                    var resultado = await _clienteServicio.GetIdVigenteAsync(_apiKey, tipoIdentificacion.Codigo, nroIdentificacion);
 
                     if (resultado != null)
                     {

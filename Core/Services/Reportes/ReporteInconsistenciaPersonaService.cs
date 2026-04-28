@@ -89,6 +89,8 @@ namespace Core.Services.Reportes
                         reporte = inconsistencia;
                     }
                 }
+                // BUG-LZ-004: si no hay inconsistencias o persona no encontrada, no insertar
+                if (reporte == null) return null;
                 var reporteNNA = reporte.Adapt<ReporteInconsistenciaPersona>();
                 await _repository.AddReporteInconsistenciaAsync(reporteNNA);
                 return reporte;

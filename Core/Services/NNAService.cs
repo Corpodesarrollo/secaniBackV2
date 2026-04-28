@@ -29,18 +29,40 @@ namespace Core.Services
             {
                 var entity = GenericMapper.Map<NNADto, NNAs>(dto);
                 var (success, entitys) = await _repository.AddAsync(entity, user);
+
+                long? primerContactoId = null;
+                string? primerTelefono = null;
                 if (success && dto.Contactos != null && dto.Contactos.Length > 0)
                 {
                     foreach (var item in dto.Contactos)
                     {
                         item.NNAId = entitys.Id;
-                        _ = await ContactoNNA.CrearContactoNNA(item);
+                        var resCont = await ContactoNNA.CrearContactoNNA(item);
+                        if (primerContactoId == null && resCont?.Datos?.Id > 0)
+                        {
+                            primerContactoId = resCont.Datos.Id;
+                            primerTelefono = resCont.Datos.Telefonos;
+                        }
                     }
                 }
 
                 var dto1 = GenericMapper.Map<NNAs, NNADto>(entitys);
 
-                var resultReport = await _reporteInconsistenciaPersonaService.AddReporteInconsistenciaAsync(dto1);
+                // BUG-026: crear Seguimiento inicial + UsuarioAsignados (paralelo a cargue masivo)
+                if (success)
+                {
+                    await _repository.CrearSeguimientoInicialNNA(entitys.Id, primerContactoId, primerTelefono, entity.CreatedByUserId);
+                }
+
+                // BUG-LZ-004: reporte inconsistencia es side-effect, no debe romper save NNA
+                try
+                {
+                    await _reporteInconsistenciaPersonaService.AddReporteInconsistenciaAsync(dto1);
+                }
+                catch (Exception exReporte)
+                {
+                    Console.WriteLine($"WARN: reporte inconsistencia falló (no bloquea save NNA): {exReporte.Message}");
+                }
 
                 await _repository.CommitTransactionAsync(transaction);
 
