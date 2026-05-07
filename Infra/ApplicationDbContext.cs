@@ -2,18 +2,36 @@
 using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Modelos.TablasParametricas;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MSSeguimiento.Core.Modelos;
+using System.Security.Claims;
 
 namespace Infra
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions, IHttpContextAccessor? httpContextAccessor = null)
             : base(dbContextOptions)
         {
+            _httpContextAccessor = httpContextAccessor;
             this.Database.SetCommandTimeout(180);
+        }
+
+        // BUG-LZ-022: leer UserId real desde claims del JWT/cookie en lugar de hardcoded "1"/"2"/"3"
+        private string GetCurrentUserId()
+        {
+            var principal = _httpContextAccessor?.HttpContext?.User;
+            if (principal == null) return "Sistema";
+            var id = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+                  ?? principal.FindFirstValue("sub")
+                  ?? principal.FindFirstValue("UserId")
+                  ?? principal.FindFirstValue(ClaimTypes.Name)
+                  ?? principal.Identity?.Name;
+            return string.IsNullOrWhiteSpace(id) ? "Sistema" : id!;
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -22,6 +40,8 @@ namespace Infra
             var entries = ChangeTracker.Entries()
                                        .Where(e => e.Entity is IBaseEntity); // Filtrar solo las entidades auditable
 
+            var userId = GetCurrentUserId();
+
             foreach (var entry in entries)
             {
                 var entity = (IBaseEntity)entry.Entity;
@@ -29,20 +49,21 @@ namespace Infra
                 if (entry.State == EntityState.Added)
                 {
                     entity.DateCreated = DateTime.UtcNow;
-                    entity.CreatedByUserId = "1";
+                    if (string.IsNullOrEmpty(entity.CreatedByUserId))
+                        entity.CreatedByUserId = userId;
                     entity.IsDeleted = false;
                 }
 
                 if (entry.State == EntityState.Modified)
                 {
                     entity.DateUpdated = DateTime.UtcNow;
-                    entity.UpdatedByUserId = "2";
+                    entity.UpdatedByUserId = userId;
                 }
 
                 if (entry.State == EntityState.Deleted)
                 {
                     entity.DateDeleted = DateTime.UtcNow;
-                    entity.DeletedByUserId = "3";
+                    entity.DeletedByUserId = userId;
                     entity.IsDeleted = true;
                     entry.State = EntityState.Modified; // Para evitar eliminación física
                 }
