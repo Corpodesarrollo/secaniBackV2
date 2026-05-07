@@ -161,5 +161,13 @@ namespace MSAuthentication.Api.Controllers
             return Ok(result);
         }
 
+        // BUG-LZ-015: Coordinador lista agentes de seguimiento
+        [HttpGet("GetAgentesSeguimiento")]
+        public async Task<IActionResult> GetAgentesSeguimiento(CancellationToken cancellationToken)
+        {
+            var result = await _usurioRepo.GetAgentesSeguimientoAsync(cancellationToken);
+            return Ok(result);
+        }
+
     }
 }
