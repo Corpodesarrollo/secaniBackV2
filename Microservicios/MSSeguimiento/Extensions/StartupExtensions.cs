@@ -8,6 +8,7 @@ namespace MSSeguimiento.Api.Extensions
         public static WebApplicationBuilder CustomConfigureServices(this WebApplicationBuilder pBuilder)
         {
             //registrar el dbcontext y las interfaces
+            pBuilder.Services.AddHttpContextAccessor();
             pBuilder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(pBuilder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
             ));
