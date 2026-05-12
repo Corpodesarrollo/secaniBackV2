@@ -263,23 +263,44 @@ namespace Infra.Repositories
 
         public async Task<(bool, PermisoResponseDTO)> UpdateAsync(PermisoResponseDTO entity, CancellationToken cancellationToken)
         {
-            var newEntity = await _repository.GetByIdAsync(entity.Id, cancellationToken);
-            if (newEntity == null)
+            // BUG-LZ-023: si rol+modulo+funcionalidad no tiene registro previo, hacer INSERT (upsert).
+            // El front consulta Permisos/GetByRoleandModuloId y la query devuelve filas virtuales con
+            // id=0 cuando aun no existe permiso. PUT con id=0 antes fallaba silenciosamente.
+            var existing = entity.Id > 0
+                ? await _repository.GetByIdAsync(entity.Id, cancellationToken)
+                : null;
+
+            if (existing == null)
             {
-                return (false, null);
+                // Insert: el role no tiene aun permiso para este modulo/funcionalidad
+                var nuevo = new Permisos
+                {
+                    ModuloComponenteObjetoId = entity.ModuloComponenteObjetoId,
+                    RoleId = entity.RoleId,
+                    FuncionalidadId = entity.FuncionalidadId,
+                    CanAdd = entity.CanAdd,
+                    CanEdit = entity.CanEdit,
+                    CanDele = entity.CanDele,
+                    CanView = entity.CanView
+                };
+                var (insOk, insResponse) = await _repository.AddAsync(nuevo);
+                if (!insOk)
+                    throw new Exception("cannot insert permiso");
+                await ClearCacheAsync(cacheKey, entity.RoleId);
+                return (insOk, insResponse.Adapt<PermisoResponseDTO>());
             }
 
             await ClearCacheAsync(cacheKey, entity.RoleId, entity.Id.ToString());
 
-            newEntity.ModuloComponenteObjetoId = entity.ModuloComponenteObjetoId;
-            newEntity.RoleId = entity.RoleId;
-            newEntity.FuncionalidadId = entity.FuncionalidadId;
-            newEntity.CanAdd = entity.CanAdd;
-            newEntity.CanEdit = entity.CanEdit;
-            newEntity.CanDele = entity.CanDele;
-            newEntity.CanView = entity.CanView;
+            existing.ModuloComponenteObjetoId = entity.ModuloComponenteObjetoId;
+            existing.RoleId = entity.RoleId;
+            existing.FuncionalidadId = entity.FuncionalidadId;
+            existing.CanAdd = entity.CanAdd;
+            existing.CanEdit = entity.CanEdit;
+            existing.CanDele = entity.CanDele;
+            existing.CanView = entity.CanView;
 
-            var (success, response) = await _repository.UpdateAsync(newEntity);
+            var (success, response) = await _repository.UpdateAsync(existing);
             if (!success)
             {
                 throw new Exception("cannot update permiso");
