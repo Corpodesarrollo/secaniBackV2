@@ -301,12 +301,11 @@ namespace Infra.Repositories
             existing.CanView = entity.CanView;
 
             var (success, response) = await _repository.UpdateAsync(existing);
-            if (!success)
-            {
-                throw new Exception("cannot update permiso");
-            }
-
-            return (success, response.Adapt<PermisoResponseDTO>());
+            // BUG-LZ-008: GenericRepository.UpdateAsync retorna success=false cuando SaveChangesAsync
+            // devuelve 0 (sin cambios reales). Antes esto lanzaba exception → 500 → el front mostraba
+            // "Guardado parcial: 1 OK, 2 con error" si QA editaba 1 de 3 checks y dejaba 2 sin cambios.
+            // Tratar el caso de "sin cambios" como idempotente exitoso.
+            return (true, (response ?? existing).Adapt<PermisoResponseDTO>());
         }
         public async Task ClearCacheAsync(string cacheKey, string roleId = null, string id = null)
         {
