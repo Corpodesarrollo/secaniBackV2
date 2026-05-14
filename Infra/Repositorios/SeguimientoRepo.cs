@@ -1696,7 +1696,15 @@ namespace Infra.Repositorios
 
         public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
         {
-            long.TryParse(id, out long solicitanteId);
+            // BUG-LZ-037: si el id recibido no es un long válido (caso típico: User.Id es un GUID de
+            // AspNet Identity), antes el TryParse fallaba y dejaba solicitanteId=0, devolviendo todos
+            // los seguimientos cuyo SolicitanteId fuera 0 (huérfanos / mockeados). Devolver lista
+            // vacía explícita evita mostrarle al Cuidador los registros de otra cuenta.
+            if (!long.TryParse(id, out long solicitanteId) || solicitanteId <= 0)
+            {
+                return Array.Empty<SeguimientoDto>();
+            }
+
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
                         where s.SolicitanteId == solicitanteId
