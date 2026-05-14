@@ -125,13 +125,23 @@ namespace Infra.Repositorios
                 var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == "CC3216549872");
                 //var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == user.Alias);
 
+                // BUG-LZ-029: si el NNA nunca tuvo asignacion previa la query devuelve null y
+                // antes hacia NRE en usuario.Id silencioso por el try/catch. Fallback al usuario
+                // origen (Sistema/Solicitante) para que SetSeguimiento no falle; AsignacionAutomatica
+                // mas abajo se encarga de re-asignar al agente correspondiente.
+                if (usuario == null && usuarioOrigen == null)
+                {
+                    return false;
+                }
+                var usuarioInicialId = usuario?.Id ?? usuarioOrigen!.Id;
+
                 var seguimiento = new SetSeguimientoRequest()
                 {
                     NNAId = nna.Id,
                     FechaSeguimiento = DateTime.Now,
                     EstadoId = 1, // Estado inicial
                     ContactoNNAId = contacto != null ? contacto.Id : 0,
-                    UsuarioId = usuario.Id,
+                    UsuarioId = usuarioInicialId,
                     SolicitanteId = usuarioOrigen?.Id,
                     FechaSolicitud = DateTime.Now,
                     TieneDiagnosticos = true,
