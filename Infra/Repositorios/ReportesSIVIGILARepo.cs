@@ -89,7 +89,18 @@ namespace Infra.Repositorios
                     if (data.EvidenciaParentesco != null)
                         await _storageService.UploadFileAsync(data.EvidenciaParentesco?.FileBytes, $"RS-EvidenciaParentesco-{entity.Id}-{data.NumeroIdentificacion}{data.EvidenciaParentesco.Extension}", true);
 
-                    await _notificacionRepo.Value.RevisarYEnviarNotificaciones();
+                    // BUG-LZ-spinner-sivigila: aislar RevisarYEnviarNotificaciones para que no rompa
+                    // el POST. El reporte SIVIGILA ya fue creado y subido a storage; si falta la tabla
+                    // NotificacionReporteSivigila o algun envio externo cuelga, no debe revertirse el
+                    // resultado al usuario. Procesamiento de notificaciones es best-effort.
+                    try
+                    {
+                        await _notificacionRepo.Value.RevisarYEnviarNotificaciones();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"WARN RevisarYEnviarNotificaciones fallo (POST SIVIGILA continua): {ex.Message}");
+                    }
                 }
 
                 return (success, response);
