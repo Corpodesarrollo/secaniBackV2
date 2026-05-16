@@ -14,5 +14,7 @@ namespace Core.Interfaces.Repositorios
         Task<ReportesSIVIGILADto?> GetById(long id);
         Task<(bool, ReportesSIVIGILA)> UpdateAsync(ReportesSIVIGILADto data);
         Task<bool> CrearSeguimiento(SeguimientoDto data, User user);
+        // BUG-LZ-040: variante que retorna motivo cuando falla (NNA no existe, sin agente, etc.)
+        Task<(bool success, string? message)> CrearSeguimientoDetallado(SeguimientoDto data, User user);
     }
 }
