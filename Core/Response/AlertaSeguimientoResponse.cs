@@ -11,5 +11,10 @@
         public string NombreAlerta { get; set; }
         public string CategoriaAlerta { get; set; }
         public string SubcategoriaAlerta { get; set; }
+        // BUG-LZ-055: trazabilidad por-alerta (antes solo a nivel seguimiento → duplicados/vacios)
+        public string? EntidadAlerta { get; set; }
+        public DateTime? FechaNotificacion { get; set; }
+        public string? RespuestaEntidad { get; set; }
+        public DateTime? FechaRespuesta { get; set; }
     }
 }

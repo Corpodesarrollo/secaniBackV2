@@ -56,7 +56,8 @@ namespace Infra.Repositories
                     {
                         Port = 587,
                         Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                        EnableSsl = emailConfiguration.EnableSsl
+                        EnableSsl = emailConfiguration.EnableSsl,
+                        Timeout = 15000
                     };
                 }
             }
@@ -521,6 +522,7 @@ namespace Infra.Repositories
                             Port = 587, // Puerto SMTP
                             Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
                             EnableSsl = emailConfiguration.EnableSsl, // Habilitar SSL
+                            Timeout = 15000 // BUG-LZ-056: default 100s cuelga UI; falla rápida con try/catch wrapper
                         };
 
                         // Creación del mensaje de correo
@@ -603,13 +605,12 @@ namespace Infra.Repositories
                             var fileByte2 = request.Adjunto.File;
                             //await _storageService.UploadFileAsync(fileByte2, $"Adjunto-{request.IdNotificacion}.pdf");
 
-                            // Enviar el correo
-                            clienteSmtp.Send(mensaje); //se repite para que no se cierre el Stream del archivo
+                            // BUG-LZ-056: SendMailAsync no bloquea hilo; Timeout=15s en SmtpClient evita cuelgue
+                            await clienteSmtp.SendMailAsync(mensaje);
                         }
                         else
                         {
-                            // Enviar el correo
-                            clienteSmtp.Send(mensaje);
+                            await clienteSmtp.SendMailAsync(mensaje);
                         }
                     }
 

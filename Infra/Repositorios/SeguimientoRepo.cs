@@ -425,19 +425,15 @@ namespace Infra.Repositorios
 
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
+            // BUG-LZ-055: query anterior hacía LEFT JOIN cartesiano alseg×ent → duplicaba seguimientos
+            // y exponía solo FechaNotificacion arbitraria. Trazabilidad pide entidad/notif/respuesta
+            // por alerta, no por seguimiento. Fix: una fila por seguimiento + subquery anidada
+            // por alerta con join Notificacion (FechaNotif/Respuesta/RespuestaEntidad) + TPEAPB.
             List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
                                                          join nna in _context.NNAs on seg.NNAId equals nna.Id
-
-                                                         join alseg in _context.AlertaSeguimientos on seg.Id equals alseg.SeguimientoId into alsegGroup
-                                                         from alseg in alsegGroup.DefaultIfEmpty()
-
-                                                         join ent in _context.NotificacionesEntidad on alseg.Id equals ent.AlertaSeguimientoId into entGroup
-                                                         from ent in entGroup.DefaultIfEmpty()
-
                                                          where seg.NNAId == idNNA
                                                          select new SeguimientoNNAResponse()
                                                          {
-                                                             FechaNotificacion = ent != null ? ent.FechaEnvio : null,
                                                              FechaSeguimiento = seg.UltimaActuacionFecha,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
@@ -452,6 +448,7 @@ namespace Infra.Repositorios
                                                                  IdEstado = nna.estadoId
                                                              },
 
+                                                             // Resumen entidades de todas las alertas del seguimiento (compat con consumers viejos)
                                                              EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
                                                                                                 join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
                                                                                                 join en in _context.TPEAPB on na.EntidadId equals en.Id
@@ -474,7 +471,26 @@ namespace Infra.Repositorios
                                                                                         UltimaFechaSeguimiento = (DateTime)als.UltimaFechaSeguimiento,
                                                                                         NombreAlerta = subal.CategoriaAlertaId + "." + subal.Indicador,
                                                                                         SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
-                                                                                        CategoriaAlerta = catal.Id + ". " + catal.Nombre
+                                                                                        CategoriaAlerta = catal.Id + ". " + catal.Nombre,
+                                                                                        // Entidad(es) notificada(s) para esta alerta especifica
+                                                                                        EntidadAlerta = string.Join(", ", (from na in _context.NotificacionesEntidad
+                                                                                                                           join en in _context.TPEAPB on na.EntidadId equals en.Id
+                                                                                                                           where na.AlertaSeguimientoId == als.Id
+                                                                                                                           select en.Nombre).ToArray()),
+                                                                                        // Primera fecha de envio de oficio para esta alerta
+                                                                                        FechaNotificacion = (from na in _context.NotificacionesEntidad
+                                                                                                             where na.AlertaSeguimientoId == als.Id
+                                                                                                             orderby na.FechaEnvio
+                                                                                                             select na.FechaEnvio).FirstOrDefault(),
+                                                                                        // Respuesta de la entidad (si la hay)
+                                                                                        RespuestaEntidad = (from n in _context.Notificacions
+                                                                                                            where n.AlertaSeguimientoId == als.Id
+                                                                                                            orderby n.FechaRespuesta descending
+                                                                                                            select n.RespuestaEntidad).FirstOrDefault(),
+                                                                                        FechaRespuesta = (from n in _context.Notificacions
+                                                                                                          where n.AlertaSeguimientoId == als.Id
+                                                                                                          orderby n.FechaRespuesta descending
+                                                                                                          select n.FechaRespuesta).FirstOrDefault()
                                                                                     }).ToList()
                                                          }).ToList();
 
