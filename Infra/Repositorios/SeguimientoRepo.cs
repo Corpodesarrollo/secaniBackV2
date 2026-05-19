@@ -258,8 +258,13 @@ namespace Infra.Repositorios
             }
 
 
-            DateTime hoy = DateTime.Now;
-            if (UsuarioOriginal.FechaAsignacion < hoy)
+            // BUG-LZ-057: el servidor EC2 corre en UTC pero FechaAsignacion se almacena en hora
+            // local (Colombia, GMT-5). Comparar `FechaAsignacion < DateTime.Now` directamente
+            // descartaba erroneamente seguimientos del mismo dia por el desfase de 5 horas
+            // ("No es posible reasignar seguimientos en horarios vencidos" aun cuando vigentes).
+            // Comparar solo la parte Date en hora Colombia para tolerar reasignaciones del dia.
+            var nowColombia = DateTime.UtcNow.AddHours(-5);
+            if (UsuarioOriginal.FechaAsignacion?.Date < nowColombia.Date)
             {
                 return -2;
             }
@@ -732,6 +737,14 @@ namespace Infra.Repositorios
                     await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId, "Registro Inicial");
 
                     seguimientosAsignados.Add(usuarioAsignado);
+                    // BUG-LZ-058: la lista local seguimientosAsignadosFecha NO incluia el recien
+                    // creado, asi BuscarEspacioHorario seguia encontrando el mismo slot libre y
+                    // generaba duplicados mismo agente/misma hora. Agregar el nuevo Asignado a la
+                    // lista local para que la proxima iteracion vea el slot ocupado.
+                    seguimientosAsignadosFecha.Add(usuarioAsignado);
+                    // Refrescar disponibles del revisor local para que el OrderByDescending
+                    // de la siguiente iteracion balancee entre agentes activos.
+                    revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
                 }
 
