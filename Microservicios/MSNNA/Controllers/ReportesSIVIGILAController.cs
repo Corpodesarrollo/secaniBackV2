@@ -58,11 +58,15 @@ namespace MSNNA.Api.Controllers
         public async Task<ActionResult> CrearSeguimiento(SeguimientoDto data)
         {
             var user = this.GetUser();
-            var result = await _reportesSIVIGILARepo.CrearSeguimiento(data, user);
-            if (!result)
-                return BadRequest();
+            // BUG-LZ-040: antes retornaba 400 sin mensaje cuando el NNA no existia en NNAs (caso comun:
+            // cuidador busca persona existente en SISPRO pero aun no creada como NNA en SECANI).
+            // Frontend mostraba "Http failure response ... 400 Bad Request" sin contexto util.
+            // Ahora delegamos al repo que retorna (bool, string?) con motivo, y devolvemos el mensaje.
+            var (success, message) = await _reportesSIVIGILARepo.CrearSeguimientoDetallado(data, user);
+            if (!success)
+                return BadRequest(new { message });
 
-            return Ok(result);
+            return Ok(new { success });
         }
 
         [HttpPut]

@@ -18,6 +18,19 @@ namespace Core.Services.StorageService
                 throw new ArgumentNullException(nameof(containerName), "El nombre del contenedor no puede ser nulo o vacío.");
 
             _containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // BUG-storage-containernotfound: Azurite/Azure Blob no crea containers automaticamente.
+            // En EC2 el container "attachments" no existia, UploadFileAsync devolvia false silencioso
+            // (catch atrapa ContainerNotFound) y los POST SIVIGILA insertaban en BD pero las evidencias
+            // PDF nunca se subian. CreateIfNotExists es idempotente y barato.
+            try
+            {
+                _containerClient.CreateIfNotExists();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"WARN StorageService.CreateIfNotExists fallo (continuando): {ex.Message}");
+            }
         }
 
         public async Task<bool> UploadFileAsync(byte[] fileBytes, string fileName, bool replace = false)

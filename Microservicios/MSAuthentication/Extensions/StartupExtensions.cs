@@ -1,12 +1,16 @@
 ﻿using Core.Interfaces;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
+using Core.Interfaces.Repositorios.MSTablasParametricas;
+using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Services;
+using Core.Services.MSTablasParametricas;
 using Core.Validators;
 using FluentValidation;
 using Infra;
 using Infra.Repositories;
 using Infra.Repositories.Common;
+using Infra.Repositorios.MSTablasParametricas;
 using Microsoft.EntityFrameworkCore;
 using MSAuthentication.Api.Middleware;
 
@@ -26,6 +30,9 @@ namespace MSEntidad.Api.Extensions
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             builder.Services.AddTransient<IContactoEntidadRepository, ContactoEntidadRepository>();
             builder.Services.AddTransient<IContactoEntidadService, ContactoEntidadService>();
+            // BUG-LZ-027: registrar repo de HistoricoTransaccion para auditar Add/Update/Delete de ContactoEntidad (Entidad Territorial).
+            builder.Services.AddTransient<IHistoricoTransaccionRepository, HistoricoTransaccionRepository>();
+            builder.Services.AddTransient<IHistoricoTransaccionService, HistoricoTransaccionService>();
 
             builder.Services.AddValidatorsFromAssemblyContaining<ContactoEntidadRequestValidator>();
 

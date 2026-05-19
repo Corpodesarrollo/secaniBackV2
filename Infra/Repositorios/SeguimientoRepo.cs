@@ -258,8 +258,13 @@ namespace Infra.Repositorios
             }
 
 
-            DateTime hoy = DateTime.Now;
-            if (UsuarioOriginal.FechaAsignacion < hoy)
+            // BUG-LZ-057: el servidor EC2 corre en UTC pero FechaAsignacion se almacena en hora
+            // local (Colombia, GMT-5). Comparar `FechaAsignacion < DateTime.Now` directamente
+            // descartaba erroneamente seguimientos del mismo dia por el desfase de 5 horas
+            // ("No es posible reasignar seguimientos en horarios vencidos" aun cuando vigentes).
+            // Comparar solo la parte Date en hora Colombia para tolerar reasignaciones del dia.
+            var nowColombia = DateTime.UtcNow.AddHours(-5);
+            if (UsuarioOriginal.FechaAsignacion?.Date < nowColombia.Date)
             {
                 return -2;
             }
@@ -420,19 +425,15 @@ namespace Infra.Repositorios
 
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {
+            // BUG-LZ-055: query anterior hacía LEFT JOIN cartesiano alseg×ent → duplicaba seguimientos
+            // y exponía solo FechaNotificacion arbitraria. Trazabilidad pide entidad/notif/respuesta
+            // por alerta, no por seguimiento. Fix: una fila por seguimiento + subquery anidada
+            // por alerta con join Notificacion (FechaNotif/Respuesta/RespuestaEntidad) + TPEAPB.
             List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
                                                          join nna in _context.NNAs on seg.NNAId equals nna.Id
-
-                                                         join alseg in _context.AlertaSeguimientos on seg.Id equals alseg.SeguimientoId into alsegGroup
-                                                         from alseg in alsegGroup.DefaultIfEmpty()
-
-                                                         join ent in _context.NotificacionesEntidad on alseg.Id equals ent.AlertaSeguimientoId into entGroup
-                                                         from ent in entGroup.DefaultIfEmpty()
-
                                                          where seg.NNAId == idNNA
                                                          select new SeguimientoNNAResponse()
                                                          {
-                                                             FechaNotificacion = ent != null ? ent.FechaEnvio : null,
                                                              FechaSeguimiento = seg.UltimaActuacionFecha,
                                                              IdSeguimiento = seg.Id,
                                                              Asunto = seg.UltimaActuacionAsunto,
@@ -447,6 +448,7 @@ namespace Infra.Repositorios
                                                                  IdEstado = nna.estadoId
                                                              },
 
+                                                             // Resumen entidades de todas las alertas del seguimiento (compat con consumers viejos)
                                                              EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
                                                                                                 join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
                                                                                                 join en in _context.TPEAPB on na.EntidadId equals en.Id
@@ -469,7 +471,26 @@ namespace Infra.Repositorios
                                                                                         UltimaFechaSeguimiento = (DateTime)als.UltimaFechaSeguimiento,
                                                                                         NombreAlerta = subal.CategoriaAlertaId + "." + subal.Indicador,
                                                                                         SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
-                                                                                        CategoriaAlerta = catal.Id + ". " + catal.Nombre
+                                                                                        CategoriaAlerta = catal.Id + ". " + catal.Nombre,
+                                                                                        // Entidad(es) notificada(s) para esta alerta especifica
+                                                                                        EntidadAlerta = string.Join(", ", (from na in _context.NotificacionesEntidad
+                                                                                                                           join en in _context.TPEAPB on na.EntidadId equals en.Id
+                                                                                                                           where na.AlertaSeguimientoId == als.Id
+                                                                                                                           select en.Nombre).ToArray()),
+                                                                                        // Primera fecha de envio de oficio para esta alerta
+                                                                                        FechaNotificacion = (from na in _context.NotificacionesEntidad
+                                                                                                             where na.AlertaSeguimientoId == als.Id
+                                                                                                             orderby na.FechaEnvio
+                                                                                                             select na.FechaEnvio).FirstOrDefault(),
+                                                                                        // Respuesta de la entidad (si la hay)
+                                                                                        RespuestaEntidad = (from n in _context.Notificacions
+                                                                                                            where n.AlertaSeguimientoId == als.Id
+                                                                                                            orderby n.FechaRespuesta descending
+                                                                                                            select n.RespuestaEntidad).FirstOrDefault(),
+                                                                                        FechaRespuesta = (from n in _context.Notificacions
+                                                                                                          where n.AlertaSeguimientoId == als.Id
+                                                                                                          orderby n.FechaRespuesta descending
+                                                                                                          select n.FechaRespuesta).FirstOrDefault()
                                                                                     }).ToList()
                                                          }).ToList();
 
@@ -732,6 +753,14 @@ namespace Infra.Repositorios
                     await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId, "Registro Inicial");
 
                     seguimientosAsignados.Add(usuarioAsignado);
+                    // BUG-LZ-058: la lista local seguimientosAsignadosFecha NO incluia el recien
+                    // creado, asi BuscarEspacioHorario seguia encontrando el mismo slot libre y
+                    // generaba duplicados mismo agente/misma hora. Agregar el nuevo Asignado a la
+                    // lista local para que la proxima iteracion vea el slot ocupado.
+                    seguimientosAsignadosFecha.Add(usuarioAsignado);
+                    // Refrescar disponibles del revisor local para que el OrderByDescending
+                    // de la siguiente iteracion balancee entre agentes activos.
+                    revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
                     seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
                 }
 
@@ -1696,7 +1725,15 @@ namespace Infra.Repositorios
 
         public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
         {
-            long.TryParse(id, out long solicitanteId);
+            // BUG-LZ-037: si el id recibido no es un long válido (caso típico: User.Id es un GUID de
+            // AspNet Identity), antes el TryParse fallaba y dejaba solicitanteId=0, devolviendo todos
+            // los seguimientos cuyo SolicitanteId fuera 0 (huérfanos / mockeados). Devolver lista
+            // vacía explícita evita mostrarle al Cuidador los registros de otra cuenta.
+            if (!long.TryParse(id, out long solicitanteId) || solicitanteId <= 0)
+            {
+                return Array.Empty<SeguimientoDto>();
+            }
+
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
                         where s.SolicitanteId == solicitanteId
