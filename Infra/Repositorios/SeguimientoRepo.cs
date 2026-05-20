@@ -178,9 +178,14 @@ namespace Infra.Repositorios
 
         public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
         {
+            // BUG-LZ-068: JOIN previo `new { un.Id, un.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }`
+            // requeria que Seguimiento.UsuarioId == UsuarioAsignado.UsuarioId. Al reasignar
+            // RepoSeguimientoActualizacionUsuario crea nueva fila UsuarioAsignados con UsuarioId
+            // = agente2 pero NO actualiza Seguimiento.UsuarioId (que queda en agente1) -> JOIN
+            // excluia al nuevo agente. Fix: join solo por SeguimientoId; WHERE filtra el ua.UsuarioId.
             List<GetSeguimientoResponse> response = (from un in _context.Seguimientos
                                                      join nna in _context.NNAs on un.NNAId equals nna.Id
-                                                     join ua in _context.UsuarioAsignados on new { un.Id, un.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }
+                                                     join ua in _context.UsuarioAsignados on un.Id equals ua.SeguimientoId
                                                      join alerta in _context.AlertaSeguimientos on un.Id equals alerta.SeguimientoId into alertaGroup
                                                      from subAlerta in alertaGroup.DefaultIfEmpty()
                                                      where ua.UsuarioId == UsuarioId
