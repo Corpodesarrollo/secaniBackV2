@@ -133,6 +133,18 @@ namespace Infra.Repositorios
 
                 var usuarioOrigen = await _context.Users.FirstOrDefaultAsync(x => x.Alias == "CC3216549872");
 
+                // BUG-LZ-069: Alias CC3216549872 hardcoded no existe en BD QA. Si NNA sin agente previo
+                // y no existe ese usuario solicitante, retornaba error "No hay agente disponible".
+                // Fallback: primer agente activo con rol "Agentes de seguimiento" (id 14CDDEA5...).
+                if (usuario == null && usuarioOrigen == null)
+                {
+                    const string ROL_AGENTE_ID = "14CDDEA5-FA06-4331-8359-036E101C5046";
+                    usuarioOrigen = await (from u in _context.Users
+                                           join ur in _context.UserRoles on u.Id equals ur.UserId
+                                           where ur.RoleId == ROL_AGENTE_ID && u.Activo == true
+                                           select u).FirstOrDefaultAsync();
+                }
+
                 if (usuario == null && usuarioOrigen == null)
                     return (false, "No hay agente disponible para asignar este seguimiento. Contacte al administrador.");
 
@@ -203,6 +215,16 @@ namespace Infra.Repositorios
                 // antes hacia NRE en usuario.Id silencioso por el try/catch. Fallback al usuario
                 // origen (Sistema/Solicitante) para que SetSeguimiento no falle; AsignacionAutomatica
                 // mas abajo se encarga de re-asignar al agente correspondiente.
+                // BUG-LZ-069: Alias hardcoded inexistente. Fallback primer agente activo.
+                if (usuario == null && usuarioOrigen == null)
+                {
+                    const string ROL_AGENTE_ID = "14CDDEA5-FA06-4331-8359-036E101C5046";
+                    usuarioOrigen = await (from u in _context.Users
+                                           join ur in _context.UserRoles on u.Id equals ur.UserId
+                                           where ur.RoleId == ROL_AGENTE_ID && u.Activo == true
+                                           select u).FirstOrDefaultAsync();
+                }
+
                 if (usuario == null && usuarioOrigen == null)
                 {
                     return false;
