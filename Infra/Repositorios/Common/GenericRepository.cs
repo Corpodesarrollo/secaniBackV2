@@ -27,7 +27,26 @@ namespace Infra.Repositories.Common
         }
         public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
         {
-            var items = await _context.Set<T>().AsNoTracking().ToListAsync();
+            // BUG-LZ-070: parametricas devolvian filas con IsDeleted=1 (test data tipo "editar
+            // borrar", "Cat 1", "SUBCAT PRUEBA"). Aplicar filtro IsDeleted=false si la entity
+            // expone esa columna; las que no la tienen quedan como antes.
+            var prop = typeof(T).GetProperty("IsDeleted");
+            if (prop != null && prop.PropertyType == typeof(bool))
+            {
+                var parameter = Expression.Parameter(typeof(T), "x");
+                var propertyAccess = Expression.Property(parameter, prop);
+                var falseConstant = Expression.Constant(false);
+                var equalExpression = Expression.Equal(propertyAccess, falseConstant);
+                var lambda = Expression.Lambda<Func<T, bool>>(equalExpression, parameter);
+
+                var filtered = await _context.Set<T>()
+                    .AsNoTracking()
+                    .Where(lambda)
+                    .ToListAsync(cancellationToken);
+                return filtered;
+            }
+
+            var items = await _context.Set<T>().AsNoTracking().ToListAsync(cancellationToken);
             return items ?? Enumerable.Empty<T>();
         }
         public async Task<IEnumerable<T>> GetAllNotDeletedAsync(CancellationToken cancellationToken)
