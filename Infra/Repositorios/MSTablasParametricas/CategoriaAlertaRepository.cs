@@ -22,7 +22,12 @@ namespace Infra.Repositorios.MSTablasParametricas
             // BUG-LZ-067: filtraba por Sub.Id == Cat.Id (PK == PK) en lugar de FK
             // CategoriaAlertaId. Por eso solo retornaba 1 subcategoria por categoria (la
             // que coincidia accidentalmente por Id). Fix: usar la FK correcta.
-            var subCategorias = _context.TPSubCategoriaAlerta.Where(c => c.CategoriaAlertaId == categoriaAlerta.Id);
+            // BUG-LZ-070: ademas filtrar IsDeleted y Activo para no retornar test data
+            // ("SUBCAT PRUEBA", "Item nuevo") que estaban borradas logicamente.
+            var subCategorias = _context.TPSubCategoriaAlerta
+                .Where(c => c.CategoriaAlertaId == categoriaAlerta.Id
+                            && !c.IsDeleted
+                            && c.Activo);
 
             var categoriaAlertaDTO = categoriaAlerta.Adapt<CategoriaAlertaDTO>();
             categoriaAlertaDTO.SubCategorias = subCategorias.Adapt<List<SubCategoriaAlertaDTO>>();
