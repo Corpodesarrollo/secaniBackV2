@@ -1,5 +1,8 @@
 using Core.Interfaces;
 using Core.Interfaces.MSTablasParametricas;
+using Core.Interfaces.Repositorios.MSTablasParametricas;
+using Core.Interfaces.Services.MSTablasParametricas;
+using Infra.Repositorios.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.Common;
 using Core.Interfaces.Repositorios.Llamadas;
@@ -55,6 +58,9 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
 
 builder.Services.AddScoped<IContactoNNARepo, ContactoNNARepo>();
+// BUG-LZ-018: auditar Add/Update de ContactoNNA en HistoricoTransaccion (paridad con ContactoEntidad)
+builder.Services.AddTransient<IHistoricoTransaccionRepository, HistoricoTransaccionRepository>();
+builder.Services.AddTransient<IHistoricoTransaccionService, HistoricoTransaccionService>();
 builder.Services.AddScoped<TablaParametricaService>();
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 builder.Services.AddScoped<INNARepo, NNARepo>();

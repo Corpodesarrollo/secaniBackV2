@@ -1693,7 +1693,9 @@ namespace Infra.Repositorios
                           join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
                           from d in diagnostico.DefaultIfEmpty()
 
-                          join a in _context.UsuarioAsignados on s.Id equals a.SeguimientoId into asignado
+                          // BUG-LZ-037 (root cause): JOIN UsuarioAsignados sin filtro Activo
+                          // duplicaba filas del seguimiento por cada reasignacion historica.
+                          join a in _context.UsuarioAsignados.Where(x => x.Activo) on s.Id equals a.SeguimientoId into asignado
                           from a in asignado.DefaultIfEmpty()
 
                           join ea in _context.TPEAPB on n.EAPBId equals ea.Id into eapb
@@ -1755,7 +1757,9 @@ namespace Infra.Repositorios
                           join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
                           from d in diagnostico.DefaultIfEmpty()
 
-                          join a in _context.UsuarioAsignados on s.Id equals a.SeguimientoId into asignado
+                          // BUG-LZ-037 (root cause): JOIN UsuarioAsignados sin filtro Activo
+                          // duplicaba filas del seguimiento por cada reasignacion historica.
+                          join a in _context.UsuarioAsignados.Where(x => x.Activo) on s.Id equals a.SeguimientoId into asignado
                           from a in asignado.DefaultIfEmpty()
 
                           join ea in _context.TPEAPB on n.EAPBId equals ea.Id into eapb
