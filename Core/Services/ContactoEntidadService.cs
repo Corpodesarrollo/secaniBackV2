@@ -14,6 +14,13 @@ namespace Core.Services
         public async Task<(bool, ContactoEntidadResponse)> AddAsync(ContactoEntidadRequest entity, CancellationToken cancellationToken)
         {
             var contactoEntidad = entity.Adapt<ContactoEntidades>();
+            // BUG-LZ-045 (extension): si el payload del frontend no incluye Activo (ej. tras
+            // contactForm.reset() que limpia el default true), BD lo guardaba como NULL y el
+            // contacto desaparecia del listado (GetAllAsync filtra Activo==true). Forzar default.
+            if (contactoEntidad.Activo == null)
+            {
+                contactoEntidad.Activo = true;
+            }
             var result = await _repository.AddAsync(contactoEntidad);
             return result.Adapt<(bool, ContactoEntidadResponse)>();
         }
@@ -62,7 +69,9 @@ namespace Core.Services
         {
             var result = await _repository.GetAllAsync(cancellationToken);
             if (result != null)
-                result = result.Where(x => x.Activo == true).ToArray();
+                // BUG-LZ-045 (extension): incluir Activo=true Y Activo=null (registros legacy sin
+                // el flag seteado). Activo=false excluido para esconder desactivados explicitos.
+                result = result.Where(x => x.Activo != false).ToArray();
 
             return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
         }
@@ -71,7 +80,7 @@ namespace Core.Services
         {
             var result = await _repository.GetAllAsync(cancellationToken);
             if (result != null)
-                result = result.Where(x => x.EntidadId == id && x.Activo == true).ToArray();
+                result = result.Where(x => x.EntidadId == id && x.Activo != false).ToArray();
 
             return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
         }
