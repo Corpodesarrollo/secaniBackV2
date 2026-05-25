@@ -1,14 +1,16 @@
-﻿using Core.Modelos;
+﻿using Core.DTOs;
+using Core.Modelos;
 using Core.Request;
 
 namespace Core.Interfaces.Repositorios
 {
     public interface IAlertaRepo
     {
-        public string CrearAlertaSeguimiento(string token,CrearAlertaSeguimientoRequest request);
+        public string CrearAlertaSeguimiento(CrearAlertaSeguimientoRequest request);
         public string GestionarAlerta(GestionarAlertaRequest request);
-        public List<AlertaSeguimiento> ConsultarAlertaSeguimiento(ConsultarAlertasRequest request);
-
-        public List<AlertaSeguimiento> ConsultarAlertaEstados(ConsultarAlertasEstadosRequest request);
+        Task<AlertaSeguimientoDto[]> ConsultarAlertasUltimoSeguimiento(int idNNA);
+        List<AlertaSeguimiento> ConsultarAlertaSeguimiento(ConsultarAlertasRequest request);
+        List<AlertaSeguimiento> ConsultarAlertaEstados(ConsultarAlertasEstadosRequest request);
+        Task<(byte[], string)> Exportar(int idAlerta);
     }
 }

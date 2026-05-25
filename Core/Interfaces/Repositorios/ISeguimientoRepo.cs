@@ -1,18 +1,44 @@
-﻿using Core.Request;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Core.DTOs;
+using Core.Modelos;
+using Core.Modelos.Identity;
+using Core.Request;
+using Core.response;
+using Core.Response;
+
 
 namespace Core.Interfaces.Repositorios
 {
     public interface ISeguimientoRepo
     {
+        public Seguimiento GetById(long id);
+        public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal);
+        public int RepoSeguimientoActualizacionFecha(PutSeguimientoActualizacionFechaRequest request);
+        public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request);
+        public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal, string UsuarioId);
+        public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId);
+        public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId);
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request);
-        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request);
-        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request);
-        public void SetDificultadesProceso(DificultadesProcesoRequest request);
-        public void SetAdherenciaProceso (AdherenciaProcesoRequest request);
+        public GetNNaParcialResponse GetNNaById(long id);
+        public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA);
+        Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro);
+        Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id);
+        Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id);
+        public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request);
+        public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request);
+        public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest id);
+        public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo();
+        public PlantillaCorreo ConsultarUnaPlantillasCorreo(long id);
+        public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(long id);
+        public Task<ExportarDetalleSeguimientoResponse> ExportarDetalleSeguimiento(long id);
+        Task<long> GetCntSeguimientoByNNA(long id);
+        Task<long> SetSeguimiento(SetSeguimientoRequest request);
+        Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
+        Task<List<UsuarioAsignado>> AsignacionAutomatica((long, string, string)? seguimientoDef = null, ApplicationUser? user = null);
+        Task<SeguimientoDto[]> GetSeguimientosEstados(string id);
+        Task<SeguimientoDto[]> GetSeguimientosCuidador(string id);
+        Task<List<UsuarioAsignado>> AsignacionAutomaticaReagendar();
+        Task<List<UsuarioAsignado>> AsignacionAutomaticaReasignacion();
+        Task<UserDto[]> CargarCoordinadores();
+        Task<UserDto[]> CargarRevisores();
     }
 }

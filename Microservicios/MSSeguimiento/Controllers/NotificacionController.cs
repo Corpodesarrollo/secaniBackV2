@@ -1,42 +1,67 @@
-﻿using Core.Interfaces.Repositorios;
-using Core.request;
+﻿using Core.Common;
+using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
+using Core.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class NotificacionController : ControllerBase
+    public class NotificacionController : BaseController
     {
         private readonly INotificacionRepo notificacionRepo;
+
+
 
         public NotificacionController(INotificacionRepo notificacion)
         {
             notificacionRepo = notificacion;
         }
 
-        [HttpPost("GetNotification")]
-        public List<GetNotificacionResponse> GetNotifications(GetNotificacionRequest request)
+        [HttpGet("GetNotification/{agenteDestinoId}")]
+        public async Task<List<GetNotificacionResponse>> GetNotifications(string agenteDestinoId)
         {
-            List<GetNotificacionResponse> response;
-
-            response = notificacionRepo.GetNotificacionUsuario(request.AgenteDestinoId);
+            var response = await notificacionRepo.GetNotificacionUsuario(agenteDestinoId);
 
             return response;
         }
 
-        [HttpPost("GetNumeroNotification")]
-        public int GetNumeroNotifications(GetNotificacionRequest request)
+        [HttpGet("GetNotificationAlerta/{alertaId}")]
+        public List<NotificacionResponse> GetNotificationsAlerta(long alertaId)
         {
-            return notificacionRepo.GetNumeroNotificacionUsuario(request.AgenteDestinoId);
+            List<NotificacionResponse> response;
+
+            response = notificacionRepo.GetNotificacionAlerta(alertaId);
+
+            return response;
+        }
+
+        [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
+        public async Task<int> GetNumeroNotificationsAsync(string agenteDestinoId)
+        {
+            return await notificacionRepo.GetNumeroNotificacionUsuario(agenteDestinoId);
+        }
+
+        [HttpPost("SetNotification")]
+        public async Task<IActionResult> SetNotification(GetNotificacionResponse request)
+        {
+            var result = await notificacionRepo.SetNotificacion(request);
+            return Ok(result);
+        }
+
+        [HttpGet("ValidarNotificacion/{id}")]
+        public async Task<IActionResult> ValidarNotificacion(int id)
+        {
+            var result = await notificacionRepo.ValidarNotificacion(id);
+            return Ok(result);
         }
 
         [HttpPost("OficioNotificacion")]
-        public string GenerarOficioNotificacion(OficioNotificacionRequest request)
+        public async Task<IActionResult> GenerarOficioNotificacion(OficioNotificacionRequest request)
         {
-            return notificacionRepo.GenerarOficioNotificacion(request);
+            var result = await notificacionRepo.GenerarOficioNotificacion(request);
+            return Ok(result);
         }
 
         [HttpPost("EliminarNotificacion")]
@@ -44,5 +69,100 @@ namespace MSSeguimiento.Api.Controllers
         {
             notificacionRepo.EliminarNotificacion(request);
         }
+
+        [HttpPost("EnviarOficioNotificacion")]
+        public async Task<IActionResult> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
+        {
+            var result = await notificacionRepo.EnviarOficioNotificacion(request);
+            return Ok(result);
+        }
+
+        [HttpGet("VerOficioNotificacion/{id}")]
+        public async Task<IActionResult> VerOficioNotificacion(long id)
+        {
+            var result = await notificacionRepo.VerOficioNotificacion(id);
+            return Ok(result);
+        }
+
+        [HttpPost("NotificacionRespuesta")]
+        public async Task<IActionResult> NotificacionRespuesta([FromForm] NotificacionRespuestaDto data)
+        {
+            var result = await notificacionRepo.NotificacionRespuesta(data);
+            return Ok(result);
+        }
+
+
+        [HttpGet("GetNotificacionEntidadCasos")]
+        public List<GetNotificacionesEntidadResponse> GetNotificacionEntidadCasos(long entidadId, int alertaSeguimientoId, int nnaId)
+        {
+
+            List<GetNotificacionesEntidadResponse> response = notificacionRepo.RepoNotificacionEntidadCasos(entidadId, alertaSeguimientoId, nnaId);
+            return response;
+        }
+
+        [HttpGet("GetListaCasosNotificacion")]
+        public List<GetListaCasosResponse> GetListaCasosNotificacion(string eapbId, int epsId)
+        {
+
+            List<GetListaCasosResponse> response = notificacionRepo.RepoListaCasosNotificacion(eapbId, epsId);
+            return response;
+        }
+
+
+        [HttpPost("EnviarCorreo")]
+        public async Task<IActionResult> EnviarCorreo([FromBody] CorreoRequest correoRequest)
+        {
+            if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
+            {
+                return BadRequest("El cuerpo del mensaje no puede estar vacío");
+            }
+
+            string resultado = await notificacionRepo.PlantillaCorreo(
+                correoRequest.Para,
+                correoRequest.ConCopia,
+                correoRequest.Asunto,
+                correoRequest.Body,
+                correoRequest.Adjuntos,
+                null
+            );
+
+            return Ok(new { mensaje = resultado });
+        }
+
+        [HttpPost("NotificacionReporteSivigila")]
+        public async Task<IActionResult> NotificacionReporteSivigila([FromBody] NotificacionSigivilaRequest request)
+        {
+
+            Task<string> resultado = notificacionRepo.NotificacionReporteSivigila(request.idReporteSivigila, request.entidadId, request.userId);
+
+            return Ok(new { mensaje = resultado });
+        }
+
+        [HttpPost("ProbarNotificacionReporteSivigila")]
+        public async Task<IActionResult> ProbarEnvios()
+        {
+            await notificacionRepo.RevisarYEnviarNotificaciones();
+            return Ok("Proceso ejecutado exitosamente");
+        }
+
+
+        [HttpPost("NotificacionSolicitudSeguimiento")]
+        public async Task<IActionResult> NotificacionSolicitudSeguimiento([FromBody] NotificacionSolicitudSeguimientoRequest request)
+        {
+
+            Task<string> resultado = notificacionRepo.NotificacionSolicitudSeguimiento(request.cuidadorId!, request.nnaId, request.agenteSeguimientoId!, request.userId);
+
+
+            return Ok(new { mensaje = resultado });
+        }
     }
+}
+
+public class CorreoRequest
+{
+    public string[] Para { get; set; }
+    public string[] ConCopia { get; set; }
+    public string Asunto { get; set; }
+    public string Body { get; set; }
+    public string[] Adjuntos { get; set; }
 }

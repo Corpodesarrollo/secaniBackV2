@@ -1,50 +1,375 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Modelos;
+using Core.Modelos.Identity;
 using Core.Request;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Core.response;
+using Core.Response;
+using Core.Services.MSTablasParametricas;
+using Core.Utilities;
+using iText.Html2pdf;
+using iText.Html2pdf.Resolver.Font;
+using iText.Kernel.Exceptions;
+using iText.Kernel.Geom;
+using iText.Kernel.Pdf;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Infra.Repositorios
 {
-    public class SeguimientoRepo : ISeguimientoRepo
+    public class SeguimientoRepo(ApplicationDbContext context, IWebHostEnvironment env, TablaParametricaService tablaParametricaService) : ISeguimientoRepo
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context = context;
+        private readonly IWebHostEnvironment _env = env;
 
-        public SeguimientoRepo(ApplicationDbContext context)
+        private IQueryable<SeguimientoDto> GetSelect(string id)
         {
-            _context = context;
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
+                        where s.UsuarioId == id && n.estadoId != 10
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+            return from q in query
+                   join s in _context.Seguimientos on q.id equals s.Id
+                   join n in _context.NNAs on s.NNAId equals n.Id
+                   join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                   select new SeguimientoDto()
+                   {
+                       Id = s.Id,
+                       NoCaso = s.NNAId,
+                       PrimerNombre = n.PrimerNombre,
+                       SegundoNombre = n.SegundoNombre,
+                       PrimerApellido = n.PrimerApellido,
+                       SegundoApellido = n.SegundoApellido,
+                       FechaNotificacion = n.FechaNotificacionSIVIGILA,
+                       FechaSeguimiento = s.FechaSeguimiento,
+                       Estado = new TPEstadoNNADto()
+                       {
+                           Nombre = e.Nombre,
+                           Descripcion = e.Descripcion,
+                           ColorBG = e.ColorBG,
+                           ColorText = e.ColorText
+                       },
+                       AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                       FechaUltimaActuacion = s.UltimaActuacionFecha,
+                       Alertas = (from als in _context.AlertaSeguimientos
+                                  join a in _context.Alertas on als.AlertaId equals a.Id
+                                  join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
+                                  join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
+                                  where als.SeguimientoId == s.Id
+                                  select new Core.DTOs.AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                   };
         }
 
-        public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
+        public async Task<List<SeguimientoDto>> GetAllByIdUser(string id, int filtro)
         {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                        where seg.Id == request.IdSeguimiento
-                                        select seg).FirstOrDefault();
-
-            if (seguimiento != null)
+            try
             {
-                NNAs? nna = (from nn in _context.NNAs
-                           where nn.Id == seguimiento.NNAId
-                           select nn).FirstOrDefault();
+                var query = GetSelect(id);
+                var result = await query.ToListAsync();
 
-                if (nna != null)
-                {
+                if (filtro == 1) //hoy
+                    return result.Where(x => x.FechaSeguimiento?.Date == DateTime.Now.Date).ToList();
 
-                    nna.DiagnosticoId = request.IdDiagnostico;
-                    nna.FechaConsultaDiagnostico = request.FechaDiagnostico;
-                    nna.FechaConsultaOrigenReporte = request.FechaConsulta;
-                    nna.FechaInicioTratamiento = request.FechaInicioTratamiento;
-                    nna.IPSId = request.IdIPS;
-                    nna.Recaida = request.Recaidas;
-                    nna.CantidadRecaidas = request.NumeroRecaidas;
-                    nna.FechaUltimaRecaida = request.FechaUltimaRecaida;
-                    nna.MotivoNoDiagnosticoId = request.IdMotivoNoDiagnostico;
-                    nna.MotivoNoDiagnosticoOtro = request.RazonNoDiagnostico;
-                }
+                else if (filtro == 2) //con alerta
+                    return result.Where(x => x.Alertas.Count > 0).ToList();
+
+                else if (filtro == 3) //Todos
+                    return result;
+
+                else if (filtro == 4) //Solicitados por Cuidador
+                    return result.Where(x => x.AsuntoUltimaActuacion?.ToLower() == "solicitado por cuidador").ToList();
+
+                return result;
             }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<SeguimientoCntFiltrosDto> GetCntSeguimiento(string id)
+        {
+            try
+            {
+                var query = GetSelect(id);
+                var result = await query.ToListAsync();
+
+                return new SeguimientoCntFiltrosDto
+                {
+                    Todos = result.Count,
+                    Hoy = result.Where(x => x.FechaSeguimiento?.Date == DateTime.Now.Date).Count(),
+                    ConAlerta = result.Where(x => x.Alertas.Count > 0).Count(),
+                    SolicitadosPorCuidador = result.Count(x => x.AsuntoUltimaActuacion?.ToLower() == "solicitado por cuidador")
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<long> GetCntSeguimientoByNNA(long id)
+        {
+            try
+            {
+                return await _context.Seguimientos.CountAsync(x => x.NNAId == id);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<SeguimientoDatosNNADto?> SeguimientoNNA(long id)
+        {
+            try
+            {
+                var result = await (from n in _context.NNAs
+                                    join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diag
+                                    from diagnostico in diag.DefaultIfEmpty()
+                                    where n.Id == id
+                                    select new SeguimientoDatosNNADto
+                                    {
+                                        IdNNA = n.Id,
+                                        NombreCompleto = string.Join(" ", n.PrimerNombre, n.SegundoNombre, n.PrimerApellido, n.SegundoApellido),
+                                        Diagnostico = diagnostico.Nombre,
+                                        FechaNacimiento = n.FechaNacimiento,
+                                        FechaIngresoEstrategia = n.FechaIngresoEstrategia
+                                    }).FirstOrDefaultAsync();
+
+                if (result != null)
+                {
+                    var seguimiento = await (from s in _context.Seguimientos
+                                             join e in _context.TPEstadoSeguimiento on s.EstadoId equals e.Id
+                                             where s.NNAId == id
+                                             orderby s.FechaSeguimiento descending
+                                             select new
+                                             {
+                                                 s.FechaSeguimiento,
+                                                 s.FechaSolicitud,
+                                                 s.EstadoId,
+                                                 Estado = e.Nombre
+                                             }).FirstOrDefaultAsync();
+
+                    result.FechaInicioSeguimiento = seguimiento?.FechaSeguimiento;
+                    result.Estado = seguimiento?.Estado;
+                    result.SeguimientosRealizados = await _context.Seguimientos.CountAsync(s => s.NNAId == id);
+                    result.Edad = Funciones.CalcularEdad(result.FechaNacimiento);
+                    result.TiempoTranscurrido = Funciones.CalcularTiempoTrascurrido(result.FechaInicioSeguimiento!.Value);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public Seguimiento? GetById(long id)
+        {
+            return _context.Seguimientos?.FirstOrDefault(s => s.Id == id);
+        }
+
+        public List<GetSeguimientoResponse> RepoSeguimientoUsuario(string UsuarioId, DateTime FechaInicial, DateTime FechaFinal)
+        {
+            // BUG-LZ-068: JOIN previo `new { un.Id, un.UsuarioId } equals new { Id = ua.SeguimientoId, ua.UsuarioId }`
+            // requeria que Seguimiento.UsuarioId == UsuarioAsignado.UsuarioId. Al reasignar
+            // RepoSeguimientoActualizacionUsuario crea nueva fila UsuarioAsignados con UsuarioId
+            // = agente2 pero NO actualiza Seguimiento.UsuarioId (que queda en agente1) -> JOIN
+            // excluia al nuevo agente. Fix: join solo por SeguimientoId; WHERE filtra el ua.UsuarioId.
+            List<GetSeguimientoResponse> response = (from un in _context.Seguimientos
+                                                     join nna in _context.NNAs on un.NNAId equals nna.Id
+                                                     join ua in _context.UsuarioAsignados on un.Id equals ua.SeguimientoId
+                                                     join alerta in _context.AlertaSeguimientos on un.Id equals alerta.SeguimientoId into alertaGroup
+                                                     from subAlerta in alertaGroup.DefaultIfEmpty()
+                                                     where ua.UsuarioId == UsuarioId
+                                                           && ua.FechaAsignacion >= FechaInicial
+                                                           && ua.FechaAsignacion <= FechaFinal
+                                                        && un.EstadoId != 3 && ua.Activo
+                                                     group subAlerta by new
+                                                     {
+                                                         un.Id,
+                                                         un.NNAId,
+                                                         ua.FechaAsignacion, // Usando FechaAsignacion como FechaSeguimiento
+                                                         un.EstadoId,
+                                                         un.ContactoNNAId,
+                                                         un.Telefono,
+                                                         un.UsuarioId,
+                                                         un.SolicitanteId,
+                                                         un.FechaSolicitud,
+                                                         un.TieneDiagnosticos,
+                                                         un.ObservacionesSolicitante,
+                                                         nna.PrimerNombre,
+                                                         nna.SegundoNombre,
+                                                         nna.PrimerApellido,
+                                                         nna.SegundoApellido,
+                                                         nna.FechaNotificacionSIVIGILA
+                                                     } into g
+                                                     select new GetSeguimientoResponse()
+                                                     {
+                                                         Id = g.Key.Id,
+                                                         NNAId = g.Key.NNAId,
+                                                         FechaSeguimiento = g.Key.FechaAsignacion, // Ajustando la fecha de seguimiento
+                                                         EstadoId = g.Key.EstadoId,
+                                                         ContactoNNAId = g.Key.ContactoNNAId,
+                                                         Telefono = g.Key.Telefono,
+                                                         UsuarioId = g.Key.UsuarioId,
+                                                         SolicitanteId = g.Key.SolicitanteId.ToString(),
+                                                         FechaSolicitud = g.Key.FechaSolicitud ?? new(),
+                                                         TieneDiagnosticos = g.Key.TieneDiagnosticos ?? false,
+                                                         ObservacionesSolicitante = g.Key.ObservacionesSolicitante,
+                                                         PrimerNombre = g.Key.PrimerNombre,
+                                                         SegundoNombre = g.Key.SegundoNombre,
+                                                         PrimerApellido = g.Key.PrimerApellido,
+                                                         SegundoApellido = g.Key.SegundoApellido,
+                                                         FechaNotificacionSIVIGILA = g.Key.FechaNotificacionSIVIGILA,
+                                                         CantidadAlertas = g.Count(subAlerta => subAlerta != null)
+                                                     }).ToList();
+
+
+
+            return response;
+        }
+
+        public int RepoSeguimientoActualizacionFecha(PutSeguimientoActualizacionFechaRequest request)
+        {
+
+            var usuarioAsignado = _context.UsuarioAsignados.FirstOrDefault(s => s.SeguimientoId == request.Id);
+
+            if (usuarioAsignado == null)
+            {
+                return -1;
+            }
+
+            usuarioAsignado.FechaAsignacion = request.FechaSeguimiento;
+
+            _context.SaveChanges();
+            return 1;
+        }
+
+        public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
+        {
+            var UsuarioOriginal = _context.UsuarioAsignados.FirstOrDefault(s => s.SeguimientoId == request.Id);
+
+            if (UsuarioOriginal == null)
+            {
+                return -1;
+            }
+
+
+            // BUG-LZ-057: el servidor EC2 corre en UTC pero FechaAsignacion se almacena en hora
+            // local (Colombia, GMT-5). Comparar `FechaAsignacion < DateTime.Now` directamente
+            // descartaba erroneamente seguimientos del mismo dia por el desfase de 5 horas
+            // ("No es posible reasignar seguimientos en horarios vencidos" aun cuando vigentes).
+            // Comparar solo la parte Date en hora Colombia para tolerar reasignaciones del dia.
+            var nowColombia = DateTime.UtcNow.AddHours(-5);
+            if (UsuarioOriginal.FechaAsignacion?.Date < nowColombia.Date)
+            {
+                return -2;
+            }
+
+            // Actualizar el EstadoId a falso
+            UsuarioOriginal.Activo = false;
+            UsuarioOriginal.Observaciones = request.ObservacionesSolicitante!;
+
+            // Guardar los cambios en el seguimiento original
+            _context.SaveChanges();
+
+            try
+            {
+                var nuevoUsuarioAsignado = new UsuarioAsignado
+                {
+                    UsuarioId = request.UsuarioId,
+                    SeguimientoId = UsuarioOriginal.SeguimientoId,
+                    FechaAsignacion = UsuarioOriginal.FechaAsignacion,
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    CreatedByUserId = UsuarioOriginal.CreatedByUserId,
+                    Observaciones = "Creado por Reasignación"
+                };
+
+                _context.UsuarioAsignados.Add(nuevoUsuarioAsignado);
+                _context.SaveChanges();
+            }
+            catch (Exception)
+            {
+
+                return -3;
+            }
+
+            return 1;
+        }
+
+        public List<GetSeguimientoFestivoResponse> RepoSeguimientoFestivo(DateTime FechaInicial, DateTime FechaFinal, string UsuarioId)
+        {
+            var festivos = from un in _context.TPFestivos
+                           where un.Festivo.Date >= FechaInicial.Date
+                                 && un.Festivo.Date <= FechaFinal.Date
+                           select new GetSeguimientoFestivoResponse
+                           {
+                               Festivo = un.Festivo.Date,
+                           };
+
+            var ausencias = from a in _context.Ausencias
+                            where a.FechaAusencia.Date >= FechaInicial.Date
+                                  && a.FechaAusencia.Date <= FechaFinal.Date
+                                  && a.UsuarioId == UsuarioId
+                            select new GetSeguimientoFestivoResponse
+                            {
+                                Festivo = a.FechaAusencia.Date, // Coincide el formato de solo fecha
+                            };
+
+            // Hacemos la unión de los resultados de ambas consultas
+            var unionResult = festivos
+                             .Union(ausencias) // Une las dos listas
+                             .OrderBy(x => x.Festivo) // Ordenamos por fecha si es necesario
+                             .ToList();
+
+            return unionResult;
+        }
+
+
+        public List<GetSeguimientoHorarioAgenteResponse> RepoSeguimientoHorarioAgente(string UsuarioId)
+        {
+            List<GetSeguimientoHorarioAgenteResponse> response = (from un in _context.HorarioLaboralAgente
+                                                                  where
+                                                                  un.UserId == UsuarioId
+
+
+                                                                  select new GetSeguimientoHorarioAgenteResponse()
+                                                                  {
+
+                                                                      Dia = un.Dia,
+                                                                      HoraEntrada = un.HoraEntrada,
+                                                                      HoraSalida = un.HoraSalida,
+
+                                                                  }).ToList();
+
+
+
+            return response;
+        }
+
+        public List<GetSeguimientoAgentesResponse> RepoSeguimientoAgentes(string UsuarioId)
+        {
+            var response = (from ur in _context.UserRoles
+                            join r in _context.Roles on ur.RoleId equals r.Id
+                            join u in _context.Users on ur.UserId equals u.Id
+                            where r.Name.Contains("Agentes de seguimiento")
+                            && u.Id != UsuarioId
+                            select new GetSeguimientoAgentesResponse
+                            {
+                                Id = u.Id,
+                                FullName = u.FullName!
+                            }).ToList();
+
+            return response;
         }
 
         public void SetEstadoDiagnosticoTratamiento(EstadoDiagnosticoTratamientoRequest request)
@@ -61,87 +386,1413 @@ namespace Infra.Repositorios
             }
         }
 
-        public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
+        public async Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA)
         {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                        where seg.Id == request.IdSeguimiento
-                                        select seg).FirstOrDefault();
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                        where n.Id == idNNA
+                        select new SeguimientoDto()
+                        {
+                            Id = s.Id,
+                            NoCaso = s.NNAId,
+                            PrimerNombre = n.PrimerNombre,
+                            SegundoNombre = n.SegundoNombre,
+                            PrimerApellido = n.PrimerApellido,
+                            SegundoApellido = n.SegundoApellido,
+                            FechaNotificacion = s.FechaSolicitud,
+                            FechaSeguimiento = s.UltimaActuacionFecha,
+                            Observaciones = s.ObservacionAgente,
+                            EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
+                                                               join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                                                               join en in _context.TPEAPB on na.EntidadId equals en.Id
+                                                               where als.SeguimientoId == s.Id
+                                                               select en.Nombre).ToArray()),
+                            Estado = new TPEstadoNNADto()
+                            {
+                                Nombre = e.Nombre,
+                                Descripcion = e.Descripcion,
+                                ColorBG = e.ColorBG,
+                                ColorText = e.ColorText
+                            },
+                            AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                            FechaUltimaActuacion = s.UltimaActuacionFecha,
+                            Alertas = (from als in _context.AlertaSeguimientos
+                                       join a in _context.Alertas on als.AlertaId equals a.Id
+                                       join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
+                                       join sca in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
+                                       where als.SeguimientoId == s.Id
+                                       select new AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
+                        };
 
-            NNAs? nna=null;
-            if (seguimiento != null)
+            return await query.ToArrayAsync();
+        }
+
+        public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
+        {
+            // BUG-LZ-055: query anterior hacía LEFT JOIN cartesiano alseg×ent → duplicaba seguimientos
+            // y exponía solo FechaNotificacion arbitraria. Trazabilidad pide entidad/notif/respuesta
+            // por alerta, no por seguimiento. Fix: una fila por seguimiento + subquery anidada
+            // por alerta con join Notificacion (FechaNotif/Respuesta/RespuestaEntidad) + TPEAPB.
+            List<SeguimientoNNAResponse> seguimientos = (from seg in _context.Seguimientos
+                                                         join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                         where seg.NNAId == idNNA
+                                                         select new SeguimientoNNAResponse()
+                                                         {
+                                                             FechaSeguimiento = seg.UltimaActuacionFecha,
+                                                             IdSeguimiento = seg.Id,
+                                                             Asunto = seg.UltimaActuacionAsunto,
+                                                             Observacion = seg.ObservacionAgente,
+                                                             FechaInicioSeguimiento = seg.FechaSeguimiento,
+                                                             NNA = new NNAResponse()
+                                                             {
+                                                                 Id = nna.Id,
+                                                                 FechaNacimiento = nna.FechaNacimiento,
+                                                                 NombreCompleto = string.Join("", nna.PrimerNombre, " ", nna.SegundoNombre, " ", nna.PrimerApellido, " ", nna.SegundoApellido),
+                                                                 Diagnostico = "",
+                                                                 IdEstado = nna.estadoId
+                                                             },
+
+                                                             // Resumen entidades de todas las alertas del seguimiento (compat con consumers viejos)
+                                                             EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
+                                                                                                join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                                                                                                join en in _context.TPEAPB on na.EntidadId equals en.Id
+                                                                                                where als.SeguimientoId == seg.Id
+                                                                                                select en.Nombre).ToArray()),
+
+                                                             alertasSeguimientos = (from als in _context.AlertaSeguimientos
+                                                                                    join a in _context.Alertas on als.AlertaId equals a.Id
+                                                                                    join subal in _context.TPSubCategoriaAlerta on a.SubcategoriaId equals subal.Id
+                                                                                    join catal in _context.TPCategoriaAlerta on subal.CategoriaAlertaId equals catal.Id
+                                                                                    join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
+                                                                                    where als.SeguimientoId == seg.Id
+                                                                                    select new AlertaSeguimientoResponse()
+                                                                                    {
+                                                                                        AlertaId = als.AlertaId,
+                                                                                        EstadoId = als.EstadoId,
+                                                                                        IdAlertaSeguimiento = als.Id,
+                                                                                        Observaciones = als.Observaciones,
+                                                                                        SeguimientoId = als.SeguimientoId,
+                                                                                        UltimaFechaSeguimiento = (DateTime)als.UltimaFechaSeguimiento,
+                                                                                        NombreAlerta = subal.CategoriaAlertaId + "." + subal.Indicador,
+                                                                                        SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
+                                                                                        CategoriaAlerta = catal.Id + ". " + catal.Nombre,
+                                                                                        // Entidad(es) notificada(s) para esta alerta especifica
+                                                                                        EntidadAlerta = string.Join(", ", (from na in _context.NotificacionesEntidad
+                                                                                                                           join en in _context.TPEAPB on na.EntidadId equals en.Id
+                                                                                                                           where na.AlertaSeguimientoId == als.Id
+                                                                                                                           select en.Nombre).ToArray()),
+                                                                                        // Primera fecha de envio de oficio para esta alerta
+                                                                                        FechaNotificacion = (from na in _context.NotificacionesEntidad
+                                                                                                             where na.AlertaSeguimientoId == als.Id
+                                                                                                             orderby na.FechaEnvio
+                                                                                                             select na.FechaEnvio).FirstOrDefault(),
+                                                                                        // Respuesta de la entidad (si la hay)
+                                                                                        RespuestaEntidad = (from n in _context.Notificacions
+                                                                                                            where n.AlertaSeguimientoId == als.Id
+                                                                                                            orderby n.FechaRespuesta descending
+                                                                                                            select n.RespuestaEntidad).FirstOrDefault(),
+                                                                                        FechaRespuesta = (from n in _context.Notificacions
+                                                                                                          where n.AlertaSeguimientoId == als.Id
+                                                                                                          orderby n.FechaRespuesta descending
+                                                                                                          select n.FechaRespuesta).FirstOrDefault()
+                                                                                    }).ToList()
+                                                         }).ToList();
+
+
+            return seguimientos;
+        }
+
+        public int RepoSeguimientoRechazo(PutSeguimientoRechazoRequest request)
+        {
+
+            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
+
+            if (seguimiento == null)
             {
-                nna = (from nn in _context.NNAs
-                            where nn.Id == seguimiento.NNAId
-                            select nn).FirstOrDefault();
+                return -1;
+            }
+            seguimiento.EstadoId = 3;
+            seguimiento.NombreRechazo = request.NombreRechazo;
+            seguimiento.ParentescoRechazo = request.ParentescoRechazo;
+            seguimiento.RazonesRechazo = request.RazonesRechazo;
+
+            var contactonna = _context.ContactoNNAs.FirstOrDefault(s => s.Id == seguimiento.ContactoNNAId);
+            if (contactonna == null)
+            {
+                return -1;
             }
 
-            if (nna != null)
-            {
-                nna.ResidenciaOrigenMunicipioId = request.residenciaOrigen.IdMunicipio;
-                nna.ResidenciaOrigenBarrio = request.residenciaOrigen.Barrio;
-                nna.ResidenciaOrigenAreaId = request.residenciaOrigen.IdArea;
-                nna.ResidenciaOrigenDireccion = request.residenciaOrigen.Direccion;
-                nna.ResidenciaOrigenEstratoId = request.residenciaOrigen.IdEstrato;
-                nna.ResidenciaOrigenTelefono = request.residenciaOrigen.TelefonoFijo;
+            contactonna.TelefnosInactivos = contactonna.TelefnosInactivos + ' ' + contactonna.Telefonos;
+            contactonna.Telefonos = "";
 
-                if (request.residenciaDestino != null)
+            _context.SaveChanges();
+            return 1;
+        }
+
+        public GetNNaParcialResponse GetNNaById(long id)
+        {
+
+
+            GetNNaParcialResponse? response = (from u in _context.NNAs
+                                               where u.Id != id
+                                               select new GetNNaParcialResponse
+                                               {
+                                                   Id = u.Id,
+                                                   PrimerNombre = u.PrimerNombre,
+                                                   SegundoNombre = u.SegundoNombre,
+                                                   PrimerApellido = u.PrimerApellido,
+                                                   SegundoApellido = u.SegundoApellido,
+                                                   FechaNotificacionSIVIGILA = u.FechaNotificacionSIVIGILA
+
+                                               }).FirstOrDefault();
+
+            return response;
+        }
+
+        public async Task<long> SetSeguimiento(SetSeguimientoRequest request)
+        {
+            try
+            {
+                /* Asunto última actuación:
+                    Alerta identificada: contacto exitoso y se identificó alerta
+                    Alerta resuelta: contacto exitoso y resolución de alerta previa
+                    Alerta sin resolver: contacto exitoso y alerta previa sin resolver
+                    Control: contacto exitoso sin alertas identificadas
+                    Solicitud cuidador: seguimiento agendado por acción en el sistema por parte del cuidador.
+                */
+
+                string asuntoUltimaActuacion = string.Empty;
+                if (request.Alertas != null && request.Alertas.Length > 0)
+                    asuntoUltimaActuacion = "Alerta identificada";
+                else if (request?.alertasPendientes?.Length > 0 && request.alertasPendientes.Any(a => a.Resuelta == false))
+                    asuntoUltimaActuacion = "Alerta sin resolver";
+                else if (request?.alertasPendientes?.Length > 0)
+                    asuntoUltimaActuacion = "Alerta resuelta";
+                else
+                    asuntoUltimaActuacion = "Control";
+
+                var ultimoSeguimiento = await _context.Seguimientos.Where(s => s.NNAId == request.NNAId).OrderByDescending(x => x.FechaSeguimiento).FirstOrDefaultAsync();
+                if (ultimoSeguimiento != null)
                 {
-                    nna.ResidenciaActualMunicipioId = request.residenciaDestino.IdMunicipio;
-                    nna.ResidenciaActualBarrio = request.residenciaDestino.Barrio;
-                    nna.ResidenciaActualAreaId = request.residenciaDestino.IdArea;
-                    nna.ResidenciaActualDireccion = request.residenciaDestino.Direccion;
-                    nna.ResidenciaActualEstratoId = request.residenciaDestino.IdEstrato;
-                    nna.ResidenciaActualTelefono = request.residenciaDestino.TelefonoFijo;
+                    ultimoSeguimiento.Telefono = request.Telefono;
+                    ultimoSeguimiento.ObservacionAgente = request.ObservacionAgente;
+                    ultimoSeguimiento.ObservacionesSolicitante = request.ObservacionesSolicitante;
+                    ultimoSeguimiento.UltimaActuacionFecha = DateTime.Now;
+                    ultimoSeguimiento.UltimaActuacionAsunto = asuntoUltimaActuacion;
+                    ultimoSeguimiento.FechaSeguimiento = DateTime.Now;
+                    ultimoSeguimiento.UpdatedByUserId = request.UsuarioId;
+                    ultimoSeguimiento.DateUpdated = DateTime.Now;
+
+                    _context.Seguimientos.Update(ultimoSeguimiento);
                 }
 
-                nna.TrasladoTieneCapacidadEconomica = request.CapacidadEconomicaTraslado;
-                nna.TrasladoEAPBSuministroApoyo = request.ServiciosSocialesEAPB;
-                nna.TrasladosServiciosdeApoyoOportunos = request.ServiciosSocialesEntregados;
-                nna.TrasladosServiciosdeApoyoCobertura = request.ServiciosSocialesCobertura;
-                nna.TrasladosHaSolicitadoApoyoFundacion = request.ApoyoFundacion;
-                nna.TrasladosNombreFundacion = request.NombreFundacion;
-                nna.TrasladosPropietarioResidenciaActualId = request.IdTipoResidenciaActual;
-                nna.TrasladosQuienAsumioCostosTraslado = request.AsumeCostoTraslado;
-                nna.TrasladosQuienAsumioCostosVivienda = request.AsumeCostoVivienda;
-                _context.NNAs.Update(nna);
-                _context.SaveChanges();
+                var seguimiento = new Seguimiento()
+                {
+                    NNAId = request.NNAId,
+                    FechaSeguimiento = request.FechaSeguimiento,
+                    EstadoId = request.EstadoId,
+                    ContactoNNAId = request.ContactoNNAId,
+                    UsuarioId = request.UsuarioId,
+                    SolicitanteId = long.TryParse(request.SolicitanteId, out long solId) ? solId : null,
+                    FechaSolicitud = request.FechaSolicitud,
+                    TieneDiagnosticos = request.TieneDiagnosticos,
+                    UltimaActuacionFecha = request.UltimaActuacionFecha,
+                    NombreRechazo = request.NombreRechazo,
+                    ParentescoRechazo = request.ParentescoRechazo,
+                    RazonesRechazo = request.RazonesRechazo,
+                    CreatedByUserId = "1"
+                };
+                _context.Seguimientos.Add(seguimiento);
+                await _context.SaveChangesAsync();
+
+                var usuarioAsignado = new UsuarioAsignado()
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = request.FechaSeguimiento,
+                    Observaciones = "Asignación automática",
+                    SeguimientoId = seguimiento.Id,
+                    UsuarioId = request.UsuarioId,
+                };
+                _context.UsuarioAsignados.Add(usuarioAsignado);
+                await _context.SaveChangesAsync();
+
+                if (request.Alertas != null)
+                {
+                    foreach (var item in request.Alertas)
+                    {
+                        var alerta = new Alerta()
+                        {
+                            SubcategoriaId = item,
+                            Descripcion = "Alerta generada por seguimiento",
+                            Alias = "S",
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now
+                        };
+                        _context.Alertas.Add(alerta);
+                        await _context.SaveChangesAsync();
+
+                        var alertaSeguimiento = new AlertaSeguimiento()
+                        {
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now,
+                            EstadoId = 1,
+                            AlertaId = alerta.Id,
+                            SeguimientoId = seguimiento.Id,
+                            Observaciones = "Alerta generada por seguimiento",
+                            UltimaFechaSeguimiento = ultimoSeguimiento.FechaSeguimiento
+                        };
+                        _context.AlertaSeguimientos.Add(alertaSeguimiento);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (request.alertasPendientes != null)
+                {
+                    foreach (var item in request.alertasPendientes)
+                    {
+                        var alertaSeguimiento = await _context.AlertaSeguimientos.FirstOrDefaultAsync(x => x.AlertaId == item.Id);
+                        if (alertaSeguimiento != null)
+                        {
+                            if ((item.Resuelta ?? false) == false)
+                            {
+                                var alertaSeguimiento2 = new AlertaSeguimiento()
+                                {
+                                    AlertaId = item.Id ?? 0,
+                                    CreatedByUserId = "1",
+                                    DateCreated = DateTime.Now,
+                                    EstadoId = item.Resuelta ?? false ? 4 : 3,
+                                    SeguimientoId = seguimiento.Id,
+                                    Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento",
+                                    UltimaFechaSeguimiento = DateTime.Now
+                                };
+                                _context.AlertaSeguimientos.Add(alertaSeguimiento2);
+                                await _context.SaveChangesAsync();
+                            }
+
+                            alertaSeguimiento.EstadoId = item.Resuelta ?? false ? 4 : 3;
+                            alertaSeguimiento.Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento";
+                            alertaSeguimiento.UltimaFechaSeguimiento = DateTime.Now;
+                            _context.AlertaSeguimientos.Update(alertaSeguimiento);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
+
+                return seguimiento.Id;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
         }
 
-        public void SetDificultadesProceso(DificultadesProcesoRequest request)
+        public async Task<List<UsuarioAsignado>> AsignacionAutomatica((long, string, string)? seguimientoDef = null, ApplicationUser? user = null)
         {
-            Seguimiento? seguimiento = (from seg in _context.Seguimientos
-                                       where seg.Id == request.IdSeguimiento
-                                       select seg).FirstOrDefault();
+            var seguimientosAsignados = new List<UsuarioAsignado>();
 
-            if (seguimiento != null)
+            var seguimientosNoAsignados = seguimientoDef != null ? [seguimientoDef.Value] : await CargarSeguimientos();
+
+            var fecha = DateTime.Now.Date;
+            var revisores = await CargarRevisores(fecha, user);
+
+            while (seguimientosNoAsignados.Count > 0)
             {
-                NNAs? nna = (from nn in _context.NNAs
-                            where nn.Id == seguimiento.NNAId
-                            select nn).FirstOrDefault();
-
-                if (nna != null)
+                while (seguimientosNoAsignados.Count > 0 && revisores.Count > 0)
                 {
-                    nna.DifAutorizaciondeMedicamentos = request.AutorizacionMedicamento;
-                    nna.DifEntregaMedicamentosLAP = request.EntregaMedicamentoLAP;
-                    nna.DifEntregaMedicamentosNoLAP = request.EntregaMedicamentoNoLAP;
-                    nna.DifAsignaciondeCitas = request.AsignacionCitas;
-                    nna.DifHanCobradoCuotasoCopagos = request.CobradoCopagos;
-                    nna.DifAutorizacionProcedimientos = request.AutorizacionProcedimientos;
-                    nna.DifRemisionInstitucionesEspecializadas = request.RemisionEspecialistas;
-                    nna.DifMalaAtencionIPS = request.MalaAtencionIPS;
-                    nna.DifMalaAtencionNombreIPSId = request.IdMalaIPS;
-                    nna.DifFallasenMIPRES = request.FallasMIPRES;
-                    nna.DifFallaConvenioEAPBeIPSTratante = request.FallasConvenio;
-                    nna.CategoriaAlertaId = request.IdCategoriaAlerta;
-                    nna.SubcategoriaAlertaId = request.IdSubcategoriaAlerta;
-                    nna.TrasladosHaSidoTrasladadodeInstitucion = request.HaSidoTrasladado;
-                    nna.TrasladosNumerodeTraslados = request.NumeroTraslados;
-                    nna.TrasladosHaRecurridoAccionLegal = request.AccionLegal; 
-                    nna.TrasladosTipoAccionLegalId = request.IdTipoRecurso;
-                    nna.TrasladosMotivoAccionLegal = request.MotivoAccionLegal;
+                    var revisor = revisores.Select(x => x).OrderByDescending(x => x.CantidadSeguimientosDisponibles).FirstOrDefault();
+
+                    //validar que la fecha no es dia festivo
+                    var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                    if (festivos != null)
+                        break;
+
+                    //validamos los seguimientos asignados al revisor en la fecha
+                    var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion.Value.Date == fecha.Date).ToListAsync();
+                    if (seguimientosAsignadosFecha.Count > 0)
+                        revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
+
+                    //valida si el revisor tiene seguimeintos disponibles por asignar
+                    if (revisor.CantidadSeguimientosDisponibles <= 0)
+                    {
+                        revisores.Remove(revisor);
+                        continue;
+                    }
+
+                    //validar lista de seguimientos no asignados
+                    if (seguimientosNoAsignados.Count == 0)
+                        break;
+
+                    //el revisor entra a las horaentrada y sale a la horasalida. se debe asignar el seguimiento en un rango de 640 segundos,
+                    //si el seguimiento se cruza con otro se debe aumentar 640 segundos  y volver a verificar hasta lograr agendar el seguimiento
+                    var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
+                    if (fechaAsignacion == null)
+                    {
+                        // revisor sin slots disponibles hoy -> descartarlo para evitar loop infinito
+                        revisores.Remove(revisor);
+                        if (user != null) break;
+                        continue;
+                    }
+
+                    var seguimiento = seguimientosNoAsignados[0];
+
+                    //asignar seguimiento al revisor
+                    var usuarioAsignado = new UsuarioAsignado
+                    {
+                        Activo = true,
+                        DateCreated = DateTime.Now,
+                        FechaAsignacion = fechaAsignacion,
+                        Observaciones = "Asignación automática",
+                        SeguimientoId = seguimiento.Item1,
+                        NombreNNA = seguimiento.Item2,
+                        DocumentoNNA = seguimiento.Item3,
+                        UsuarioId = revisor.UserId,
+                        NombreUsuario = revisor.Nombre,
+                    };
+
+                    _context.UsuarioAsignados.Add(usuarioAsignado);
+                    await _context.SaveChangesAsync();
+
+                    //actualizar fecha seguimiento
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId, "Registro Inicial");
+
+                    seguimientosAsignados.Add(usuarioAsignado);
+                    // BUG-LZ-058: la lista local seguimientosAsignadosFecha NO incluia el recien
+                    // creado, asi BuscarEspacioHorario seguia encontrando el mismo slot libre y
+                    // generaba duplicados mismo agente/misma hora. Agregar el nuevo Asignado a la
+                    // lista local para que la proxima iteracion vea el slot ocupado.
+                    seguimientosAsignadosFecha.Add(usuarioAsignado);
+                    // Refrescar disponibles del revisor local para que el OrderByDescending
+                    // de la siguiente iteracion balancee entre agentes activos.
+                    revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
+                    seguimientosNoAsignados.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
                 }
+
+                var sw = false;
+                for (int i = 0; i < 10; i++)
+                {
+                    fecha = fecha.AddDays(1);
+                    revisores = await CargarRevisores(fecha, user);
+
+                    //validar si hay disponibilidad de revisores
+                    var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
+                    if (revisoresDisponibles)
+                    {
+                        sw = true;
+                        break;
+                    }
+                }
+
+                if (!sw)
+                    break;
+
+            }
+
+            return seguimientosAsignados;
+        }
+
+        private async Task ActulizarSeguimiento(DateTime? fechaAsignacion, long idSeguimiento, string idUsuario, string asunto = "")
+        {
+            var seguimientoActualizado = await _context.Seguimientos.FirstOrDefaultAsync(x => x.Id == idSeguimiento);
+            if (seguimientoActualizado != null)
+            {
+                seguimientoActualizado.EstadoId = 1;
+                seguimientoActualizado.UltimaActuacionFecha = fechaAsignacion;
+                seguimientoActualizado.UltimaActuacionAsunto = asunto;
+                seguimientoActualizado.FechaSeguimiento = fechaAsignacion;
+                seguimientoActualizado.UsuarioId = idUsuario;
+                _context.Seguimientos.Update(seguimientoActualizado);
+                await _context.SaveChangesAsync();
             }
         }
+
+        private static DateTime? BuscarEspacioHorario(DateTime fecha, UsuariosHorariosDto revisor, List<UsuarioAsignado> seguimientosAsignadosFecha)
+        {
+            var fechaAsignacion = fecha.Date + revisor.HoraEntrada.GetValueOrDefault();
+            var fechaSalida = fecha.Date + revisor.HoraSalida.GetValueOrDefault();
+            var fechaEncontrada = false;
+
+            if (fechaAsignacion < DateTime.Now)
+                fechaAsignacion = DateTime.Now;
+
+            while (!fechaEncontrada && fechaAsignacion < fechaSalida)
+            {
+                var proxFechaAsignacion = fechaAsignacion.AddSeconds(640);
+                var seguimientosAsignadosFechaRango = seguimientosAsignadosFecha.Where(x => x.FechaAsignacion >= fechaAsignacion && x.FechaAsignacion < proxFechaAsignacion).FirstOrDefault();
+                if (seguimientosAsignadosFechaRango != null)
+                {
+                    fechaAsignacion = fechaAsignacion.AddSeconds(640);
+                    continue;
+                }
+                else
+                    fechaEncontrada = true;
+            }
+
+            if (!fechaEncontrada)
+                return null;
+
+            return fechaAsignacion;
+        }
+
+        public async Task<List<UsuarioAsignado>> AsignacionAutomaticaReagendar()
+        {
+            var fecha = DateTime.Now;
+            var seguimientosReagendados = new List<UsuarioAsignado>();
+
+            //reagendar por no ejecucion de seguimiento
+            var revisores = await CargarRevisores(fecha);
+
+            foreach (var revisor in revisores)
+            {
+                var seguimientos = from s in _context.Seguimientos
+                                   join n in _context.NNAs on s.NNAId equals n.Id
+                                   where s.UsuarioId == revisor.UserId
+                                   group s by s.NNAId into g
+                                   select new { id = g.Max(x => x.Id) };
+
+                var seguimientosReagendamiento = await (from q in seguimientos
+                                                        join seg in _context.Seguimientos on q.id equals seg.Id
+                                                        join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                        join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                        where seg.FechaSeguimiento < fecha && ua.UsuarioId == revisor.UserId
+                                                              && nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value)
+                                                        select new ValueTuple<long, string, string>(
+                                                            seg.Id,
+                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                            nna.NumeroIdentificacion ?? ""
+                                                        )).ToListAsync();
+
+                fecha = await ReagendarSeguimientos(fecha, seguimientosReagendados, revisor, seguimientosReagendamiento, "No ejecución");
+            }
+
+            //reagendar por agente ausente
+            var revisoresAusentes = await CargarRevisoresAusentes(fecha);
+
+            foreach (var revisor in revisoresAusentes)
+            {
+                var seguimientosReagendamiento = await (from seg in _context.Seguimientos
+                                                        join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                        join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                        where ua.FechaAsignacion == fecha && ua.UsuarioId == revisor.UserId
+                                                              && nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value)
+                                                        select new ValueTuple<long, string, string>(
+                                                            seg.Id,
+                                                            $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                            nna.NumeroIdentificacion ?? ""
+                                                        )).ToListAsync();
+
+                fecha = await ReagendarSeguimientos(fecha, seguimientosReagendados, revisor, seguimientosReagendamiento, "Ausencia");
+            }
+
+            return seguimientosReagendados;
+        }
+
+        private async Task<DateTime> ReagendarSeguimientos(DateTime fecha, List<UsuarioAsignado> seguimientosReagendados, UsuariosHorariosDto revisor, List<(long, string, string)> seguimientosReagendamiento, string tipo)
+        {
+            int safetyMaxDays = 180; // cap para evitar loop infinito avanzando fechas
+            int iteraciones = 0;
+            while (seguimientosReagendamiento.Count > 0 && iteraciones++ < safetyMaxDays)
+            {
+                fecha = fecha.Date.AddDays(1);
+
+                //validar que la fecha no es dia festivo
+                var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                if (festivos != null)
+                    continue;
+
+                //validamos los seguimientos asignados al revisor en la fecha
+                var fechaIni = fecha;
+                var fechaFin = fechaIni.AddDays(1).AddSeconds(-1);
+                var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion >= fechaIni && x.FechaAsignacion <= fechaFin).ToListAsync();
+                // reset disponibles cada dia nuevo (bug: se heredaba el valor del dia previo)
+                revisor.CantidadSeguimientosDisponibles = revisor.CantidadSeguimientos - seguimientosAsignadosFecha.Count;
+
+                //valida si el revisor tiene seguimeintos disponibles por asignar
+                if (revisor.CantidadSeguimientosDisponibles <= 0)
+                    continue;
+
+                var seguimiento = seguimientosReagendamiento[0];
+                var continuar = true;
+                do
+                {
+                    // validacion para verificar que el seguimiento no haya sido reagendado previamente
+                    var seguimientosReasignados = await _context.UsuarioAsignados
+                        .Where(x => x.SeguimientoId == seguimiento.Item1 && x.FechaAsignacion > fecha)
+                        .AnyAsync();
+
+                    if (seguimientosReasignados)
+                    {
+                        seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                        if (seguimientosReagendamiento.Count > 0)
+                            seguimiento = seguimientosReagendamiento[0];
+                        else
+                            continuar = false;
+                    }
+                    else
+                        continuar = false;
+
+                } while (continuar);
+
+                if (seguimientosReagendamiento.Count == 0)
+                    break;
+
+                var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
+                if (fechaAsignacion == null)
+                    continue;
+
+                //asignar seguimiento al revisor
+                var usuarioAsignado = new UsuarioAsignado
+                {
+                    Activo = true,
+                    DateCreated = DateTime.Now,
+                    FechaAsignacion = fechaAsignacion,
+                    Observaciones = "Reagendamiento automático",
+                    SeguimientoId = seguimiento.Item1,
+                    NombreNNA = seguimiento.Item2,
+                    DocumentoNNA = seguimiento.Item3,
+                    Criterio = tipo,
+                    UsuarioId = revisor.UserId
+                };
+
+                _context.UsuarioAsignados.Add(usuarioAsignado);
+                await _context.SaveChangesAsync();
+
+                //actualizar fecha seguimiento
+                await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId);
+
+                seguimientosReagendados.Add(usuarioAsignado);
+                seguimientosReagendamiento.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+
+                //validar si hay disponibilidad de revisores
+                var revisoresDisponibles = await _context.HorarioLaboralAgente.AnyAsync(x => x.UserId == revisor.UserId && x.Fecha == fecha);
+                if (!revisoresDisponibles)
+                    break;
+            }
+
+            return fecha;
+        }
+
+        private async Task<List<UsuariosHorariosDto>> CargarRevisoresAusentes(DateTime fecha)
+        {
+            var diaSemana = (int)fecha.DayOfWeek;
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && aus != null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).ToListAsync();
+        }
+
+        public async Task<List<UsuarioAsignado>> AsignacionAutomaticaReasignacion()
+        {
+            var fecha = DateTime.Now.Date;
+            var seguimientosAsignados = new List<UsuarioAsignado>();
+
+            var seguimientos = from s in _context.Seguimientos
+                               join n in _context.NNAs on s.NNAId equals n.Id
+                               group s by s.NNAId into g
+                               select new { id = g.Max(x => x.Id) };
+
+            // RQ00-HU011: incluir UsuarioId/UserId del agente inactivo + filtro estados NNA abiertos
+            var seguimientosReasignacionRaw = await (from q in seguimientos
+                                                     join seg in _context.Seguimientos on q.id equals seg.Id
+                                                     join nna in _context.NNAs on seg.NNAId equals nna.Id
+                                                     join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId
+                                                     join u in _context.Users on ua.UsuarioId equals u.Id
+                                                     where ua.FechaAsignacion == fecha && u.Activo == false
+                                                           && nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value)
+                                                     select new
+                                                     {
+                                                         SeguimientoId = seg.Id,
+                                                         NombreNNA = $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                                                         Documento = nna.NumeroIdentificacion ?? "",
+                                                         AgenteAnteriorId = u.Id,
+                                                         AgenteAnteriorNombre = u.FullName
+                                                     }).ToListAsync();
+
+            var seguimientosReasignacion = seguimientosReasignacionRaw
+                .Select(x => new ValueTuple<long, string, string>(x.SeguimientoId, x.NombreNNA, x.Documento))
+                .ToList();
+            // map seguimientoId -> agente anterior para historico
+            var agenteAnteriorMap = seguimientosReasignacionRaw
+                .GroupBy(x => x.SeguimientoId)
+                .ToDictionary(g => g.Key, g => (g.First().AgenteAnteriorId, g.First().AgenteAnteriorNombre));
+
+            var revisores = await CargarRevisoresReasignacion(fecha);
+
+            while (seguimientosReasignacion.Count > 0)
+            {
+                while (seguimientosReasignacion.Count > 0 && revisores.Count > 0)
+                {
+                    var revisor = revisores.Select(x => x).OrderByDescending(x => x.CantidadSeguimientosDisponibles).FirstOrDefault();
+
+                    //validar que la fecha no es dia festivo
+                    var festivos = await _context.TPFestivos.FirstOrDefaultAsync(x => x.Festivo == fecha);
+                    if (festivos != null)
+                        break;
+
+                    //validamos los seguimientos asignados al revisor en la fecha
+                    var seguimientosAsignadosFecha = await _context.UsuarioAsignados.Where(x => x.UsuarioId == revisor.UserId && x.FechaAsignacion == fecha).ToListAsync();
+                    if (seguimientosAsignadosFecha.Count > 0)
+                        revisor.CantidadSeguimientosDisponibles -= seguimientosAsignadosFecha.Count;
+
+                    //valida si el revisor tiene seguimeintos disponibles por asignar
+                    if (revisor.CantidadSeguimientosDisponibles <= 0)
+                    {
+                        revisores.Remove(revisor);
+                        continue;
+                    }
+
+                    //validar lista de seguimientos no asignados
+                    if (seguimientosReasignacion.Count == 0)
+                        break;
+
+                    var seguimiento = seguimientosReasignacion[0];
+                    var continuar = true;
+                    do
+                    {
+                        // validacion para verificar que el seguimiento no haya sido reagendado previamente
+                        var seguimientosReasignados = await _context.UsuarioAsignados
+                            .Where(x => x.SeguimientoId == seguimiento.Item1 && x.FechaAsignacion > fecha)
+                            .AnyAsync();
+
+                        if (seguimientosReasignados)
+                        {
+                            seguimientosReasignacion.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                            if (seguimientosReasignacion.Count > 0)
+                                seguimiento = seguimientosReasignacion[0];
+                            else
+                                continuar = false;
+                        }
+                        else
+                            continuar = false;
+
+                    } while (continuar);
+
+                    if (seguimientosReasignacion.Count == 0)
+                        break;
+
+                    var fechaAsignacion = BuscarEspacioHorario(fecha, revisor, seguimientosAsignadosFecha);
+                    if (fechaAsignacion == null)
+                    {
+                        // revisor sin slots -> descartar para evitar loop infinito
+                        revisores.Remove(revisor);
+                        continue;
+                    }
+
+                    // RQ00-HU011: histórico agente antiguo vs nuevo
+                    // Desactivar UsuarioAsignado anterior + dejar referencia en Observaciones del nuevo
+                    var asignacionesAnteriores = await _context.UsuarioAsignados
+                        .Where(x => x.SeguimientoId == seguimiento.Item1 && x.Activo)
+                        .ToListAsync();
+                    string nombreAgenteAnterior = "";
+                    string idAgenteAnterior = "";
+                    if (agenteAnteriorMap.TryGetValue(seguimiento.Item1, out var prev))
+                    {
+                        idAgenteAnterior = prev.AgenteAnteriorId ?? "";
+                        nombreAgenteAnterior = prev.AgenteAnteriorNombre ?? "";
+                    }
+                    foreach (var prevUa in asignacionesAnteriores)
+                    {
+                        prevUa.Activo = false;
+                    }
+                    if (asignacionesAnteriores.Count > 0)
+                        await _context.SaveChangesAsync();
+
+                    //asignar seguimiento al revisor
+                    var usuarioAsignado = new UsuarioAsignado
+                    {
+                        Activo = true,
+                        DateCreated = DateTime.Now,
+                        FechaAsignacion = fechaAsignacion,
+                        Observaciones = !string.IsNullOrEmpty(idAgenteAnterior)
+                            ? $"Reasignación automática. Agente anterior: {nombreAgenteAnterior} ({idAgenteAnterior}). Agente nuevo: {revisor.Nombre} ({revisor.UserId})."
+                            : "Reasignación automática",
+                        SeguimientoId = seguimiento.Item1,
+                        NombreNNA = seguimiento.Item2,
+                        DocumentoNNA = seguimiento.Item3,
+                        Criterio = "Reasignación",
+                        UsuarioId = revisor.UserId,
+                        NombreUsuario = revisor.Nombre
+                    };
+
+                    _context.UsuarioAsignados.Add(usuarioAsignado);
+                    await _context.SaveChangesAsync();
+
+                    //actualizar fecha seguimiento
+                    await ActulizarSeguimiento(fechaAsignacion, seguimiento.Item1, revisor.UserId, "Reasignación");
+
+                    seguimientosAsignados.Add(usuarioAsignado);
+
+                    seguimientosReasignacion.Remove(seguimiento); //se quita el seguimiento de la lista de no asignados
+                    revisor.CantidadSeguimientosDisponibles--;
+                }
+
+                fecha = fecha.AddDays(1);
+                revisores = await CargarRevisoresReasignacion(fecha);
+
+                //validar si hay disponibilidad de revisores
+                var revisoresDisponibles = await ValidarDiponibilidadAgentes(fecha);
+                if (!revisoresDisponibles)
+                    break;
+            }
+
+            return seguimientosAsignados;
+        }
+
+        private async Task<List<UsuariosHorariosDto>> CargarRevisoresReasignacion(DateTime fecha)
+        {
+            var diaSemana = (int)fecha.DayOfWeek;
+
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fecha } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Nombre = u.FullName,
+                              Email = u.Email,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).ToListAsync();
+        }
+
+        // RQ00-HU011: solo NNA en estados abiertos (Sin diagnostico, Diagnostico confirmado, EP*, Valoracion, Trat finalizado, Registrado)
+        private static readonly int[] _estadosNNAAbiertos = new[] { 2, 3, 4, 5, 6, 7, 8, 9, 15 };
+
+        private async Task<List<(long, string, string)>> CargarSeguimientos()
+        {
+            return await (from seg in _context.Seguimientos
+                          join nna in _context.NNAs on seg.NNAId equals nna.Id
+                          join ua in _context.UsuarioAsignados on seg.Id equals ua.SeguimientoId into uaJoin
+                          from uas in uaJoin.DefaultIfEmpty()
+                          where nna.estadoId.HasValue && _estadosNNAAbiertos.Contains(nna.estadoId.Value) && uas == null
+                          select new ValueTuple<long, string, string>(
+                              seg.Id,
+                              $"{nna.PrimerNombre} {nna.SegundoNombre} {nna.PrimerApellido} {nna.SegundoApellido}",
+                              nna.NumeroIdentificacion ?? ""
+                          )).ToListAsync();
+        }
+
+        private async Task<bool> ValidarDiponibilidadAgentes(DateTime fecha)
+        {
+            var fechaValidar = fecha;
+            var diaSemana = (int)fechaValidar.DayOfWeek;
+
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                          join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                          from aus in a.DefaultIfEmpty()
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
+                          select new UsuariosHorariosDto
+                          {
+                              UserId = u.Id,
+                              Nombre = u.FullName,
+                              Email = u.Email,
+                              Fecha = h.Fecha,
+                              HoraEntrada = h.HoraEntrada,
+                              HoraSalida = h.HoraSalida
+                          }).AnyAsync();
+        }
+
+        private async Task<List<UsuariosHorariosDto>> CargarRevisores(DateTime fecha, IdentityUser? user = null)
+        {
+            var fechaValidar = fecha;
+            var diaSemana = (int)fechaValidar.DayOfWeek;
+
+            if (user != null)
+            {
+                return await (from u in _context.Users
+                              join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                              join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                              from aus in a.DefaultIfEmpty()
+                              where u.Id == user.Id && u.Activo == true && h.Dia == diaSemana && aus == null
+                              select new UsuariosHorariosDto
+                              {
+                                  UserId = u.Id,
+                                  Nombre = u.FullName,
+                                  Email = u.Email,
+                                  Fecha = h.Fecha,
+                                  HoraEntrada = h.HoraEntrada,
+                                  HoraSalida = h.HoraSalida
+                              }).ToListAsync();
+            }
+            else
+            {
+                //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+                return await (from ur in _context.UserRoles
+                              join r in _context.Roles on ur.RoleId equals r.Id
+                              join u in _context.Users on ur.UserId equals u.Id
+                              join h in _context.HorarioLaboralAgente on u.Id equals h.UserId
+                              join a in _context.Ausencias on new { a = u.Id, b = fechaValidar } equals new { a = a.UsuarioId, b = a.FechaAusencia } into a
+                              from aus in a.DefaultIfEmpty()
+                              where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true && h.Dia == diaSemana && aus == null
+                              select new UsuariosHorariosDto
+                              {
+                                  UserId = u.Id,
+                                  Nombre = u.FullName,
+                                  Email = u.Email,
+                                  Fecha = h.Fecha,
+                                  HoraEntrada = h.HoraEntrada,
+                                  HoraSalida = h.HoraSalida
+                              }).ToListAsync();
+            }
+        }
+
+        public async Task<UserDto[]> CargarRevisores()
+        {
+            //14CDDEA5-FA06-4331-8359-036E101C5046	Agentes de seguimiento
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          where r.Id == "14CDDEA5-FA06-4331-8359-036E101C5046" && u.Activo == true
+                          select new UserDto
+                          {
+                              Id = u.Id,
+                              Alias = u.Alias,
+                              Email = u.Email,
+                              Name = u.FullName
+                          }).ToArrayAsync();
+        }
+
+        public async Task<UserDto[]> CargarCoordinadores()
+        {
+            //311882D4-EAD0-4B0B-9C5D-4A434D49D16D	Coordinadores
+            return await (from ur in _context.UserRoles
+                          join r in _context.Roles on ur.RoleId equals r.Id
+                          join u in _context.Users on ur.UserId equals u.Id
+                          where r.Id == "311882D4-EAD0-4B0B-9C5D-4A434D49D16D" && u.Activo == true
+                          select new UserDto
+                          {
+                              Id = u.Id,
+                              Alias = u.Alias,
+                              Email = u.Email,
+                              Name = u.FullName
+                          }).ToArrayAsync();
+        }
+
+        public string CrearPlantillaCorreo(CrearPlantillaCorreoRequest request)
+        {
+            try
+            {
+                PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
+                                                    where p.Id == request.Id
+                                                    select p).FirstOrDefault();
+
+                if (plantillaCorreo == null)
+                {
+                    plantillaCorreo = new PlantillaCorreo()
+                    {
+                        Asunto = request.Asunto,
+                        Cierre = request.Cierre ?? "",
+                        Estado = request.Estado,
+                        FechaCreacion = DateTime.Now,
+                        Firmante = request.Firmante,
+                        Mensaje = request.Mensaje,
+                        Nombre = request.Nombre,
+                        TipoPlantilla = request.TipoPlantilla
+                    };
+
+                    _context.PlantillaCorreos.Add(plantillaCorreo);
+                    _context.SaveChanges();
+
+                    string registroNuevo = JsonConvert.SerializeObject(plantillaCorreo);
+
+                    HistoricoPlantilla historicoPlantilla = new()
+                    {
+                        IdPlantilla = plantillaCorreo.Id,
+                        Transaccion = "Creacion",
+                        Comentario = "Creacion",
+                        FechaCreacion = DateTime.Now,
+                        UsuarioOrigen = "Juan Manuel",
+                        UsuarioRol = "Coordinador Admin",
+                        RegistroNuevo = registroNuevo
+                    };
+
+                    _context.HistoricosPlantilla.Add(historicoPlantilla);
+                    _context.SaveChanges();
+
+                    return "Plantilla creada exitosamente";
+                }
+                else
+                {
+                    string registroAnterior = JsonConvert.SerializeObject(plantillaCorreo);
+                    List<string> listComentario = new List<string>();
+                    if (plantillaCorreo.Asunto != request.Asunto)
+                    {
+                        listComentario.Add("Asunto");
+                    }
+                    if (plantillaCorreo.Cierre != request.Cierre)
+                    {
+                        listComentario.Add("Cierre");
+                    }
+                    if (plantillaCorreo.Estado != request.Estado)
+                    {
+                        listComentario.Add("Estado");
+                    }
+                    if (plantillaCorreo.Firmante != request.Firmante)
+                    {
+                        listComentario.Add("Firmante");
+                    }
+                    if (plantillaCorreo.Mensaje != request.Mensaje)
+                    {
+                        listComentario.Add("Mensaje");
+                    }
+                    if (plantillaCorreo.Nombre != request.Nombre)
+                    {
+                        listComentario.Add("Nombre");
+                    }
+                    if (plantillaCorreo.TipoPlantilla != request.TipoPlantilla)
+                    {
+                        listComentario.Add("Tipo Plantilla");
+                    }
+                    string comentario = string.Join(", ", listComentario);
+
+                    plantillaCorreo.Asunto = request.Asunto;
+                    plantillaCorreo.Cierre = request.Cierre ?? "";
+                    plantillaCorreo.Estado = request.Estado;
+                    plantillaCorreo.Firmante = request.Firmante;
+                    plantillaCorreo.Mensaje = request.Mensaje;
+                    plantillaCorreo.Nombre = request.Nombre;
+                    plantillaCorreo.TipoPlantilla = request.TipoPlantilla;
+
+                    _context.PlantillaCorreos.Update(plantillaCorreo);
+                    _context.SaveChanges();
+
+                    string registroNuevo = JsonConvert.SerializeObject(plantillaCorreo);
+
+                    HistoricoPlantilla historicoPlantilla = new()
+                    {
+                        IdPlantilla = plantillaCorreo.Id,
+                        Transaccion = "Modificacion",
+                        Comentario = comentario,
+                        FechaCreacion = DateTime.Now,
+                        UsuarioOrigen = "Juan Manuel",
+                        UsuarioRol = "Coordinador Admin",
+                        RegistroAnterior = registroAnterior,
+                        RegistroNuevo = registroNuevo
+                    };
+
+                    _context.HistoricosPlantilla.Add(historicoPlantilla);
+                    _context.SaveChanges();
+
+                    return "Plantilla modificada exitosamente";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred:");
+                Console.WriteLine($"Message: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return "Se presento un problema en el proceso";
+            }
+
+        }
+
+        public string EliminarPlantillaCorreo(EliminarPlantillaCorreoRequest request)
+        {
+            try
+            {
+                PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
+                                                    where p.Id == request.Id
+                                                    select p).FirstOrDefault();
+
+                if (plantillaCorreo != null)
+                {
+                    string registroAnterior = JsonConvert.SerializeObject(plantillaCorreo);
+
+                    _context.PlantillaCorreos.Remove(plantillaCorreo);
+                    _context.SaveChanges();
+
+                    HistoricoPlantilla historicoPlantilla = new()
+                    {
+                        IdPlantilla = plantillaCorreo.Id,
+                        Transaccion = "Eliminacion",
+                        Comentario = "Eliminacion",
+                        FechaCreacion = DateTime.Now,
+                        UsuarioOrigen = "Juan Manuel",
+                        UsuarioRol = "Coordinador Admin",
+                        RegistroAnterior = registroAnterior
+                    };
+
+                    _context.HistoricosPlantilla.Add(historicoPlantilla);
+                    _context.SaveChanges();
+
+                    return "Registro Eliminado Correctamente";
+                }
+                else
+                {
+                    return "El Id indicado no existe";
+                }
+            }
+            catch (Exception)
+            {
+                return "Se presento un problema en el proceso";
+            }
+        }
+
+        public List<ConsultarPlantillaResponse> ConsultarPlantillasCorreo()
+        {
+            List<ConsultarPlantillaResponse> response = (from p in _context.PlantillaCorreos
+                                                         select new ConsultarPlantillaResponse()
+                                                         {
+                                                             Id = p.Id,
+                                                             Asunto = p.Asunto,
+                                                             Cierre = p.Cierre,
+                                                             Estado = p.Estado,
+                                                             FechaCreacion = p.FechaCreacion,
+                                                             Firmante = p.Firmante,
+                                                             Mensaje = p.Mensaje,
+                                                             Nombre = p.Nombre,
+                                                             TipoPlantilla = p.TipoPlantilla
+                                                         }).ToList();
+
+            return response;
+        }
+
+        public PlantillaCorreo ConsultarUnaPlantillasCorreo(long id)
+        {
+            PlantillaCorreo? plantillaCorreo = (from p in _context.PlantillaCorreos
+                                                where p.Id == id
+                                                select p).FirstOrDefault();
+
+            return plantillaCorreo;
+        }
+
+        public List<HistoricoPlantillaCorreoResponse> HistoricoPlantillaCorreo(long id)
+        {
+            List<HistoricoPlantillaCorreoResponse> response = (from h in _context.HistoricosPlantilla
+                                                               where h.IdPlantilla == id
+                                                               select new HistoricoPlantillaCorreoResponse()
+                                                               {
+                                                                   Id = h.Id.ToString(),
+                                                                   FechaCreacion = h.FechaCreacion,
+                                                                   Comentario = h.Comentario,
+                                                                   Transaccion = h.Transaccion,
+                                                                   UsuarioOrigen = h.UsuarioOrigen,
+                                                                   UsuarioRol = h.UsuarioRol
+                                                               }).ToList();
+            return response;
+        }
+
+        public async Task<ExportarDetalleSeguimientoResponse> ExportarDetalleSeguimiento(long id)
+        {
+            ExportarDetalleSeguimientoResponse response = new();
+            try
+            {
+                VwExportarDetalleSeguimientoModel? vwSeg = _context.VwExportarDetalleSeguimiento.FirstOrDefault(seg => seg.SeguimientoId == id);
+                if (vwSeg != null)
+                {
+                    List<Seguimiento>? seguimientos = _context.Seguimientos.Where(s => s.NNAId == vwSeg.NNAId).OrderByDescending(x => x.FechaSeguimiento).ToList();
+
+                    string htmlContent = File.ReadAllText("PlantillaExportarSeguimiento.html");
+                    htmlContent = htmlContent
+                        .Replace("{nombreNNA}", vwSeg.Nombres)
+                        .Replace("{fechaHoy}", DateTime.Now.ToString("dd/MM/yyyy"))
+                        .Replace("{edadNNA}", vwSeg.Edad)
+                        .Replace("{seguimientosRealizados}", vwSeg.SeguimientosRealizados.ToString())
+                        .Replace("{diagnosticoNNA}", vwSeg.Diagnostico)
+                        .Replace("{seguimientosEnProceso}", vwSeg.SeguimientosEnProceso.ToString())
+                        .Replace("{fechaInicioSeguimiento}", vwSeg.FechaSeguimiento)
+                        .Replace("{fechaSivigila}", vwSeg.FechaSivigila)
+                        .Replace("{sexo}", vwSeg.Sexo)
+                        .Replace("{tipoIdentificacion}", vwSeg.TipoIdentificacion)
+                        .Replace("{numeroIdentificacion}", vwSeg.NumeroIdentificacion)
+                        .Replace("{fechaNacimiento}", vwSeg.FechaNacimiento)
+                        .Replace("{paisNacimiento}", vwSeg.Pais)
+                        .Replace("{etnia}", vwSeg.Etnia)
+                        .Replace("{departamentoNacimiento}", vwSeg.DepartamentoNacimiento)
+                        .Replace("{ciudadNacimiento}", vwSeg.CiudadNacimiento)
+                        .Replace("{origenReporte}", vwSeg.OrigenReporte)
+                        .Replace("{departamentoTratamiento}", vwSeg.DepartamentoTratamiento)
+                        .Replace("{estadoIngesoEstrategia}", vwSeg.EstadoIngresoEstrategia)
+                        .Replace("{fechaIngresoEstrategia}", vwSeg.FechaIngresoEstrategia)
+                        .Replace("{grupoPoblacional}", vwSeg.GrupoPoblacional)
+                        .Replace("{semanasGestacion}", "")
+                        .Replace("{regimenAfiliacion}", vwSeg.RegimenAfiliacion)
+                        .Replace("{asegurador}", vwSeg.Asegurador)
+                        .Replace("{ips}", vwSeg.Ips)
+                        .Replace("{razonesNoDiagnostico}", vwSeg.RazonesNoDiagnostico)
+                        .Replace("{fechaConsulta}", vwSeg.FechaConsulta)
+                        .Replace("{fechaDiagnostico}", vwSeg.FechaDiagnostico)
+                        .Replace("{fechaInicioTratamiento}", vwSeg.FechaInicioTratamiento)
+                        .Replace("{ipsTratamiento}", vwSeg.IpsTratamiento)
+                        .Replace("{recaidas}", vwSeg.Recaida)
+                        .Replace("{cantidadRecaidas}", vwSeg.CantidadRecaidas.ToString())
+                        .Replace("{fechaUltimaRecaida}", vwSeg.FechaUltimaRecaida)
+                        .Replace("{procedenciaDepartamento}", vwSeg.ProcedenciaDepartamento)
+                        .Replace("{procedenciaMunicipio}", vwSeg.ProcedenciaMunicipio)
+                        .Replace("{procedenciaBarrio}", vwSeg.ProcedenciaBarrio)
+                        .Replace("{procedenciaArea}", vwSeg.ProcedenciaArea)
+                        .Replace("{procedenciaDireccion}", vwSeg.ProcedenciaDireccion)
+                        .Replace("{procedenciaEstrato}", vwSeg.ProcedenciaEstrato)
+                        .Replace("{procedenciaTelefono}", vwSeg.ProcedenciaTelefono)
+                        .Replace("{actualDepartamento}", vwSeg.ActualDepartamento)
+                        .Replace("{actualMunicipio}", vwSeg.ActualMunicipio)
+                        .Replace("{actualBarrio}", vwSeg.ActualBarrio)
+                        .Replace("{actualArea}", vwSeg.ActualArea)
+                        .Replace("{actualDireccion}", vwSeg.ActualDireccion)
+                        .Replace("{actualEstrato}", vwSeg.ActualEstrato)
+                        .Replace("{actualTelefono}", vwSeg.ActualTelefono)
+                        .Replace("{requirioTraslado}", vwSeg.RequirioTraslado)
+                        .Replace("{capacidadEconomica}", vwSeg.CapacidadEconomica)
+                        .Replace("{serviciosSocialesA}", vwSeg.ServiciosSocialesA)
+                        .Replace("{oportunidadSSA}", vwSeg.OportunidadSSA)
+                        .Replace("{coberturaTrasladoSSA}", vwSeg.CoberturaTrasladoSSA)
+                        .Replace("{nombreFundacion}", vwSeg.NombreFundacion)
+                        .Replace("{apoyoFundacion}", vwSeg.ApoyoFundacion)
+                        .Replace("{sitioResidencia}", vwSeg.SitioResidencia)
+                        .Replace("{asumioCostoTraslado}", vwSeg.AsumioCostoTraslado)
+                        .Replace("{asumioCostoVivienda}", vwSeg.AsumioCostoVivienda)
+                        .Replace("{autorizacionMed}", vwSeg.AutorizacionMed)
+                        .Replace("{entregaMedLAP}", vwSeg.EntregaMedLAP)
+                        .Replace("{entregaMedNoLAP}", vwSeg.EntregaMedNoLAP)
+                        .Replace("{asignacionCitas}", vwSeg.AsignacionCitas)
+                        .Replace("{cobroCopagos}", vwSeg.CobroCopagos)
+                        .Replace("{autorizacionProc}", vwSeg.AutorizacionProc)
+                        .Replace("{remisionIExp}", vwSeg.RemisionIExp)
+                        .Replace("{malaAtencionIPS}", vwSeg.MalaAtencionIPS)
+                        .Replace("{fallaMipres}", vwSeg.FallaMipres)
+                        .Replace("{fallaEapbIps}", vwSeg.FallaEapbIps)
+                        .Replace("{transladoInstitucion}", vwSeg.TransladoInstitucion)
+                        .Replace("{numeroTraslado}", vwSeg.NumeroTraslado.ToString())
+                        .Replace("{ipsTraslado}", vwSeg.IpsTraslado)
+                        .Replace("{accionLegal}", vwSeg.AccionLegal)
+                        .Replace("{motivoAccionLegal}", vwSeg.MotivoAccionLegal)
+                        .Replace("{tipoRecursoAccionLegal}", vwSeg.TipoRecursoAccionLegal)
+                        .Replace("{dejoAsistirTratamiento}", vwSeg.DejoAsistirTratamiento)
+                        .Replace("{cuantoTiempoTratamiento}", vwSeg.CuantoTiempoTratamiento)
+                        .Replace("{causaInasistencia}", vwSeg.CausaInasistencia)
+                        .Replace("{otaCausaCual}", vwSeg.OtaCausaCual)
+                        .Replace("{estudiando}", vwSeg.Estudiando)
+                        .Replace("{dejoAsistirColegio}", vwSeg.DejoAsistirColegio)
+                        .Replace("{cuantoTiempoColegio}", vwSeg.CuantoTiempoColegio)
+                        .Replace("{informeClaroDiagTrat}", vwSeg.InformeClaroDiagTrat)
+                        .Replace("{obsSolicitante}", (seguimientos != null) ? seguimientos.First().ObservacionesSolicitante : "")
+                        .Replace("{obsAgente}", (seguimientos != null) ? seguimientos.First().ObservacionAgente : "")
+                        ;
+
+                    List<ContactoNNA> contactosNNA = _context.ContactoNNAs.Where(contacto => contacto.NNAId == vwSeg.NNAId).ToList();
+                    string htmlContactos = "";
+                    string plantillaContactos = File.ReadAllText("PlantillaContactos.html");
+                    foreach (var contacto in contactosNNA)
+                    {
+                        TPParentescos? tPParentescos = _context.TPParentescos.FirstOrDefault(p => p.Id == contacto.ParentescoId);
+                        string? parentesco = (tPParentescos == null) ? "" : tPParentescos.Nombre;
+                        htmlContactos += plantillaContactos
+                            .Replace("{contactoNombre}", contacto.Nombres)
+                            .Replace("{contactoParentesco}", parentesco)
+                            .Replace("{contactoEmail}", contacto.Email)
+                            .Replace("{contactoTelefono}", contacto.Telefonos);
+                    }
+                    htmlContent = htmlContent.Replace("{contactos}", htmlContactos);
+
+                    string htmlSeguimientos = "";
+                    string plantillaSeguimientos = File.ReadAllText("PlantillaSeguimientos.html");
+                    foreach (var seguimiento in seguimientos)
+                    {
+                        htmlSeguimientos += plantillaSeguimientos
+                            .Replace("{seguimientoNumero}", seguimiento.Id.ToString())
+                            .Replace("{seguimientoFecha}", seguimiento.FechaSeguimiento?.ToString("dd/MM/yyyy"))
+                            .Replace("{seguimientoAsunto}", seguimiento.UltimaActuacionAsunto)
+                            .Replace("{seguimientoObservacion}", seguimiento.ObservacionAgente)
+                            ;
+                    }
+                    htmlContent = htmlContent.Replace("{tbSeguimientos}", htmlSeguimientos);
+
+                    List<VwExportarDetalleSeguimientoAlertasModel> vwAlertas = _context.VwExportarDetalleSeguimientoAlertas.Where(alerta => alerta.SeguimientoId == id).ToList();
+                    string htmlAlertas = "";
+                    string plantillaAlertas = File.ReadAllText("PlantillaAlertas.html");
+                    foreach (var alerta in vwAlertas)
+                    {
+                        htmlAlertas += plantillaAlertas
+                            .Replace("{alertaNumeroSeguimiento}", alerta.SeguimientoId.ToString())
+                            .Replace("{alertaFecha}", alerta.FechaNotificacion)
+                            .Replace("{alertaCategoria}", alerta.Categoria)
+                            .Replace("{alertaSubcategoria}", alerta.SubCategoriaAlerta)
+                            .Replace("{alertaEntidad}", vwSeg.Ips)
+                            .Replace("{alertaObservacion}", alerta.Observaciones)
+                            .Replace("{alertaEstado}", alerta.Estado)
+                            ;
+                    }
+                    htmlContent = htmlContent.Replace("{tbAlertas}", htmlAlertas);
+
+                    using (var pdfStream = new MemoryStream())
+                    {
+                        ConverterProperties properties = new ConverterProperties();
+                        properties.SetBaseUri("");
+                        DefaultFontProvider fontProvider = new DefaultFontProvider(false, true, true);
+                        properties.SetFontProvider(fontProvider);
+                        PdfWriter writer = new PdfWriter(pdfStream);
+                        PdfDocument pdf = new PdfDocument(writer);
+                        pdf.SetDefaultPageSize(PageSize.LETTER);
+                        // Convertir HTML a PDF usando el MemoryStream
+                        HtmlConverter.ConvertToPdf(htmlContent, pdf, properties);
+
+                        // Convertir el MemoryStream a un array de bytes
+                        byte[] pdfBytes = pdfStream.ToArray();
+
+                        // Convertir el PDF a Base64
+                        var base64Pdf = Convert.ToBase64String(pdfBytes);
+
+                        //File.WriteAllBytes("D:\\Temp\\DetalleSeguimiento.pdf", pdfBytes);
+
+                        // Retornar el PDF en Base64
+                        response.Base64 = base64Pdf;
+                    }
+                }
+            }
+            catch (PdfException exception)
+            {
+                Console.WriteLine(exception.ToString());
+                response.Nombre = "Ha ocurrido un error - PdfException";
+                response.Base64 = exception.ToString();
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception.ToString());
+                response.Nombre = "Ha ocurrido un error - Exception";
+                response.Base64 = exception.ToString();
+            }
+
+            return response;
+        }
+
+        public async Task<SeguimientoDto[]> GetSeguimientosEstados(string id)
+        {
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        where s.UsuarioId == id
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+            return await (from q in query
+                          join s in _context.Seguimientos on q.id equals s.Id
+                          join n in _context.NNAs on s.NNAId equals n.Id
+
+                          join p in _context.TPParentescos on n.CuidadorParentescoId equals p.Id into parentesco
+                          from p in parentesco.DefaultIfEmpty()
+
+                          join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
+                          from d in diagnostico.DefaultIfEmpty()
+
+                          // BUG-LZ-037 (root cause): JOIN UsuarioAsignados sin filtro Activo
+                          // duplicaba filas del seguimiento por cada reasignacion historica.
+                          join a in _context.UsuarioAsignados.Where(x => x.Activo) on s.Id equals a.SeguimientoId into asignado
+                          from a in asignado.DefaultIfEmpty()
+
+                          join ea in _context.TPEAPB on n.EAPBId equals ea.Id into eapb
+                          from ea in eapb.DefaultIfEmpty()
+
+                          join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                          select new SeguimientoDto()
+                          {
+                              Id = s.Id,
+                              NoCaso = s.NNAId,
+                              PrimerNombre = n.PrimerNombre,
+                              SegundoNombre = n.SegundoNombre,
+                              PrimerApellido = n.PrimerApellido,
+                              SegundoApellido = n.SegundoApellido,
+                              Sexo = n.SexoId == "1" ? "Masculino" : "Femenino",
+                              FechaNacimiento = n.FechaNacimiento,
+                              FechaNotificacion = n.FechaNotificacionSIVIGILA,
+
+                              FechaSolicitud = s.FechaSolicitud, // solicitado
+                              FechaAsignacion = a != null ? a.FechaAsignacion : null, // fecha asignacion
+                              FechaSeguimiento = s.FechaSeguimiento, // agendado
+                              FechaUltimaActuacion = s.UltimaActuacionFecha, // contacto
+
+                              EstadoSeguimiento = (s.UltimaActuacionFecha != null ? "Contactado" : (s.FechaSeguimiento != null ? "Agendado" : (a.FechaAsignacion != null ? "Asignado" : (s.FechaSolicitud != null ? "Solicitado" : "")))),
+
+                              TipoIdentificacion = n.TipoIdentificacionId,
+                              NumeroIdentificacion = n.NumeroIdentificacion,
+                              Parentesco = p != null ? p.Nombre : "",
+                              Diagnostico = d != null ? d.Nombre : "",
+                              Aseguradora = ea != null ? ea.Nombre : "",
+                              AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                          }).ToArrayAsync();
+        }
+
+        public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
+        {
+            // BUG-LZ-037: si el id recibido no es un long válido (caso típico: User.Id es un GUID de
+            // AspNet Identity), antes el TryParse fallaba y dejaba solicitanteId=0, devolviendo todos
+            // los seguimientos cuyo SolicitanteId fuera 0 (huérfanos / mockeados). Devolver lista
+            // vacía explícita evita mostrarle al Cuidador los registros de otra cuenta.
+            if (!long.TryParse(id, out long solicitanteId) || solicitanteId <= 0)
+            {
+                return Array.Empty<SeguimientoDto>();
+            }
+
+            var query = from s in _context.Seguimientos
+                        join n in _context.NNAs on s.NNAId equals n.Id
+                        where s.SolicitanteId == solicitanteId
+                        group s by s.NNAId into g
+                        select new { id = g.Max(x => x.Id) };
+
+            return await (from q in query
+                          join s in _context.Seguimientos on q.id equals s.Id
+                          join n in _context.NNAs on s.NNAId equals n.Id
+
+                          join p in _context.TPParentescos on n.CuidadorParentescoId equals p.Id into parentesco
+                          from p in parentesco.DefaultIfEmpty()
+
+                          join d in _context.CIE10s on n.DiagnosticoId equals d.Id into diagnostico
+                          from d in diagnostico.DefaultIfEmpty()
+
+                          // BUG-LZ-037 (root cause): JOIN UsuarioAsignados sin filtro Activo
+                          // duplicaba filas del seguimiento por cada reasignacion historica.
+                          join a in _context.UsuarioAsignados.Where(x => x.Activo) on s.Id equals a.SeguimientoId into asignado
+                          from a in asignado.DefaultIfEmpty()
+
+                          join ea in _context.TPEAPB on n.EAPBId equals ea.Id into eapb
+                          from ea in eapb.DefaultIfEmpty()
+
+                          join e in _context.TPEstadoNNA on n.estadoId equals e.Id
+                          select new SeguimientoDto()
+                          {
+                              Id = s.Id,
+                              NoCaso = s.NNAId,
+                              PrimerNombre = n.PrimerNombre,
+                              SegundoNombre = n.SegundoNombre,
+                              PrimerApellido = n.PrimerApellido,
+                              SegundoApellido = n.SegundoApellido,
+                              Sexo = n.SexoId == "1" ? "Masculino" : "Femenino",
+                              FechaNacimiento = n.FechaNacimiento,
+                              FechaNotificacion = n.FechaNotificacionSIVIGILA,
+
+                              FechaSolicitud = s.FechaSolicitud, // solicitado
+                              FechaAsignacion = a != null ? a.FechaAsignacion : null, // fecha asignacion
+                              FechaSeguimiento = s.FechaSeguimiento, // agendado
+                              FechaUltimaActuacion = s.UltimaActuacionFecha, // contacto
+
+                              EstadoSeguimiento = (s.UltimaActuacionFecha != null ? "Contactado" : (s.FechaSeguimiento != null ? "Agendado" : (a.FechaAsignacion != null ? "Asignado" : (s.FechaSolicitud != null ? "Solicitado" : "")))),
+
+                              TipoIdentificacion = n.TipoIdentificacionId,
+                              NumeroIdentificacion = n.NumeroIdentificacion,
+                              Parentesco = p != null ? p.Nombre : "",
+                              Diagnostico = d != null ? d.Nombre : "",
+                              Aseguradora = ea != null ? ea.Nombre : "",
+                              AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
+                          }).ToArrayAsync();
+        }
+
     }
 }

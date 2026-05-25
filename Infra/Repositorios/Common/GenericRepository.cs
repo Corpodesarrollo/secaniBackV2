@@ -20,19 +20,82 @@ namespace Infra.Repositories.Common
                 result = result.Include(includeTable);
             return result;
         }
+
         public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
         {
             return await _context.Set<T>().FirstOrDefaultAsync(predicate);
         }
         public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return await _context.Set<T>().ToListAsync();
+            // BUG-LZ-070: parametricas devolvian filas con IsDeleted=1 (test data tipo "editar
+            // borrar", "Cat 1", "SUBCAT PRUEBA"). Aplicar filtro IsDeleted=false si la entity
+            // expone esa columna; las que no la tienen quedan como antes.
+            var prop = typeof(T).GetProperty("IsDeleted");
+            if (prop != null && prop.PropertyType == typeof(bool))
+            {
+                var parameter = Expression.Parameter(typeof(T), "x");
+                var propertyAccess = Expression.Property(parameter, prop);
+                var falseConstant = Expression.Constant(false);
+                var equalExpression = Expression.Equal(propertyAccess, falseConstant);
+                var lambda = Expression.Lambda<Func<T, bool>>(equalExpression, parameter);
+
+                var filtered = await _context.Set<T>()
+                    .AsNoTracking()
+                    .Where(lambda)
+                    .ToListAsync(cancellationToken);
+                return filtered;
+            }
+
+            var items = await _context.Set<T>().AsNoTracking().ToListAsync(cancellationToken);
+            return items ?? Enumerable.Empty<T>();
         }
+        public async Task<IEnumerable<T>> GetAllNotDeletedAsync(CancellationToken cancellationToken)
+        {
+            var prop = typeof(T).GetProperty("IsDeleted");
+            if (prop != null && prop.PropertyType == typeof(bool))
+            {
+                // Construye una expresión lambda: x => x.IsDeleted == false
+                var parameter = Expression.Parameter(typeof(T), "x");
+                var propertyAccess = Expression.Property(parameter, prop);
+                var falseConstant = Expression.Constant(false);
+                var equalExpression = Expression.Equal(propertyAccess, falseConstant);
+                var lambda = Expression.Lambda<Func<T, bool>>(equalExpression, parameter);
+
+                return await _context.Set<T>()
+                    .AsNoTracking()
+                    .Where(lambda)
+                    .ToListAsync(cancellationToken);
+            }
+
+            // Si no tiene IsDeleted, retorna todo
+            return await _context.Set<T>()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+
         public async Task<T> GetByIdAsync(long id, CancellationToken cancellationToken)
         {
             return await _context.Set<T>().FindAsync(id);
         }
+        public async Task<T> GetByIdAsync(int id, CancellationToken cancellationToken)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
         public async Task<T> GetByIdAsync(string id, CancellationToken cancellationToken)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+
+        public async Task<T> GetByIdAsync(long id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public async Task<T> GetByIdAsync(int id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public async Task<T> GetByIdAsync(string id)
         {
             return await _context.Set<T>().FindAsync(id);
         }
@@ -64,25 +127,68 @@ namespace Infra.Repositories.Common
 
         public async Task<(bool, T)> AddAsync(T entity)
         {
-            await _context.Set<T>().AddAsync(entity);
-            var result = await _context.SaveChangesAsync();
-            return (result > 0, entity);
+            try
+            {
+                await _context.Set<T>().AddAsync(entity);
+                var result = await _context.SaveChangesAsync();
+                return (result > 0, entity);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return (false, null);
         }
 
         // Update
         public async Task<(bool, T)> UpdateAsync(T entity)
         {
-            _context.Entry(entity).State = EntityState.Modified;
+            var keyProperty = typeof(T).GetProperties()
+                .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+
+            if (keyProperty == null)
+            {
+                throw new InvalidOperationException($"No se encontró una propiedad 'Id' en {typeof(T).Name}.");
+            }
+
+            var keyValue = keyProperty.GetValue(entity);
+
+            var existingEntity = await _context.Set<T>().FindAsync(keyValue);
+
+            if (existingEntity == null)
+            {
+                return (false, null); // O lanza una excepción si prefieres
+            }
+
+            _context.Entry(existingEntity).CurrentValues.SetValues(entity);
             var result = await _context.SaveChangesAsync();
-            return (result > 0, entity);
+            return (result > 0, existingEntity);
         }
+
+
 
         // Delete
         public async Task<bool> DeleteAsync(T entity)
         {
-            _context.Set<T>().Remove(entity);
-            var result = await _context.SaveChangesAsync();
-            return result > 0;
+            var prop = typeof(T).GetProperty("IsDeleted");
+
+            if (prop != null && prop.PropertyType == typeof(bool) && prop.CanWrite)
+            {
+                try
+                {
+                    prop.SetValue(entity, true);
+                    _context.Entry(entity).State = EntityState.Modified;
+                    var result = await _context.SaveChangesAsync();
+                    return result > 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return false; // No tiene propiedad IsDeleted
         }
     }
 }

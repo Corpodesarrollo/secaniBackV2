@@ -1,42 +1,71 @@
-﻿using Core.Modelos;
+﻿using Core.Interfaces.Repositorios.Common;
+using Core.Modelos;
+using Core.Modelos.Identity;
+using Core.Modelos.TablasParametricas;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MSSeguimiento.Core.Modelos;
+using System.Security.Claims;
 
 namespace Infra
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions)
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> dbContextOptions, IHttpContextAccessor? httpContextAccessor = null)
             : base(dbContextOptions)
         {
+            _httpContextAccessor = httpContextAccessor;
+            this.Database.SetCommandTimeout(180);
+        }
+
+        // BUG-LZ-022: leer UserId real desde claims del JWT/cookie en lugar de hardcoded "1"/"2"/"3"
+        private string GetCurrentUserId()
+        {
+            var principal = _httpContextAccessor?.HttpContext?.User;
+            if (principal == null) return "Sistema";
+            var id = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+                  ?? principal.FindFirstValue("sub")
+                  ?? principal.FindFirstValue("UserId")
+                  ?? principal.FindFirstValue(ClaimTypes.Name)
+                  ?? principal.Identity?.Name;
+            return string.IsNullOrWhiteSpace(id) ? "Sistema" : id!;
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var entries = ChangeTracker.Entries<ContactoEntidad>();
+            ChangeTracker.DetectChanges();
+            var entries = ChangeTracker.Entries()
+                                       .Where(e => e.Entity is IBaseEntity); // Filtrar solo las entidades auditable
+
+            var userId = GetCurrentUserId();
 
             foreach (var entry in entries)
             {
+                var entity = (IBaseEntity)entry.Entity;
+
                 if (entry.State == EntityState.Added)
                 {
-                    var entity = entry.Entity;
                     entity.DateCreated = DateTime.UtcNow;
-                    entity.CreatedByUserId = "1";
+                    if (string.IsNullOrEmpty(entity.CreatedByUserId))
+                        entity.CreatedByUserId = userId;
                     entity.IsDeleted = false;
                 }
 
                 if (entry.State == EntityState.Modified)
                 {
-                    var entity = entry.Entity;
                     entity.DateUpdated = DateTime.UtcNow;
-                    entity.UpdatedByUserId = "2";
+                    entity.UpdatedByUserId = userId;
                 }
 
                 if (entry.State == EntityState.Deleted)
                 {
-                    var entity = entry.Entity;
                     entity.DateDeleted = DateTime.UtcNow;
-                    entity.DeletedByUserId = "3";
+                    entity.DeletedByUserId = userId;
                     entity.IsDeleted = true;
+                    entry.State = EntityState.Modified; // Para evitar eliminación física
                 }
             }
 
@@ -47,6 +76,10 @@ namespace Infra
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configurar las entidades de identidad
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
 
             // Configurar la vista VwMenu como una entidad sin clave
             modelBuilder.Entity<VwMenuModel>(eb =>
@@ -67,12 +100,14 @@ namespace Infra
                 eb.HasNoKey();
                 eb.ToView("VwAgentesAsignados"); // Esto es válido para versiones recientes de EF Core
             });
-            
-            modelBuilder.Entity<NNAs>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                // Configuración adicional
-            });
+
+            modelBuilder.Entity<BiStgDepartamento>()
+                .HasNoKey();
+
+            modelBuilder.Entity<BiStgMunicipio>()
+                .HasNoKey();
+
+            modelBuilder.Entity<ApplicationRole>().ToTable("AspNetRoles");
 
             // Configuración para `FiltroNNA`
             modelBuilder.Entity<FiltroNNA>(entity =>
@@ -88,19 +123,72 @@ namespace Infra
         public DbSet<Seguimiento> Seguimientos { get; set; }
         public DbSet<UsuarioAsignado> UsuarioAsignados { get; set; }
         public DbSet<NotificacionesUsuario> NotificacionesUsuarios { get; set; }
-        public DbSet<AspNetUsers> AspNetUsers { get; set; }
         public DbSet<NotificacionEntidad> NotificacionesEntidad { get; set; }
         public DbSet<Entidad> Entidades { get; set; }
         public DbSet<NNAs> NNAs { get; set; }
         public DbSet<Intentos> Intentos { get; set; }
         public DbSet<ContactoNNA> ContactoNNAs { get; set; }
-        public DbSet<ContactoEntidad> ContactoEntidades { get; set; }
+        public DbSet<ContactoEntidades> ContactoEntidades { get; set; }
         public DbSet<VwMenuModel> VwMenu { get; set; }
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
-
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
         public DbSet<FiltroNNA> FiltroNNAs { get; set; }
+        public DbSet<TPEstadoNNA> TPEstadoNNA { get; set; }
+        public DbSet<HorarioLaboralAgente> HorarioLaboralAgente { get; set; }
+        public DbSet<Permisos> TPermisos { get; set; }
+        public DbSet<TPFuncionalidad> TPFuncionalidad { get; set; }
+        public DbSet<TPModuloComponenteObjeto> TPModuloComponenteObjeto { get; set; }
+        public DbSet<TPFestivos> TPFestivos { get; set; }
+        public DbSet<TPTipoFallaLLamada> TPTipoFallaLLamada { get; set; }
+        public DbSet<TPSubCategoriaAlerta> TPSubCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoAlerta> TPEstadoAlerta { get; set; }
+        public DbSet<TPCategoriaAlerta> TPCategoriaAlerta { get; set; }
+        public DbSet<TPEstadoSeguimiento> TPEstadoSeguimiento { get; set; }
 
-        public DbSet<TPEstadoNNA> TPEstadoNNA { get;set; }
+        public DbSet<TPRazonesSinDiagnostico> TPRazonesSinDiagnostico { get; set; }
+        public DbSet<TPMotivoCierreSolicitud> TPMotivoCierreSolicitud { get; set; }
+        public DbSet<TPTipoFallaLlamada> TPTipoFallaLlamada { get; set; }
+        public DbSet<TPMalaAtencionIPS> TPMalaAtencionIPS { get; set; }
+        public DbSet<TPCausaInasistencia> tPCausaInasistencia { get; set; }
+        public DbSet<TPEstadoIngresoEstrategia> tPEstadoIngresoEstrategia { get; set; }
+        public DbSet<TPOrigenReporte> TPOrigenReporte { get; set; }
+        public DbSet<TPCIE10> CIE10s { get; set; }
+        public DbSet<HistoricoTransaccion> HistoricoTransacciones { get; set; }
+
+        public DbSet<DepuracionManualProtocolo> DepuracionManualProtocolo { get; set; }
+        public DbSet<ReporteDepuracion> ReporteDepuracion { get; set; }
+
+        public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
+
+        public DbSet<Ausencias> Ausencias { get; set; }
+
+        public DbSet<BiStgMunicipio> BiStgMunicipio { get; set; }
+
+        public DbSet<BiStgDepartamento> BiStgDepartamento { get; set; }
+
+        public DbSet<PlantillaCorreo> PlantillaCorreos { get; set; }
+
+        public DbSet<HistoricoPlantilla> HistoricosPlantilla { get; set; }
+        public DbSet<TablaParametrica> TablasParametricas { get; set; }
+        public DbSet<ApplicationUser> ApplicationUser { get; set; }
+        public DbSet<Adjuntos> Adjuntos { get; set; }
+        public DbSet<NotificacionRespuesta> NotificacionRespuesta { get; set; }
+        public DbSet<TPParentescos> TPParentescos { get; set; }
+
+        public DbSet<ReportesSIVIGILA> ReportesSIVIGILA { get; set; }
+        public DbSet<RespuestasAlerta> RespuestasAlerta { get; internal set; }
+        public DbSet<TPIPS> TPIPS { get; internal set; }
+        public DbSet<TPEAPB> TPEAPB { get; internal set; }
+        public DbSet<ReporteInconsistenciaPersona> ReporteInconsistenciaPersona { get; set; }
+        public DbSet<ReporteDepuracionDetalle> ReporteDepuracionDetalle { get; set; }
+        public DbSet<Log> Log { get; set; }
+        public DbSet<NotificacionSolicitudSeguimiento> NotificacionSolicitudSeguimiento { get; set; }
+
+        public DbSet<NotificacionReporteSivigila> NotificacionReporteSivigila { get; set; }
+        public DbSet<ResumenLlamadas> ResumenLlamadas { get; set; }
+        public DbSet<DetalleFallasLlamadas> DetalleFallasLlamadas { get; set; }
+        public DbSet<VwExportarDetalleSeguimientoModel> VwExportarDetalleSeguimiento { get; set; }
+        public DbSet<VwExportarDetalleSeguimientoAlertasModel> VwExportarDetalleSeguimientoAlertas { get; set; }
+        public DbSet<ControlProcesosAutomaticos> ControlProcesosAutomaticos { get; set; }
     }
 }

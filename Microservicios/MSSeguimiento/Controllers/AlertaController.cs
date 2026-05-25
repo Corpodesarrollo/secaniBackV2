@@ -1,13 +1,13 @@
-﻿using Core.Interfaces.Repositorios;
+﻿using Core.Common;
+using Core.DTOs;
+using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class AlertaController : ControllerBase
+    public class AlertaController : BaseController
     {
         private readonly IAlertaRepo alertaRepo;
 
@@ -17,9 +17,9 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("CrearAlertaSeguimiento")]
-        public string CrearAlerta([FromHeader(Name = "Authorization")] string token, [FromBody] CrearAlertaSeguimientoRequest request)
+        public string CrearAlerta([FromBody] CrearAlertaSeguimientoRequest request)
         {
-            return alertaRepo.CrearAlertaSeguimiento(token,request);
+            return alertaRepo.CrearAlertaSeguimiento(request);
         }
 
         [HttpPost("GestionarAlerta")]
@@ -38,6 +38,25 @@ namespace MSSeguimiento.Api.Controllers
         public List<AlertaSeguimiento> ConsultarAlertaEstados(ConsultarAlertasEstadosRequest request)
         {
             return alertaRepo.ConsultarAlertaEstados(request);
+        }
+
+        [HttpGet("ConsultarAlertasUltimoSeguimiento/{idNNA}")]
+        public async Task<AlertaSeguimientoDto[]> ConsultarAlertasUltimoSeguimiento(int idNNA)
+        {
+            return await alertaRepo.ConsultarAlertasUltimoSeguimiento(idNNA);
+        }
+
+        [HttpGet("Exportar/{idAlerta}")]
+        public async Task<IActionResult> Exportar(int idAlerta)
+        {
+            var result = await alertaRepo.Exportar(idAlerta);
+
+            if (result.Item1 == null)
+                return NotFound("El archivo no existe o está vacío.");
+
+            return File(result.Item1,
+                        "application/zip",
+                        $"{Path.GetFileNameWithoutExtension(result.Item2)}.zip");
         }
     }
 }

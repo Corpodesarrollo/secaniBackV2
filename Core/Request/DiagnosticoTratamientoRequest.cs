@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Request
+﻿namespace Core.Request
 {
     public class DiagnosticoTratamientoRequest
     {
         public int IdSeguimiento { get; set; }
-        public string IdDiagnostico { get; set; }
+        public int? IdDiagnostico { get; set; }
         public DateTime? FechaConsulta { get; set; }
         public DateTime? FechaDiagnostico { get; set; }
         public DateTime? FechaInicioTratamiento { get; set; }
@@ -18,6 +12,6 @@ namespace Core.Request
         public int? NumeroRecaidas { get; set; }
         public DateTime? FechaUltimaRecaida { get; set; }
         public int? IdMotivoNoDiagnostico { get; set; }
-        public string? RazonNoDiagnostico {  get; set; }
+        public string? RazonNoDiagnostico { get; set; }
     }
 }

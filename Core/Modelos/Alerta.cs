@@ -6,6 +6,6 @@ namespace Core.Modelos
     {
         public int SubcategoriaId { get; set; }
         public string Descripcion { get; set; }
-        public char Alias { get; set; }
+        public string Alias { get; set; }
     }
 }

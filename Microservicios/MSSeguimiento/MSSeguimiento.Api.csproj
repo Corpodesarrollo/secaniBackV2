@@ -1,14 +1,65 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>a709e780-0c08-4f64-b1a1-7de8bff96374</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <None Remove="PlantillaAlertas.html" />
+    <None Remove="PlantillaContactos.html" />
+    <None Remove="PlantillaExportarSeguimiento.html" />
+    <None Remove="PlantillaSeguimientos.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="PlantillaAlertas.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Generator> </Generator>
+    </Content>
+    <Content Include="PlantillaContactos.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Generator> </Generator>
+    </Content>
+    <Content Include="PlantillaExportarSeguimiento.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Generator> </Generator>
+    </Content>
+    <Content Include="PlantillaSeguimientos.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Generator> </Generator>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.LegacyAuthCookieCompat" Version="2.0.5" />
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.0" />
+    <PackageReference Include="EPPlus" Version="7.6.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.HealthChecks" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.12" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="PDFsharp" Version="6.2.0" />
+    <PackageReference Include="Quartz" Version="3.13.0" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.0" />
+    <PackageReference Include="QuestPDF" Version="2025.5.0" />
+    <PackageReference Include="Serilog" Version="4.0.2" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="SISPRO.TRV.General" Version="1.0.0.297" />
+    <PackageReference Include="SISPRO.TRV.Web.MVCCore" Version="1.0.0.1374" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+    <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+    <PackageReference Include="System.IO.Packaging" Version="8.0.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>

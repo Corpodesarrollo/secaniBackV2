@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.Request
+﻿namespace Core.Request
 {
     public class ResidenciaRequest
     {
-        public int IdMunicipio {  get; set; }
+        public string? IdMunicipio { get; set; }
         public string Barrio { get; set; }
-        public int IdArea { get; set; }
+        public string? IdArea { get; set; }
         public string Direccion { get; set; }
-        public int IdEstrato { get; set; }
-        public string TelefonoFijo {  get; set; }
+        public string? IdEstrato { get; set; }
+        public string TelefonoFijo { get; set; }
     }
 }

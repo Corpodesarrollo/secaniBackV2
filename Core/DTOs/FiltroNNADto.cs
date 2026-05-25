@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Core.DTOs
+﻿namespace Core.DTOs
 {
     public class FiltroNNADto
     {
         public long? NoCaso { get; set; }
+        public long? IdNNA { get; set; }
         public string? NombreNNA { get; set; }
         public string? NoDocumento { get; set; }
         public DateTime? UltimaActualizacion { get; set; }

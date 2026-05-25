@@ -13,14 +13,33 @@ namespace Core.Services
 
         public async Task<(bool, ContactoEntidadResponse)> AddAsync(ContactoEntidadRequest entity, CancellationToken cancellationToken)
         {
-            var contactoEntidad = entity.Adapt<ContactoEntidad>();
+            var contactoEntidad = entity.Adapt<ContactoEntidades>();
+            // BUG-LZ-045 (extension): si el payload del frontend no incluye Activo (ej. tras
+            // contactForm.reset() que limpia el default true), BD lo guardaba como NULL y el
+            // contacto desaparecia del listado (GetAllAsync filtra Activo==true). Forzar default.
+            if (contactoEntidad.Activo == null)
+            {
+                contactoEntidad.Activo = true;
+            }
             var result = await _repository.AddAsync(contactoEntidad);
             return result.Adapt<(bool, ContactoEntidadResponse)>();
         }
 
-        public async Task<(bool, ContactoEntidadResponse)> UpdateAsync(ContactoEntidadResponse entity, CancellationToken cancellationToken)
+        public async Task<(bool, ContactoEntidadResponse)> UpdateAsync(long id, ContactoEntidadRequest request, CancellationToken cancellationToken)
         {
-            var contactoEntidad = entity.Adapt<ContactoEntidad>();
+            var contactoEntidad = await _repository.GetByIdAsync(id, cancellationToken);
+
+            if (contactoEntidad == null)
+            {
+                throw new Exception($"Contacto Entidad con identificar {id} not found");
+            }
+
+            contactoEntidad.Nombres = request.Nombres;
+            contactoEntidad.EntidadId = request.EntidadId;
+            contactoEntidad.Cargo = request.Cargo;
+            contactoEntidad.Email = request.Email;
+            contactoEntidad.Telefonos = request.Telefonos;
+            contactoEntidad.Estado = request.Estado;
 
             var result = await _repository.UpdateAsync(contactoEntidad);
             return result.Adapt<(bool, ContactoEntidadResponse)>();
@@ -28,7 +47,7 @@ namespace Core.Services
 
         public async Task<bool> DeleteAsync(ContactoEntidadResponse entity, CancellationToken cancellationToken)
         {
-            var contactoEntidad = entity.Adapt<ContactoEntidad>();
+            var contactoEntidad = entity.Adapt<ContactoEntidades>();
             contactoEntidad.IsDeleted = true;
             var (isDeleted, _) = await _repository.UpdateAsync(contactoEntidad);
             return isDeleted;
@@ -49,6 +68,20 @@ namespace Core.Services
         public async Task<IEnumerable<ContactoEntidadResponse>> GetAllAsync(CancellationToken cancellationToken)
         {
             var result = await _repository.GetAllAsync(cancellationToken);
+            if (result != null)
+                // BUG-LZ-045 (extension): incluir Activo=true Y Activo=null (registros legacy sin
+                // el flag seteado). Activo=false excluido para esconder desactivados explicitos.
+                result = result.Where(x => x.Activo != false).ToArray();
+
+            return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
+        }
+
+        public async Task<IEnumerable<ContactoEntidadResponse>> Entidades(CancellationToken cancellationToken, string id)
+        {
+            var result = await _repository.GetAllAsync(cancellationToken);
+            if (result != null)
+                result = result.Where(x => x.EntidadId == id && x.Activo != false).ToArray();
+
             return result.Adapt<IEnumerable<ContactoEntidadResponse>>();
         }
 

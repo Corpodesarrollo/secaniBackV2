@@ -24,7 +24,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7291;http://localhost:15300",
+      "applicationUrl": "https://localhost:7291;http://localhost:15300;https://nna.sispropreprod.gov.co/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

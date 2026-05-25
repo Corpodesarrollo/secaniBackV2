@@ -1,51 +1,191 @@
+using Core.CQRS.MSUsuariosyRoles.Queries.User;
+using Core.Interfaces;
+using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Repositorios.Common;
+using Core.Interfaces.Repositorios.Llamadas;
+using Core.Interfaces.Repositorios.MSPermisos;
+using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Base;
+using Core.Interfaces.Repositorios.MSUsuariosyRoles.Command.Query.Base;
+using Core.Interfaces.Repositorios.Reportes;
+using Core.Interfaces.Services.Llamadas;
+using Core.Interfaces.Services.MSUsuariosyRoles;
+using Core.Interfaces.Services.Reportes;
+using Core.Modelos;
+using Core.Modelos.Identity;
+using Core.Modelos.TablasParametricas;
+using Core.Services.Llamadas;
+using Core.Services.MSPermisos;
+using Core.Services.MSTablasParametricas;
+using Core.Services.MSUsuariosyRoles;
+using Core.Services.Reportes;
+using Core.Services.StorageService;
+using DinkToPdf;
+using DinkToPdf.Contracts;
+using Infra;
 using Infra.Repositories;
-using MSAuthentication.Api.Extensions;
+using Infra.Repositories.Common;
+using Infra.Repositorios;
+using Infra.Repositorios.Llamadas;
+using Infra.Repositorios.MSPermisos;
+using Infra.Repositorios.MSUsuariosyRoles.Command.Base;
+using Infra.Repositorios.MSUsuariosyRoles.Query.Base;
+using Infra.Repositorios.Reportes;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MSEntidad.Api.Extensions;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
+using SISPRO.TRV.Entity.Helpers;
+using SISPRO.TRV.General;
+using SISPRO.TRV.Web.MVCCore.Helpers;
+using SISPRO.TRV.Web.MVCCore.StartupExtensions;
+using System.Text.Json;
 
-var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+WebApplicationBuilder builder = WebApplicationHelper.CreateCustomBuilder<Program>(args);
 
-builder.CustomConfigureServices();
+ReadConfig.FixLoadAppSettings(builder.Configuration);
 
-//Registro de Repos
-builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
+builder.Services.AddCustomConfigureServicesPreviousMvc();
+builder
+    .Services
+    .AddCustomMvcControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
-
+// Asegurar que CORS maneje OPTIONS autom�ticamente
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
-        builder => builder.WithOrigins("http://localhost:4200")
-                          .AllowAnyMethod()
+        policy => policy.WithOrigins(
+            "https://secani.sispro.gov.co",
+            "http://192.168.152.17:8140",
+            "https://secani.sispropreprod.gov.co",
+            "https://nna.sispropreprod.gov.co", // Agregando el dominio de la API tambi�n
+            "http://192.168.110.11:8140",
+            "http://localhost:4200",
+            "https://localhost:4200",
+            "http://localhost:9110",
+            "https://localhost:9110",
+            "http://18.232.27.199:9110",
+            "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
+                          .AllowAnyMethod()  // Esto incluye OPTIONS autom�ticamente
                           .AllowAnyHeader()
-                          .AllowCredentials());
+                          .AllowCredentials()
+                          .SetPreflightMaxAge(TimeSpan.FromMinutes(30))); // Cache preflight por 30 min
 });
 
-builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", policy =>
+builder.Services.AddCustomSwagger();
+
+builder.Services.AddCustomAuthentication(true);
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
+builder.Services.AddMediatR(cfg =>
 {
-    policy.AllowAnyHeader()
-          .AllowAnyMethod()
-          .AllowAnyOrigin();
-}));
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetUserQuery).Assembly);
+    // Agrega otros assemblies seg�n necesites
+});
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredUniqueChars = 1;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
-app.UseCors("CorsPolicy");
 
-app.UseHttpsRedirection();
+builder.CustomConfigureServices();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
+builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
+builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();
+builder.Services.AddScoped<IModuloService, ModuloService>();
+builder.Services.AddScoped<IModuloRepository, ModuloRepository>();
+builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
+builder.Services.AddScoped(typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IFuncionalidadService, FuncionalidadService>();
+builder.Services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+builder.Services.AddScoped<IGenericRepository<TPCIE10>, GenericRepository<TPCIE10>>();
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
+builder.Services.AddScoped<IAlertaRepo, AlertaRepo>();
+builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
+builder.Services.AddScoped<IIntentoRepo, IntentoRepo>();
+builder.Services.AddScoped<IDashboardRepo, DashboardRepo>();
+builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
+builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<IReporteDepuracionRepository, ReporteDepuracionRepository>();
+builder.Services.AddScoped<IReporteDepuracionService, ReporteDepuracionService>();
+builder.Services.AddScoped<IReporteDinamicoNNARepository, ReporteDinamicoNNARepository>();
+builder.Services.AddScoped<IReporteDinamicoNNAService, ReporteDinamicoNNAService>();
+builder.Services.AddScoped<IReporteDinamicoSeguimientoRepository, ReporteDinamicoSeguimientoRepository>();
+builder.Services.AddScoped<IReporteDinamicoSeguimientoService, ReporteDinamicoSeguimientoService>();
+builder.Services.AddScoped<IReporteDetalleRegDepuradosRepository, ReporteDetalleRegDepuradosRepository>();
+builder.Services.AddScoped<IReporteDetalleRegDepuradosService, ReporteDetalleRegDepuradosService>();
+builder.Services.AddScoped<TablaParametricaService>();
+builder.Services.AddScoped<IEnviarRespuesta, EnviarRespuestaRepo>();
+builder.Services.AddScoped<IGestionarAlertas, GestionarAlertasRepo>();
+builder.Services.AddScoped<IReporteDinamicoAlertasRepository, ReporteDinamicoAlertasRepository>();
+builder.Services.AddScoped<IReporteDinamicoAlertasService, ReporteDinamicoAlertasService>();
+builder.Services.AddScoped<IResumenLlamadasRepository, ResumenLlamadasRepository>();
+builder.Services.AddScoped<IResumenLlamadasService, ResumenLlamadasService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAuthRepo, AuthRepo>();
+builder.Services.AddScoped<IUsurioRepo, UsuarioRepo>();
 
-app.UseAuthorization();
 
-app.MapControllers();
+// Register Quartz services
+builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
+builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
+builder.Services.AddScoped<IEmailConfigurationRepo, EmailConfigurationRepo>();
+
+var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
+
+builder.Services.AddHostedService<QuartzHostedService>();
+
+builder.Services.Configure<Core.DTOs.Quartz>(builder.Configuration.GetSection("Quartz"));
+
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
+builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
+
+
+WebApplication app = builder.Build();
+
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = "El servicio esta disponible"
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
+app.UseCors("AllowSpecificOrigin");
+app.UseCustomConfigure();
+app.UseCustomSwagger();
 
 app.Run();

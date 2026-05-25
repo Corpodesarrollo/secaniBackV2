@@ -1,0 +1,392 @@
+﻿using Core.Modelos.Common;
+using System.Text.Json;
+
+namespace Core.Services.MSTablasParametricas
+{
+    public class TablaParametricaService
+    {
+        private readonly HttpClient _httpClient;
+
+        private readonly string _baseUrl = "https://web.sispro.gov.co/directoriogeneral/api/";
+        private readonly string _baseUrlMunicipios = "https://web.sispro.gov.co/directoriogeneral/api/Municipio";
+        private readonly string _baseUrlEntidades = "https://web.sispro.gov.co/directoriogeneral/api/CodigoEAPByNit";
+
+        public TablaParametricaService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<List<TPExternalEntityBase>> GetBynomTREF(string nomTREF, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(_baseUrl + nomTREF, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var result = JsonDocument.Parse(responseBody);
+                var items = result.RootElement.GetProperty("items");
+
+                var entities = new List<TPExternalEntityBase>();
+                foreach (var item in items.EnumerateArray())
+                {
+                    entities.Add(new TPExternalEntityBase
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString()
+                    });
+                }
+
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener la entidad del sitio externo sispro: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<TPExternalEntityBase>> GetTipoIdentificaciones(CancellationToken cancellationToken)
+        {
+            var nomTREF = "APSTipoIdentificacion";
+            var response = await _httpClient.GetAsync(_baseUrl + nomTREF, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            var entities = new List<TPExternalEntityBase>();
+            foreach (var item in items.EnumerateArray())
+            {
+                entities.Add(new TPExternalEntityBase
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString()
+                });
+            }
+
+            return entities;
+        }
+
+        public async Task<List<TPExternalEntityBase>> GetBynomTREFCodigo(string nomTREF, int? Codigo, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(_baseUrl + nomTREF + "/" + Codigo, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var result = JsonDocument.Parse(responseBody);
+                var items = result.RootElement.GetProperty("items");
+
+                var entities = new List<TPExternalEntityBase>();
+                foreach (var item in items.EnumerateArray())
+                {
+                    entities.Add(new TPExternalEntityBase
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString()
+                    });
+                }
+
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener la entidad del sitio externo sispro: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<List<TPExternalEntityBase>> GetBynomTREFStringCodigo(string nomTREF, string? Codigo, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(_baseUrl + nomTREF + "/" + Codigo, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var result = JsonDocument.Parse(responseBody);
+                var items = result.RootElement.GetProperty("items");
+
+                var entities = new List<TPExternalEntityBase>();
+                foreach (var item in items.EnumerateArray())
+                {
+                    entities.Add(new TPExternalEntityBase
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString()
+                    });
+                }
+
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener la entidad del sitio externo sispro: {ex.Message}");
+                return null;
+            }
+        }
+
+        public string GetBynomTREFStringCodigoX(string nomTREF, string? Codigo)
+        {
+            var task = Task.Run(() => _httpClient.GetStringAsync(_baseUrl + nomTREF + "/" + Codigo));
+            task.Wait();
+            var respuesta1 = task.Result;
+            var respuesta2 = JsonDocument.Parse(respuesta1);
+            var items = respuesta2.RootElement.GetProperty("items");
+
+            string Nombre = "";
+            foreach (var item in items.EnumerateArray())
+            {
+                Nombre = item.GetProperty("nombre").GetString();
+            }
+            return Nombre;
+        }
+
+        public async Task<List<TPExternalEntityBase>> GetMunicipiosByDepto(string CodigoDepto, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlMunicipios, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            var entities = new List<TPExternalEntityBase>();
+            foreach (var item in items.EnumerateArray())
+            {
+                if (item.GetProperty("codigo").GetString().StartsWith(CodigoDepto))
+                {
+                    entities.Add(new TPExternalEntityBase
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString()
+                    });
+                }
+            }
+
+            return entities;
+        }
+
+        public async Task<List<TPEntidadExterna>> GetEntidates(CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            var entities = new List<TPEntidadExterna>();
+            foreach (var item in items.EnumerateArray())
+            {
+                entities.Add(new TPEntidadExterna
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString(),
+                    NITConCode = item.GetProperty("extra_V").GetString(),
+                    NITSinCode = item.GetProperty("extra_III").GetString(),
+                    DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                    CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                    CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                    Email = item.GetProperty("extra_X").GetString(),
+                });
+            }
+
+            return entities;
+        }
+
+        public async Task<List<TPEntidadExterna>> GetEntidatesCatDepartamento(CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+            IEnumerable<JsonElement> filterItems = new List<JsonElement>();
+
+            if (items.GetArrayLength() > 0)
+            {
+                filterItems = items.EnumerateArray().Where(x => x.GetProperty("extra_IX").GetString().Contains("DEPARTAMENTO"));
+            }
+
+            var entities = new List<TPEntidadExterna>();
+            foreach (var item in filterItems)
+            {
+                entities.Add(new TPEntidadExterna
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString(),
+                    NITConCode = item.GetProperty("extra_V").GetString(),
+                    NITSinCode = item.GetProperty("extra_III").GetString(),
+                    DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                    CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                    CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                    Email = item.GetProperty("extra_X").GetString(),
+                });
+            }
+
+            return entities;
+        }
+
+        public async Task<List<TPEntidadExterna>> GetEntidatesCatMunicipio(CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+            IEnumerable<JsonElement> filterItems = new List<JsonElement>();
+
+            if (items.GetArrayLength() > 0)
+            {
+                filterItems = items.EnumerateArray().Where(x => x.GetProperty("extra_IX").GetString().Contains("MUNICIPIO"));
+            }
+
+            var entities = new List<TPEntidadExterna>();
+            foreach (var item in filterItems)
+            {
+                entities.Add(new TPEntidadExterna
+                {
+                    Codigo = item.GetProperty("codigo").GetString(),
+                    Nombre = item.GetProperty("nombre").GetString(),
+                    Descripcion = item.GetProperty("descripcion").GetString(),
+                    NITConCode = item.GetProperty("extra_V").GetString(),
+                    NITSinCode = item.GetProperty("extra_III").GetString(),
+                    DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                    CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                    CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                    Email = item.GetProperty("extra_X").GetString(),
+                });
+            }
+
+            return entities;
+        }
+
+        public async Task<TPEntidadExterna> GetEntidadById(string CodigoEntidad, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades + "/" + CodigoEntidad, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+            if (items.GetArrayLength() == 0)
+            {
+                return null;
+            }
+            var item = items.EnumerateArray().FirstOrDefault();
+
+            var entidad = new TPEntidadExterna()
+            {
+                Codigo = item.GetProperty("codigo").GetString(),
+                Nombre = item.GetProperty("nombre").GetString(),
+                Descripcion = item.GetProperty("descripcion").GetString(),
+                NITConCode = item.GetProperty("extra_V").GetString(),
+                NITSinCode = item.GetProperty("extra_III").GetString(),
+                DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                Email = item.GetProperty("extra_X").GetString(),
+            };
+
+            return entidad;
+        }
+
+        public async Task<TPEntidadExterna> GetEntidadByNit(string NitEntidad, CancellationToken cancellationToken)
+        {
+            var response = await _httpClient.GetAsync(_baseUrlEntidades, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var result = JsonDocument.Parse(responseBody);
+            var items = result.RootElement.GetProperty("items");
+
+            TPEntidadExterna entity = null;
+            foreach (var item in items.EnumerateArray())
+            {
+                var NITConCode = item.GetProperty("extra_V").GetString();
+                var NITSinCode = item.GetProperty("extra_III").GetString();
+
+                if (NITConCode.Equals(NitEntidad) || NITSinCode.Equals(NitEntidad))
+                {
+                    entity = new TPEntidadExterna
+                    {
+                        Codigo = item.GetProperty("codigo").GetString(),
+                        Nombre = item.GetProperty("nombre").GetString(),
+                        Descripcion = item.GetProperty("descripcion").GetString(),
+                        NITConCode = NITConCode,
+                        NITSinCode = NITSinCode,
+                        DigitoVerificacion = item.GetProperty("extra_IV").GetString(),
+                        CategoriaVIII = item.GetProperty("extra_VIII").GetString(),
+                        CategoriaIX = item.GetProperty("extra_IX").GetString(),
+                        Email = item.GetProperty("extra_X").GetString(),
+                    };
+                    break;
+                }
+            }
+            return entity;
+        }
+    }
+}
