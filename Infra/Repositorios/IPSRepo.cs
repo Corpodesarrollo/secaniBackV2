@@ -122,12 +122,23 @@ namespace Infra.Repositorios
             }
         }
 
-        public async Task<TPIPSDto[]> GetAll()
+        public async Task<TPIPSSlimDto[]> GetAll()
         {
             try
             {
-                var result = await db.TPIPS.ToArrayAsync();
-                var data = GenericMapper.Map<TPIPS[], TPIPSDto[]>(result);
+                // BUG QA 2026-05-25: GetAll devolvia 330k IPS (~73 MB), el frontend renderizaba
+                // un <select> con todos los <option> y el navegador colgaba ("la pagina no
+                // responde"). Filtrar a Habilitado=true + proyectar a un DTO slim (id, codigo,
+                // nombre) baja el payload a ~10 MB / ~1 MB gzip.
+                var data = await db.TPIPS
+                    .Where(x => x.Habilitado)
+                    .Select(x => new TPIPSSlimDto
+                    {
+                        Id = x.Id,
+                        Codigo = x.Codigo,
+                        Nombre = x.Nombre
+                    })
+                    .ToArrayAsync();
                 return data;
             }
             catch (Exception ex)
