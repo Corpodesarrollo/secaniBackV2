@@ -9,7 +9,8 @@
             AsignacionSolicitudesCuidadores = 3,
             RespuestasNotificacionesAlertas = 4,
             DiasAusencia = 5,
-            ActivacionInactivacionPerfil = 6
+            ActivacionInactivacionPerfil = 6,
+            ProgramacionHorario = 7
         }
     }
 }

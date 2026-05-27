@@ -214,7 +214,31 @@ namespace Infra.Repositories
                             TipoNotificacionId = (int)data.TipoNotificacion,
                             AgenteDestinoId = coord.Id,
                             AgenteOrigenId = data.IdAgenteOrigen,
+                            // BUG-LZ-079: la lista del campanita ordena por FechaNotificacion DESC y
+                            // toma top-10; si queda NULL la notif cae al fondo y puede no mostrarse.
+                            FechaNotificacion = data.FechaNotificacion == default ? DateTime.UtcNow : data.FechaNotificacion,
                             Asunto = $"El {user.Name} {user.FullName} {data.TextoNotificacion}",
+                            Url = $"/administracion/permisos"
+                        });
+                }
+                else if (data.TipoNotificacion == TipoNotificacion.ProgramacionHorario)
+                {
+                    // BUG-LZ-079: al programar/actualizar el horario laboral ("Mi semana") el
+                    // agente debe notificar a los coordinadores. Antes no existia esta rama.
+                    var user = await (from us in _context.Users
+                                      join ur in _context.UserRoles on us.Id equals ur.UserId
+                                      join r in _context.Roles on ur.RoleId equals r.Id
+                                      where us.Id == data.IdAgenteOrigen
+                                      select new { us.FullName, r.Name }).FirstOrDefaultAsync();
+
+                    foreach (var coord in coordinadores)
+                        _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                        {
+                            TipoNotificacionId = (int)data.TipoNotificacion,
+                            AgenteDestinoId = coord.Id,
+                            AgenteOrigenId = data.IdAgenteOrigen,
+                            FechaNotificacion = data.FechaNotificacion == default ? DateTime.UtcNow : data.FechaNotificacion,
+                            Asunto = $"El {user?.Name} {user?.FullName} {data.TextoNotificacion}",
                             Url = $"/administracion/permisos"
                         });
                 }

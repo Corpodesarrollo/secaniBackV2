@@ -1,17 +1,40 @@
 ﻿using Core.DTOs.AusenciasUsuario;
+using Core.Interfaces.Repositorios;
 using Core.Interfaces.Repositorios.AusenciasUsuario;
 using Core.Interfaces.Services.AusenciasUsuario;
 using MSSeguimiento.Core.Modelos;
+using static Core.Common.Estructuras;
 
 namespace Core.Services.AusenciasService
 {
     public class HorarioLaboralAgenteService : IHorarioLaboralAgenteService
     {
         private readonly IHorarioLaboralAgenteRepository _repo;
+        private readonly INotificacionRepo _notificacionRepo;
 
-        public HorarioLaboralAgenteService(IHorarioLaboralAgenteRepository repo)
+        public HorarioLaboralAgenteService(IHorarioLaboralAgenteRepository repo, INotificacionRepo notificacionRepo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
+            _notificacionRepo = notificacionRepo;
+        }
+
+        // BUG-LZ-079: notificar al coordinador cuando el agente programa/actualiza su horario.
+        private async Task NotificarProgramacionHorarioAsync(string usuarioId)
+        {
+            try
+            {
+                await _notificacionRepo.SetNotificacion(new()
+                {
+                    IdAgenteOrigen = usuarioId,
+                    TipoNotificacion = TipoNotificacion.ProgramacionHorario,
+                    TextoNotificacion = "ha programado/actualizado su horario laboral de la semana",
+                    FechaNotificacion = DateTime.UtcNow
+                });
+            }
+            catch
+            {
+                // la notificacion no debe tumbar el guardado del horario
+            }
         }
 
         // ---------------- Mapeos ----------------
@@ -42,6 +65,8 @@ namespace Core.Services.AusenciasService
                 return OperationResult<HorarioLaboralAgenteDto>.Fail("ARG_NULL", "El DTO no puede ser nulo.");
 
             var repoResult = await _repo.UpsertDayAsync(ToEntity(dto), ct);
+            if (repoResult.Success)
+                await NotificarProgramacionHorarioAsync(dto.UserId);
             return repoResult.Map(ToDto);
         }
 
@@ -58,6 +83,8 @@ namespace Core.Services.AusenciasService
             string userId, int diaInicial, int diaFinal, TimeSpan horaEntrada, TimeSpan horaSalida, CancellationToken ct = default)
         {
             var repoResult = await _repo.UpsertDaysAsync(userId, diaInicial, diaFinal, horaEntrada, horaSalida, ct);
+            if (repoResult.Success)
+                await NotificarProgramacionHorarioAsync(userId);
             return repoResult.Map(ToDtoList);
         }
 
