@@ -101,6 +101,11 @@ namespace Infra.Repositories
                                       FechaNotificacion = un.FechaNotificacion < umbralFecha ? (un.DateCreated ?? un.FechaNotificacion) : un.FechaNotificacion,
                                       TextoNotificacion = un.Asunto,
                                       Leida = un.IsDeleted,
+                                      // BUG-LZ noti "Ver": la projection no devolvia Url -> el front
+                                      // recibia url undefined y "Ver" no navegaba. Fallback a la ruta
+                                      // del seguimiento cuando Url quedo sin setear pero hay SeguimientoId.
+                                      Url = un.Url != null ? un.Url
+                                            : (un.SeguimientoId > 0 ? "/gestion/detalle_seguimiento/" + un.SeguimientoId : null),
                                   }).Take(10).ToListAsync();
 
             return response;
