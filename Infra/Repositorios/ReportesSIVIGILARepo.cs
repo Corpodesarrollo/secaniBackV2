@@ -136,7 +136,11 @@ namespace Infra.Repositorios
                 // BUG-LZ-069: Alias CC3216549872 hardcoded no existe en BD QA. Si NNA sin agente previo
                 // y no existe ese usuario solicitante, retornaba error "No hay agente disponible".
                 // Fallback: primer agente activo con rol "Agentes de seguimiento" (id 14CDDEA5...).
-                if (usuario == null && usuarioOrigen == null)
+                // BUG-LZ-082: el fallback solo corria si usuario y usuarioOrigen eran null. Cuando el
+                // NNA YA tenia agente (usuario != null) pero el alias hardcoded no existia,
+                // usuarioOrigen quedaba null y mas abajo CrearNotificacion hacia userOrigen.Id -> NRE
+                // ("Object reference not set..."). Ahora resolvemos usuarioOrigen siempre que sea null.
+                if (usuarioOrigen == null)
                 {
                     const string ROL_AGENTE_ID = "14CDDEA5-FA06-4331-8359-036E101C5046";
                     usuarioOrigen = await (from u in _context.Users
@@ -170,11 +174,14 @@ namespace Infra.Repositorios
                 if (asignanciones.Count == 0)
                     return (false, "No fue posible asignar el seguimiento automaticamente. Contacte al administrador.");
 
-                await CrearNotificacion(new()
-                {
-                    TipoIdentificacionId = nna.TipoIdentificacionId,
-                    NumeroIdentificacion = nna.NumeroIdentificacion
-                }, usuarioOrigen!, asignanciones[0]);
+                // BUG-LZ-082: guard defensivo. Si aun no hay solicitante (sin agentes activos con rol),
+                // se crea el seguimiento pero se omite la notificacion en vez de tirar NRE.
+                if (usuarioOrigen != null)
+                    await CrearNotificacion(new()
+                    {
+                        TipoIdentificacionId = nna.TipoIdentificacionId,
+                        NumeroIdentificacion = nna.NumeroIdentificacion
+                    }, usuarioOrigen, asignanciones[0]);
 
                 return seguimientoId > 0
                     ? (true, null)
