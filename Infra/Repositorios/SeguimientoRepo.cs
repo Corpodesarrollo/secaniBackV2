@@ -26,10 +26,17 @@ namespace Infra.Repositorios
 
         private IQueryable<SeguimientoDto> GetSelect(string id)
         {
+            // BUG-LZ-086: la pantalla de asignacion (administracion) es del Coordinador y debe
+            // listar TODOS los seguimientos para reasignar, no solo los asignados a un usuario.
+            // Antes filtraba siempre por s.UsuarioId == id; con el id del Coordinador (que no es
+            // agente asignado) la lista salia vacia. Si el id es Coordinador, no filtrar por usuario.
+            const string ROL_COORDINADOR_ID = "311882D4-EAD0-4B0B-9C5D-4A434D49D16D";
+            bool esCoordinador = _context.UserRoles.Any(ur => ur.UserId == id && ur.RoleId == ROL_COORDINADOR_ID);
+
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
                         join ua in _context.UsuarioAsignados on s.Id equals ua.SeguimientoId
-                        where s.UsuarioId == id && n.estadoId != 10
+                        where (esCoordinador || s.UsuarioId == id) && n.estadoId != 10
                         group s by s.NNAId into g
                         select new { id = g.Max(x => x.Id) };
 
