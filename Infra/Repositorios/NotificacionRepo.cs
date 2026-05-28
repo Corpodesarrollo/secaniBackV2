@@ -74,9 +74,15 @@ namespace Infra.Repositories
                                   join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
                                   join ruDestino in _context.UserRoles on uDestino.Id equals ruDestino.UserId
                                   join rDestino in _context.Roles on ruDestino.RoleId equals rDestino.Id
-                                  join uOrigen in _context.Users on un.AgenteOrigenId equals uOrigen.Id
-                                  join ruOrigen in _context.UserRoles on uOrigen.Id equals ruOrigen.UserId
-                                  join rOrigen in _context.Roles on ruOrigen.RoleId equals rOrigen.Id
+                                  // BUG-LZ-089: LEFT JOIN al origen. Las respuestas a alertas (tipo 4)
+                                  // no tienen un usuario origen real; con INNER JOIN esas notis nunca
+                                  // se mostraban. Con LEFT JOIN se muestran (origen queda en blanco).
+                                  join uOrigenJ in _context.Users on un.AgenteOrigenId equals uOrigenJ.Id into uOrigenG
+                                  from uOrigen in uOrigenG.DefaultIfEmpty()
+                                  join ruOrigenJ in _context.UserRoles on uOrigen.Id equals ruOrigenJ.UserId into ruOrigenG
+                                  from ruOrigen in ruOrigenG.DefaultIfEmpty()
+                                  join rOrigenJ in _context.Roles on ruOrigen.RoleId equals rOrigenJ.Id into rOrigenG
+                                  from rOrigen in rOrigenG.DefaultIfEmpty()
                                   where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
                                   // BUG-LZ-088: FechaNotificacion es DateTime no-nullable; las notis
                                   // viejas/otros tipos quedaban en 0001-01-01 (default) -> el modal
@@ -90,8 +96,8 @@ namespace Infra.Repositories
                                       TipoNotificacion = (TipoNotificacion)un.TipoNotificacionId,
                                       AgenteDestino = uDestino.FullName,
                                       RolAgenteDestino = rDestino.Name,
-                                      AgenteOrigen = uOrigen.FullName,
-                                      RolAgenteOrigen = rOrigen.Name,
+                                      AgenteOrigen = uOrigen != null ? uOrigen.FullName : null,
+                                      RolAgenteOrigen = rOrigen != null ? rOrigen.Name : null,
                                       FechaNotificacion = un.FechaNotificacion < umbralFecha ? (un.DateCreated ?? un.FechaNotificacion) : un.FechaNotificacion,
                                       TextoNotificacion = un.Asunto,
                                       Leida = un.IsDeleted,
@@ -245,6 +251,42 @@ namespace Infra.Repositories
                             FechaNotificacion = data.FechaNotificacion == default ? DateTime.UtcNow : data.FechaNotificacion,
                             Asunto = $"El {user?.Name} {user?.FullName} {data.TextoNotificacion}",
                             Url = $"/administracion/permisos"
+                        });
+                }
+                else if (data.TipoNotificacion == TipoNotificacion.RespuestasNotificacionesAlertas)
+                {
+                    // BUG-LZ-089: antes no existia rama -> responder una alerta no generaba
+                    // notificacion alguna. Decision negocio: notificar a Coordinadores + agente(s)
+                    // asignado(s) del caso (y al IdAgenteDestino explicito si el caller lo manda).
+                    var asunto = !string.IsNullOrWhiteSpace(data.TextoNotificacion)
+                        ? data.TextoNotificacion
+                        : "Una alerta del caso ha recibido una respuesta.";
+                    var url = data.IdSeguimiento > 0
+                        ? $"/gestion/detalle_seguimiento/{data.IdSeguimiento}"
+                        : "/gestion/seguimientos";
+
+                    var destinatarios = coordinadores.Select(c => c.Id).ToList();
+
+                    if (!string.IsNullOrWhiteSpace(data.IdAgenteDestino))
+                        destinatarios.Add(data.IdAgenteDestino);
+
+                    if (data.IdSeguimiento > 0)
+                    {
+                        var agentesCaso = await (from ua in _context.UsuarioAsignados
+                                                 where ua.SeguimientoId == data.IdSeguimiento && ua.Activo
+                                                 select ua.UsuarioId).ToListAsync();
+                        destinatarios.AddRange(agentesCaso);
+                    }
+
+                    foreach (var destinoId in destinatarios.Where(d => !string.IsNullOrWhiteSpace(d)).Distinct())
+                        _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                        {
+                            TipoNotificacionId = (int)data.TipoNotificacion,
+                            AgenteDestinoId = destinoId,
+                            AgenteOrigenId = data.IdAgenteOrigen ?? "",
+                            FechaNotificacion = DateTime.UtcNow,
+                            Asunto = asunto,
+                            Url = url
                         });
                 }
 

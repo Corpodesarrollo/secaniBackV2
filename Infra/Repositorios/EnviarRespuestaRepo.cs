@@ -30,6 +30,7 @@ namespace Infra.Repositorios
                                     Nombre = sca.CategoriaAlertaId + "." + sca.Indicador,
                                     ea.Id,
                                     s.NNAId,
+                                    SeguimientoId = s.Id,
                                     NNANombre = $"{n.PrimerNombre ?? ""} {n.SegundoNombre ?? ""} {n.PrimerApellido ?? ""} {n.SegundoApellido ?? ""}",
                                     sca.Indicador
                                 }).FirstOrDefaultAsync();
@@ -37,6 +38,9 @@ namespace Infra.Repositorios
             var noti = await notificacionRepo.SetNotificacion(new()
             {
                 TipoNotificacion = TipoNotificacion.RespuestasNotificacionesAlertas,
+                // BUG-LZ-089: pasar IdSeguimiento para que SetNotificacion resuelva y notifique
+                // al agente asignado del caso (ademas de los coordinadores).
+                IdSeguimiento = alerta.SeguimientoId,
                 TextoNotificacion = $"La alerta {alerta.Indicador} {alerta.Nombre} No. {alerta.Id:000000} del caso No. {alerta.NNAId:0000000} del NNA {alerta.NNANombre} ha recibido una respuesta."
             });
 
