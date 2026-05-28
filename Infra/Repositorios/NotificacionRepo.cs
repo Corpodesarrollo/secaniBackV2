@@ -289,6 +289,29 @@ namespace Infra.Repositories
                             Url = url
                         });
                 }
+                else if (data.TipoNotificacion == TipoNotificacion.AsignacionReasignacion)
+                {
+                    // BUG-LZ-090: notificar al agente al que se le reasigna un caso (antes la
+                    // reasignacion no generaba notificacion, por eso un agente podia tener casos
+                    // reasignados pero 0 notificaciones).
+                    var caso = await (from s in _context.Seguimientos
+                                      where s.Id == data.IdSeguimiento
+                                      select new { s.NNAId }).FirstOrDefaultAsync();
+                    var asunto = !string.IsNullOrWhiteSpace(data.TextoNotificacion)
+                        ? data.TextoNotificacion
+                        : $"Le han reasignado el caso No. {(caso != null ? caso.NNAId : 0):000000}";
+
+                    if (!string.IsNullOrWhiteSpace(data.IdAgenteDestino))
+                        _context.NotificacionesUsuarios.Add(new NotificacionesUsuario
+                        {
+                            TipoNotificacionId = (int)data.TipoNotificacion,
+                            AgenteDestinoId = data.IdAgenteDestino,
+                            AgenteOrigenId = data.IdAgenteOrigen ?? "",
+                            FechaNotificacion = DateTime.UtcNow,
+                            Asunto = asunto,
+                            Url = data.IdSeguimiento > 0 ? $"/gestion/detalle_seguimiento/{data.IdSeguimiento}" : "/gestion/seguimientos"
+                        });
+                }
 
                 // BUG-LZ-088: garantizar FechaNotificacion en todas las ramas (varias no la seteaban
                 // -> el modal mostraba 01/01/0001). Asignar a las notis nuevas que aun esten en default.

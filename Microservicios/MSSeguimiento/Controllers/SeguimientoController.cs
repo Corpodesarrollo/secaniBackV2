@@ -6,6 +6,7 @@ using Core.Request;
 using Core.response;
 using Core.Response;
 using Microsoft.AspNetCore.Mvc;
+using static Core.Common.Estructuras;
 
 namespace MSSeguimiento.Api.Controllers
 {
@@ -13,11 +14,13 @@ namespace MSSeguimiento.Api.Controllers
     {
         private readonly ISeguimientoRepo seguimientoRepo;
         private readonly IWebHostEnvironment _env;
+        private readonly INotificacionRepo notificacionRepo;
 
-        public SeguimientoController(ISeguimientoRepo seguimiento, IWebHostEnvironment env)
+        public SeguimientoController(ISeguimientoRepo seguimiento, IWebHostEnvironment env, INotificacionRepo notificacion)
         {
             seguimientoRepo = seguimiento;
             _env = env;
+            notificacionRepo = notificacion;
         }
 
         [HttpGet("GetAllByIdUser/{UsuarioId}/{filtro}")]
@@ -78,9 +81,27 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPut("PutSeguimientoActualizacionUsuario")]
-        public int PutSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
+        public async Task<int> PutSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
         {
-            return seguimientoRepo.RepoSeguimientoActualizacionUsuario(request);
+            var result = seguimientoRepo.RepoSeguimientoActualizacionUsuario(request);
+
+            // BUG-LZ-090: la reasignacion no notificaba al nuevo agente (por eso qa-agente-005
+            // tenia casos reasignados pero 0 notificaciones). Notificar al destino si reasigno OK.
+            if (result == 1)
+            {
+                try
+                {
+                    await notificacionRepo.SetNotificacion(new()
+                    {
+                        TipoNotificacion = TipoNotificacion.AsignacionReasignacion,
+                        IdAgenteDestino = request.UsuarioId,
+                        IdSeguimiento = request.Id
+                    });
+                }
+                catch { /* la notificacion no debe afectar la reasignacion */ }
+            }
+
+            return result;
         }
 
         [HttpGet("GetSeguimientoFestivos")]
