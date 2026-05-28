@@ -77,7 +77,9 @@ namespace Infra.Repositories
                                   join ruOrigen in _context.UserRoles on uOrigen.Id equals ruOrigen.UserId
                                   join rOrigen in _context.Roles on ruOrigen.RoleId equals rOrigen.Id
                                   where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
-                                  orderby un.IsDeleted, un.FechaNotificacion descending
+                                  // BUG-LZ-088: notis viejas/otros tipos tenian FechaNotificacion NULL
+                                  // -> el modal mostraba 01/01/0001. Usar DateCreated como respaldo.
+                                  orderby un.IsDeleted, (un.FechaNotificacion ?? un.DateCreated) descending
                                   select new GetNotificacionResponse()
                                   {
                                       IdNotificacion = un.Id,
@@ -87,7 +89,7 @@ namespace Infra.Repositories
                                       RolAgenteDestino = rDestino.Name,
                                       AgenteOrigen = uOrigen.FullName,
                                       RolAgenteOrigen = rOrigen.Name,
-                                      FechaNotificacion = un.FechaNotificacion,
+                                      FechaNotificacion = un.FechaNotificacion ?? un.DateCreated,
                                       TextoNotificacion = un.Asunto,
                                       Leida = un.IsDeleted,
                                   }).Take(10).ToListAsync();
@@ -241,6 +243,17 @@ namespace Infra.Repositories
                             Asunto = $"El {user?.Name} {user?.FullName} {data.TextoNotificacion}",
                             Url = $"/administracion/permisos"
                         });
+                }
+
+                // BUG-LZ-088: garantizar FechaNotificacion en todas las ramas (varias no la seteaban
+                // -> el modal mostraba 01/01/0001). Asignar a las notis nuevas que aun esten en default.
+                foreach (var entry in _context.ChangeTracker.Entries<NotificacionesUsuario>())
+                {
+                    if (entry.State == EntityState.Added &&
+                        (entry.Entity.FechaNotificacion == null || entry.Entity.FechaNotificacion == default(DateTime)))
+                    {
+                        entry.Entity.FechaNotificacion = data.FechaNotificacion == default ? DateTime.UtcNow : data.FechaNotificacion;
+                    }
                 }
 
                 await _context.SaveChangesAsync();
