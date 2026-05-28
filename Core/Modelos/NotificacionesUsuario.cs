@@ -15,7 +15,9 @@ namespace Core.Modelos
         // UsuarioId del agente destino
         public string AgenteDestinoId { get; set; }
         public DateTime FechaNotificacion { get; set; }
-        public string Accion { get; set; }
+        // BUG-LZ-091: columna nullable y SetNotificacion no lo setea -> al materializar la entidad
+        // completa (EliminarNotificacion: select ne) lanzaba SqlNullValueException "Data is Null".
+        public string? Accion { get; set; }
         public bool CoordinadorOAdministrador { get; set; }
         public string? Asunto { get; set; }
         public string? Url { get; set; }
