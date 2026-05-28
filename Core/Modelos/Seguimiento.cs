@@ -10,7 +10,10 @@ namespace Core.Modelos
         public long ContactoNNAId { get; set; }
         public string? Telefono { get; set; }
         public string? UsuarioId { get; set; }
-        public long? SolicitanteId { get; set; }
+        // BUG-LZ-083: era long? pero los DTOs (SetSeguimientoRequest/GetSeguimientoResponse) y los
+        // ids de AspNetUsers son string (ej. "qa-cuidador-003"). Como long nunca podia guardar el
+        // id del solicitante, GetSeguimientosCuidador (long.TryParse) devolvia lista vacia.
+        public string? SolicitanteId { get; set; }
         public DateTime? FechaSolicitud { get; set; }
         public bool? TieneDiagnosticos { get; set; }
         public string? ObservacionesSolicitante { get; set; }

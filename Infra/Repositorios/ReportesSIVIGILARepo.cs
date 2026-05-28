@@ -154,6 +154,11 @@ namespace Infra.Repositorios
 
                 var usuarioInicialId = usuario?.Id ?? usuarioOrigen!.Id;
 
+                // BUG-LZ-083: el solicitante es el usuario autenticado (Cuidador) que pide el
+                // seguimiento. GetSeguimientosCuidador lista por SolicitanteId == AspNetUsers.Id,
+                // asi que debe guardarse el Id del solicitante, no el del agente (usuarioOrigen).
+                var solicitante = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+
                 var seguimiento = new SetSeguimientoRequest()
                 {
                     NNAId = nna.Id,
@@ -161,7 +166,7 @@ namespace Infra.Repositorios
                     EstadoId = 1,
                     ContactoNNAId = contacto != null ? contacto.Id : 0,
                     UsuarioId = usuarioInicialId,
-                    SolicitanteId = usuarioOrigen?.Id,
+                    SolicitanteId = solicitante?.Id ?? usuarioOrigen?.Id,
                     FechaSolicitud = DateTime.Now,
                     TieneDiagnosticos = true,
                     UltimaActuacionFecha = DateTime.Now
@@ -238,6 +243,9 @@ namespace Infra.Repositorios
                 }
                 var usuarioInicialId = usuario?.Id ?? usuarioOrigen!.Id;
 
+                // BUG-LZ-083: SolicitanteId = Id del usuario autenticado (Cuidador) que solicita.
+                var solicitante = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+
                 var seguimiento = new SetSeguimientoRequest()
                 {
                     NNAId = nna.Id,
@@ -245,7 +253,7 @@ namespace Infra.Repositorios
                     EstadoId = 1, // Estado inicial
                     ContactoNNAId = contacto != null ? contacto.Id : 0,
                     UsuarioId = usuarioInicialId,
-                    SolicitanteId = usuarioOrigen?.Id,
+                    SolicitanteId = solicitante?.Id ?? usuarioOrigen?.Id,
                     FechaSolicitud = DateTime.Now,
                     TieneDiagnosticos = true,
                     UltimaActuacionFecha = DateTime.Now

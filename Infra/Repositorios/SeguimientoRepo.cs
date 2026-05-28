@@ -220,7 +220,7 @@ namespace Infra.Repositorios
                                                          ContactoNNAId = g.Key.ContactoNNAId,
                                                          Telefono = g.Key.Telefono,
                                                          UsuarioId = g.Key.UsuarioId,
-                                                         SolicitanteId = g.Key.SolicitanteId.ToString(),
+                                                         SolicitanteId = g.Key.SolicitanteId,
                                                          FechaSolicitud = g.Key.FechaSolicitud ?? new(),
                                                          TieneDiagnosticos = g.Key.TieneDiagnosticos ?? false,
                                                          ObservacionesSolicitante = g.Key.ObservacionesSolicitante,
@@ -594,7 +594,9 @@ namespace Infra.Repositorios
                     EstadoId = request.EstadoId,
                     ContactoNNAId = request.ContactoNNAId,
                     UsuarioId = request.UsuarioId,
-                    SolicitanteId = long.TryParse(request.SolicitanteId, out long solId) ? solId : null,
+                    // BUG-LZ-083: SolicitanteId ahora es string (id de AspNetUsers). Antes se parseaba
+                    // a long y se perdia el id real del solicitante (quedaba null).
+                    SolicitanteId = request.SolicitanteId,
                     FechaSolicitud = request.FechaSolicitud,
                     TieneDiagnosticos = request.TieneDiagnosticos,
                     UltimaActuacionFecha = request.UltimaActuacionFecha,
@@ -1732,18 +1734,17 @@ namespace Infra.Repositorios
 
         public async Task<SeguimientoDto[]> GetSeguimientosCuidador(string id)
         {
-            // BUG-LZ-037: si el id recibido no es un long válido (caso típico: User.Id es un GUID de
-            // AspNet Identity), antes el TryParse fallaba y dejaba solicitanteId=0, devolviendo todos
-            // los seguimientos cuyo SolicitanteId fuera 0 (huérfanos / mockeados). Devolver lista
-            // vacía explícita evita mostrarle al Cuidador los registros de otra cuenta.
-            if (!long.TryParse(id, out long solicitanteId) || solicitanteId <= 0)
+            // BUG-LZ-037/083: SolicitanteId es el id (string) de AspNetUsers del solicitante (Cuidador).
+            // Antes se parseaba a long; como el id del Cuidador es string (ej "qa-cuidador-003") el
+            // TryParse fallaba y la lista salia vacia. Ahora se compara como string.
+            if (string.IsNullOrWhiteSpace(id))
             {
                 return Array.Empty<SeguimientoDto>();
             }
 
             var query = from s in _context.Seguimientos
                         join n in _context.NNAs on s.NNAId equals n.Id
-                        where s.SolicitanteId == solicitanteId
+                        where s.SolicitanteId == id
                         group s by s.NNAId into g
                         select new { id = g.Max(x => x.Id) };
 
