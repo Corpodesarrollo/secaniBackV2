@@ -24,6 +24,29 @@ namespace Infra.Repositorios
         private readonly ApplicationDbContext _context = context;
         private readonly IWebHostEnvironment _env = env;
 
+        // BUG-LZ-082: no se permite agendar/reagendar dos seguimientos del mismo agente con menos
+        // de 10 minutos de diferencia (ni en la misma fecha y hora). Se compara contra las
+        // asignaciones ACTIVAS del agente; ventana abierta (-10, +10) => exactamente 10 min separa
+        // si que se permite (intervalo minimo).
+        private const int IntervaloMinimoMinutos = 10;
+
+        private bool ExisteSolapamientoAgenda(string? usuarioId, DateTime fecha, long? seguimientoIdExcluir = null)
+        {
+            if (string.IsNullOrEmpty(usuarioId))
+                return false;
+
+            var limiteInferior = fecha.AddMinutes(-IntervaloMinimoMinutos);
+            var limiteSuperior = fecha.AddMinutes(IntervaloMinimoMinutos);
+
+            return _context.UsuarioAsignados.Any(ua =>
+                ua.Activo &&
+                ua.UsuarioId == usuarioId &&
+                ua.FechaAsignacion.HasValue &&
+                ua.FechaAsignacion.Value > limiteInferior &&
+                ua.FechaAsignacion.Value < limiteSuperior &&
+                (seguimientoIdExcluir == null || ua.SeguimientoId != seguimientoIdExcluir));
+        }
+
         private IQueryable<SeguimientoDto> GetSelect(string id)
         {
             // BUG-LZ-086: la pantalla de asignacion (administracion) es del Coordinador y debe
@@ -252,6 +275,13 @@ namespace Infra.Repositorios
             if (usuarioAsignado == null)
             {
                 return -1;
+            }
+
+            // BUG-LZ-082: validar solapamiento al reagendar (mismo agente, < 10 min). Se excluye
+            // el propio seguimiento. -3 = conflicto de agenda (el front muestra el mensaje).
+            if (ExisteSolapamientoAgenda(usuarioAsignado.UsuarioId, request.FechaSeguimiento, request.Id))
+            {
+                return -3;
             }
 
             usuarioAsignado.FechaAsignacion = request.FechaSeguimiento;
@@ -595,6 +625,15 @@ namespace Infra.Repositorios
                     Control: contacto exitoso sin alertas identificadas
                     Solicitud cuidador: seguimiento agendado por acción en el sistema por parte del cuidador.
                 */
+
+                // BUG-LZ-082: validar antes de tocar la BD que el agente no tenga otro seguimiento
+                // agendado a menos de 10 minutos. La excepcion la captura el controller -> BadRequest
+                // con este mensaje, que el front muestra en el modal "Guardar y agendar seguimiento".
+                if (ExisteSolapamientoAgenda(request.UsuarioId, request.FechaSeguimiento))
+                {
+                    throw new InvalidOperationException(
+                        $"El agente ya tiene un seguimiento agendado a menos de {IntervaloMinimoMinutos} minutos de la fecha y hora seleccionada. Seleccione otro horario.");
+                }
 
                 string asuntoUltimaActuacion = string.Empty;
                 if (request.Alertas != null && request.Alertas.Length > 0)
