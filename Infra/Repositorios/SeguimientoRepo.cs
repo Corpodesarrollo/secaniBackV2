@@ -262,7 +262,16 @@ namespace Infra.Repositorios
 
         public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
         {
-            var UsuarioOriginal = _context.UsuarioAsignados.FirstOrDefault(s => s.SeguimientoId == request.Id);
+            // BUG-LZ-087: tomar las asignaciones ACTIVAS (puede haber mas de una por reasignaciones
+            // previas, ver BUG-LZ-084). Antes FirstOrDefault sin filtro Activo podia desactivar una
+            // inactiva y dejar la activa, asi el seguimiento seguia en el calendario del agente origen.
+            var asignacionesActivas = _context.UsuarioAsignados
+                .Where(s => s.SeguimientoId == request.Id && s.Activo)
+                .OrderByDescending(s => s.FechaAsignacion)
+                .ToList();
+
+            var UsuarioOriginal = asignacionesActivas.FirstOrDefault()
+                ?? _context.UsuarioAsignados.FirstOrDefault(s => s.SeguimientoId == request.Id);
 
             if (UsuarioOriginal == null)
             {
@@ -281,9 +290,27 @@ namespace Infra.Repositorios
                 return -2;
             }
 
-            // Actualizar el EstadoId a falso
-            UsuarioOriginal.Activo = false;
-            UsuarioOriginal.Observaciones = request.ObservacionesSolicitante!;
+            // Desactivar TODAS las asignaciones activas del seguimiento (evita que el agente origen
+            // lo siga viendo en su calendario si habia duplicados activos).
+            if (asignacionesActivas.Count > 0)
+            {
+                foreach (var a in asignacionesActivas)
+                {
+                    a.Activo = false;
+                    a.Observaciones = request.ObservacionesSolicitante!;
+                }
+            }
+            else
+            {
+                UsuarioOriginal.Activo = false;
+                UsuarioOriginal.Observaciones = request.ObservacionesSolicitante!;
+            }
+
+            // BUG-LZ-087: actualizar tambien Seguimiento.UsuarioId para que las vistas que filtran
+            // por el agente asignado (GetSelect) reflejen al nuevo agente.
+            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
+            if (seguimiento != null)
+                seguimiento.UsuarioId = request.UsuarioId;
 
             // Guardar los cambios en el seguimiento original
             _context.SaveChanges();
