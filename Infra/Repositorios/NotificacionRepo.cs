@@ -69,6 +69,7 @@ namespace Infra.Repositories
 
         public async Task<List<GetNotificacionResponse>> GetNotificacionUsuario(string AgenteDestinoId)
         {
+            var umbralFecha = new DateTime(1900, 1, 1);
             var response = await (from un in _context.NotificacionesUsuarios
                                   join uDestino in _context.Users on un.AgenteDestinoId equals uDestino.Id
                                   join ruDestino in _context.UserRoles on uDestino.Id equals ruDestino.UserId
@@ -77,9 +78,11 @@ namespace Infra.Repositories
                                   join ruOrigen in _context.UserRoles on uOrigen.Id equals ruOrigen.UserId
                                   join rOrigen in _context.Roles on ruOrigen.RoleId equals rOrigen.Id
                                   where un.AgenteDestinoId == AgenteDestinoId && !un.IsDeleted
-                                  // BUG-LZ-088: notis viejas/otros tipos tenian FechaNotificacion NULL
-                                  // -> el modal mostraba 01/01/0001. Usar DateCreated como respaldo.
-                                  orderby un.IsDeleted, (un.FechaNotificacion ?? un.DateCreated) descending
+                                  // BUG-LZ-088: FechaNotificacion es DateTime no-nullable; las notis
+                                  // viejas/otros tipos quedaban en 0001-01-01 (default) -> el modal
+                                  // mostraba 01/01/0001. Usar DateCreated como respaldo cuando la
+                                  // fecha esta sin setear (umbral 1900 cubre el default MinValue).
+                                  orderby un.IsDeleted, (un.FechaNotificacion < umbralFecha ? un.DateCreated : un.FechaNotificacion) descending
                                   select new GetNotificacionResponse()
                                   {
                                       IdNotificacion = un.Id,
@@ -89,7 +92,7 @@ namespace Infra.Repositories
                                       RolAgenteDestino = rDestino.Name,
                                       AgenteOrigen = uOrigen.FullName,
                                       RolAgenteOrigen = rOrigen.Name,
-                                      FechaNotificacion = un.FechaNotificacion ?? un.DateCreated,
+                                      FechaNotificacion = un.FechaNotificacion < umbralFecha ? (un.DateCreated ?? un.FechaNotificacion) : un.FechaNotificacion,
                                       TextoNotificacion = un.Asunto,
                                       Leida = un.IsDeleted,
                                   }).Take(10).ToListAsync();
@@ -249,8 +252,7 @@ namespace Infra.Repositories
                 // -> el modal mostraba 01/01/0001). Asignar a las notis nuevas que aun esten en default.
                 foreach (var entry in _context.ChangeTracker.Entries<NotificacionesUsuario>())
                 {
-                    if (entry.State == EntityState.Added &&
-                        (entry.Entity.FechaNotificacion == null || entry.Entity.FechaNotificacion == default(DateTime)))
+                    if (entry.State == EntityState.Added && entry.Entity.FechaNotificacion == default(DateTime))
                     {
                         entry.Entity.FechaNotificacion = data.FechaNotificacion == default ? DateTime.UtcNow : data.FechaNotificacion;
                     }
