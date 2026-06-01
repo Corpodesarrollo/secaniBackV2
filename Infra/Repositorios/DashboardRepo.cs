@@ -789,6 +789,14 @@ namespace Infra.Repositorios
 
         }
 
+        // BUG-LZ-087: lookup TPEAPB.Id por NIT (long?) -> int? (Id PK). Devuelve null si no existe.
+        public int? GetEAPBIdByNit(long nit)
+        {
+            return _context.TPEAPB
+                .Where(e => e.NIT == nit)
+                .Select(e => (int?)e.Id)
+                .FirstOrDefault();
+        }
 
     }
 

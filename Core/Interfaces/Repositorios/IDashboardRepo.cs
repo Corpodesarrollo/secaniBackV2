@@ -30,5 +30,8 @@ namespace Core.Interfaces.Repositorios
         GetDashboardTipoCasosResponse RepoDashboardTipoCasos(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId);
         List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal);
 
+        // BUG-LZ-087: resolver TPEAPB.Id a partir del NIT del usuario logueado (enterpriseIdentification)
+        // para que el dashboard EAPB deje de usar el id hardcoded "2" del frontend.
+        int? GetEAPBIdByNit(long nit);
     }
 }

@@ -164,6 +164,15 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
+        // BUG-LZ-087: el frontend del dashboard EAPB tenia eapbId hardcoded = 2. Este endpoint
+        // resuelve TPEAPB.Id a partir del NIT del usuario logueado (enterpriseIdentification),
+        // para que el dashboard cargue contadores del EAPB real del usuario.
+        [HttpGet("GetEAPBIdByNit")]
+        public ActionResult<int?> GetEAPBIdByNit(long nit)
+        {
+            return Ok(_dashboardRepo.GetEAPBIdByNit(nit));
+        }
+
     }
 
 }
