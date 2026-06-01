@@ -621,9 +621,33 @@ namespace Infra.Repositories
 
                     byte[] pdfBytes = PDFService.PdfToHtml(bodyHtml, config);
 
+                    // BUG-LZ-086: si Para esta vacio, SendMailAsync truena con "Cannot send a message
+                    // with no recipients" -> el cuerpo del error se perdia en catch ambiguo. Validar antes.
+                    if (request.Para == null || request.Para.Length == 0)
+                    {
+                        return new RespuestaResponse<string>()
+                        {
+                            Estado = false,
+                            Descripcion = "No se seleccionaron destinatarios para el correo (campo Para vacio).",
+                            Datos = null
+                        };
+                    }
+
                     List<EmailConfiguration> emailConfigurations = _context.EmailConfigurations.ToList();
 
-                    if (emailConfigurations.Count > 0)
+                    if (emailConfigurations.Count == 0)
+                    {
+                        // BUG-LZ-086: antes el codigo entraba al if Count>0 y, si la tabla estaba vacia,
+                        // saltaba el bloque silenciosamente y devolvia "enviado correctamente". Ahora
+                        // se reporta el motivo real para que el front muestre el error.
+                        return new RespuestaResponse<string>()
+                        {
+                            Estado = false,
+                            Descripcion = "No hay configuracion SMTP cargada (tabla EmailConfigurations vacia).",
+                            Datos = null
+                        };
+                    }
+
                     {
                         EmailConfiguration emailConfiguration = emailConfigurations[0];
                         SmtpClient clienteSmtp = new(emailConfiguration.SmtpServer)
