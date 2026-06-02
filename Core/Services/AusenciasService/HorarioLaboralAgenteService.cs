@@ -19,21 +19,28 @@ namespace Core.Services.AusenciasService
         }
 
         // BUG-LZ-079: notificar al coordinador cuando el agente programa/actualiza su horario.
+        // Catch loggea (antes tragaba en silencio -> 0 notis tipo 7 sin pista). El catch sigue
+        // porque la notificacion no debe tumbar el guardado del horario.
         private async Task NotificarProgramacionHorarioAsync(string usuarioId)
         {
             try
             {
-                await _notificacionRepo.SetNotificacion(new()
+                var ok = await _notificacionRepo.SetNotificacion(new()
                 {
                     IdAgenteOrigen = usuarioId,
                     TipoNotificacion = TipoNotificacion.ProgramacionHorario,
                     TextoNotificacion = "ha programado/actualizado su horario laboral de la semana",
                     FechaNotificacion = DateTime.UtcNow
                 });
+                if (!ok)
+                {
+                    Console.Error.WriteLine($"[BUG-LZ-079] SetNotificacion retorno false para ProgramacionHorario usuario={usuarioId}");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // la notificacion no debe tumbar el guardado del horario
+                Console.Error.WriteLine($"[BUG-LZ-079] Excepcion al notificar ProgramacionHorario usuario={usuarioId}: {ex.GetType().Name} - {ex.Message}");
+                Console.Error.WriteLine(ex.StackTrace);
             }
         }
 

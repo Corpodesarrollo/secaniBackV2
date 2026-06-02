@@ -334,6 +334,10 @@ namespace Infra.Repositories
             }
             catch (Exception ex)
             {
+                // BUG-LZ-079: antes el catch retornaba false en silencio -> 0 notis tipo 7 sin
+                // pista. Loggear stacktrace al stderr para que aparezca en `docker logs`.
+                Console.Error.WriteLine($"[SetNotificacion] Tipo={data?.TipoNotificacion} IdAgenteOrigen={data?.IdAgenteOrigen} ex={ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine(ex.StackTrace);
                 return false;
             }
         }

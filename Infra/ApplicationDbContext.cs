@@ -129,6 +129,8 @@ namespace Infra
         public DbSet<Intentos> Intentos { get; set; }
         public DbSet<ContactoNNA> ContactoNNAs { get; set; }
         public DbSet<ContactoEntidades> ContactoEntidades { get; set; }
+        // BUG-LZ-089: telefonos/correos adicionales del cuidador (Mi perfil).
+        public DbSet<ContactoAdicionalCuidador> ContactosAdicionalesCuidador { get; set; }
         public DbSet<VwMenuModel> VwMenu { get; set; }
         public DbSet<VwSubMenuModel> VwSubMenu { get; set; }
         public DbSet<VwAgentesAsignados> VwAgentesAsignados { get; set; }
