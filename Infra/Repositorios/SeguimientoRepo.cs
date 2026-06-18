@@ -181,16 +181,21 @@ namespace Infra.Repositorios
                                              select new
                                              {
                                                  s.FechaSeguimiento,
+                                                 s.UltimaActuacionFecha,
                                                  s.FechaSolicitud,
                                                  s.EstadoId,
                                                  Estado = e.Nombre
                                              }).FirstOrDefaultAsync();
 
                     result.FechaInicioSeguimiento = seguimiento?.FechaSeguimiento;
+                    result.UltimaActuacionFecha = seguimiento?.UltimaActuacionFecha;
                     result.Estado = seguimiento?.Estado;
                     result.SeguimientosRealizados = await _context.Seguimientos.CountAsync(s => s.NNAId == id);
                     result.Edad = Funciones.CalcularEdad(result.FechaNacimiento);
-                    result.TiempoTranscurrido = Funciones.CalcularTiempoTrascurrido(result.FechaInicioSeguimiento!.Value);
+                    // Bug 2026-06-17: el tiempo transcurrido se calcula contra UltimaActuacionFecha
+                    // (la fecha que ve el usuario en la grilla), no contra FechaSeguimiento.
+                    var fechaRef = result.UltimaActuacionFecha ?? result.FechaInicioSeguimiento;
+                    if (fechaRef.HasValue) result.TiempoTranscurrido = Funciones.CalcularTiempoTrascurrido(fechaRef.Value);
                 }
 
                 return result;
@@ -551,15 +556,34 @@ namespace Infra.Repositorios
                                                                                                              where na.AlertaSeguimientoId == als.Id
                                                                                                              orderby na.FechaEnvio
                                                                                                              select na.FechaEnvio).FirstOrDefault(),
-                                                                                        // Respuesta de la entidad (si la hay)
-                                                                                        RespuestaEntidad = (from n in _context.Notificacions
+                                                                                        // Respuesta de la entidad (si la hay). Bug 2026-06-17: el flujo nuevo
+                                                                                        // guarda en RespuestasAlerta (IdAlerta=AlertaSeguimiento.Id), no en
+                                                                                        // Notificacions. Tomar de RespuestasAlerta y si no, fallback a la tabla
+                                                                                        // antigua para mantener compat con datos previos.
+                                                                                        RespuestaEntidad = (from ra in _context.RespuestasAlerta
+                                                                                                            where ra.IdAlerta == als.Id
+                                                                                                            orderby ra.DateCreated descending
+                                                                                                            select ra.Mensaje).FirstOrDefault()
+                                                                                                        ?? (from n in _context.Notificacions
                                                                                                             where n.AlertaSeguimientoId == als.Id
                                                                                                             orderby n.FechaRespuesta descending
                                                                                                             select n.RespuestaEntidad).FirstOrDefault(),
-                                                                                        FechaRespuesta = (from n in _context.Notificacions
+                                                                                        FechaRespuesta = (from ra in _context.RespuestasAlerta
+                                                                                                          where ra.IdAlerta == als.Id
+                                                                                                          orderby ra.DateCreated descending
+                                                                                                          select ra.DateCreated).FirstOrDefault()
+                                                                                                      ?? (from n in _context.Notificacions
                                                                                                           where n.AlertaSeguimientoId == als.Id
                                                                                                           orderby n.FechaRespuesta descending
-                                                                                                          select n.FechaRespuesta).FirstOrDefault()
+                                                                                                          select n.FechaRespuesta).FirstOrDefault(),
+                                                                                        AsuntoRespuesta = (from ra in _context.RespuestasAlerta
+                                                                                                           where ra.IdAlerta == als.Id
+                                                                                                           orderby ra.DateCreated descending
+                                                                                                           select ra.Asunto).FirstOrDefault(),
+                                                                                        ArchivoAdjuntoRespuesta = (from adj in _context.Adjuntos
+                                                                                                                   where adj.Referencia == als.Id && adj.Tipo == Core.Modelos.TipoAdjunto.Respuesta && !adj.IsDeleted
+                                                                                                                   orderby adj.Id descending
+                                                                                                                   select adj.NombreArchivo).FirstOrDefault()
                                                                                     }).ToList()
                                                          }).ToList();
 

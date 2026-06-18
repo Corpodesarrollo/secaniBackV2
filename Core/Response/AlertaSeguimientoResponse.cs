@@ -16,5 +16,10 @@
         public DateTime? FechaNotificacion { get; set; }
         public string? RespuestaEntidad { get; set; }
         public DateTime? FechaRespuesta { get; set; }
+        // Bug 2026-06-17: el modal "Respuesta de la entidad" reusaba alerta.NombreAlerta como
+        // asunto (mostraba "7.A"). Ahora exponemos el asunto real de RespuestasAlerta y el
+        // nombre del archivo adjunto si lo hay.
+        public string? AsuntoRespuesta { get; set; }
+        public string? ArchivoAdjuntoRespuesta { get; set; }
     }
 }
