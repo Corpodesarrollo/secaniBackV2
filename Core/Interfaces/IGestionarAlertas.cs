@@ -7,7 +7,7 @@ namespace Core.Interfaces
     {
         Task<RespuestasAlertaDto> Alerta(int idAlerta);
         Task<RespuestaResponse<bool>> EnviarRespuesta(EnviarRespuestaDto dto);
-        Task<NotificacionEntidadDto> GetNotificacionEntidad(int idAlerta);
+        Task<NotificacionEntidadDto?> GetNotificacionEntidad(int idAlerta);
         List<GestionarAlertasDto> ObtenerAlertas(string alias);
     }
 }

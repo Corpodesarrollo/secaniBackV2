@@ -33,7 +33,8 @@ namespace Infra.Repositorios
                                from eapb in eapbGroup.DefaultIfEmpty()
                                select new GestionarAlertasDto
                                {
-                                   IdAlerta = ea.Id,
+                                   IdAlerta = als.Id,
+                                   IdEstadoAlerta = ea.Id,
                                    IdAlertaSeguimiento = als.Id,
                                    IdSeguimiento = s.Id,
                                    Alerta = sca.CategoriaAlertaId + "." + sca.Indicador,
@@ -48,14 +49,14 @@ namespace Infra.Repositorios
 
             alertasBase.ForEach(item =>
             {
-                item.TextoEstado = item.IdAlerta switch
+                item.TextoEstado = item.IdEstadoAlerta switch
                 {
                     4 => "RESUELTA",
                     1 or 2 or 3 or 5 => "SIN RESOLVER",
                     _ => "CERRADA"
                 };
 
-                item.ColorEstado = item.IdAlerta switch
+                item.ColorEstado = item.IdEstadoAlerta switch
                 {
                     4 => "success",
                     1 or 2 => "warning",
@@ -67,18 +68,14 @@ namespace Infra.Repositorios
             return alertasBase;
         }
 
-        public async Task<NotificacionEntidadDto> GetNotificacionEntidad(int idAlerta)
+        public async Task<NotificacionEntidadDto?> GetNotificacionEntidad(int idAlerta)
         {
-            try
-            {
-                var result = await db.NotificacionesEntidad.FirstOrDefaultAsync(x => x.AlertaSeguimientoId == idAlerta) ?? throw new Exception("Notificación no encontrada");
-                var data = GenericMapper.Map<NotificacionEntidad, NotificacionEntidadDto>(result);
-                return data;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            // Bug 2026-06-17: throw "Notificacion no encontrada" generaba 500 que el front no
+            // distinguia de error real -> modal caia a un template hardcoded con datos "Ejemplo".
+            // Ahora retornar null para que el front muestre estado vacio explicito.
+            var result = await db.NotificacionesEntidad.FirstOrDefaultAsync(x => x.AlertaSeguimientoId == idAlerta);
+            if (result == null) return null;
+            return GenericMapper.Map<NotificacionEntidad, NotificacionEntidadDto>(result);
         }
 
         public async Task<RespuestasAlertaDto> Alerta(int idAlerta)
@@ -135,13 +132,16 @@ namespace Infra.Repositorios
                 var archivos = dto.Archivo != null ? new[] { dto.Archivo } : [];
                 emailConfigurations.SendEmail([dto.Para], dto.Cc, null, dto.Asunto, $"{dto.Mensaje}</br>{dto.Firma}", archivos);
 
+                // Bug 2026-06-17: el filtro era als.AlertaId == dto.IdAlerta. Tras el fix de
+                // ID Alerta unico, dto.IdAlerta ahora es AlertaSeguimiento.Id (PK por fila), no
+                // Alerta.Id (FK). El query daba null -> NullReferenceException en alerta.*.
                 var alerta = await (from als in db.AlertaSeguimientos
                                     join s in db.Seguimientos on als.SeguimientoId equals s.Id
                                     join n in db.NNAs on s.NNAId equals n.Id
                                     join a in db.Alertas on als.AlertaId equals a.Id
                                     join ea in db.TPEstadoAlerta on als.EstadoId equals ea.Id
                                     join sca in db.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
-                                    where als.AlertaId == dto.IdAlerta
+                                    where als.Id == dto.IdAlerta
                                     select new
                                     {
                                         Nombre = sca.CategoriaAlertaId + "." + sca.Indicador,
@@ -151,6 +151,9 @@ namespace Infra.Repositorios
                                         NNANombre = $"{n.PrimerNombre ?? ""} {n.SegundoNombre ?? ""} {n.PrimerApellido ?? ""} {n.SegundoApellido ?? ""}",
                                         sca.Indicador
                                     }).FirstOrDefaultAsync();
+
+                if (alerta == null)
+                    return new() { Estado = false, Descripcion = "No se encontro la alerta asociada al envio de respuesta." };
 
                 var noti = await notificacionRepo.SetNotificacion(new()
                 {

@@ -15,7 +15,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("NotificacionEntidad/{idAlerta}")]
-        public Task<NotificacionEntidadDto> NotificacionEntidad(int idAlerta)
+        public Task<NotificacionEntidadDto?> NotificacionEntidad(int idAlerta)
         {
             return repo.GetNotificacionEntidad(idAlerta);
         }
