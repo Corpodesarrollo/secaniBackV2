@@ -960,19 +960,45 @@ namespace Infra.Repositories
 
         public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId)
         {
-            List<NotificacionResponse> response = (from un in _context.Notificacions
-                                                   join ent in _context.Entidades on un.EntidadId equals ent.Id
-                                                   where un.AlertaSeguimientoId == AlertaId && !un.IsDeleted
-                                                   select new NotificacionResponse()
-                                                   {
-                                                       EntidadNotificada = ent.Nombre,
-                                                       FechaNotificacion = un.FechaNotificacion,
-                                                       FechaRespuesta = un.FechaRespuesta,
-                                                       Respuesta = un.RespuestaEntidad,
-                                                       AsuntoNotificacion = un.Asunto
-                                                   }).ToList();
+            // BUG-LZ 2026-06-18: tabla expandida en /consultar-alertas siempre venia vacia
+            // porque consultaba la tabla legacy "Notificacions". El flujo nuevo persiste los
+            // oficios enviados en "NotificacionesEntidad" y la respuesta de la entidad en
+            // "RespuestasAlerta" (vinculada por NotificacionEntidadId). AlertaId aqui es la
+            // PK de AlertaSeguimiento. Se prioriza el flujo nuevo y se mantiene fallback al
+            // legacy para alertas viejas.
+            var nuevas = (from ne in _context.NotificacionesEntidad
+                          join ent in _context.TPEAPB on ne.EntidadId equals ent.Id
+                          where ne.AlertaSeguimientoId == AlertaId && !ne.IsDeleted
+                          select new NotificacionResponse
+                          {
+                              EntidadNotificada = ent.Nombre,
+                              FechaNotificacion = ne.FechaEnvio,
+                              AsuntoNotificacion = ne.Asunto,
+                              Notificacion = ne.Mensaje,
+                              Respuesta = (from r in _context.RespuestasAlerta
+                                           where r.NotificacionEntidadId == ne.Id && !r.IsDeleted
+                                           orderby r.DateCreated descending
+                                           select r.Respuesta).FirstOrDefault(),
+                              FechaRespuesta = (from r in _context.RespuestasAlerta
+                                                where r.NotificacionEntidadId == ne.Id && !r.IsDeleted
+                                                orderby r.DateCreated descending
+                                                select (DateTime?)r.DateCreated).FirstOrDefault()
+                          }).ToList();
 
-            return response;
+            if (nuevas.Any()) return nuevas;
+
+            // Fallback: flujo legacy (tabla Notificacions)
+            return (from un in _context.Notificacions
+                    join ent in _context.Entidades on un.EntidadId equals ent.Id
+                    where un.AlertaSeguimientoId == AlertaId && !un.IsDeleted
+                    select new NotificacionResponse()
+                    {
+                        EntidadNotificada = ent.Nombre,
+                        FechaNotificacion = un.FechaNotificacion,
+                        FechaRespuesta = un.FechaRespuesta,
+                        Respuesta = un.RespuestaEntidad,
+                        AsuntoNotificacion = un.Asunto
+                    }).ToList();
         }
 
 
