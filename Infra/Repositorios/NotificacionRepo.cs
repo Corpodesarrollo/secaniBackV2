@@ -914,11 +914,19 @@ namespace Infra.Repositories
 
         public List<GetListaCasosResponse> RepoListaCasosNotificacion(string eapbId, int epsId)
         {
+            // Bug 2026-06-17: el filtro de EAPBId estaba comentado y solo filtraba por EPSId.
+            // El frontend (casos-entidad) pasaba eapbId="1" + epsId=1 hardcoded -> usuarios
+            // ET/EAPB veian la tabla vacia. Ahora se aplica OR real entre los dos filtros y
+            // se parsea eapbId como int (NNA.EAPBId es int?).
+            int? eapbIdNum = int.TryParse(eapbId, out var parsed) && parsed > 0 ? parsed : null;
+            int? epsIdNum = epsId > 0 ? epsId : (int?)null;
+
             List<GetListaCasosResponse> listaCasos = (from n in _context.NNAs
                                                       join s in _context.Seguimientos on n.Id equals s.NNAId
                                                       join a in _context.AlertaSeguimientos on s.Id equals a.SeguimientoId
 
-                                                      where /*n.EAPBId == eapbId ||*/ n.EPSId == epsId
+                                                      where (eapbIdNum != null && n.EAPBId == eapbIdNum)
+                                                         || (epsIdNum != null && n.EPSId == epsIdNum)
                                                       group new { n, s, a } by new
                                                       {
                                                           NNAId = n.Id,

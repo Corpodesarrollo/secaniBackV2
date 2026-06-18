@@ -763,12 +763,21 @@ namespace Infra.Repositorios
 
         public List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal)
         {
+            // Bug 2026-06-17: el filtro previo s.FechaSeguimiento <= FechaFinal usaba DateTime
+            // completo con hora. Si user filtraba 25/06 a 25/06, FechaFinal era 25/06T00:00:00 y
+            // las alertas con FechaSeguimiento 25/06T08:00 quedaban fuera. Comparamos por dia
+            // (FechaFinal inclusivo hasta 23:59:59).
+            var inicio = FechaInicial.Date;
+            var finExclusivo = FechaFinal.Date.AddDays(1);
+            // Bug 2026-06-17: INNER JOIN con CIE10 excluia NNAs con DiagnosticoId=null
+            // (memory: "INNER JOIN FK opcional oculta filas"). Cambiar a LEFT JOIN.
             var resultado = (from n in _context.NNAs
-                             join c in _context.CIE10s on n.DiagnosticoId equals c.Id
+                             join c0 in _context.CIE10s on n.DiagnosticoId equals c0.Id into cJoin
+                             from c in cJoin.DefaultIfEmpty()
                              join s in _context.Seguimientos on n.Id equals s.NNAId
                              join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
-                             where s.FechaSeguimiento >= FechaInicial
-                                   && s.FechaSeguimiento <= FechaFinal
+                             where s.FechaSeguimiento >= inicio
+                                   && s.FechaSeguimiento < finExclusivo
                              //&& n.EAPBId == EntidadId
                              orderby als.AlertaId, s.FechaSeguimiento
                              select new GetDashboardCasosCriticosEapbResponse
@@ -779,7 +788,7 @@ namespace Infra.Repositorios
                                  PrimerApellido = n.PrimerApellido,
                                  SegundoApellido = n.SegundoApellido,
                                  FechaNacimiento = n.FechaNacimiento,
-                                 Diagnostico = c.Nombre,
+                                 Diagnostico = c != null ? c.Nombre : "",
                                  FechaSeguimiento = als.DateCreated,
                                  NNaId = n.Id
                              }).Distinct().ToList();
