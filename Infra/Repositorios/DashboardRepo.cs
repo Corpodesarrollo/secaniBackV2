@@ -528,17 +528,20 @@ namespace Infra.Repositorios
             DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
             DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
 
-            // Obtenemos el conteo de casos actuales y anteriores directamente
+            // BUG-LZ 2026-06-18: activar filtro EAPBId. Dashboard EAPB mostraba conteos
+            // nacionales (Colombia entera) en lugar de los de la entidad logueada.
             var totalCasosActual = _context.NNAs
-                .Where(s => s.DateCreated >= FechaInicial && s.DateCreated <= FechaFinal /* && s.EAPBId == EntidadId */)
+                .Where(s => s.DateCreated >= FechaInicial && s.DateCreated <= FechaFinal
+                            && (!EntidadId.HasValue || s.EAPBId == EntidadId))
                 .Count();
 
             var totalCasosAnterior = _context.NNAs
-                .Where(s => s.DateCreated >= startDatePreviousWeek && s.DateCreated <= endDatePreviousWeek /* && s.EAPBId == EntidadId */)
+                .Where(s => s.DateCreated >= startDatePreviousWeek && s.DateCreated <= endDatePreviousWeek
+                            && (!EntidadId.HasValue || s.EAPBId == EntidadId))
                 .Count();
 
             var totalCasosGeneral = _context.NNAs
-               /*.Where(s => s.EAPBId == EntidadId)*/
+               .Where(s => !EntidadId.HasValue || s.EAPBId == EntidadId)
                .Count();
 
             // Retornamos un solo objeto de respuesta
@@ -572,7 +575,7 @@ namespace Infra.Repositorios
                             x.EstadoId != 5
                             && x.UltimaFechaSeguimiento >= FechaInicial
                             && x.UltimaFechaSeguimiento <= FechaFinal
-                            /*&& x.EAPBId == EntidadId */)  // Filtro por EAPBId = EntidadId
+                            && (!EntidadId.HasValue || x.EAPBId == EntidadId))
                 .Count();
 
             // Calcular alertas anteriores
@@ -593,7 +596,7 @@ namespace Infra.Repositorios
                            x.EstadoId != 5
                            && x.UltimaFechaSeguimiento >= FechaInicial
                            && x.UltimaFechaSeguimiento <= FechaFinal
-                           /* && x.EAPBId == EntidadId*/)  // Filtro por EAPBId = EntidadId
+                           && (!EntidadId.HasValue || x.EAPBId == EntidadId))
                .Count();
 
             // Calcular alertas totales
@@ -614,7 +617,7 @@ namespace Infra.Repositorios
                            x.EstadoId != 5
                      && x.UltimaFechaSeguimiento >= FechaInicial
                     && x.UltimaFechaSeguimiento <= FechaFinal
-                /*&& x.EAPBId == EntidadId*/)  // Filtro por EAPBId = EntidadId
+                    && (!EntidadId.HasValue || x.EAPBId == EntidadId))
     .Count();
 
             // Retornar un único resultado
@@ -677,13 +680,17 @@ namespace Infra.Repositorios
 
         public List<GetDashboardEstadoResponse> RepoDashboardAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int EAPBId)
         {
-            var response = (from n in _context.AlertaSeguimientos
-                            join s in _context.Seguimientos on n.Id equals s.NNAId
+            // BUG-LZ 2026-06-18: JOIN previo "n.Id equals s.NNAId" mezclaba AlertaSeguimiento.Id
+            // con Seguimiento.NNAId (FKs distintas), produciendo cardinalidad/estados erroneos
+            // en el pie chart "Alertas". El JOIN correcto es AlertaSeguimiento.SeguimientoId
+            // == Seguimiento.Id. Tambien se activa el filtro por EAPBId del NNA.
+            var response = (from a in _context.AlertaSeguimientos
+                            join s in _context.Seguimientos on a.SeguimientoId equals s.Id
                             join u in _context.UsuarioAsignados on s.Id equals u.SeguimientoId
                             join nan in _context.NNAs on s.NNAId equals nan.Id
                             where u.FechaAsignacion >= FechaInicial && u.FechaAsignacion <= FechaFinal
-                            // && nan.EAPBId == EAPBId
-                            group n by n.EstadoId into grouped
+                                  && (EAPBId == 0 || nan.EAPBId == EAPBId)
+                            group a by a.EstadoId into grouped
                             select new GetDashboardEstadoResponse
                             {
                                 EstadoId = grouped.Key,
@@ -718,8 +725,7 @@ namespace Infra.Repositorios
                  on s.Id equals nan.SeguimientoId
                  where u.FechaAsignacion >= FechaInicial
                        && u.FechaAsignacion <= FechaFinal
-                 // && n.EAPBId == EntidadId
-                 //&& !new[] { 5 }.Contains(nan.EstadoId!)
+                       && (!EntidadId.HasValue || n.EAPBId == EntidadId)
                  select n).Count();
 
 
@@ -745,8 +751,8 @@ namespace Infra.Repositorios
                              from nan in leftJoinAlerta.DefaultIfEmpty() // Left Join
                              where u.FechaAsignacion >= FechaInicial
                                    && u.FechaAsignacion <= FechaFinal
-                             //&& n.EAPBId == EntidadId
-                             // && nan.AlertaId == null
+                                   && (!EntidadId.HasValue || n.EAPBId == EntidadId)
+                                   && nan == null
                              select n).Count();
 
 
@@ -769,6 +775,9 @@ namespace Infra.Repositorios
             // (FechaFinal inclusivo hasta 23:59:59).
             var inicio = FechaInicial.Date;
             var finExclusivo = FechaFinal.Date.AddDays(1);
+            // BUG-LZ 2026-06-18: activar filtro EAPBId (EntidadId llega como string; EAPBId
+            // del NNA es int?). Si no parsea o es 0, no filtra (mantiene compatibilidad).
+            int? eapbFiltro = int.TryParse(EntidadId, out var parsed) && parsed > 0 ? parsed : null;
             // Bug 2026-06-17: INNER JOIN con CIE10 excluia NNAs con DiagnosticoId=null
             // (memory: "INNER JOIN FK opcional oculta filas"). Cambiar a LEFT JOIN.
             var resultado = (from n in _context.NNAs
@@ -778,7 +787,7 @@ namespace Infra.Repositorios
                              join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
                              where s.FechaSeguimiento >= inicio
                                    && s.FechaSeguimiento < finExclusivo
-                             //&& n.EAPBId == EntidadId
+                                   && (eapbFiltro == null || n.EAPBId == eapbFiltro)
                              orderby als.AlertaId, s.FechaSeguimiento
                              select new GetDashboardCasosCriticosEapbResponse
                              {
