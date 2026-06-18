@@ -12,30 +12,22 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardTotalCasos(DateTime FechaInicial, DateTime FechaFinal)
         {
-            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
-            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
+            // BUG-LZ 2026-06-18: KPI global, ignora FechaInicial/FechaFinal del filtro.
+            // TotalCasosGeneral = todos los NNA (Colombia, sin filtro EAPB).
+            // TotalCasosActual = NNA creados ultimos 7 dias (para el "X% esta semana").
+            var fechaSemana = DateTime.Now.Date.AddDays(-7);
 
-            DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
-            DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
-
-            // Obtenemos el conteo de casos actuales y anteriores directamente
             var totalCasosActual = _context.NNAs
-                .Where(s => s.FechaIngresoEstrategia >= FechaInicial && s.FechaIngresoEstrategia <= FechaFinal)
+                .Where(s => s.FechaIngresoEstrategia >= fechaSemana)
                 .Count();
 
-            var totalCasosAnterior = _context.NNAs
-                .Where(s => s.FechaIngresoEstrategia >= startDatePreviousWeek && s.FechaIngresoEstrategia <= endDatePreviousWeek)
-                .Count();
+            var totalCasosGeneral = _context.NNAs.Count();
 
-            var totalCasosGeneral = _context.NNAs
-               .Count();
-
-            // Retornamos un solo objeto de respuesta
             return new GetTotalDashboardResponse
             {
                 TotalCasosGeneral = totalCasosGeneral,
                 TotalCasosActual = totalCasosActual,
-                TotalCasosAnterior = totalCasosAnterior
+                TotalCasosAnterior = 0
             };
         }
 
@@ -522,110 +514,54 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardRegistrosPropios(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
-            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
-            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
-
-            DateTime startDatePreviousWeek = FechaInicial.AddDays(-7);
-            DateTime endDatePreviousWeek = FechaFinal.AddDays(-7);
-
-            // BUG-LZ 2026-06-18: activar filtro EAPBId. Dashboard EAPB mostraba conteos
-            // nacionales (Colombia entera) en lugar de los de la entidad logueada.
-            var totalCasosActual = _context.NNAs
-                .Where(s => s.DateCreated >= FechaInicial && s.DateCreated <= FechaFinal
-                            && (!EntidadId.HasValue || s.EAPBId == EntidadId))
-                .Count();
-
-            var totalCasosAnterior = _context.NNAs
-                .Where(s => s.DateCreated >= startDatePreviousWeek && s.DateCreated <= endDatePreviousWeek
-                            && (!EntidadId.HasValue || s.EAPBId == EntidadId))
-                .Count();
+            // BUG-LZ 2026-06-18: KPI global, ignora FechaInicial/FechaFinal. Filtra por
+            // EAPBId. TotalCasosGeneral = NNA de la entidad. TotalCasosActual = NNA de la
+            // entidad creados ultimos 7 dias (para "X% esta semana" = actual/general*100).
+            var fechaSemana = DateTime.Now.Date.AddDays(-7);
 
             var totalCasosGeneral = _context.NNAs
-               .Where(s => !EntidadId.HasValue || s.EAPBId == EntidadId)
-               .Count();
+                .Where(s => !EntidadId.HasValue || s.EAPBId == EntidadId)
+                .Count();
 
-            // Retornamos un solo objeto de respuesta
+            var totalCasosActual = _context.NNAs
+                .Where(s => s.DateCreated >= fechaSemana
+                            && (!EntidadId.HasValue || s.EAPBId == EntidadId))
+                .Count();
+
             return new GetTotalDashboardResponse
             {
                 TotalCasosGeneral = totalCasosGeneral,
                 TotalCasosActual = totalCasosActual,
-                TotalCasosAnterior = totalCasosAnterior
+                TotalCasosAnterior = 0
             };
         }
 
 
         public GetTotalDashboardResponse RepoDashboardTotalAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
+            // BUG-LZ 2026-06-18: KPI global, ignora FechaInicial/FechaFinal. Filtra por EAPBId
+            // del NNA. TotalCasosGeneral = alertas no cerradas de la entidad.
+            // TotalCasosActual = alertas con UltimaFechaSeguimiento ultimos 7 dias.
+            // Bug previo en RepoDashboardAlertasEAPB(int): el JOIN AlertaSeg->Seg via
+            // (a.Id == s.NNAId) era incorrecto. Aqui usamos el join via SeguimientoId
+            // que ya estaba correcto.
+            var fechaSemana = DateTime.Now.Date.AddDays(-7);
 
-            // Calcular alertas actuales
-            var totalCasosActual = _context.AlertaSeguimientos
-                .Join(_context.UsuarioAsignados,
-                    a => a.SeguimientoId,
-                    u => u.SeguimientoId,
-                    (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId, a.SeguimientoId })  // Proyectar SeguimientoId
-                .Join(_context.Seguimientos,   // Join con Seguimientos usando SeguimientoId
-                    a => a.SeguimientoId,
-                    s => s.Id,
-                    (a, s) => new { a.UltimaFechaSeguimiento, a.EstadoId, a.UsuarioId, s.NNAId })  // Proyectar NNAId
-                .Join(_context.NNAs,           // Join con NNAs usando NNAId
-                    s => s.NNAId,
-                    n => n.Id,
-                    (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
-                .Where(x =>
-                            x.EstadoId != 5
-                            && x.UltimaFechaSeguimiento >= FechaInicial
-                            && x.UltimaFechaSeguimiento <= FechaFinal
-                            && (!EntidadId.HasValue || x.EAPBId == EntidadId))
-                .Count();
+            var baseQuery = from a in _context.AlertaSeguimientos
+                            join s in _context.Seguimientos on a.SeguimientoId equals s.Id
+                            join n in _context.NNAs on s.NNAId equals n.Id
+                            where a.EstadoId != 5
+                                  && (!EntidadId.HasValue || n.EAPBId == EntidadId)
+                            select new { a.UltimaFechaSeguimiento };
 
-            // Calcular alertas anteriores
-            var totalCasosAnterior = _context.AlertaSeguimientos
-               .Join(_context.UsuarioAsignados,
-                   a => a.SeguimientoId,
-                   u => u.SeguimientoId,
-                   (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId, a.SeguimientoId })  // Proyectar SeguimientoId
-               .Join(_context.Seguimientos,   // Join con Seguimientos usando SeguimientoId
-                   a => a.SeguimientoId,
-                   s => s.Id,
-                   (a, s) => new { a.UltimaFechaSeguimiento, a.EstadoId, a.UsuarioId, s.NNAId })  // Proyectar NNAId
-               .Join(_context.NNAs,           // Join con NNAs usando NNAId
-                   s => s.NNAId,
-                   n => n.Id,
-                   (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
-               .Where(x =>
-                           x.EstadoId != 5
-                           && x.UltimaFechaSeguimiento >= FechaInicial
-                           && x.UltimaFechaSeguimiento <= FechaFinal
-                           && (!EntidadId.HasValue || x.EAPBId == EntidadId))
-               .Count();
+            var totalCasosGeneral = baseQuery.Count();
+            var totalCasosActual = baseQuery.Count(x => x.UltimaFechaSeguimiento >= fechaSemana);
 
-            // Calcular alertas totales
-            var totalCasosGeneral = _context.AlertaSeguimientos
-               .Join(_context.UsuarioAsignados,
-                   a => a.SeguimientoId,
-                   u => u.SeguimientoId,
-                   (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId, a.SeguimientoId })  // Proyectar SeguimientoId
-               .Join(_context.Seguimientos,   // Join con Seguimientos usando SeguimientoId
-                   a => a.SeguimientoId,
-                   s => s.Id,
-                   (a, s) => new { a.UltimaFechaSeguimiento, a.EstadoId, a.UsuarioId, s.NNAId })  // Proyectar NNAId
-               .Join(_context.NNAs,           // Join con NNAs usando NNAId
-                   s => s.NNAId,
-                   n => n.Id,
-                   (s, n) => new { s.UltimaFechaSeguimiento, s.EstadoId, s.UsuarioId, n.EAPBId })  // Proyectar EAPBId
-               .Where(x =>
-                           x.EstadoId != 5
-                     && x.UltimaFechaSeguimiento >= FechaInicial
-                    && x.UltimaFechaSeguimiento <= FechaFinal
-                    && (!EntidadId.HasValue || x.EAPBId == EntidadId))
-    .Count();
-
-            // Retornar un único resultado
             return new GetTotalDashboardResponse
             {
                 TotalCasosGeneral = totalCasosGeneral,
                 TotalCasosActual = totalCasosActual,
-                TotalCasosAnterior = totalCasosAnterior
+                TotalCasosAnterior = 0
             };
         }
 
