@@ -8,10 +8,15 @@ namespace MSAuthentication.Api.Controllers
 {
     public class StorageController(IStorageService service) : BaseController
     {
+        // Bug 2026-06-17: antes retornaba ActionResult<byte[]?> que ASP.NET serializa como
+        // JSON base64. El frontend lo guardaba como blob crudo -> archivo corrupto (Excel/PDF
+        // rechazaban). Devolver FileContentResult con bytes binarios y nombre del archivo.
         [HttpGet("{fileName}")]
-        public async Task<ActionResult<byte[]?>> DownloadFile(string fileName)
+        public async Task<IActionResult> DownloadFile(string fileName)
         {
-            return await service.DownloadFileAsync(fileName);
+            var bytes = await service.DownloadFileAsync(fileName);
+            if (bytes == null || bytes.Length == 0) return NotFound();
+            return File(bytes, "application/octet-stream", fileName);
         }
 
         [HttpPost]
