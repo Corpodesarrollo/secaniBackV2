@@ -975,6 +975,11 @@ namespace Infra.Repositories
                               FechaNotificacion = ne.FechaEnvio,
                               AsuntoNotificacion = ne.Asunto,
                               Notificacion = ne.Mensaje,
+                              EmailDe = fromMail,
+                              EmailPara = ne.EmailPara,
+                              EmailConCopia = ne.EmailCC,
+                              Firma = ne.Cierre,
+                              ArchivoAdjunto = ne.ArchivoAdjunto,
                               Respuesta = (from r in _context.RespuestasAlerta
                                            where r.NotificacionEntidadId == ne.Id && !r.IsDeleted
                                            orderby r.DateCreated descending
