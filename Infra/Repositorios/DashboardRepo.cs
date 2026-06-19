@@ -752,30 +752,29 @@ namespace Infra.Repositorios
 
         public List<GetDashboardCasosCriticosEapbResponse> RepoDashboardCasosCriticosEAPB(string EntidadId, DateTime FechaInicial, DateTime FechaFinal)
         {
-            // Bug 2026-06-17: el filtro previo s.FechaSeguimiento <= FechaFinal usaba DateTime
-            // completo con hora. Si user filtraba 25/06 a 25/06, FechaFinal era 25/06T00:00:00 y
-            // las alertas con FechaSeguimiento 25/06T08:00 quedaban fuera. Comparamos por dia
-            // (FechaFinal inclusivo hasta 23:59:59).
-            var inicio = FechaInicial.Date;
-            var finExclusivo = FechaFinal.Date.AddDays(1);
-            // BUG-LZ 2026-06-18: activar filtro EAPBId (EntidadId llega como string; EAPBId
-            // del NNA es int?). Si no parsea o es 0, no filtra (mantiene compatibilidad).
+            // HU SECANI-RQ07-HU01: el tablero "Alertas Pendientes" muestra una fila por
+            // alerta abierta del ULTIMO seguimiento por NNA (mismo criterio que el listado
+            // oficial /gestionar-alertas, evita duplicados cuando un NNA tiene historico de
+            // seguimientos). El filtro de fechas del dashboard solo aplica a graficos, no
+            // a este tablero.
             int? eapbFiltro = int.TryParse(EntidadId, out var parsed) && parsed > 0 ? parsed : null;
-            // Bug 2026-06-17: INNER JOIN con CIE10 excluia NNAs con DiagnosticoId=null
-            // (memory: "INNER JOIN FK opcional oculta filas"). Cambiar a LEFT JOIN.
-            var resultado = (from n in _context.NNAs
+
+            var ultimoSegPorNNA = _context.Seguimientos
+                .GroupBy(s => s.NNAId)
+                .Select(g => g.Max(x => x.Id));
+
+            var resultado = (from als in _context.AlertaSeguimientos
+                             where als.EstadoId != 5
+                                   && ultimoSegPorNNA.Contains(als.SeguimientoId)
+                             join s in _context.Seguimientos on als.SeguimientoId equals s.Id
+                             join n in _context.NNAs on s.NNAId equals n.Id
                              join c0 in _context.CIE10s on n.DiagnosticoId equals c0.Id into cJoin
                              from c in cJoin.DefaultIfEmpty()
-                             join s in _context.Seguimientos on n.Id equals s.NNAId
-                             join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
-                             where s.FechaSeguimiento >= inicio
-                                   && s.FechaSeguimiento < finExclusivo
-                                   && als.EstadoId != 5
-                                   && (eapbFiltro == null || n.EAPBId == eapbFiltro)
-                             orderby als.AlertaId, s.FechaSeguimiento
+                             where eapbFiltro == null || n.EAPBId == eapbFiltro
+                             orderby als.DateCreated descending
                              select new GetDashboardCasosCriticosEapbResponse
                              {
-                                 AlertaId = als.AlertaId,
+                                 AlertaId = als.Id,
                                  PrimerNombre = n.PrimerNombre,
                                  SegundoNombre = n.SegundoNombre,
                                  PrimerApellido = n.PrimerApellido,
@@ -784,11 +783,9 @@ namespace Infra.Repositorios
                                  Diagnostico = c != null ? c.Nombre : "",
                                  FechaSeguimiento = als.DateCreated,
                                  NNaId = n.Id
-                             }).Distinct().ToList();
-
+                             }).ToList();
 
             return resultado;
-
         }
 
         // BUG-LZ-087: lookup TPEAPB.Id por NIT (long?) -> int? (Id PK). Devuelve null si no existe.
