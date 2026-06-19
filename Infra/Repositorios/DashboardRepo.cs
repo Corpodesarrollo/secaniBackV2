@@ -620,13 +620,19 @@ namespace Infra.Repositorios
             // con Seguimiento.NNAId (FKs distintas), produciendo cardinalidad/estados erroneos
             // en el pie chart "Alertas". El JOIN correcto es AlertaSeguimiento.SeguimientoId
             // == Seguimiento.Id. Tambien se activa el filtro por EAPBId del NNA.
+            // HU SECANI-RQ07-HU01: el pie "Alertas" agrupa por CATEGORIA de la alerta
+            // (no por EstadoId). Se navega AlertaSeguimiento -> Alerta -> SubCategoriaAlerta
+            // -> CategoriaAlerta para llegar a la categoria final.
             var response = (from a in _context.AlertaSeguimientos
                             join s in _context.Seguimientos on a.SeguimientoId equals s.Id
-                            join u in _context.UsuarioAsignados on s.Id equals u.SeguimientoId
                             join nan in _context.NNAs on s.NNAId equals nan.Id
-                            where u.FechaAsignacion >= FechaInicial && u.FechaAsignacion <= FechaFinal
+                            join al in _context.Alertas on a.AlertaId equals al.Id
+                            join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
+                            join ca in _context.TPCategoriaAlerta on sca.CategoriaAlertaId equals ca.Id
+                            where a.UltimaFechaSeguimiento >= FechaInicial
+                                  && a.UltimaFechaSeguimiento <= FechaFinal
                                   && (EAPBId == 0 || nan.EAPBId == EAPBId)
-                            group a by a.EstadoId into grouped
+                            group a by ca.Id into grouped
                             select new GetDashboardEstadoResponse
                             {
                                 EstadoId = grouped.Key,
@@ -723,6 +729,7 @@ namespace Infra.Repositorios
                              join als in _context.AlertaSeguimientos on s.Id equals als.SeguimientoId
                              where s.FechaSeguimiento >= inicio
                                    && s.FechaSeguimiento < finExclusivo
+                                   && als.EstadoId != 5
                                    && (eapbFiltro == null || n.EAPBId == eapbFiltro)
                              orderby als.AlertaId, s.FechaSeguimiento
                              select new GetDashboardCasosCriticosEapbResponse
