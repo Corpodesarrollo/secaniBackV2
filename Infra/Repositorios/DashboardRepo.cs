@@ -112,49 +112,43 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardAlertas(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
-            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
-            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
+            // HU SECANI-RQ02-HU01: "Alertas" = numero de CASOS (NNAs) con alertas abiertas
+            // asignados al agente. Antes contaba el cartesiano AlertaSeguimientos x
+            // UsuarioAsignados (mismo seguimiento con varias asignaciones inflaba el numero:
+            // 54 vs 5 NNAs reales con alerta). Tambien se excluye NNAs estadoId == 10 para
+            // ser consistente con "Mis Casos" y con la lista /gestion/seguimientos.
+            var hoy = DateTime.Now.Date;
+            var inicioSemana = hoy.AddDays(-7);
+            var inicioSemanaAnterior = hoy.AddDays(-14);
 
-            DateTime FechaInicialSemanaAnterior = FechaInicial.AddDays(-7);
-            DateTime FechaFinalSemanaAnterior = FechaFinal.AddDays(-7);
+            // Mismo criterio que GetSelect/GetCntSeguimiento de /gestion/seguimientos:
+            //   - Seguimientos.UsuarioId == agente (no UsuarioAsignados.UsuarioId)
+            //   - ULTIMO seguimiento por NNA (Max(Id) por NNAId)
+            //   - NNA con estadoId != 10
+            //   - Alerta abierta (EstadoId != 5) en ese seguimiento
+            var ultimoSegPorNNA = _context.Seguimientos
+                .GroupBy(s => s.NNAId)
+                .Select(g => g.Max(x => x.Id));
 
+            var baseQuery = from a in _context.AlertaSeguimientos
+                            join s in _context.Seguimientos on a.SeguimientoId equals s.Id
+                            join n in _context.NNAs on s.NNAId equals n.Id
+                            where a.EstadoId != 5
+                                  && n.estadoId != 10
+                                  && ultimoSegPorNNA.Contains(s.Id)
+                                  && (string.IsNullOrEmpty(UsuarioID) || s.UsuarioId == UsuarioID)
+                            select new { NNAId = n.Id, a.UltimaFechaSeguimiento };
 
-            // Calcular alertas actuales
-            var totalCasosActual = _context.AlertaSeguimientos
-                .Join(_context.UsuarioAsignados,
-                    a => a.SeguimientoId,
-                    u => u.SeguimientoId,
-                    (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId })
-                .Where(x => (string.IsNullOrEmpty(UsuarioID) || x.UsuarioId == UsuarioID)
-                            && x.EstadoId != 5
-                            && x.UltimaFechaSeguimiento >= FechaInicial
-                            && x.UltimaFechaSeguimiento <= FechaFinal)
-                .Count();
+            var totalCasosGeneral = baseQuery.Select(x => x.NNAId).Distinct().Count();
 
-            // Calcular alertas anteriores
-            var totalCasosAnterior = _context.AlertaSeguimientos
-                .Join(_context.UsuarioAsignados,
-                    a => a.SeguimientoId,
-                    u => u.SeguimientoId,
-                    (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId })
-                .Where(x => (string.IsNullOrEmpty(UsuarioID) || x.UsuarioId == UsuarioID)
-                            && x.EstadoId != 5
-                            && x.UltimaFechaSeguimiento >= FechaInicialSemanaAnterior
-                            && x.UltimaFechaSeguimiento <= FechaFinalSemanaAnterior)
-                .Count();
+            var totalCasosActual = baseQuery
+                .Where(x => x.UltimaFechaSeguimiento >= inicioSemana && x.UltimaFechaSeguimiento < hoy.AddDays(1))
+                .Select(x => x.NNAId).Distinct().Count();
 
-            // Calcular alertas totales
-            var totalCasosGeneral = _context.AlertaSeguimientos
-                .Join(_context.UsuarioAsignados,
-                    a => a.SeguimientoId,
-                    u => u.SeguimientoId,
-                    (a, u) => new { a.UltimaFechaSeguimiento, a.EstadoId, u.UsuarioId })
-                .Where(x => (string.IsNullOrEmpty(UsuarioID) || x.UsuarioId == UsuarioID)
-                            && x.EstadoId != 5
-                            )
-                .Count();
+            var totalCasosAnterior = baseQuery
+                .Where(x => x.UltimaFechaSeguimiento >= inicioSemanaAnterior && x.UltimaFechaSeguimiento < inicioSemana)
+                .Select(x => x.NNAId).Distinct().Count();
 
-            // Retornar un único resultado
             return new GetTotalDashboardResponse
             {
                 TotalCasosGeneral = totalCasosGeneral,
