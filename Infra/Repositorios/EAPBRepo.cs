@@ -26,8 +26,13 @@ namespace Infra.Repositorios
 
         public async Task<List<TPEAPBDto>> GetEAPB()
         {
+            // BUG-LZ 2026-06-19: Tipo==2 filtraba solo EPS (381 filas) y excluia las Cajas
+            // de Compensacion Familiar y otras EAPBs con Tipo NULL (99 filas, p.ej. "CAJA DE
+            // COMPENSACION FAMILIAR COLSUBSIDIO" id=14053 que es la EAPB real de varios NNAs
+            // en QA). Se incluyen ambos (480 entidades). Las IPS (Tipo==1, 1215 filas) siguen
+            // excluidas porque este endpoint alimenta el catalogo de EAPBs, no de IPS.
             var query = GetSelect();
-            var result = await query.Where(x => x.Tipo == 2).ToListAsync();
+            var result = await query.Where(x => x.Tipo == 2 || x.Tipo == null).ToListAsync();
             return result;
         }
 
