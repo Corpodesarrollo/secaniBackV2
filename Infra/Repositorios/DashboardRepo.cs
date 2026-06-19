@@ -72,57 +72,32 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardMisCasos(DateTime FechaInicial, DateTime FechaFinal, string? UsuarioID)
         {
-            if (FechaInicial == DateTime.MinValue) FechaInicial = DateTime.Now.AddMonths(-1);
-            if (FechaFinal == DateTime.MinValue) FechaFinal = DateTime.Now;
+            // HU SECANI-RQ02-HU01: "Mis Casos" = NNAs distintos asignados al agente. Antes
+            // contaba filas de UsuarioAsignados (con duplicados cuando el mismo seguimiento
+            // se asignaba varias veces). El listado /gestion/seguimientos cuenta NNAs
+            // distintos + excluye estadoId == 10 (NNA fallecido / inactivo) -> KPI 21 vs
+            // lista 14 confuso. Se alinean ambos. "% esta semana" => NNAs asignados en los
+            // ultimos 7 dias vs los 7 dias previos.
+            var hoy = DateTime.Now.Date;
+            var inicioSemana = hoy.AddDays(-7);
+            var inicioSemanaAnterior = hoy.AddDays(-14);
 
-            DateTime FechaInicialSemanaAnterior = FechaInicial.AddDays(-7);
-            DateTime FechaFinalSemanaAnterior = FechaFinal.AddDays(-7);
+            var baseQuery = from ua in _context.UsuarioAsignados
+                            join s in _context.Seguimientos on ua.SeguimientoId equals s.Id
+                            join n in _context.NNAs on s.NNAId equals n.Id
+                            where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
+                                  && n.estadoId != 10
+                            select new { NNAId = n.Id, ua.FechaAsignacion };
 
+            var totalCasosGeneral = baseQuery.Select(x => x.NNAId).Distinct().Count();
 
-            // Obtenemos el conteo de casos actuales directamente
-            var totalCasosActual = (from ua in _context.UsuarioAsignados
-                                    where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
-                                       && ua.FechaAsignacion >= FechaInicial
-                                       && ua.FechaAsignacion <= FechaFinal
-                                    join s1 in
-                                        (from s1 in _context.Seguimientos
-                                         join s2 in
-                                             (from s in _context.Seguimientos
-                                              group s by s.NNAId into g
-                                              select new { NNAId = g.Key, Id = g.Max(x => x.Id) })
-                                         on s1.Id equals s2.Id
-                                         select s1)
-                                    on ua.SeguimientoId equals s1.Id
-                                    select ua).Count();
+            var totalCasosActual = baseQuery
+                .Where(x => x.FechaAsignacion >= inicioSemana && x.FechaAsignacion < hoy.AddDays(1))
+                .Select(x => x.NNAId).Distinct().Count();
 
-            var totalCasosAnterior = (from ua in _context.UsuarioAsignados
-                                      where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
-                                         && ua.FechaAsignacion >= FechaInicialSemanaAnterior
-                                         && ua.FechaAsignacion <= FechaFinalSemanaAnterior
-                                      join s1 in
-                                        (from s1 in _context.Seguimientos
-                                         join s2 in
-                                             (from s in _context.Seguimientos
-                                              group s by s.NNAId into g
-                                              select new { NNAId = g.Key, Id = g.Max(x => x.Id) })
-                                         on s1.Id equals s2.Id
-                                         select s1)
-                                    on ua.SeguimientoId equals s1.Id
-                                      select ua).Count();
-
-            var totalCasosGeneral = (from ua in _context.UsuarioAsignados
-                                     where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
-
-                                     join s1 in
-                                        (from s1 in _context.Seguimientos
-                                         join s2 in
-                                             (from s in _context.Seguimientos
-                                              group s by s.NNAId into g
-                                              select new { NNAId = g.Key, Id = g.Max(x => x.Id) })
-                                         on s1.Id equals s2.Id
-                                         select s1)
-                                    on ua.SeguimientoId equals s1.Id
-                                     select ua).Count();
+            var totalCasosAnterior = baseQuery
+                .Where(x => x.FechaAsignacion >= inicioSemanaAnterior && x.FechaAsignacion < inicioSemana)
+                .Select(x => x.NNAId).Distinct().Count();
 
 
             // Retornamos un único resultado
