@@ -555,17 +555,24 @@ namespace Infra.Repositorios
         public GetTotalDashboardResponse RepoDashboardTotalAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
             // HU SECANI-RQ07-HU01: KPI global, ignora FechaInicial/FechaFinal. Filtra por
-            // EAPBId del NNA. "% esta semana" => comparar alertas con UltimaFechaSeguimiento
-            // ultimos 7 dias contra los 7 dias previos. TotalCasosGeneral = alertas abiertas
-            // (EstadoId != 5) totales.
+            // EAPBId del NNA. Solo cuenta las alertas abiertas (EstadoId != 5) del ULTIMO
+            // seguimiento por NNA (misma logica que /gestionar-alertas y el tablero
+            // "Alertas Pendientes" para evitar inconsistencias visuales: KPI 29 vs lista 3).
+            // "% esta semana" => alertas con UltimaFechaSeguimiento ultimos 7 dias vs 7 dias
+            // previos.
             var hoy = DateTime.Now.Date;
             var inicioSemana = hoy.AddDays(-7);
             var inicioSemanaAnterior = hoy.AddDays(-14);
+
+            var ultimoSegPorNNA = _context.Seguimientos
+                .GroupBy(s => s.NNAId)
+                .Select(g => g.Max(x => x.Id));
 
             var baseQuery = from a in _context.AlertaSeguimientos
                             join s in _context.Seguimientos on a.SeguimientoId equals s.Id
                             join n in _context.NNAs on s.NNAId equals n.Id
                             where a.EstadoId != 5
+                                  && ultimoSegPorNNA.Contains(a.SeguimientoId)
                                   && (!EntidadId.HasValue || n.EAPBId == EntidadId)
                             select new { a.UltimaFechaSeguimiento };
 
