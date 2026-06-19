@@ -14,6 +14,19 @@ namespace Infra.Repositorios
     {
         public List<GestionarAlertasDto> ObtenerAlertas(string alias)
         {
+            // HU SECANI-RQ07-HU03: la lista debe restringirse a las alertas de la entidad
+            // del usuario. Convencion qa-login: alias = "NI" + NIT del TPEAPB. Si el alias
+            // no tiene ese prefijo (o es "admin") no se filtra y se devuelven todas (rol
+            // administrativo / global).
+            int? eapbFiltro = null;
+            if (!string.IsNullOrWhiteSpace(alias) && alias.StartsWith("NI", StringComparison.OrdinalIgnoreCase))
+            {
+                if (long.TryParse(alias.Substring(2), out var nit))
+                {
+                    eapbFiltro = db.TPEAPB.Where(e => e.NIT == nit).Select(e => (int?)e.Id).FirstOrDefault();
+                }
+            }
+
             var query = from s in db.Seguimientos
                         join n in db.NNAs on s.NNAId equals n.Id
                         group s by s.NNAId into g
@@ -31,6 +44,7 @@ namespace Infra.Repositorios
                                join ca in db.TPCategoriaAlerta on sca.CategoriaAlertaId equals ca.Id
                                join eapb in db.TPEAPB on n.EAPBId equals eapb.Id into eapbGroup
                                from eapb in eapbGroup.DefaultIfEmpty()
+                               where eapbFiltro == null || n.EAPBId == eapbFiltro
                                select new GestionarAlertasDto
                                {
                                    IdAlerta = als.Id,
