@@ -12,13 +12,21 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardTotalCasos(DateTime FechaInicial, DateTime FechaFinal)
         {
-            // BUG-LZ 2026-06-18: KPI global, ignora FechaInicial/FechaFinal del filtro.
-            // TotalCasosGeneral = todos los NNA (Colombia, sin filtro EAPB).
-            // TotalCasosActual = NNA creados ultimos 7 dias (para el "X% esta semana").
-            var fechaSemana = DateTime.Now.Date.AddDays(-7);
+            // HU SECANI-RQ07-HU01: KPI global, ignora FechaInicial/FechaFinal.
+            // Porcentaje "aumento/disminucion esta semana" => comparar NNA creados en los
+            // ultimos 7 dias contra los 7 dias previos (semana anterior).
+            var hoy = DateTime.Now.Date;
+            var inicioSemana = hoy.AddDays(-7);
+            var inicioSemanaAnterior = hoy.AddDays(-14);
 
             var totalCasosActual = _context.NNAs
-                .Where(s => s.FechaIngresoEstrategia >= fechaSemana)
+                .Where(s => s.FechaIngresoEstrategia >= inicioSemana
+                            && s.FechaIngresoEstrategia < hoy.AddDays(1))
+                .Count();
+
+            var totalCasosAnterior = _context.NNAs
+                .Where(s => s.FechaIngresoEstrategia >= inicioSemanaAnterior
+                            && s.FechaIngresoEstrategia < inicioSemana)
                 .Count();
 
             var totalCasosGeneral = _context.NNAs.Count();
@@ -27,7 +35,7 @@ namespace Infra.Repositorios
             {
                 TotalCasosGeneral = totalCasosGeneral,
                 TotalCasosActual = totalCasosActual,
-                TotalCasosAnterior = 0
+                TotalCasosAnterior = totalCasosAnterior
             };
         }
 
@@ -514,17 +522,24 @@ namespace Infra.Repositorios
 
         public GetTotalDashboardResponse RepoDashboardRegistrosPropios(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
-            // BUG-LZ 2026-06-18: KPI global, ignora FechaInicial/FechaFinal. Filtra por
-            // EAPBId. TotalCasosGeneral = NNA de la entidad. TotalCasosActual = NNA de la
-            // entidad creados ultimos 7 dias (para "X% esta semana" = actual/general*100).
-            var fechaSemana = DateTime.Now.Date.AddDays(-7);
+            // HU SECANI-RQ07-HU01: KPI global, ignora FechaInicial/FechaFinal. Filtra por
+            // EAPBId. "% este mes" => comparar NNA creados ultimos 30 dias contra los 30
+            // dias previos (mes anterior).
+            var hoy = DateTime.Now.Date;
+            var inicioMes = hoy.AddDays(-30);
+            var inicioMesAnterior = hoy.AddDays(-60);
 
             var totalCasosGeneral = _context.NNAs
                 .Where(s => !EntidadId.HasValue || s.EAPBId == EntidadId)
                 .Count();
 
             var totalCasosActual = _context.NNAs
-                .Where(s => s.DateCreated >= fechaSemana
+                .Where(s => s.DateCreated >= inicioMes && s.DateCreated < hoy.AddDays(1)
+                            && (!EntidadId.HasValue || s.EAPBId == EntidadId))
+                .Count();
+
+            var totalCasosAnterior = _context.NNAs
+                .Where(s => s.DateCreated >= inicioMesAnterior && s.DateCreated < inicioMes
                             && (!EntidadId.HasValue || s.EAPBId == EntidadId))
                 .Count();
 
@@ -532,20 +547,20 @@ namespace Infra.Repositorios
             {
                 TotalCasosGeneral = totalCasosGeneral,
                 TotalCasosActual = totalCasosActual,
-                TotalCasosAnterior = 0
+                TotalCasosAnterior = totalCasosAnterior
             };
         }
 
 
         public GetTotalDashboardResponse RepoDashboardTotalAlertasEAPB(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
-            // BUG-LZ 2026-06-18: KPI global, ignora FechaInicial/FechaFinal. Filtra por EAPBId
-            // del NNA. TotalCasosGeneral = alertas no cerradas de la entidad.
-            // TotalCasosActual = alertas con UltimaFechaSeguimiento ultimos 7 dias.
-            // Bug previo en RepoDashboardAlertasEAPB(int): el JOIN AlertaSeg->Seg via
-            // (a.Id == s.NNAId) era incorrecto. Aqui usamos el join via SeguimientoId
-            // que ya estaba correcto.
-            var fechaSemana = DateTime.Now.Date.AddDays(-7);
+            // HU SECANI-RQ07-HU01: KPI global, ignora FechaInicial/FechaFinal. Filtra por
+            // EAPBId del NNA. "% esta semana" => comparar alertas con UltimaFechaSeguimiento
+            // ultimos 7 dias contra los 7 dias previos. TotalCasosGeneral = alertas abiertas
+            // (EstadoId != 5) totales.
+            var hoy = DateTime.Now.Date;
+            var inicioSemana = hoy.AddDays(-7);
+            var inicioSemanaAnterior = hoy.AddDays(-14);
 
             var baseQuery = from a in _context.AlertaSeguimientos
                             join s in _context.Seguimientos on a.SeguimientoId equals s.Id
@@ -555,13 +570,16 @@ namespace Infra.Repositorios
                             select new { a.UltimaFechaSeguimiento };
 
             var totalCasosGeneral = baseQuery.Count();
-            var totalCasosActual = baseQuery.Count(x => x.UltimaFechaSeguimiento >= fechaSemana);
+            var totalCasosActual = baseQuery.Count(x => x.UltimaFechaSeguimiento >= inicioSemana
+                                                        && x.UltimaFechaSeguimiento < hoy.AddDays(1));
+            var totalCasosAnterior = baseQuery.Count(x => x.UltimaFechaSeguimiento >= inicioSemanaAnterior
+                                                          && x.UltimaFechaSeguimiento < inicioSemana);
 
             return new GetTotalDashboardResponse
             {
                 TotalCasosGeneral = totalCasosGeneral,
                 TotalCasosActual = totalCasosActual,
-                TotalCasosAnterior = 0
+                TotalCasosAnterior = totalCasosAnterior
             };
         }
 
@@ -644,6 +662,29 @@ namespace Infra.Repositorios
 
 
         public GetDashboardTipoCasosResponse RepoDashboardTipoCasos(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
+        {
+            // HU SECANI-RQ07-HU01: pie "Alertas abiertas EAPB". Distribucion Abiertas vs
+            // Cerradas (EstadoId != 5 vs == 5) sobre AlertaSeguimientos del EAPB en el
+            // rango de fechas seleccionado (UltimaFechaSeguimiento).
+            var alertasQ = from a in _context.AlertaSeguimientos
+                           join s in _context.Seguimientos on a.SeguimientoId equals s.Id
+                           join n in _context.NNAs on s.NNAId equals n.Id
+                           where a.UltimaFechaSeguimiento >= FechaInicial
+                                 && a.UltimaFechaSeguimiento <= FechaFinal
+                                 && (!EntidadId.HasValue || n.EAPBId == EntidadId)
+                           select a.EstadoId;
+
+            var abiertas = alertasQ.Count(e => e != 5);
+            var cerradas = alertasQ.Count(e => e == 5);
+
+            return new GetDashboardTipoCasosResponse
+            {
+                ConAlerta = abiertas,
+                SinAlerta = cerradas
+            };
+        }
+
+        public GetDashboardTipoCasosResponse RepoDashboardTipoCasos_LEGACY(DateTime FechaInicial, DateTime FechaFinal, int? EntidadId)
         {
 
 
