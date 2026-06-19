@@ -32,6 +32,18 @@ namespace Infra.Repositorios
                         group s by s.NNAId into g
                         select new { Id = g.Max(x => x.Id) };
 
+            // HU SECANI-RQ07-HU03 (extension): "mi entidad" incluye dos casos:
+            //   (a) NNAs cuya EAPB del NNA es la del usuario logueado
+            //   (b) NNAs con notificaciones (oficios) enviadas a la EAPB del usuario,
+            //       aunque la EAPB del NNA sea otra. Caso real: LUCAS pertenece a UNIMEC
+            //       pero recibio notificacion dirigida a Colsubsidio -> Colsubsidio debe
+            //       poder gestionarla.
+            var alertasNotificadasAEntidad = eapbFiltro == null
+                ? null
+                : db.NotificacionesEntidad
+                    .Where(ne => ne.EntidadId == eapbFiltro && !ne.IsDeleted)
+                    .Select(ne => ne.AlertaSeguimientoId ?? 0);
+
             var alertasBase = (from q in query
 
                                join s in db.Seguimientos on q.Id equals s.Id
@@ -44,7 +56,9 @@ namespace Infra.Repositorios
                                join ca in db.TPCategoriaAlerta on sca.CategoriaAlertaId equals ca.Id
                                join eapb in db.TPEAPB on n.EAPBId equals eapb.Id into eapbGroup
                                from eapb in eapbGroup.DefaultIfEmpty()
-                               where eapbFiltro == null || n.EAPBId == eapbFiltro
+                               where eapbFiltro == null
+                                     || n.EAPBId == eapbFiltro
+                                     || alertasNotificadasAEntidad!.Contains(als.Id)
                                select new GestionarAlertasDto
                                {
                                    IdAlerta = als.Id,

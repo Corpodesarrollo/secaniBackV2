@@ -568,12 +568,22 @@ namespace Infra.Repositorios
                 .GroupBy(s => s.NNAId)
                 .Select(g => g.Max(x => x.Id));
 
+            // HU SECANI-RQ07-HU03 (extension): incluir tambien alertas con notificacion
+            // enviada a la EAPB del usuario aunque la EAPB del NNA sea otra.
+            var alertasNotifAEntidad = !EntidadId.HasValue
+                ? null
+                : _context.NotificacionesEntidad
+                    .Where(ne => ne.EntidadId == EntidadId && !ne.IsDeleted)
+                    .Select(ne => ne.AlertaSeguimientoId ?? 0);
+
             var baseQuery = from a in _context.AlertaSeguimientos
                             join s in _context.Seguimientos on a.SeguimientoId equals s.Id
                             join n in _context.NNAs on s.NNAId equals n.Id
                             where a.EstadoId != 5
                                   && ultimoSegPorNNA.Contains(a.SeguimientoId)
-                                  && (!EntidadId.HasValue || n.EAPBId == EntidadId)
+                                  && (!EntidadId.HasValue
+                                      || n.EAPBId == EntidadId
+                                      || alertasNotifAEntidad!.Contains(a.Id))
                             select new { a.UltimaFechaSeguimiento };
 
             var totalCasosGeneral = baseQuery.Count();
@@ -770,6 +780,14 @@ namespace Infra.Repositorios
                 .GroupBy(s => s.NNAId)
                 .Select(g => g.Max(x => x.Id));
 
+            // HU SECANI-RQ07-HU03 (extension): incluir alertas con notificacion enviada
+            // a la EAPB del usuario aunque la EAPB del NNA sea otra.
+            var alertasNotifAEntidad = eapbFiltro == null
+                ? null
+                : _context.NotificacionesEntidad
+                    .Where(ne => ne.EntidadId == eapbFiltro && !ne.IsDeleted)
+                    .Select(ne => ne.AlertaSeguimientoId ?? 0);
+
             var resultado = (from als in _context.AlertaSeguimientos
                              where als.EstadoId != 5
                                    && ultimoSegPorNNA.Contains(als.SeguimientoId)
@@ -777,7 +795,9 @@ namespace Infra.Repositorios
                              join n in _context.NNAs on s.NNAId equals n.Id
                              join c0 in _context.CIE10s on n.DiagnosticoId equals c0.Id into cJoin
                              from c in cJoin.DefaultIfEmpty()
-                             where eapbFiltro == null || n.EAPBId == eapbFiltro
+                             where eapbFiltro == null
+                                   || n.EAPBId == eapbFiltro
+                                   || alertasNotifAEntidad!.Contains(als.Id)
                              orderby als.DateCreated descending
                              select new GetDashboardCasosCriticosEapbResponse
                              {
