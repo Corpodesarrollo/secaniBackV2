@@ -752,29 +752,29 @@ namespace Infra.Repositorios
                 {
                     foreach (var item in request.alertasPendientes)
                     {
-                        var alertaSeguimiento = await _context.AlertaSeguimientos.FirstOrDefaultAsync(x => x.AlertaId == item.Id);
-                        if (alertaSeguimiento != null)
+                        // BUG-LZ 2026-06-19: Diseno snapshot. Antes el repo creaba una fila
+                        // nueva Y ademas actualizaba la vieja, lo que dejaba registros duplicados
+                        // con el mismo estado en seguimientos consecutivos. Ahora solo se
+                        // inserta una fila nueva por seguimiento (snapshot del estado en ese
+                        // momento). La fila del seguimiento anterior queda intacta como
+                        // historial. Los listados que muestran "alertas vigentes" deben tomar
+                        // la fila con Max(Id) por AlertaId.
+                        var existeAlerta = await _context.AlertaSeguimientos
+                            .AnyAsync(x => x.AlertaId == item.Id);
+                        if (existeAlerta)
                         {
-                            if ((item.Resuelta ?? false) == false)
+                            var resuelta = item.Resuelta ?? false;
+                            var snapshot = new AlertaSeguimiento()
                             {
-                                var alertaSeguimiento2 = new AlertaSeguimiento()
-                                {
-                                    AlertaId = item.Id ?? 0,
-                                    CreatedByUserId = "1",
-                                    DateCreated = DateTime.Now,
-                                    EstadoId = item.Resuelta ?? false ? 4 : 3,
-                                    SeguimientoId = seguimiento.Id,
-                                    Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento",
-                                    UltimaFechaSeguimiento = DateTime.Now
-                                };
-                                _context.AlertaSeguimientos.Add(alertaSeguimiento2);
-                                await _context.SaveChangesAsync();
-                            }
-
-                            alertaSeguimiento.EstadoId = item.Resuelta ?? false ? 4 : 3;
-                            alertaSeguimiento.Observaciones = item.Resuelta ?? false ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento";
-                            alertaSeguimiento.UltimaFechaSeguimiento = DateTime.Now;
-                            _context.AlertaSeguimientos.Update(alertaSeguimiento);
+                                AlertaId = item.Id ?? 0,
+                                CreatedByUserId = "1",
+                                DateCreated = DateTime.Now,
+                                EstadoId = resuelta ? 4 : 3,
+                                SeguimientoId = seguimiento.Id,
+                                Observaciones = resuelta ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento",
+                                UltimaFechaSeguimiento = DateTime.Now
+                            };
+                            _context.AlertaSeguimientos.Add(snapshot);
                             await _context.SaveChangesAsync();
                         }
                     }
