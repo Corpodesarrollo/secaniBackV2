@@ -21,5 +21,8 @@
         // nombre del archivo adjunto si lo hay.
         public string? AsuntoRespuesta { get; set; }
         public string? ArchivoAdjuntoRespuesta { get; set; }
+        // BUG-LZ 2026-06-19: fecha de creacion de la alerta para que /consultar-alertas
+        // pueda ordenar la tabla por creacion descendente.
+        public DateTime? FechaCreacionAlerta { get; set; }
     }
 }

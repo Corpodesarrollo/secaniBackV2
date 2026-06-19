@@ -543,6 +543,7 @@ namespace Infra.Repositorios
                                                                                         Observaciones = als.Observaciones,
                                                                                         SeguimientoId = als.SeguimientoId,
                                                                                         UltimaFechaSeguimiento = (DateTime)als.UltimaFechaSeguimiento,
+                                                                                        FechaCreacionAlerta = als.DateCreated,
                                                                                         NombreAlerta = subal.CategoriaAlertaId + "." + subal.Indicador,
                                                                                         SubcategoriaAlerta = subal.Indicador + ". " + subal.SubCategoriaAlerta,
                                                                                         CategoriaAlerta = catal.Id + ". " + catal.Nombre,
