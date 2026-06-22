@@ -35,6 +35,7 @@
         public DateTime? FechaRespuesta { get; set; }
         public List<AlertaSeguimientoDto>? Alertas { get; set; }
         public string? Observaciones { get; set; }
+        public string? RespuestaEntidad { get; set; }
         public string? EntidadAlerta { get; set; }
         public string? UsuarioId { get; set; }
         public string? Usuario { get; set; }

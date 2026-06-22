@@ -302,37 +302,44 @@ namespace Infra.Repositorios
         {
             try
             {
-                var query = from s in _context.Seguimientos
-                            join n in _context.NNAs on s.NNAId equals n.Id
-                            group s by new { s.NNAId } into g
-                            select new { id = g.Max(x => x.Id), g.Key.NNAId };
-
-                var queryUA = from u in _context.UsuarioAsignados
-                              group u by new { u.UsuarioId, u.SeguimientoId } into g
-                              select new { id = g.Max(x => x.Id), g.Key.UsuarioId, g.Key.SeguimientoId };
-
-                var queryResult = from q in query
-                                  join s in _context.Seguimientos on q.id equals s.Id
-                                  join n in _context.NNAs on s.NNAId equals n.Id
+                // BUG-LZ 2026-06-20: per HU SECANI-RQ01-HU02 deben listarse TODOS los NNA
+                // registrados (con o sin seguimientos). Antes la query partia de Seguimientos
+                // con INNER JOIN -> NNAs sin seguimiento quedaban ocultos. Ahora partimos de
+                // NNAs y resolvemos el ultimo seguimiento y agente como subqueries que pueden
+                // dar null sin excluir la fila.
+                var queryResult = from n in _context.NNAs
                                   join e in _context.TPEstadoNNA on n.estadoId equals e.Id
 
-                                  join au in queryUA on s.Id equals au.SeguimientoId into auJoin
-                                  from au in auJoin.DefaultIfEmpty()
+                                  let lastSegId = _context.Seguimientos
+                                      .Where(s => s.NNAId == n.Id)
+                                      .OrderByDescending(s => s.Id)
+                                      .Select(s => (long?)s.Id)
+                                      .FirstOrDefault()
 
-                                  join a in _context.Users on au.UsuarioId equals a.Id into aJoin
-                                  from a in aJoin.DefaultIfEmpty()
+                                  let lastSeg = _context.Seguimientos
+                                      .Where(s => s.Id == (lastSegId ?? 0))
+                                      .FirstOrDefault()
+
+                                  let lastUA = _context.UsuarioAsignados
+                                      .Where(u => u.SeguimientoId == (lastSegId ?? 0))
+                                      .OrderByDescending(u => u.Id)
+                                      .FirstOrDefault()
+
+                                  let agente = lastUA != null
+                                      ? _context.Users.FirstOrDefault(usr => usr.Id == lastUA.UsuarioId)
+                                      : null
 
                                   select new SeguimientoDto()
                                   {
-                                      Id = s.Id,
-                                      NoCaso = s.NNAId,
+                                      Id = lastSegId ?? 0,
+                                      NoCaso = n.Id,
                                       PrimerNombre = n.PrimerNombre,
                                       SegundoNombre = n.SegundoNombre,
                                       PrimerApellido = n.PrimerApellido,
                                       SegundoApellido = n.SegundoApellido,
                                       NumeroIdentificacion = n.NumeroIdentificacion,
                                       FechaNotificacion = n.FechaNotificacionSIVIGILA,
-                                      FechaSeguimiento = s.FechaSeguimiento,
+                                      FechaSeguimiento = lastSeg != null ? lastSeg.FechaSeguimiento : (DateTime?)null,
                                       Estado = new TPEstadoNNADto()
                                       {
                                           Id = e.Id,
@@ -341,15 +348,15 @@ namespace Infra.Repositorios
                                           ColorBG = e.ColorBG,
                                           ColorText = e.ColorText
                                       },
-                                      AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
-                                      FechaUltimaActuacion = s.UltimaActuacionFecha,
-                                      UsuarioId = a.Id,
-                                      Usuario = a != null ? a.FullName : "",
+                                      AsuntoUltimaActuacion = lastSeg != null ? lastSeg.UltimaActuacionAsunto : null,
+                                      FechaUltimaActuacion = lastSeg != null ? lastSeg.UltimaActuacionFecha : (DateTime?)null,
+                                      UsuarioId = agente != null ? agente.Id : null,
+                                      Usuario = agente != null ? agente.FullName : "",
                                       Alertas = (from als in _context.AlertaSeguimientos
                                                  join al in _context.Alertas on als.AlertaId equals al.Id
                                                  join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
                                                  join sca in _context.TPSubCategoriaAlerta on al.SubcategoriaId equals sca.Id
-                                                 where als.SeguimientoId == s.Id
+                                                 where als.SeguimientoId == (lastSegId ?? 0)
                                                  select new Core.DTOs.AlertaSeguimientoDto { Nombre = sca.CategoriaAlertaId + "." + sca.Indicador, Id = ea.Id }).ToList()
                                   };
 
@@ -360,22 +367,31 @@ namespace Infra.Repositorios
                 if (!string.IsNullOrEmpty(entrada.Agente))
                     queryFiltro = queryFiltro.Where(x => x.UsuarioId == entrada.Agente);
 
-                if (!string.IsNullOrEmpty(entrada.Buscar))
-                    queryFiltro = queryFiltro.Where(x =>
-                    x.PrimerNombre.Contains(entrada.Buscar) ||
-                    x.SegundoNombre.Contains(entrada.Buscar) ||
-                    x.PrimerApellido.Contains(entrada.Buscar) ||
-                    x.SegundoApellido.Contains(entrada.Buscar) ||
-                    x.NoCaso.ToString().Contains(entrada.Buscar) ||
-                    x.NumeroIdentificacion.Contains(entrada.Buscar) ||
-                    x.Usuario.Contains(entrada.Buscar));
-
                 if (entrada.Orden == 1)
                     queryFiltro = queryFiltro.OrderByDescending(x => x.FechaUltimaActuacion);
                 else if (entrada.Orden == 2)
                     queryFiltro = queryFiltro.OrderBy(x => x.FechaUltimaActuacion);
 
-                var results = queryFiltro.ToList();
+                // BUG-LZ 2026-06-20: la projection con let/ternary no traduce a SQL cuando
+                // se combina con Where(Contains). Materializamos primero y aplicamos el
+                // filtro de busqueda en memoria.
+                var resultsAll = queryFiltro.ToList();
+
+                IEnumerable<SeguimientoDto> resultsFiltrados = resultsAll;
+                if (!string.IsNullOrEmpty(entrada.Buscar))
+                {
+                    var b = entrada.Buscar;
+                    resultsFiltrados = resultsAll.Where(x =>
+                        (x.PrimerNombre ?? "").Contains(b, StringComparison.OrdinalIgnoreCase) ||
+                        (x.SegundoNombre ?? "").Contains(b, StringComparison.OrdinalIgnoreCase) ||
+                        (x.PrimerApellido ?? "").Contains(b, StringComparison.OrdinalIgnoreCase) ||
+                        (x.SegundoApellido ?? "").Contains(b, StringComparison.OrdinalIgnoreCase) ||
+                        (x.NoCaso?.ToString() ?? "").Contains(b) ||
+                        (x.NumeroIdentificacion ?? "").Contains(b, StringComparison.OrdinalIgnoreCase) ||
+                        (x.Usuario ?? "").Contains(b, StringComparison.OrdinalIgnoreCase));
+                }
+
+                var results = resultsFiltrados.ToList();
 
                 if (results.Any())
                 {
@@ -395,7 +411,8 @@ namespace Infra.Repositorios
                             Estado = x.Estado.Nombre,
                             EstadoDescripcion = x.Estado.Descripcion,
                             EstadoColorBG = x.Estado.ColorBG,
-                            EstadoColorText = x.Estado.ColorText
+                            EstadoColorText = x.Estado.ColorText,
+                            IdSeguimiento = x.Id
                         }).ToList()
                     };
                 }

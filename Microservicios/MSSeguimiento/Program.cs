@@ -106,8 +106,19 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
 builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
 builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
+// SingletonJobFactory.NewJob resuelve por tipo concreto, no por IJob, asi que tambien
+// hay que registrar la clase como singleton accesible por su Type.
+builder.Services.AddSingleton<AsignacionAutomaticaJob>();
 
-var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
+// BUG-LZ 2026-06-20: la infraestructura Quartz estaba registrada pero ningun JobSchedule
+// se anyadia a DI -> IEnumerable<JobSchedule> llegaba vacio a QuartzHostedService y el
+// cron nunca corria. Default: cada noche 2am hora Colombia (America/Bogota).
+var cronAsignacion = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos")
+    ?? "0 0 2 * * ?";
+TimeZoneInfo tzBogota;
+try { tzBogota = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time"); }
+catch { try { tzBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota"); } catch { tzBogota = TimeZoneInfo.Utc; } }
+builder.Services.AddSingleton(new JobSchedule(typeof(AsignacionAutomaticaJob), cronAsignacion, tzBogota));
 
 builder.Services.AddHostedService<QuartzHostedService>();
 

@@ -37,6 +37,12 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
+        [HttpGet("GetNotificationSeguimiento/{seguimientoId}")]
+        public List<NotificacionResponse> GetNotificationsSeguimiento(long seguimientoId)
+        {
+            return notificacionRepo.GetNotificacionSeguimiento(seguimientoId);
+        }
+
         [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
         public async Task<int> GetNumeroNotificationsAsync(string agenteDestinoId)
         {

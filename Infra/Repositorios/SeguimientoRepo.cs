@@ -469,9 +469,33 @@ namespace Infra.Repositorios
                             SegundoNombre = n.SegundoNombre,
                             PrimerApellido = n.PrimerApellido,
                             SegundoApellido = n.SegundoApellido,
-                            FechaNotificacion = s.FechaSolicitud,
+                            FechaNotificacion = (from als in _context.AlertaSeguimientos
+                                                 join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
+                                                 where als.SeguimientoId == s.Id
+                                                 orderby na.FechaEnvio
+                                                 select (DateTime?)na.FechaEnvio).FirstOrDefault() ?? s.FechaSolicitud,
                             FechaSeguimiento = s.UltimaActuacionFecha,
                             Observaciones = s.ObservacionAgente,
+                            RespuestaEntidad = (from als in _context.AlertaSeguimientos
+                                                join ra in _context.RespuestasAlerta on als.Id equals ra.IdAlerta
+                                                where als.SeguimientoId == s.Id
+                                                orderby ra.DateCreated descending
+                                                select ra.Mensaje).FirstOrDefault()
+                                            ?? (from als in _context.AlertaSeguimientos
+                                                join n in _context.Notificacions on als.Id equals n.AlertaSeguimientoId
+                                                where als.SeguimientoId == s.Id
+                                                orderby n.FechaRespuesta descending
+                                                select n.RespuestaEntidad).FirstOrDefault(),
+                            FechaRespuesta = (from als in _context.AlertaSeguimientos
+                                              join ra in _context.RespuestasAlerta on als.Id equals ra.IdAlerta
+                                              where als.SeguimientoId == s.Id
+                                              orderby ra.DateCreated descending
+                                              select (DateTime?)ra.DateCreated).FirstOrDefault()
+                                          ?? (from als in _context.AlertaSeguimientos
+                                              join n in _context.Notificacions on als.Id equals n.AlertaSeguimientoId
+                                              where als.SeguimientoId == s.Id
+                                              orderby n.FechaRespuesta descending
+                                              select (DateTime?)n.FechaRespuesta).FirstOrDefault(),
                             EntidadAlerta = string.Join(", ", (from als in _context.AlertaSeguimientos
                                                                join na in _context.NotificacionesEntidad on als.Id equals na.AlertaSeguimientoId
                                                                join en in _context.TPEAPB on na.EntidadId equals en.Id
@@ -701,6 +725,8 @@ namespace Infra.Repositorios
                     NombreRechazo = request.NombreRechazo,
                     ParentescoRechazo = request.ParentescoRechazo,
                     RazonesRechazo = request.RazonesRechazo,
+                    ObservacionAgente = request.ObservacionAgente,
+                    ObservacionesSolicitante = request.ObservacionesSolicitante,
                     CreatedByUserId = "1"
                 };
                 _context.Seguimientos.Add(seguimiento);
@@ -759,24 +785,40 @@ namespace Infra.Repositorios
                         // momento). La fila del seguimiento anterior queda intacta como
                         // historial. Los listados que muestran "alertas vigentes" deben tomar
                         // la fila con Max(Id) por AlertaId.
-                        var existeAlerta = await _context.AlertaSeguimientos
-                            .AnyAsync(x => x.AlertaId == item.Id);
-                        if (existeAlerta)
+
+                        // BUG-LZ 2026-06-20: AlertaRepo.ConsultarAlertasUltimoSeguimiento
+                        // devuelve item.Id = EstadoAlertaId (1=IDENTIFICADA, 3=SIN RESOLVER)
+                        // y item.IdAlerta = SubcategoriaId. El bug historico era tratar item.Id
+                        // como AlertaId-base, lo que coincidia con la semilla 1 o 3 por azar.
+                        // Fix: usar item.IdAlerta (SubcategoriaId) y resolver el AlertaId-base
+                        // real del NNA. Si no existe (fantasma) se ignora.
+                        var subcatIdReq = item.IdAlerta ?? 0;
+                        if (subcatIdReq <= 0) continue;
+
+                        var alertaBaseDelNNA = await (from als in _context.AlertaSeguimientos
+                                                      join s in _context.Seguimientos on als.SeguimientoId equals s.Id
+                                                      join a in _context.Alertas on als.AlertaId equals a.Id
+                                                      where s.NNAId == seguimiento.NNAId
+                                                            && s.Id != seguimiento.Id
+                                                            && a.SubcategoriaId == subcatIdReq
+                                                      orderby als.AlertaId descending
+                                                      select als.AlertaId)
+                                                     .FirstOrDefaultAsync();
+                        if (alertaBaseDelNNA == 0) continue; // fantasma: el NNA nunca tuvo esta alerta
+
+                        var resuelta = item.Resuelta ?? false;
+                        var snapshot = new AlertaSeguimiento()
                         {
-                            var resuelta = item.Resuelta ?? false;
-                            var snapshot = new AlertaSeguimiento()
-                            {
-                                AlertaId = item.Id ?? 0,
-                                CreatedByUserId = "1",
-                                DateCreated = DateTime.Now,
-                                EstadoId = resuelta ? 4 : 3,
-                                SeguimientoId = seguimiento.Id,
-                                Observaciones = resuelta ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento",
-                                UltimaFechaSeguimiento = DateTime.Now
-                            };
-                            _context.AlertaSeguimientos.Add(snapshot);
-                            await _context.SaveChangesAsync();
-                        }
+                            AlertaId = alertaBaseDelNNA,
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now,
+                            EstadoId = resuelta ? 4 : 3,
+                            SeguimientoId = seguimiento.Id,
+                            Observaciones = resuelta ? "Alerta resuelta en seguimiento" : "Alerta sin resolver en seguimiento",
+                            UltimaFechaSeguimiento = DateTime.Now
+                        };
+                        _context.AlertaSeguimientos.Add(snapshot);
+                        await _context.SaveChangesAsync();
                     }
                 }
 

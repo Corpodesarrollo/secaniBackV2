@@ -12,6 +12,10 @@ namespace Core.Modelos
         public bool EnableSsl { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
+        // BUG-LZ 2026-06-20: con providers tipo SendGrid el UserName es literal "apikey",
+        // no un email. El remitente debe ser un email verificado (Single Sender). Separamos
+        // FromEmail del UserName SMTP. Si FromEmail es null se sigue usando UserName (Gmail).
+        public string? FromEmail { get; set; }
 
         public EmailConfiguration(string smtpServer, int port, bool enableSsl, string userName, string password)
         {
@@ -56,7 +60,7 @@ namespace Core.Modelos
             {
                 using MailMessage email = new()
                 {
-                    From = new(UserName),
+                    From = new(!string.IsNullOrWhiteSpace(FromEmail) ? FromEmail : UserName),
                     Subject = subject,
                     Body = body,
                     IsBodyHtml = true,

@@ -21,5 +21,12 @@ namespace Core.Response
         public string? EmailConCopia { get; set; }
         public string? Firma { get; set; }
         public string? ArchivoAdjunto { get; set; }
+        // BUG-LZ 2026-06-20: adjunto que subio la EAPB al responder (vive en tabla
+        // Adjuntos con Tipo=Respuesta y Referencia=respuestaAlerta.IdAlerta).
+        public string? ArchivoAdjuntoRespuesta { get; set; }
+        // BUG-LZ 2026-06-20: PDF autogenerado del oficio (membrete ICBF, datos NNA,
+        // alerta, cierre, firma) que el agente envia al EAPB. Vive en tabla Adjuntos
+        // con Tipo=Notificacion y Referencia=NotificacionEntidad.Id.
+        public string? ArchivoOficio { get; set; }
     }
 }

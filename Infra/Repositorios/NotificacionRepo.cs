@@ -51,7 +51,12 @@ namespace Infra.Repositories
                 if (emailConfigurations.Count > 0)
                 {
                     var emailConfiguration = emailConfigurations[0];
-                    fromMail = emailConfiguration.UserName;
+                    // BUG-LZ 2026-06-20: SendGrid usa UserName="apikey". El remitente real
+                    // debe venir de FromEmail (Single Sender verificado). Fallback a UserName
+                    // si FromEmail no esta seteado (compatibilidad Gmail).
+                    fromMail = !string.IsNullOrWhiteSpace(emailConfiguration.FromEmail)
+                        ? emailConfiguration.FromEmail
+                        : emailConfiguration.UserName;
                     clienteSmtp = new SmtpClient(emailConfiguration.SmtpServer)
                     {
                         Port = 587,
@@ -662,10 +667,16 @@ namespace Infra.Repositories
                             Timeout = 15000 // BUG-LZ-056: default 100s cuelga UI; falla rápida con try/catch wrapper
                         };
 
+                        // BUG-LZ 2026-06-20: usar FromEmail (si esta) para evitar mandar
+                        // con "apikey" cuando el provider es SendGrid.
+                        var remitente = !string.IsNullOrWhiteSpace(emailConfiguration.FromEmail)
+                            ? emailConfiguration.FromEmail
+                            : emailConfiguration.UserName;
+
                         // Creación del mensaje de correo
                         MailMessage mensaje = new()
                         {
-                            From = new MailAddress(emailConfiguration.UserName),
+                            From = new MailAddress(remitente),
                             Subject = request.Asunto,
                             IsBodyHtml = true, // Cambiar a true si el cuerpo del correo es HTML
                         };
@@ -718,13 +729,23 @@ namespace Infra.Repositories
                         var fileByte = pdfBytes.ToArray();
                         //await _storageService.UploadFileAsync(fileByte, $"OficioNotificacion-{request.IdNotificacion}.pdf");
 
+                        // BUG-LZ 2026-06-20: capturar nombre real con el que se subio a storage
+                        // para persistirlo en NotificacionesEntidad y que el modal pueda mostrarlo
+                        // y descargarlo.
+                        string? nombreAdjuntoStorage = null;
                         if (request.Adjunto != null)
                         {
-                            // Agregar el archivo adjunto adicional
-                            var nombreAdjunto = $"AdjuntoEmail-{Guid.NewGuid()}.pdf";
+                            // Nombre estable basado en IdNotificacion + FileName original para
+                            // que la descarga desde el modal funcione (antes era guid aleatorio
+                            // que no quedaba referenciado en NotificacionesEntidad).
+                            var safeName = string.IsNullOrWhiteSpace(request.Adjunto.FileName)
+                                ? $"adjunto-{Guid.NewGuid()}.pdf"
+                                : request.Adjunto.FileName;
+                            nombreAdjuntoStorage = $"AdjuntoEmail-{request.IdNotificacion}-{safeName}";
+
                             var adjuntoEmail = new Adjuntos
                             {
-                                NombreArchivo = nombreAdjunto,
+                                NombreArchivo = nombreAdjuntoStorage,
                                 Tipo = TipoAdjunto.Notificacion,
                                 Referencia = request.IdNotificacion
                             };
@@ -732,15 +753,11 @@ namespace Infra.Repositories
                             await _context.SaveChangesAsync();
 
                             // Guardar el archivo adjunto adicional en el almacenamiento
-                            await _storageService.UploadFileAsync(request.Adjunto.File, nombreAdjunto);
+                            await _storageService.UploadFileAsync(request.Adjunto.File, nombreAdjuntoStorage);
 
                             using var ms2 = new MemoryStream(request.Adjunto.File);
                             Attachment adjunto2 = new(ms2, $"{request.Adjunto.FileName}", MediaTypeNames.Application.Octet);
                             mensaje.Attachments.Add(adjunto2);
-
-                            // Guardar el archivo en el almacenamiento
-                            var fileByte2 = request.Adjunto.File;
-                            //await _storageService.UploadFileAsync(fileByte2, $"Adjunto-{request.IdNotificacion}.pdf");
 
                             // BUG-LZ-056: SendMailAsync no bloquea hilo; Timeout=15s en SmtpClient evita cuelgue
                             await clienteSmtp.SendMailAsync(mensaje);
@@ -748,6 +765,26 @@ namespace Infra.Repositories
                         else
                         {
                             await clienteSmtp.SendMailAsync(mensaje);
+                        }
+
+                        // BUG-LZ 2026-06-20: persistir destinatarios y nombre del adjunto en
+                        // NotificacionesEntidad para que el modal "Ver Notificacion" en
+                        // /consultar-alertas muestre los datos reales del envio (antes solo se
+                        // guardaba asunto/mensaje/cierre -> Con copia y Adjunto siempre vacios).
+                        var neRow = await _context.NotificacionesEntidad
+                            .FirstOrDefaultAsync(x => x.Id == request.IdNotificacion);
+                        if (neRow != null)
+                        {
+                            neRow.EmailPara = request.Para != null && request.Para.Length > 0
+                                ? string.Join("; ", request.Para)
+                                : neRow.EmailPara;
+                            neRow.EmailCC = request.ConCopia != null && request.ConCopia.Length > 0
+                                ? string.Join("; ", request.ConCopia)
+                                : neRow.EmailCC;
+                            if (!string.IsNullOrWhiteSpace(nombreAdjuntoStorage))
+                                neRow.ArchivoAdjunto = nombreAdjuntoStorage;
+                            _context.NotificacionesEntidad.Update(neRow);
+                            await _context.SaveChangesAsync();
                         }
                     }
 
@@ -966,9 +1003,28 @@ namespace Infra.Repositories
             // "RespuestasAlerta" (vinculada por NotificacionEntidadId). AlertaId aqui es la
             // PK de AlertaSeguimiento. Se prioriza el flujo nuevo y se mantiene fallback al
             // legacy para alertas viejas.
+            // BUG-LZ 2026-06-20: Diseno B inserta un snapshot nuevo de AlertaSeguimiento en
+            // cada seguimiento (incluso para alertas heredadas). Las notis se persistieron
+            // contra el snapshot original; al ver la heredada del seguimiento siguiente, el
+            // filtro AlertaSeguimientoId == X devolvia vacio. Resolvemos al AlertaId-base
+            // del snapshot consultado y traemos las notis de cualquier snapshot que
+            // comparta ese AlertaId-base.
+            var alertaBaseId = (from snap in _context.AlertaSeguimientos
+                                where snap.Id == AlertaId
+                                select (long?)snap.AlertaId).FirstOrDefault();
+
+            var snapshotIdsMismaAlertaBase = alertaBaseId == null
+                ? new List<long> { AlertaId }
+                : _context.AlertaSeguimientos
+                    .Where(x => x.AlertaId == alertaBaseId.Value)
+                    .Select(x => x.Id)
+                    .ToList();
+
             var nuevas = (from ne in _context.NotificacionesEntidad
                           join ent in _context.TPEAPB on ne.EntidadId equals ent.Id
-                          where ne.AlertaSeguimientoId == AlertaId && !ne.IsDeleted
+                          where ne.AlertaSeguimientoId != null
+                                && snapshotIdsMismaAlertaBase.Contains(ne.AlertaSeguimientoId.Value)
+                                && !ne.IsDeleted
                           select new NotificacionResponse
                           {
                               EntidadNotificada = ent.Nombre,
@@ -980,12 +1036,46 @@ namespace Infra.Repositories
                               EmailConCopia = ne.EmailCC,
                               Firma = ne.Cierre,
                               ArchivoAdjunto = ne.ArchivoAdjunto,
+                              // BUG-LZ 2026-06-20: GestionarAlertasRepo.EnviarRespuesta solo setea
+                              // RespuestasAlerta.IdAlerta (= AlertaSeguimiento.Id), no NotificacionEntidadId.
+                              // El match por NotificacionEntidadId fallaba y la respuesta quedaba null.
+                              // Aceptamos cualquier respuesta cuyo IdAlerta apunte al mismo snapshot
+                              // que la notificacion (ne.AlertaSeguimientoId), o que tenga
+                              // NotificacionEntidadId == ne.Id para flujos que si lo setean.
                               Respuesta = (from r in _context.RespuestasAlerta
-                                           where r.NotificacionEntidadId == ne.Id && !r.IsDeleted
+                                           where (r.NotificacionEntidadId == ne.Id
+                                                  || (ne.AlertaSeguimientoId != null && r.IdAlerta == ne.AlertaSeguimientoId.Value))
+                                                 && !r.IsDeleted
                                            orderby r.DateCreated descending
-                                           select r.Respuesta).FirstOrDefault(),
+                                           // BUG-LZ 2026-06-20: respuestas legacy persistieron solo en Mensaje
+                                           // (la columna Respuesta quedaba null). Fallback a Mensaje.
+                                           select r.Respuesta ?? r.Mensaje).FirstOrDefault(),
+                              // BUG-LZ 2026-06-20: el adjunto de la respuesta vive en tabla Adjuntos
+                              // con Tipo=Respuesta (1) y Referencia = RespuestasAlerta.IdAlerta
+                              // (= AlertaSeguimiento.Id). Lo exponemos para que el modal "Ver respuesta"
+                              // muestre el archivo descargable.
+                              ArchivoAdjuntoRespuesta = (from r in _context.RespuestasAlerta
+                                                         join ad in _context.Adjuntos on r.IdAlerta equals ad.Referencia
+                                                         where (r.NotificacionEntidadId == ne.Id
+                                                                || (ne.AlertaSeguimientoId != null && r.IdAlerta == ne.AlertaSeguimientoId.Value))
+                                                               && !r.IsDeleted
+                                                               && ad.Tipo == TipoAdjunto.Respuesta && !ad.IsDeleted
+                                                         orderby r.DateCreated descending
+                                                         select ad.NombreArchivo).FirstOrDefault(),
+                              // BUG-LZ 2026-06-20: PDF del oficio formal autogenerado por
+                              // EnviarOficioNotificacion. Adjuntos con Tipo=Notificacion (2) y
+                              // Referencia=ne.Id. Nombre tipico: "OficioNotificacion-{guid}.pdf".
+                              ArchivoOficio = (from ad in _context.Adjuntos
+                                               where ad.Referencia == ne.Id
+                                                     && ad.Tipo == TipoAdjunto.Notificacion
+                                                     && !ad.IsDeleted
+                                                     && ad.NombreArchivo.StartsWith("OficioNotificacion-")
+                                               orderby ad.Id descending
+                                               select ad.NombreArchivo).FirstOrDefault(),
                               FechaRespuesta = (from r in _context.RespuestasAlerta
-                                                where r.NotificacionEntidadId == ne.Id && !r.IsDeleted
+                                                where (r.NotificacionEntidadId == ne.Id
+                                                       || (ne.AlertaSeguimientoId != null && r.IdAlerta == ne.AlertaSeguimientoId.Value))
+                                                      && !r.IsDeleted
                                                 orderby r.DateCreated descending
                                                 select (DateTime?)r.DateCreated).FirstOrDefault()
                           }).ToList();
@@ -1004,6 +1094,22 @@ namespace Infra.Repositories
                         Respuesta = un.RespuestaEntidad,
                         AsuntoNotificacion = un.Asunto
                     }).ToList();
+        }
+
+        // Notificaciones de TODAS las alertas (snapshots) del seguimiento. Usado por el
+        // historial del seguimiento para abrir el modal "Ver respuesta" con datos reales.
+        public List<NotificacionResponse> GetNotificacionSeguimiento(long SeguimientoId)
+        {
+            var alertaIds = _context.AlertaSeguimientos
+                .Where(x => x.SeguimientoId == SeguimientoId)
+                .Select(x => x.Id)
+                .ToList();
+            var all = new List<NotificacionResponse>();
+            foreach (var id in alertaIds)
+            {
+                all.AddRange(GetNotificacionAlerta(id));
+            }
+            return all;
         }
 
 

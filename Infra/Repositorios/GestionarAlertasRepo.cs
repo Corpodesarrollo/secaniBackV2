@@ -27,10 +27,15 @@ namespace Infra.Repositorios
                 }
             }
 
-            var query = from s in db.Seguimientos
-                        join n in db.NNAs on s.NNAId equals n.Id
-                        group s by s.NNAId into g
-                        select new { Id = g.Max(x => x.Id) };
+            // BUG-LZ 2026-06-20: antes se tomaba el ultimo seguimiento por NNA, lo que
+            // ocultaba alertas de seguimientos anteriores aunque hubieran sido notificadas
+            // a la EAPB y siguieran sin resolver. Repro: agente crea S1+alerta tipo 2
+            // notificada -> EAPB ve la 2. Agente crea S2+alerta tipo 7 notificada -> EAPB
+            // solo veia la 7. Ahora se toma el ultimo snapshot POR ALERTA (AlertaId-base)
+            // para que cada alerta unica del NNA aparezca con su estado vigente.
+            var ultimoSnapshotPorAlerta = from als in db.AlertaSeguimientos
+                                          group als by als.AlertaId into g
+                                          select g.Max(x => x.Id);
 
             // HU SECANI-RQ07-HU03 (extension): "mi entidad" incluye dos casos:
             //   (a) NNAs cuya EAPB del NNA es la del usuario logueado
@@ -38,18 +43,34 @@ namespace Infra.Repositorios
             //       aunque la EAPB del NNA sea otra. Caso real: LUCAS pertenece a UNIMEC
             //       pero recibio notificacion dirigida a Colsubsidio -> Colsubsidio debe
             //       poder gestionarla.
+            // BUG-LZ 2026-06-20: las notis se persisten contra el AlertaSeguimientoId
+            // (snapshot puntual). Como Design B re-snapshota por seguimiento, el snapshot
+            // vigente puede ser otro distinto al que se notifico. Hay que traducir las
+            // notis a AlertaId-base para que el filtro siga aplicando despues del re-snapshot.
             var alertasNotificadasAEntidad = eapbFiltro == null
                 ? null
-                : db.NotificacionesEntidad
-                    .Where(ne => ne.EntidadId == eapbFiltro && !ne.IsDeleted)
-                    .Select(ne => ne.AlertaSeguimientoId ?? 0);
+                : (from ne in db.NotificacionesEntidad
+                   join asnap in db.AlertaSeguimientos on ne.AlertaSeguimientoId equals asnap.Id
+                   where ne.EntidadId == eapbFiltro && !ne.IsDeleted
+                   select asnap.AlertaId).Distinct();
 
-            var alertasBase = (from q in query
+            // BUG-LZ 2026-06-20: per HU SECANI-RQ07-HU04, una alerta solo recibe una
+            // respuesta y eso la "cierra". Calculamos el set de AlertaId-base que ya
+            // tienen al menos una respuesta para que el front oculte el boton "Enviar
+            // respuesta". RespuestasAlerta vive por NotificacionEntidad; resolvemos
+            // hacia el AlertaId-base via AlertaSeguimientos (snapshot puede cambiar
+            // entre seguimientos, igual que el filtro de notis).
+            // RespuestasAlerta.IdAlerta = AlertaSeguimiento.Id (snapshot puntual, no la
+            // alerta-base). Resolvemos via AlertaSeguimientos para obtener el AlertaId-base.
+            var alertasConRespuesta = (from r in db.RespuestasAlerta
+                                       join asnap in db.AlertaSeguimientos on r.IdAlerta equals asnap.Id
+                                       where !r.IsDeleted
+                                       select asnap.AlertaId).Distinct().ToHashSet();
 
-                               join s in db.Seguimientos on q.Id equals s.Id
+            var alertasBase = (from snapId in ultimoSnapshotPorAlerta
+                               join als in db.AlertaSeguimientos on snapId equals als.Id
+                               join s in db.Seguimientos on als.SeguimientoId equals s.Id
                                join n in db.NNAs on s.NNAId equals n.Id
-
-                               join als in db.AlertaSeguimientos on s.Id equals als.SeguimientoId
                                join a in db.Alertas on als.AlertaId equals a.Id
                                join ea in db.TPEstadoAlerta on als.EstadoId equals ea.Id
                                join sca in db.TPSubCategoriaAlerta on a.SubcategoriaId equals sca.Id
@@ -58,10 +79,11 @@ namespace Infra.Repositorios
                                from eapb in eapbGroup.DefaultIfEmpty()
                                where eapbFiltro == null
                                      || n.EAPBId == eapbFiltro
-                                     || alertasNotificadasAEntidad!.Contains(als.Id)
+                                     || alertasNotificadasAEntidad!.Contains(als.AlertaId)
                                select new GestionarAlertasDto
                                {
                                    IdAlerta = als.Id,
+                                   AlertaIdBase = als.AlertaId,
                                    IdEstadoAlerta = ea.Id,
                                    IdAlertaSeguimiento = als.Id,
                                    IdSeguimiento = s.Id,
@@ -91,6 +113,8 @@ namespace Infra.Repositorios
                     3 or 5 => "danger",
                     _ => "secondary"
                 };
+
+                item.TieneRespuesta = alertasConRespuesta.Contains(item.AlertaIdBase);
             });
 
             return alertasBase;
@@ -132,6 +156,10 @@ namespace Infra.Repositorios
                     ConCopia = dto.Cc != null ? string.Join(",", dto.Cc) : null,
                     Asunto = dto.Asunto,
                     Mensaje = dto.Mensaje,
+                    // BUG-LZ 2026-06-20: la columna Respuesta nunca se poblaba (DTO solo trae
+                    // Mensaje) y GetNotificacionAlerta filtra por Respuesta -> modal vacio.
+                    // Copiamos Mensaje en Respuesta para que el modal lo muestre.
+                    Respuesta = dto.Mensaje,
                     Firma = dto.Firma
                 };
 
@@ -140,7 +168,12 @@ namespace Infra.Repositorios
 
                 if (dto.Archivo != null)
                 {
-                    var nombreArchivo = $"AdjuntoRespuesta-{Guid.NewGuid()}.{dto.Archivo.FileExtension}";
+                    // BUG-LZ 2026-06-20: antes se perdia el FileName original (solo guid + ext).
+                    // El modal mostraba "pdf" como nombre. Preservar FileName para UI legible.
+                    var safeName = !string.IsNullOrWhiteSpace(dto.Archivo.FileName)
+                        ? dto.Archivo.FileName
+                        : $"adjunto-{Guid.NewGuid()}.{dto.Archivo.FileExtension}";
+                    var nombreArchivo = $"AdjuntoRespuesta-{respuestaAlerta.IdAlerta}-{safeName}";
                     var archivoAdjunto = new Adjuntos
                     {
                         NombreArchivo = nombreArchivo,
