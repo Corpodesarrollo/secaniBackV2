@@ -142,6 +142,15 @@ namespace MSSeguimiento.Api.Controllers
             return Ok(response);
         }
 
+        // HU SECANI-RQ06-HU01: historico de asignaciones/reasignaciones del NNA para
+        // mostrar en pestaña Trazabilidad/Seguimiento del detalle.
+        [HttpGet("HistorialAsignacionesNNA/{nnaId}")]
+        public async Task<ActionResult> HistorialAsignacionesNNA(long nnaId)
+        {
+            var response = await seguimientoRepo.GetHistorialAsignacionesNNA(nnaId);
+            return Ok(response);
+        }
+
         [HttpGet("GetSeguimientosNNA/{idNNA}")]
         public List<SeguimientoNNAResponse> GetSeguimientosNNA(int idNNA)
         {

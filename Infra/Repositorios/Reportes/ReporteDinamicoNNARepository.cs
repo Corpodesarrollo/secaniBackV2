@@ -34,8 +34,8 @@ namespace Infra.Repositorios.Reportes
 
             if (seguimiento == null)
                 return string.Empty;
-            var estado = await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default);
-
+            // Estado Seguimiento (no OrigenReporte).
+            var estado = _context.TPEstadoSeguimiento.FirstOrDefault(e => e.Id == seguimiento.EstadoId);
             return estado?.Nombre ?? string.Empty;
         }
 
@@ -48,8 +48,10 @@ namespace Infra.Repositorios.Reportes
 
         public async Task<List<ReporteDinamicoNNADTO>> GetReporteDinamicoNNAAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken)
         {
+            // Periodo inclusivo
+            var fin = fechaFin.Date.AddDays(1).AddTicks(-1);
             var nnas = await _context.NNAs
-                .Where(nna => nna.FechaIngresoEstrategia >= fechaInicio && nna.FechaIngresoEstrategia <= fechaFin)
+                .Where(nna => nna.FechaIngresoEstrategia >= fechaInicio && nna.FechaIngresoEstrategia <= fin)
                 .ToListAsync(cancellationToken);
 
             var reporte = new List<ReporteDinamicoNNADTO>();
@@ -192,15 +194,26 @@ namespace Infra.Repositorios.Reportes
                                 nna.TipoRegimenSSId,
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
-                        EPSId = nna.EPSId,
-                        EPS = nna.EPSId.HasValue
-                            ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.EPSId, cancellationToken))?.FirstOrDefault()?.Nombre
+                        EPSId = nna.EAPBId,
+                        EPS = nna.EAPBId.HasValue
+                            ? (_context.TPEAPB.FirstOrDefault(e => e.Id == nna.EAPBId.Value)?.Nombre ?? string.Empty)
                             : string.Empty,
                         IPSId = nna.IPSId,
                         IPS = nna.IPSId.HasValue
-                            ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.IPSId, cancellationToken))?.FirstOrDefault()?.Nombre
+                            ? (_context.TPIPS.FirstOrDefault(i => i.Id == nna.IPSId.Value)?.Nombre ?? string.Empty)
                             : string.Empty,
-                        CuidadorNombres = nna.CuidadorNombres,
+                        // "Contacto" en el reporte = nombre del contacto de la EAPB (ContactoEntidades),
+                        // fallback al cuidador del NNA si la EAPB no tiene contacto.
+                        CuidadorNombres = (nna.EAPBId.HasValue
+                            ? (from c in _context.ContactoEntidades
+                               join e in _context.TPEAPB on c.EntidadId equals e.Codigo
+                               where e.Id == nna.EAPBId.Value
+                                     && !c.IsDeleted
+                                     && (c.Activo == null || c.Activo == true)
+                                     && !string.IsNullOrEmpty(c.Nombres)
+                               orderby c.Id
+                               select c.Nombres).FirstOrDefault()
+                            : null) ?? nna.CuidadorNombres,
                         CuidadorParentescoId = nna.CuidadorParentescoId,
                         CuidadorParentesco = nna.CuidadorParentescoId != null
                             ? (await _tablaParametricaService.GetBynomTREFStringCodigo(
@@ -208,8 +221,16 @@ namespace Infra.Repositorios.Reportes
                                 nna.CuidadorParentescoId.ToString(),
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
-                        CuidadorEmail = nna.CuidadorEmail,
-                        CuidadorTelefono = nna.CuidadorTelefono,
+                        CuidadorEmail = _context.ContactoNNAs
+                            .Where(c => c.NNAId == nna.Id && !c.IsDeleted && !string.IsNullOrEmpty(c.Email))
+                            .OrderBy(c => c.Id)
+                            .Select(c => c.Email)
+                            .FirstOrDefault() ?? nna.CuidadorEmail,
+                        CuidadorTelefono = _context.ContactoNNAs
+                            .Where(c => c.NNAId == nna.Id && !c.IsDeleted && !string.IsNullOrEmpty(c.Telefonos))
+                            .OrderBy(c => c.Id)
+                            .Select(c => c.Telefonos)
+                            .FirstOrDefault() ?? nna.CuidadorTelefono,
                         TipoSeguimiento = await GetLastSeguimiento(nna.Id)
                     };
 

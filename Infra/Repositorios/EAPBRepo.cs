@@ -45,8 +45,12 @@ namespace Infra.Repositorios
 
         public async Task<TPEAPBDto?> GetEAPBByCode(string code)
         {
+            // Cargue SIVIGILA puede enviar NIT (ej. 830003564) en cod_ase en lugar del
+            // Codigo SISPRO. Buscar por Codigo primero, fallback a NIT para no perder el match.
             var query = GetSelect();
             var result = await query.Where(x => x.Codigo.Equals(code)).FirstOrDefaultAsync();
+            if (result == null && !string.IsNullOrWhiteSpace(code) && long.TryParse(code, out var nitNum))
+                result = await query.Where(x => x.NIT == nitNum).FirstOrDefaultAsync();
             return result;
         }
 

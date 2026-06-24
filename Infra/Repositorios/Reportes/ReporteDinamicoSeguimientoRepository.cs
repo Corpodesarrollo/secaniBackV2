@@ -43,8 +43,10 @@ namespace Infra.Repositorios.Reportes
 
         public async Task<List<ReporteDinamicoSeguimientoDTO>> GetReporteDinamicoSeguimientoAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken)
         {
+            // Periodo inclusivo
+            var fin = fechaFin.Date.AddDays(1).AddTicks(-1);
             var seguimientos = await _context.Seguimientos
-                .Where(item => item.FechaSeguimiento >= fechaInicio && item.FechaSeguimiento <= fechaFin)
+                .Where(item => item.FechaSeguimiento >= fechaInicio && item.FechaSeguimiento <= fin)
                 .ToListAsync(cancellationToken);
 
             var reporte = new List<ReporteDinamicoSeguimientoDTO>();
@@ -61,11 +63,12 @@ namespace Infra.Repositorios.Reportes
                         //Seguimiento
                         SeguimientoId = item.Id,
                         FechaSeguimiento = item.FechaSeguimiento,
-                        ObservacionesSolicitante = item.ObservacionesSolicitante,
-                        ObservacionAgente = item.ObservacionAgente,
+                        ObservacionesSolicitante = StripHtml(item.ObservacionesSolicitante),
+                        ObservacionAgente = StripHtml(item.ObservacionAgente),
                         EstadoId = item.EstadoId,
-                        Estado = (await _origenReporteService.GetByIdAsync(item.EstadoId, default))?.Nombre ?? string.Empty,
-                        TipoSeguimiento = (seguimiento == null) ? string.Empty : (await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default))?.Nombre ?? string.Empty,
+                        // Estado seguimiento — TPEstadoSeguimiento, no OrigenReporte
+                        Estado = _context.TPEstadoSeguimiento.FirstOrDefault(e => e.Id == item.EstadoId)?.Nombre ?? string.Empty,
+                        TipoSeguimiento = (seguimiento == null) ? string.Empty : (_context.TPEstadoSeguimiento.FirstOrDefault(e => e.Id == seguimiento.EstadoId)?.Nombre ?? string.Empty),
                         UltimaActuacionAsunto = (seguimiento == null) ? string.Empty : seguimiento.UltimaActuacionAsunto ?? string.Empty,
                         //NNA
                         NNAId = nna.Id,
@@ -93,18 +96,20 @@ namespace Infra.Repositorios.Reportes
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
                         EAPBId = nna.EAPBId,
-                        //EAPB = !string.IsNullOrEmpty(nna.EAPBId)
-                        //    ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.EAPBId, cancellationToken))?.FirstOrDefault()?.Nombre
-                        //    : string.Empty,
+                        EAPB = nna.EAPBId.HasValue
+                            ? (_context.TPEAPB.FirstOrDefault(e => e.Id == nna.EAPBId.Value)?.Nombre ?? string.Empty)
+                            : string.Empty,
                         FechaConsultaDiagnostico = nna.FechaConsultaDiagnostico,
                         FechaDiagnostico = nna.FechaDiagnostico,
                         MotivoNoDiagnosticoId = nna.MotivoNoDiagnosticoId,
-                        MotivoNoDiagnostico = "",
+                        MotivoNoDiagnostico = nna.MotivoNoDiagnosticoId.HasValue
+                            ? (_context.TPRazonesSinDiagnostico.FirstOrDefault(r => r.Id == nna.MotivoNoDiagnosticoId.Value && !r.IsDeleted)?.Nombre ?? string.Empty)
+                            : string.Empty,
                         MotivoNoDiagnosticoOtro = nna.MotivoNoDiagnosticoOtro,
                         FechaInicioTratamiento = nna.FechaInicioTratamiento,
                         IPSId = nna.IPSId,
                         IPS = nna.IPSId.HasValue
-                            ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.IPSId, cancellationToken))?.FirstOrDefault()?.Nombre
+                            ? (_context.TPIPS.FirstOrDefault(i => i.Id == nna.IPSId.Value)?.Nombre ?? string.Empty)
                             : string.Empty,
                         Recaida = nna.Recaida,
                         CantidadRecaidas = nna.CantidadRecaidas,
@@ -140,7 +145,17 @@ namespace Infra.Repositorios.Reportes
                         TrasladoTieneCapacidadEconomica = nna.TrasladoTieneCapacidadEconomica,
                         TrasladoEAPBSuministroApoyo = nna.TrasladoEAPBSuministroApoyo,
                         TrasladosServiciosdeApoyoOportunos = nna.TrasladosServiciosdeApoyoOportunos,
-                        CuidadorNombres = nna.CuidadorNombres,
+                        // Contacto: nombre del contacto de la EAPB, fallback al cuidador del NNA.
+                        CuidadorNombres = (nna.EAPBId.HasValue
+                            ? (from c in _context.ContactoEntidades
+                               join e in _context.TPEAPB on c.EntidadId equals e.Codigo
+                               where e.Id == nna.EAPBId.Value
+                                     && !c.IsDeleted
+                                     && (c.Activo == null || c.Activo == true)
+                                     && !string.IsNullOrEmpty(c.Nombres)
+                               orderby c.Id
+                               select c.Nombres).FirstOrDefault()
+                            : null) ?? nna.CuidadorNombres,
                         CuidadorParentescoId = nna.CuidadorParentescoId,
                         CuidadorParentesco = nna.CuidadorParentescoId != null
                             ? (await _tablaParametricaService.GetBynomTREFStringCodigo(
@@ -148,8 +163,16 @@ namespace Infra.Repositorios.Reportes
                                 nna.CuidadorParentescoId.ToString(),
                                 cancellationToken))?.FirstOrDefault()?.Nombre
                             : string.Empty,
-                        CuidadorEmail = nna.CuidadorEmail,
-                        CuidadorTelefono = nna.CuidadorTelefono,
+                        CuidadorEmail = _context.ContactoNNAs
+                            .Where(c => c.NNAId == nna.Id && !c.IsDeleted && !string.IsNullOrEmpty(c.Email))
+                            .OrderBy(c => c.Id)
+                            .Select(c => c.Email)
+                            .FirstOrDefault() ?? nna.CuidadorEmail,
+                        CuidadorTelefono = _context.ContactoNNAs
+                            .Where(c => c.NNAId == nna.Id && !c.IsDeleted && !string.IsNullOrEmpty(c.Telefonos))
+                            .OrderBy(c => c.Id)
+                            .Select(c => c.Telefonos)
+                            .FirstOrDefault() ?? nna.CuidadorTelefono,
                     };
                     reporte.Add(dto);
                 }
@@ -879,6 +902,14 @@ namespace Infra.Repositorios.Reportes
             if (dias < 0)
                 dias += DateTime.DaysInMonth(fechaActual.Year, fechaActual.Month);
             return $"{edad} años {meses} meses {dias} días";
+        }
+
+        // Quill editor guarda HTML; reportes requieren texto plano.
+        private static string StripHtml(string? html)
+        {
+            if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+            var sinTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", string.Empty);
+            return System.Net.WebUtility.HtmlDecode(sinTags).Trim();
         }
     }
 }

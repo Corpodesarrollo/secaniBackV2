@@ -1,4 +1,4 @@
-﻿using Core.DTOs;
+using Core.DTOs;
 using Core.DTOs.Reportes;
 using Core.Modelos;
 
@@ -10,5 +10,6 @@ namespace Core.Interfaces.Services.Reportes
         Task<List<ReporteInconsistenciaPersonaDTO>> GetReporteInconsistenciasPersonaAsync();
         Task<ReporteInconsistenciaPersonaDTO> AddReporteInconsistenciaAsync(NNADto menor);
         Task<InconsistenciaReporte> GetReporteInconsistenciasAsync(DateTime fechaInicio, DateTime fechaFin);
+        Task<bool> MarcarResueltoAsync(long reporteId, string? userId);
     }
 }

@@ -1,7 +1,8 @@
-﻿namespace Core.DTOs.Reportes
+namespace Core.DTOs.Reportes
 {
     public class ReporteInconsistenciaPersonaDTO
     {
+        public long Id { get; set; }
         public long NNAId { get; set; }
         public DateTime FechaReporte { get; set; }
         public string TipoIdentificacionSIVIGILA { get; set; }
@@ -31,5 +32,12 @@
         public DateTime? FechaDefuncion { get; set; }
         public DateTime? FechaDefuncionSIVIGILA { get; set; }
         public bool FechaDefuncionInconsistente { get; set; } = false;
+
+        public string? FuenteDatos { get; set; } = "SIVIGILA";
+        public string? ValidacionTipo { get; set; } = "Automatica";
+        public bool Resuelto { get; set; } = false;
+        public DateTime? FechaResolucion { get; set; }
+        public string? ResueltoPorUserId { get; set; }
+        public bool EsReincidente { get; set; } = false;
     }
 }

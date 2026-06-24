@@ -75,10 +75,15 @@ namespace Infra.Repositorios
                        SegundoNombre = n.SegundoNombre,
                        PrimerApellido = n.PrimerApellido,
                        SegundoApellido = n.SegundoApellido,
-                       FechaNotificacion = n.FechaNotificacionSIVIGILA,
+                       // FechaNotif = MinValue (0001-01-01) viene de cargas masivas sin fec_not
+                       // valido. Convertir a null para que el front no muestre "01/01/0001".
+                       FechaNotificacion = n.FechaNotificacionSIVIGILA == DateTime.MinValue
+                           ? null
+                           : n.FechaNotificacionSIVIGILA,
                        FechaSeguimiento = s.FechaSeguimiento,
                        Estado = new TPEstadoNNADto()
                        {
+                           Id = e.Id,
                            Nombre = e.Nombre,
                            Descripcion = e.Descripcion,
                            ColorBG = e.ColorBG,
@@ -86,6 +91,11 @@ namespace Infra.Repositorios
                        },
                        AsuntoUltimaActuacion = s.UltimaActuacionAsunto,
                        FechaUltimaActuacion = s.UltimaActuacionFecha,
+                       Usuario = (from ua in _context.UsuarioAsignados
+                                  join u in _context.Users on ua.UsuarioId equals u.Id
+                                  where ua.SeguimientoId == s.Id && ua.Activo
+                                  orderby ua.Id descending
+                                  select u.FullName).FirstOrDefault(),
                        Alertas = (from als in _context.AlertaSeguimientos
                                   join a in _context.Alertas on als.AlertaId equals a.Id
                                   join ea in _context.TPEstadoAlerta on als.EstadoId equals ea.Id
@@ -297,11 +307,27 @@ namespace Infra.Repositorios
 
         public int RepoSeguimientoActualizacionUsuario(PutSeguimientoActualizacionUsuarioRequest request)
         {
-            // BUG-LZ-087: tomar las asignaciones ACTIVAS (puede haber mas de una por reasignaciones
-            // previas, ver BUG-LZ-084). Antes FirstOrDefault sin filtro Activo podia desactivar una
-            // inactiva y dejar la activa, asi el seguimiento seguia en el calendario del agente origen.
+            // BUG-LZ 2026-06-22: la pantalla de asignacion agrupa por NNA (1 fila = 1 NNA, ultimo
+            // seguimiento). Reasignar solo el seguimiento.Id seleccionado dejaba los OTROS
+            // seguimientos del mismo NNA asignados al agente anterior -> ambos agentes terminaban
+            // viendo el NNA en su /gestion/seguimientos. Reasignar TODOS los seguimientos del NNA
+            // (cualquier seguimiento que tenga al menos una asignacion activa).
+            var nnaId = _context.Seguimientos
+                .Where(s => s.Id == request.Id)
+                .Select(s => (long?)s.NNAId)
+                .FirstOrDefault();
+
+            if (nnaId == null)
+                return -1;
+
+            var seguimientosDelNNA = _context.Seguimientos
+                .Where(s => s.NNAId == nnaId.Value)
+                .Select(s => s.Id)
+                .ToList();
+
+            // BUG-LZ-087: tomar TODAS las asignaciones ACTIVAS de TODOS los seguimientos del NNA.
             var asignacionesActivas = _context.UsuarioAsignados
-                .Where(s => s.SeguimientoId == request.Id && s.Activo)
+                .Where(s => seguimientosDelNNA.Contains(s.SeguimientoId) && s.Activo)
                 .OrderByDescending(s => s.FechaAsignacion)
                 .ToList();
 
@@ -325,45 +351,51 @@ namespace Infra.Repositorios
                 return -2;
             }
 
-            // Desactivar TODAS las asignaciones activas del seguimiento (evita que el agente origen
-            // lo siga viendo en su calendario si habia duplicados activos).
-            if (asignacionesActivas.Count > 0)
+            // Desactivar TODAS las asignaciones activas del NNA (todos sus seguimientos).
+            foreach (var a in asignacionesActivas)
             {
-                foreach (var a in asignacionesActivas)
-                {
-                    a.Activo = false;
-                    a.Observaciones = request.ObservacionesSolicitante!;
-                }
-            }
-            else
-            {
-                UsuarioOriginal.Activo = false;
-                UsuarioOriginal.Observaciones = request.ObservacionesSolicitante!;
+                a.Activo = false;
+                a.Observaciones = request.ObservacionesSolicitante!;
             }
 
-            // BUG-LZ-087: actualizar tambien Seguimiento.UsuarioId para que las vistas que filtran
-            // por el agente asignado (GetSelect) reflejen al nuevo agente.
-            var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == request.Id);
-            if (seguimiento != null)
-                seguimiento.UsuarioId = request.UsuarioId;
+            // Actualizar Seguimiento.UsuarioId de TODOS los seguimientos del NNA para que las
+            // vistas que filtran por agente (GetSelect) reflejen al nuevo agente.
+            var seguimientos = _context.Seguimientos
+                .Where(s => seguimientosDelNNA.Contains(s.Id))
+                .ToList();
+            foreach (var seg in seguimientos)
+                seg.UsuarioId = request.UsuarioId;
 
-            // Guardar los cambios en el seguimiento original
             _context.SaveChanges();
 
             try
             {
-                var nuevoUsuarioAsignado = new UsuarioAsignado
-                {
-                    UsuarioId = request.UsuarioId,
-                    SeguimientoId = UsuarioOriginal.SeguimientoId,
-                    FechaAsignacion = UsuarioOriginal.FechaAsignacion,
-                    Activo = true,
-                    DateCreated = DateTime.Now,
-                    CreatedByUserId = UsuarioOriginal.CreatedByUserId,
-                    Observaciones = "Creado por Reasignación"
-                };
+                // Crear nueva asignacion activa por cada seguimiento del NNA (espejo de las
+                // desactivadas). Asi el nuevo agente recibe TODOS los seguimientos del NNA.
+                var seguimientosConAsignacionPrevia = asignacionesActivas
+                    .Select(a => a.SeguimientoId)
+                    .Distinct()
+                    .ToList();
 
-                _context.UsuarioAsignados.Add(nuevoUsuarioAsignado);
+                foreach (var segId in seguimientosConAsignacionPrevia)
+                {
+                    var original = asignacionesActivas.First(a => a.SeguimientoId == segId);
+                    var nuevoUsuarioAsignado = new UsuarioAsignado
+                    {
+                        UsuarioId = request.UsuarioId,
+                        SeguimientoId = segId,
+                        FechaAsignacion = original.FechaAsignacion,
+                        Activo = true,
+                        DateCreated = DateTime.Now,
+                        // HU SECANI-RQ06-HU01: registrar el coordinador que ejecuta la reasignacion
+                        // como creador (cae a "Sistema" si el front no lo envia).
+                        CreatedByUserId = !string.IsNullOrEmpty(request.CoordinadorId)
+                            ? request.CoordinadorId
+                            : original.CreatedByUserId,
+                        Observaciones = "Creado por Reasignación"
+                    };
+                    _context.UsuarioAsignados.Add(nuevoUsuarioAsignado);
+                }
                 _context.SaveChanges();
             }
             catch (Exception)
@@ -453,6 +485,37 @@ namespace Infra.Repositorios
                 _context.Seguimientos.Update(seguimiento);
                 _context.SaveChanges();
             }
+        }
+
+        // HU SECANI-RQ06-HU01: trazabilidad de asignaciones/reasignaciones del NNA.
+        public async Task<List<HistorialAsignacionDto>> GetHistorialAsignacionesNNA(long nnaId)
+        {
+            var query = from ua in _context.UsuarioAsignados
+                        join s in _context.Seguimientos on ua.SeguimientoId equals s.Id
+                        join agente in _context.Users on ua.UsuarioId equals agente.Id into agenteJoin
+                        from agente in agenteJoin.DefaultIfEmpty()
+                        join creador in _context.Users on ua.CreatedByUserId equals creador.Id into creadorJoin
+                        from creador in creadorJoin.DefaultIfEmpty()
+                        where s.NNAId == nnaId
+                        orderby ua.Id descending
+                        select new HistorialAsignacionDto
+                        {
+                            Id = ua.Id,
+                            SeguimientoId = ua.SeguimientoId,
+                            // HU SECANI-RQ06-HU01: la fecha mostrada debe ser cuando se HIZO la
+                            // asignacion (DateCreated), no la fecha futura del seguimiento agendado
+                            // que vive en ua.FechaAsignacion.
+                            FechaAsignacion = ua.DateCreated,
+                            AgenteAsignadoId = ua.UsuarioId,
+                            AgenteAsignadoNombre = agente != null ? agente.FullName : null,
+                            CreadoPorId = ua.CreatedByUserId,
+                            CreadoPorNombre = creador != null
+                                ? creador.FullName
+                                : (ua.CreatedByUserId == "Sistema" ? "Sistema" : ua.CreatedByUserId),
+                            Motivo = ua.Observaciones,
+                            Activo = ua.Activo
+                        };
+            return await query.ToListAsync();
         }
 
         public async Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA)
@@ -709,6 +772,26 @@ namespace Infra.Repositorios
                     _context.Seguimientos.Update(ultimoSeguimiento);
                 }
 
+                // Regla negocio: 1 NNA = 1 seguimiento Activo. Desactivar TODOS los previos
+                // del NNA antes de crear el nuevo. Las alertas heredadas se snapshotean abajo
+                // contra el nuevo seguimiento (Design B existente).
+                var previosActivos = await _context.Seguimientos
+                    .Where(s => s.NNAId == request.NNAId && s.Activo)
+                    .ToListAsync();
+                var previosActivosIds = previosActivos.Select(p => p.Id).ToList();
+                foreach (var prev in previosActivos)
+                {
+                    prev.Activo = false;
+                }
+                // Espejo: si Seguimiento.Activo=false, sus UsuarioAsignados tambien deben quedar inactivos.
+                var uaPrevios = await _context.UsuarioAsignados
+                    .Where(ua => previosActivosIds.Contains(ua.SeguimientoId) && ua.Activo)
+                    .ToListAsync();
+                foreach (var ua in uaPrevios)
+                {
+                    ua.Activo = false;
+                }
+
                 var seguimiento = new Seguimiento()
                 {
                     NNAId = request.NNAId,
@@ -727,6 +810,7 @@ namespace Infra.Repositorios
                     RazonesRechazo = request.RazonesRechazo,
                     ObservacionAgente = request.ObservacionAgente,
                     ObservacionesSolicitante = request.ObservacionesSolicitante,
+                    Activo = true,
                     CreatedByUserId = "1"
                 };
                 _context.Seguimientos.Add(seguimiento);
@@ -772,6 +856,40 @@ namespace Infra.Repositorios
                         _context.AlertaSeguimientos.Add(alertaSeguimiento);
                         await _context.SaveChangesAsync();
                     }
+                }
+
+                // Herencia garantizada: snapshot de alertas vigentes (IDENTIFICADA=1 o SIN_RESOLVER=3)
+                // del seguimiento ANTERIOR del NNA que NO vengan en request.alertasPendientes.
+                // Asi, aunque el front no envie explicitamente la lista, las alertas no se pierden.
+                if (ultimoSeguimiento != null)
+                {
+                    var alertaIdsRequest = (request.alertasPendientes ?? Array.Empty<AlertaSeguimientoDto>())
+                        .Select(a => a.IdAlerta ?? 0)
+                        .Where(x => x > 0)
+                        .ToHashSet();
+
+                    var snapshotsPreviosActivos = await (from als in _context.AlertaSeguimientos
+                                                         join a in _context.Alertas on als.AlertaId equals a.Id
+                                                         where als.SeguimientoId == ultimoSeguimiento.Id
+                                                               && (als.EstadoId == 1 || als.EstadoId == 3)
+                                                         select new { als.AlertaId, a.SubcategoriaId }).ToListAsync();
+
+                    foreach (var prev in snapshotsPreviosActivos)
+                    {
+                        if (alertaIdsRequest.Contains(prev.SubcategoriaId)) continue; // el front la maneja
+                        _context.AlertaSeguimientos.Add(new AlertaSeguimiento
+                        {
+                            AlertaId = prev.AlertaId,
+                            CreatedByUserId = "1",
+                            DateCreated = DateTime.Now,
+                            EstadoId = 3, // SIN_RESOLVER por defecto
+                            SeguimientoId = seguimiento.Id,
+                            Observaciones = "Alerta heredada automaticamente",
+                            UltimaFechaSeguimiento = DateTime.Now
+                        });
+                    }
+                    if (snapshotsPreviosActivos.Any(p => !alertaIdsRequest.Contains(p.SubcategoriaId)))
+                        await _context.SaveChangesAsync();
                 }
 
                 if (request.alertasPendientes != null)

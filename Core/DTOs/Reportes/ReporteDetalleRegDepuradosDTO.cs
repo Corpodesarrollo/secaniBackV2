@@ -56,6 +56,9 @@
         public string? CuidadorEmail { get; set; }
         public string? CuidadorTelefono { get; set; }
         public string Agente { get; set; } //calculado
+        // Estado del NNA (TPEstadoNNA.Nombre) — diferente a EstadoIngresoEstrategia.
+        public int? EstadoNNAId { get; set; }
+        public string? Estado { get; set; } //calculado
 
     }
 }

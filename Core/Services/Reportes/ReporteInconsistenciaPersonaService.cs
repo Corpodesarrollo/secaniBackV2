@@ -91,6 +91,13 @@ namespace Core.Services.Reportes
                 }
                 // BUG-LZ-004: si no hay inconsistencias o persona no encontrada, no insertar
                 if (reporte == null) return null;
+
+                // KPI 8 — reincidencia: marcar si NNA ya tuvo reporte previo
+                var previos = await _repository.ContarReportesPreviosNNAAsync(menor.Id);
+                reporte.EsReincidente = previos > 0;
+                reporte.FuenteDatos = "SIVIGILA";
+                reporte.ValidacionTipo = "Automatica";
+
                 var reporteNNA = reporte.Adapt<ReporteInconsistenciaPersona>();
                 await _repository.AddReporteInconsistenciaAsync(reporteNNA);
                 return reporte;
@@ -138,6 +145,11 @@ namespace Core.Services.Reportes
         public async Task<InconsistenciaReporte> GetReporteInconsistenciasAsync(DateTime fechaInicio, DateTime fechaFin)
         {
             return await _repository.GetReporteInconsistenciasAsync(fechaInicio, fechaFin);
+        }
+
+        public async Task<bool> MarcarResueltoAsync(long reporteId, string? userId)
+        {
+            return await _repository.MarcarResueltoAsync(reporteId, userId);
         }
     }
 }

@@ -63,6 +63,24 @@ namespace MSNNA.Api.Controllers
         /// </summary>
         /// <param name="id">ID del reporte de inconsistencia.</param>
         /// <returns>Reporte de inconsistencia correspondiente al ID.</returns>
+        /// <summary>
+        /// Marcar reporte de inconsistencia como resuelto (KPI 6 + KPI 7 Manual).
+        /// </summary>
+        [HttpPut("{id}/Resolver")]
+        public async Task<IActionResult> MarcarResuelto(long id, [FromQuery] string? userId)
+        {
+            try
+            {
+                var ok = await _reporteService.MarcarResueltoAsync(id, userId);
+                if (!ok) return NotFound(new { message = $"Reporte {id} no encontrado." });
+                return Ok(new { message = "Resuelto" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReporteInconsistencia(long id)
         {

@@ -155,9 +155,20 @@ namespace Infra.Repositorios
                 var usuarioInicialId = usuario?.Id ?? usuarioOrigen!.Id;
 
                 // BUG-LZ-083: el solicitante es el usuario autenticado (Cuidador) que pide el
-                // seguimiento. GetSeguimientosCuidador lista por SolicitanteId == AspNetUsers.Id,
-                // asi que debe guardarse el Id del solicitante, no el del agente (usuarioOrigen).
-                var solicitante = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+                // seguimiento. GetSeguimientosCuidador lista por SolicitanteId == AspNetUsers.Id.
+                // Preferimos el data.UsuarioId que el front envia (xUser.id del Cuidador logueado)
+                // porque el lookup por Alias del JWT no siempre resuelve bien en QA -> caia al agente.
+                string? solicitanteId = null;
+                if (!string.IsNullOrWhiteSpace(data.UsuarioId))
+                {
+                    var existe = await _context.Users.AnyAsync(u => u.Id == data.UsuarioId);
+                    if (existe) solicitanteId = data.UsuarioId;
+                }
+                if (solicitanteId == null)
+                {
+                    var solicitante = await _context.Users.FirstOrDefaultAsync(u => u.Alias == user.Alias);
+                    solicitanteId = solicitante?.Id;
+                }
 
                 var seguimiento = new SetSeguimientoRequest()
                 {
@@ -166,7 +177,7 @@ namespace Infra.Repositorios
                     EstadoId = 1,
                     ContactoNNAId = contacto != null ? contacto.Id : 0,
                     UsuarioId = usuarioInicialId,
-                    SolicitanteId = solicitante?.Id ?? usuarioOrigen?.Id,
+                    SolicitanteId = solicitanteId ?? usuarioOrigen?.Id,
                     FechaSolicitud = DateTime.Now,
                     TieneDiagnosticos = true,
                     UltimaActuacionFecha = DateTime.Now

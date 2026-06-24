@@ -997,14 +997,25 @@ namespace Infra.Repositorios
                             ResidenciaOrigenBarrio = d.DepuracionProtocoloRequest.bar_ver,
                             ResidenciaOrigenDireccion = d.DepuracionProtocoloRequest.dir_res,
                             MunicipioNacimientoId = NormalizeCodMun(d.DepuracionProtocoloRequest.cod_dpto_r, d.DepuracionProtocoloRequest.cod_mun_r),
-                            TipoRegimenSSId = d.DepuracionProtocoloRequest.tip_ss switch
+                            TipoRegimenSSId = (d.DepuracionProtocoloRequest.tip_ss ?? "").Trim().ToUpper() switch
                             {
+                                // Codigos por letra (estandar SIVIGILA tradicional)
                                 "C" => "2",
                                 "S" => "1",
                                 "P" => "4",
                                 "E" => "3",
                                 "N" => "5",
                                 "I" => "6",
+                                // Codigos numericos (variantes SIVIGILA actuales).
+                                // 1=Subsidiado, 2=Contributivo, 3=Especial, 4=Particular,
+                                // 5=No asegurado, 6=Indeterminado.
+                                "1" => "1",
+                                "2" => "2",
+                                "3" => "3",
+                                "4" => "4",
+                                "5" => "5",
+                                "6" => "6",
+                                _ => null,
                             },
                             EtniaId = d.DepuracionProtocoloRequest.per_etn,
                             ResidenciaOrigenEstratoId = d.DepuracionProtocoloRequest.estrato,
@@ -1208,6 +1219,46 @@ namespace Infra.Repositorios
 
                 _context.ReporteDepuracion.AddRange(reporte);
                 await _context.SaveChangesAsync();
+
+                // HU RQ12-HU02: persistir detalle por NNA (TipoRegistro) para que el endpoint
+                // ReporteDetalleRegDepurados pueda listar los NNAs procesados por cada cargue.
+                var detalles = new List<ReporteDepuracionDetalle>();
+                foreach (var n in insertNNA)
+                    detalles.Add(new ReporteDepuracionDetalle { IdReporteDepuracion = reporte.Id, IdNNA = n.Id, TipoRegistro = (int)TipoRegistro.Nuevo });
+                foreach (var n in updateNNA)
+                {
+                    var tipo = (n.Recaida == true)
+                        ? (int)TipoRegistro.Recaida
+                        : (int)TipoRegistro.Duplicado;
+                    detalles.Add(new ReporteDepuracionDetalle { IdReporteDepuracion = reporte.Id, IdNNA = n.Id, TipoRegistro = tipo });
+                }
+                // Duplicados sin recaida/segunda-neoplasia van a depuracionManual (no a updateNNA).
+                // Lookup IdNNA existente por num_ide para registrarlos en el detalle como Duplicado.
+                if (depuracionManual.Count > 0)
+                {
+                    var numIdes = depuracionManual
+                        .Select(x => x.DepuracionProtocoloRequest?.num_ide)
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .Distinct()
+                        .ToList();
+                    var nnasExistentes = await _context.NNAs
+                        .Where(n => numIdes.Contains(n.NumeroIdentificacion))
+                        .Select(n => new { n.Id, n.NumeroIdentificacion })
+                        .ToListAsync();
+                    foreach (var d in depuracionManual)
+                    {
+                        var numIde = d.DepuracionProtocoloRequest?.num_ide;
+                        if (string.IsNullOrEmpty(numIde)) continue;
+                        var nna = nnasExistentes.FirstOrDefault(x => x.NumeroIdentificacion == numIde);
+                        if (nna == null) continue;
+                        detalles.Add(new ReporteDepuracionDetalle { IdReporteDepuracion = reporte.Id, IdNNA = nna.Id, TipoRegistro = (int)TipoRegistro.Duplicado });
+                    }
+                }
+                if (detalles.Count > 0)
+                {
+                    _context.ReporteDepuracionDetalle.AddRange(detalles);
+                    await _context.SaveChangesAsync();
+                }
 
                 await GenerarSeguimientos();
                 var asignados = await _seguimientoRepo.AsignacionAutomatica();
@@ -1531,15 +1582,20 @@ namespace Infra.Repositorios
                 using (var stream = new MemoryStream())
                 {
                     file.CopyToAsync(stream);
-                    var formatosValidos = new[] { ".xls", ".xlsx", ".csv" };
+                    var formatosValidos = new[] { ".xlsx", ".csv" };
                     var extension = Path.GetExtension(file.FileName);
                     if (string.IsNullOrEmpty(extension))
-                        throw new ArgumentException("El archivo no tiene una extensión válida. Solo se permiten archivos .xls, .xlsx o .csv.");
+                        throw new ArgumentException("El archivo no tiene una extensión válida. Solo se permiten archivos .xlsx o .csv.");
+
+                    // Formato .xls (Excel 97-2003 BIFF) no soportado por ClosedXML. Mensaje claro
+                    // para que el usuario re-guarde como .xlsx desde Excel.
+                    if (extension.ToLower() == ".xls")
+                        throw new ArgumentException("El formato .xls (Excel 97-2003) no es compatible. Abra el archivo en Excel y guarde como .xlsx antes de cargarlo.");
 
                     if (!formatosValidos.Contains(extension.ToLower()))
-                        throw new ArgumentException("El formato del archivo no es válido. Solo se permiten archivos .xls, .xlsx o .csv.");
+                        throw new ArgumentException("El formato del archivo no es válido. Solo se permiten archivos .xlsx o .csv.");
 
-                    if (extension.ToLower() == ".xls" || extension.ToLower() == ".xlsx")
+                    if (extension.ToLower() == ".xlsx")
                     {
                         using var workbook = new XLWorkbook(stream);
                         var worksheet = workbook.Worksheet(1); // Selecciona la primera hoja

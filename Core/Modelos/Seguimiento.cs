@@ -23,6 +23,9 @@ namespace Core.Modelos
         public string? NombreRechazo { get; set; }
         public string? ParentescoRechazo { get; set; }
         public string? RazonesRechazo { get; set; }
+        // Regla negocio: 1 NNA = 1 seguimiento Activo. Al crear uno nuevo, los previos quedan
+        // Activo=false. Heredan alertas en AlertaSeguimientos (snapshot Design B).
+        public bool Activo { get; set; } = true;
     }
 }
 

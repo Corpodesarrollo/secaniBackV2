@@ -9,6 +9,6 @@ namespace Core.Interfaces.Services.Reportes
 {
     public interface IReporteDinamicoEAPBService
     {
-        Task<List<ReporteDinamicoEAPBDTO>> GetReporteDinamicoEAPBAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken);
+        Task<List<ReporteDinamicoEAPBDTO>> GetReporteDinamicoEAPBAsync(DateTime fechaInicio, DateTime fechaFin, int? eapbId, string? departamentoId, CancellationToken cancellationToken);
     }
 }

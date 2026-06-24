@@ -34,8 +34,14 @@ namespace Infra.Repositorios.Reportes
 
         public async Task<List<ReporteDinamicoAlertasDTO>> GetReporteDinamicoAlertasAsync(DateTime FechaInicio, DateTime FechaFin, CancellationToken cancellationToken)
         {
+            // Periodo inclusivo
+            var fin = FechaFin.Date.AddDays(1).AddTicks(-1);
+
             List<AlertaSeguimientoDTO> alertas = (from al in _context.AlertaSeguimientos
                                                   join alerta in _context.Alertas on al.AlertaId equals alerta.Id
+                                                  where al.UltimaFechaSeguimiento.HasValue
+                                                     && al.UltimaFechaSeguimiento.Value >= FechaInicio
+                                                     && al.UltimaFechaSeguimiento.Value <= fin
                                                   select new AlertaSeguimientoDTO()
                                                   {
                                                       AlertaSeguimientoId = al.Id,
@@ -44,7 +50,7 @@ namespace Infra.Repositorios.Reportes
                                                       NombreAlerta = alerta.Descripcion,
                                                       Observaciones = al.Observaciones,
                                                       SeguimientoId = al.SeguimientoId,
-                                                      UltimaFechaSeguimiento = (DateTime)al.UltimaFechaSeguimiento
+                                                      UltimaFechaSeguimiento = al.UltimaFechaSeguimiento!.Value
                                                   }).ToList();
 
             var reporte = new List<ReporteDinamicoAlertasDTO>();
@@ -56,7 +62,8 @@ namespace Infra.Repositorios.Reportes
                     var seguimiento = _context.Seguimientos.FirstOrDefault(s => s.Id == item.SeguimientoId);
                     var nna = seguimiento != null ? _context.NNAs.FirstOrDefault(n => n.Id == seguimiento.NNAId) : null;
                     var alerta = await _context.Alertas.FirstOrDefaultAsync(a => a.Id == item.AlertaId, cancellationToken);
-                    var subAlerta = (alerta != null) ? (await _subCategoriaAlertaService.GetByIdAsync(alerta.SubcategoriaId, default)) : null;
+                    // Lookup directo: el campo en TPSubCategoriaAlerta se llama SubCategoriaAlerta, no Nombre.
+                    var subAlertaModel = (alerta != null) ? _context.TPSubCategoriaAlerta.FirstOrDefault(s => s.Id == alerta.SubcategoriaId && !s.IsDeleted) : null;
                     var notificacion = ObtenerUltimaNotificacion(item.AlertaSeguimientoId);
                     int tratamientoCausasInasistenciaId = nna != null && int.TryParse(nna.TratamientoCausasInasistenciaId?.ToString(), out int id) ? id : 0;
 
@@ -67,7 +74,7 @@ namespace Infra.Repositorios.Reportes
                             //Seguimiento
                             FechaNotificacion = item.UltimaFechaSeguimiento,
                             FechaResolucion = (item.EstadoId == 6) ? (DateTime?)item.UltimaFechaSeguimiento : null,
-                            Notificaciones = _context.Notificacions.Count(n => n.AlertaSeguimientoId == item.AlertaSeguimientoId),
+                            Notificaciones = _context.NotificacionesEntidad.Count(n => n.AlertaSeguimientoId == item.AlertaSeguimientoId && (n.IsDeleted == false || n.IsDeleted == null)),
 
                             //NNA
                             NNAId = nna.Id,
@@ -106,28 +113,33 @@ namespace Infra.Repositorios.Reportes
                             TrasladosQuienAsumioCostosTraslado = nna.TrasladosQuienAsumioCostosTraslado,
                             TrasladosQuienAsumioCostosVivienda = nna.TrasladosQuienAsumioCostosVivienda,
                             TratamientoHaDejadodeAsistir = nna.TratamientoHaDejadodeAsistir,
-                            TipoSeguimiento = (seguimiento == null) ? string.Empty : (await _origenReporteService.GetByIdAsync(seguimiento.EstadoId, default))?.Nombre ?? string.Empty,
+                            TipoSeguimiento = (seguimiento == null) ? string.Empty : (_context.TPEstadoSeguimiento.FirstOrDefault(e => e.Id == seguimiento.EstadoId)?.Nombre ?? string.Empty),
                             Agente = await GetAgente(seguimiento.UsuarioId),
-                            EPSId = nna.EPSId,
-                            EPS = nna.EPSId.HasValue
-                                ? (await _tablaParametricaService.GetBynomTREFCodigo("CodigoEAPByNit", nna.EPSId, cancellationToken))?.FirstOrDefault()?.Nombre
+                            EPSId = nna.EAPBId,
+                            EPS = nna.EAPBId.HasValue
+                                ? (_context.TPEAPB.FirstOrDefault(e => e.Id == nna.EAPBId.Value)?.Nombre ?? string.Empty)
                                 : string.Empty,
-                            CuidadorEmail = nna.CuidadorEmail,
+                            // Email del contacto del NNA (ContactoNNAs.Email); fallback a NNAs.CuidadorEmail
+                            CuidadorEmail = _context.ContactoNNAs
+                                .Where(c => c.NNAId == nna.Id && !c.IsDeleted && !string.IsNullOrEmpty(c.Email))
+                                .OrderBy(c => c.Id)
+                                .Select(c => c.Email)
+                                .FirstOrDefault() ?? nna.CuidadorEmail,
                             TratamientoCuantoTiemposinAsistir = nna.TratamientoCuantoTiemposinAsistir,
                             TratamientoUnidadMedidaIdTiempoId = nna.TratamientoUnidadMedidaIdTiempoId,
                             TratamientoUnidadMedidaTiempo = nna.TratamientoUnidadMedidaIdTiempoId, //pendiente de la tabla parametrica
                             TratamientoCausasInasistenciaId = tratamientoCausasInasistenciaId.ToString(),
                             TratamientoCausasInasistencia = (await _causaInasistenciaReporteService.GetByIdAsync(tratamientoCausasInasistenciaId, default))?.Nombre ?? string.Empty,
                             CategoriaAlerta = (alerta != null) ? alerta.Descripcion ?? string.Empty : string.Empty,
-                            SubCategoriaAlerta = (subAlerta != null) ? subAlerta.Nombre ?? string.Empty : string.Empty,
+                            SubCategoriaAlerta = subAlertaModel?.SubCategoriaAlerta ?? string.Empty,
                             EstadoAlerta = (alerta == null) ? string.Empty : (await _estadoAlertaService.GetByIdAsync(item.EstadoId, default))?.Nombre ?? string.Empty,
                             TratamientoEstudiaActualmente = nna.TratamientoEstudiaActualmente,
                             TratamientoHaDejadodeAsistirColegio = nna.TratamientoHaDejadodeAsistirColegio,
                             TratamientoTiempoInasistenciaColegio = nna.TratamientoTiempoInasistenciaColegio,
                             TratamientoTiempoInasistenciaUnidadMedidaId = nna.TratamientoTiempoInasistenciaUnidadMedidaId,
                             TratamientoTiempoInasistenciaUnidadMedida = nna.TratamientoTiempoInasistenciaUnidadMedidaId, //pendiente de la tabla parametrica
-                            RespuestaEntidad = (notificacion == null) ? string.Empty : notificacion.RespuestaEntidad ?? string.Empty,
-                            FechaRespuesta = notificacion?.FechaRespuesta ?? DateTime.MinValue,
+                            RespuestaEntidad = ObtenerRespuestaTexto(item.AlertaSeguimientoId),
+                            FechaRespuesta = ObtenerRespuestaFecha(item.AlertaSeguimientoId),
                             TratamientoHaSidoInformadoClaramente = nna.TratamientoHaSidoInformadoClaramente,
                             TrasladosHaSolicitadoApoyoFundacion = nna.TrasladosHaSolicitadoApoyoFundacion,
                             TrasladosNombreFundacion = nna.TrasladosNombreFundacion,
@@ -156,6 +168,34 @@ namespace Infra.Repositorios.Reportes
             // Toma el primer registro
 
             return ultimaNotificacion;
+        }
+
+        // Respuesta entidad real: RespuestasAlerta.IdAlerta == AlertaSeguimientoId
+        // (NotificacionEntidadId=0 en datos reales, no se usa)
+        private string ObtenerRespuestaTexto(long alertaSeguimientoId)
+        {
+            var ultima = _context.RespuestasAlerta
+                .Where(r => r.IdAlerta == alertaSeguimientoId && (r.IsDeleted == false || r.IsDeleted == null))
+                .OrderByDescending(r => r.DateCreated)
+                .FirstOrDefault();
+            return StripHtml(ultima?.Respuesta);
+        }
+
+        private DateTime? ObtenerRespuestaFecha(long alertaSeguimientoId)
+        {
+            var ultima = _context.RespuestasAlerta
+                .Where(r => r.IdAlerta == alertaSeguimientoId && (r.IsDeleted == false || r.IsDeleted == null))
+                .OrderByDescending(r => r.DateCreated)
+                .FirstOrDefault();
+            return ultima?.DateCreated;
+        }
+
+        // Quill editor guarda HTML; el reporte requiere texto plano.
+        private static string StripHtml(string? html)
+        {
+            if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+            var sinTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", string.Empty);
+            return System.Net.WebUtility.HtmlDecode(sinTags).Trim();
         }
 
         private async Task<string> GetAgente(string? usuarioId)

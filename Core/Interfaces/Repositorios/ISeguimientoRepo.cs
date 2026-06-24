@@ -33,6 +33,7 @@ namespace Core.Interfaces.Repositorios
         Task<long> GetCntSeguimientoByNNA(long id);
         Task<long> SetSeguimiento(SetSeguimientoRequest request);
         Task<SeguimientoDto[]> GetSeguimientosByNNA(int idNNA);
+        Task<List<HistorialAsignacionDto>> GetHistorialAsignacionesNNA(long nnaId);
         Task<List<UsuarioAsignado>> AsignacionAutomatica((long, string, string)? seguimientoDef = null, ApplicationUser? user = null);
         Task<SeguimientoDto[]> GetSeguimientosEstados(string id);
         Task<SeguimientoDto[]> GetSeguimientosCuidador(string id);

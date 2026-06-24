@@ -105,13 +105,16 @@ namespace Infra.Repositorios.Llamadas
 
         public async Task<List<ResumenLlamadasDTO>> GetResumenLlamadas(DateTime fechaInicio, DateTime fechaFin)
         {
+            // Periodo inclusivo
+            var fin = fechaFin.Date.AddDays(1).AddTicks(-1);
+
             var tiposFalla = await _context.TPTipoFallaLLamada
                 .Select(t => new { t.Id, t.Nombre })
                 .ToListAsync();
 
             // Obtener los intentos agrupados por Agente y Fecha
             var resumenLlamadas = await _context.ResumenLlamadas
-                .Where(r => r.FechaIntento >= fechaInicio && r.FechaIntento <= fechaFin)
+                .Where(r => r.FechaIntento >= fechaInicio && r.FechaIntento <= fin)
                 .Include(r => r.DetallesFallas)
                 .ThenInclude(df => df.TipoFalla)
                 .OrderBy(r => r.AgenteId)

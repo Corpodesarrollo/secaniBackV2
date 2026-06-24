@@ -32,7 +32,16 @@ namespace MSNNA.Api.Controllers
         {
             public List<TelefonoDto> Telefonos { get; set; } = new();
             public List<CorreoDto> Correos { get; set; } = new();
+            public string? Celular { get; set; }
         }
+
+        public sealed class CelularRequest
+        {
+            public string UserId { get; set; } = string.Empty;
+            public string Celular { get; set; } = string.Empty;
+        }
+
+        private const string TIPO_CELULAR_PRINCIPAL = "celular_principal";
 
         [HttpGet("ContactosAdicionales/{userId}")]
         public async Task<ActionResult<ContactosResponse>> Get(string userId)
@@ -52,10 +61,46 @@ namespace MSNNA.Api.Controllers
                     .ToList(),
                 Correos = registros.Where(c => c.Tipo == "correo")
                     .Select(c => new CorreoDto { Correo = c.Valor })
-                    .ToList()
+                    .ToList(),
+                Celular = registros.Where(c => c.Tipo == TIPO_CELULAR_PRINCIPAL)
+                    .Select(c => c.Valor)
+                    .FirstOrDefault()
             };
 
             return Ok(respuesta);
+        }
+
+        // Update celular principal (1 sola fila Tipo=celular_principal, sobreescribe la anterior).
+        [HttpPost("Celular")]
+        public async Task<ActionResult> ActualizarCelular([FromBody] CelularRequest req)
+        {
+            if (req is null || string.IsNullOrWhiteSpace(req.UserId))
+                return BadRequest("UserId es obligatorio.");
+            if (string.IsNullOrWhiteSpace(req.Celular) || !System.Text.RegularExpressions.Regex.IsMatch(req.Celular, "^[0-9]{7,10}$"))
+                return BadRequest("Celular debe tener entre 7 y 10 digitos.");
+
+            var actuales = await context.ContactosAdicionalesCuidador
+                .Where(c => c.UserId == req.UserId && c.Tipo == TIPO_CELULAR_PRINCIPAL && !c.IsDeleted)
+                .ToListAsync();
+
+            foreach (var a in actuales)
+            {
+                a.IsDeleted = true;
+                a.DateDeleted = DateTime.UtcNow;
+                a.DeletedByUserId = req.UserId;
+            }
+
+            context.ContactosAdicionalesCuidador.Add(new ContactoAdicionalCuidador
+            {
+                UserId = req.UserId,
+                Tipo = TIPO_CELULAR_PRINCIPAL,
+                Valor = req.Celular.Trim(),
+                CreatedByUserId = req.UserId,
+                DateCreated = DateTime.UtcNow
+            });
+
+            await context.SaveChangesAsync();
+            return Ok(new { estado = true, celular = req.Celular.Trim() });
         }
 
         [HttpPost("ContactosAdicionales/Guardar")]

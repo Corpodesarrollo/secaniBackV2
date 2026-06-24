@@ -16,12 +16,21 @@ namespace Infra.Repositorios.Reportes
             _tablaParametricaService = tablaParametricaService;
         }
 
-        public async Task<List<ReporteDinamicoEAPBDTO>> GetReporteDinamicoEAPBAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken)
+        public async Task<List<ReporteDinamicoEAPBDTO>> GetReporteDinamicoEAPBAsync(DateTime fechaInicio, DateTime fechaFin, int? eapbId, string? departamentoId, CancellationToken cancellationToken)
         {
             try
             {
-                // Proyección de solo los campos necesarios de NNAs
-                var nnas = await _context.NNAs
+                // Proyección de solo los campos necesarios de NNAs (filtros opcionales)
+                var query = _context.NNAs.AsQueryable();
+                if (eapbId.HasValue && eapbId.Value > 0)
+                    query = query.Where(n => n.EAPBId == eapbId.Value);
+                if (!string.IsNullOrWhiteSpace(departamentoId))
+                    query = query.Where(n => n.DepartamentoTratamientoId == departamentoId
+                                          || (n.ResidenciaActualMunicipioId != null
+                                              && n.ResidenciaActualMunicipioId.Length >= 2
+                                              && n.ResidenciaActualMunicipioId.Substring(0, 2) == departamentoId));
+
+                var nnas = await query
                     .Select(nna => new
                     {
                         nna.Id,
@@ -30,10 +39,12 @@ namespace Infra.Repositorios.Reportes
                     })
                     .ToListAsync(cancellationToken);
 
+                // Periodo inclusivo
+                var fin = fechaFin.Date.AddDays(1).AddTicks(-1);
                 var seguimientos = await _context.Seguimientos
                     .Where(s => s.FechaSeguimiento.HasValue &&
                                 s.FechaSeguimiento >= fechaInicio &&
-                                s.FechaSeguimiento <= fechaFin)
+                                s.FechaSeguimiento <= fin)
                     .ToListAsync(cancellationToken);
 
                 var reporte = new List<ReporteDinamicoEAPBDTO>();

@@ -1,4 +1,4 @@
-﻿using Core.Modelos.Common;
+using Core.Modelos.Common;
 
 namespace Core.Modelos
 {
@@ -24,5 +24,19 @@ namespace Core.Modelos
         public string? SexoIdSIVIGILA { get; set; }
         public DateTime? FechaDefuncion { get; set; }
         public DateTime? FechaDefuncionSIVIGILA { get; set; }
+
+        // KPI 3 — fuente datos (SIVIGILA / RUAF / BDUA / MIPRES)
+        public string? FuenteDatos { get; set; } = "SIVIGILA";
+
+        // KPI 7 — auto vs manual ("Automatica" | "Manual")
+        public string? ValidacionTipo { get; set; } = "Automatica";
+
+        // KPI 6 — tiempo resolución
+        public bool Resuelto { get; set; } = false;
+        public DateTime? FechaResolucion { get; set; }
+        public string? ResueltoPorUserId { get; set; }
+
+        // KPI 8 — reincidencia
+        public bool EsReincidente { get; set; } = false;
     }
 }

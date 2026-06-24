@@ -200,7 +200,12 @@ namespace Infra.Repositorios.Reportes
                             : string.Empty,
                         CuidadorEmail = nna.CuidadorEmail,
                         CuidadorTelefono = nna.CuidadorTelefono,
-                        Agente = await GetAgente(nna.Id)
+                        Agente = await GetAgente(nna.Id),
+                        EstadoNNAId = nna.estadoId,
+                        Estado = await _context.TPEstadoNNA
+                            .Where(e => e.Id == nna.estadoId)
+                            .Select(e => e.Nombre)
+                            .FirstOrDefaultAsync(cancellationToken)
                     };
                     reporte.Add(dto);
                 }

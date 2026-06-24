@@ -12,9 +12,9 @@ namespace MSNNA.Api.Controllers
         private readonly IReporteDinamicoEAPBService _service = service;
 
         [HttpGet]
-        public async Task<List<ReporteDinamicoEAPBDTO>> GetReporteDinamicoEAPBAsync(DateTime FechaInicial, DateTime FechaFinal)
+        public async Task<List<ReporteDinamicoEAPBDTO>> GetReporteDinamicoEAPBAsync(DateTime FechaInicial, DateTime FechaFinal, int? EAPB = null, string? Departamento = null)
         {
-            return await _service.GetReporteDinamicoEAPBAsync(FechaInicial, FechaFinal, cancellationToken: default);
+            return await _service.GetReporteDinamicoEAPBAsync(FechaInicial, FechaFinal, EAPB, Departamento, cancellationToken: default);
         }
     }
 }
