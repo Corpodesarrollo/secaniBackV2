@@ -82,10 +82,15 @@ namespace Infra.Repositorios
             var inicioSemana = hoy.AddDays(-7);
             var inicioSemanaAnterior = hoy.AddDays(-14);
 
+            // QA: dashboard contaba 24 vs listado 22 (RAFAEL+LAURA). Causa: UAs
+            // viejos (reasignados) quedan en BD pero dashboard los contaba. Filtrar
+            // ua.Activo + s.UsuarioId == ua.UsuarioId alinea con listado /gestion/seguimientos.
             var baseQuery = from ua in _context.UsuarioAsignados
                             join s in _context.Seguimientos on ua.SeguimientoId equals s.Id
                             join n in _context.NNAs on s.NNAId equals n.Id
                             where (string.IsNullOrEmpty(UsuarioID) || ua.UsuarioId == UsuarioID)
+                                  && ua.Activo
+                                  && s.UsuarioId == ua.UsuarioId
                                   && n.estadoId != 10
                             select new { NNAId = n.Id, ua.FechaAsignacion };
 
