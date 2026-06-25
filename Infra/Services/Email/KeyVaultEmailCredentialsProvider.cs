@@ -3,25 +3,33 @@ using Azure.Security.KeyVault.Secrets;
 using Core.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace Infra.Services.Email
 {
     /// <summary>
-    /// Lee credenciales SMTP desde Azure Key Vault via Managed Identity.
+    /// Lee credenciales SMTP desde Azure Key Vault via Managed Identity (ACS MinSalud).
     /// Activado por env var USE_AZURE_KEYVAULT=true.
     ///
-    /// Config requerida (env vars):
-    ///   KV_NAME            = nombre Key Vault (ej "kv-acs-sispro-e1-001")
-    ///   KV_SECRET_USER     = nombre secreto username (ej "sispro-username")
-    ///   KV_SECRET_PWD      = nombre secreto password (ej "sispro-key")
-    ///   SMTP_HOST          = ej "smtp.azurecomm.net"
-    ///   SMTP_PORT          = ej "587"
-    ///   SMTP_FROM_EMAIL    = ej "DoNotReply@sispro.gov.co"
+    /// Config requerida (env vars o appsettings):
+    ///   KV_NAME            nombre Key Vault. Ejemplos validados con MinSalud:
+    ///                        PROD:    kv-acs-sispro-e1
+    ///                        PREPROD: kv-acs-sispropreprod-e1
+    ///   KV_SECRET_USER     nombre secreto username.
+    ///                        PROD:    sisproacs-user
+    ///                        PREPROD: sispropreprodacs-user
+    ///   KV_SECRET_PWD      nombre secreto password (Access Key ACS).
+    ///                        PROD:    sisproacs-key
+    ///                        PREPROD: sispropreprodacs-key
+    ///   SMTP_HOST          smtp.azurecomm.net (default)
+    ///   SMTP_PORT          587 (default)
+    ///   SMTP_FROM_EMAIL    DoNotReply@sispro.gov.co (PROD) / DoNotReply@sispropreprod.gov.co (PREPROD)
     ///
     /// Requisitos infra:
     /// - App Service / VM con Managed Identity habilitada
     /// - RBAC "Key Vault Secrets User" sobre el Key Vault para el MI
-    /// - Secrets cache 5 min (KeyVaultSecretsCache) — evita golpear KV en cada send
+    /// - TLS 1.2 forzado (script ejemplo MinSalud lo exige; .NET 8 lo usa por default)
+    /// - Secrets cache 5 min para no golpear KV en cada send
     /// </summary>
     public class KeyVaultEmailCredentialsProvider : IEmailCredentialsProvider
     {
@@ -30,6 +38,13 @@ namespace Infra.Services.Email
         private static EmailCredentials? _cache;
         private static DateTime _cacheUntil = DateTime.MinValue;
         private static readonly SemaphoreSlim _gate = new(1, 1);
+
+        static KeyVaultEmailCredentialsProvider()
+        {
+            // Defensivo: scripts ejemplo MinSalud forzan TLS 1.2. .NET 8 ya lo usa
+            // pero algunos entornos legacy pueden tener override; aseguramos aqui.
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+        }
 
         public KeyVaultEmailCredentialsProvider(IConfiguration config, ILogger<KeyVaultEmailCredentialsProvider> logger)
         {
@@ -49,8 +64,8 @@ namespace Infra.Services.Email
                     return _cache;
 
                 var kvName = _config["KV_NAME"] ?? Environment.GetEnvironmentVariable("KV_NAME");
-                var secretUser = _config["KV_SECRET_USER"] ?? Environment.GetEnvironmentVariable("KV_SECRET_USER") ?? "sispro-username";
-                var secretPwd = _config["KV_SECRET_PWD"] ?? Environment.GetEnvironmentVariable("KV_SECRET_PWD") ?? "sispro-key";
+                var secretUser = _config["KV_SECRET_USER"] ?? Environment.GetEnvironmentVariable("KV_SECRET_USER") ?? "sisproacs-user";
+                var secretPwd = _config["KV_SECRET_PWD"] ?? Environment.GetEnvironmentVariable("KV_SECRET_PWD") ?? "sisproacs-key";
                 var smtpHost = _config["SMTP_HOST"] ?? Environment.GetEnvironmentVariable("SMTP_HOST") ?? "smtp.azurecomm.net";
                 var smtpPortStr = _config["SMTP_PORT"] ?? Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587";
                 var fromEmail = _config["SMTP_FROM_EMAIL"] ?? Environment.GetEnvironmentVariable("SMTP_FROM_EMAIL") ?? string.Empty;
