@@ -108,6 +108,18 @@ namespace Infra.Repositorios.Llamadas
             // Periodo inclusivo
             var fin = fechaFin.Date.AddDays(1).AddTicks(-1);
 
+            // Auto-recompute ResumenLlamadas desde Intentos. Antes habia que llamar
+            // /InicializarResumenLlamadas manualmente -> reporte salia vacio. El SP
+            // es idempotente (UPSERT) y rapido para volumenes esperados.
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync("EXEC ActualizarResumenDesdeIntentos");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"WARN ActualizarResumenDesdeIntentos fallo: {ex.Message}");
+            }
+
             var tiposFalla = await _context.TPTipoFallaLLamada
                 .Select(t => new { t.Id, t.Nombre })
                 .ToListAsync();
