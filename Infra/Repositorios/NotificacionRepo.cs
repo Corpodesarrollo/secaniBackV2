@@ -1,5 +1,6 @@
 ﻿using Core.DTOs;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Services;
 using Core.Modelos;
 using Core.Modelos.Identity;
 using Core.Request;
@@ -33,9 +34,14 @@ namespace Infra.Repositories
         private readonly SmtpClient clienteSmtp;
         private readonly string fromMail;
         private readonly ISeguimientoRepo _seguimientoRepo;
+        // Optional: si registrado en DI (feature/azure-acs-email branch), se usa para envios
+        // futuros via Key Vault. Si null, los métodos existentes siguen usando el clienteSmtp
+        // construido al startup desde EmailConfigurations (comportamiento EC2 actual).
+        private readonly IEmailCredentialsProvider? _credsProvider;
 
-        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env, ISeguimientoRepo seguimientoRepo)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env, ISeguimientoRepo seguimientoRepo, IEmailCredentialsProvider? credsProvider = null)
         {
+            _credsProvider = credsProvider;
             try
             {
                 _context = context;
@@ -1991,6 +1997,34 @@ namespace Infra.Repositories
             {
                 return new() { Estado = false, Descripcion = ex.Message };
             }
+        }
+
+        /// <summary>
+        /// Construye SmtpClient + FromEmail usando IEmailCredentialsProvider si esta
+        /// disponible (Azure stage con Key Vault), o cae a EmailConfigurations BD
+        /// (EC2 actual). Llamar en cada send para soportar rotacion sin reinicio.
+        /// MIGRACION PENDIENTE: reemplazar usos de this.clienteSmtp + this.fromMail
+        /// (lineas ~60, ~662) por (smtp, from) = await BuildSmtpAsync().
+        /// </summary>
+        private async Task<(SmtpClient? client, string fromEmail)> BuildSmtpAsync(CancellationToken ct = default)
+        {
+            if (_credsProvider != null)
+            {
+                var creds = await _credsProvider.GetAsync(ct);
+                if (creds != null)
+                {
+                    var smtp = new SmtpClient(creds.SmtpServer)
+                    {
+                        Port = creds.Port,
+                        Credentials = new NetworkCredential(creds.UserName, creds.Password),
+                        EnableSsl = creds.EnableSsl,
+                        Timeout = 15000
+                    };
+                    return (smtp, creds.FromEmail);
+                }
+            }
+            // Fallback comportamiento legacy
+            return (clienteSmtp, fromMail);
         }
     }
 }
