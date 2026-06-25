@@ -31,51 +31,21 @@ namespace Infra.Repositories
         private readonly IAdjuntosRepo _adjuntosRepo;
         private readonly IStorageService _storageService;
         private readonly IReportesSIVIGILARepo _reportesSIVIGILARepo;
-        private readonly SmtpClient clienteSmtp;
-        private readonly string fromMail;
         private readonly ISeguimientoRepo _seguimientoRepo;
-        // Optional: si registrado en DI (feature/azure-acs-email branch), se usa para envios
-        // futuros via Key Vault. Si null, los métodos existentes siguen usando el clienteSmtp
-        // construido al startup desde EmailConfigurations (comportamiento EC2 actual).
-        private readonly IEmailCredentialsProvider? _credsProvider;
+        // Provider obligatorio. DbEmailCredentialsProvider lee EmailConfigurations (EC2 legacy)
+        // o KeyVaultEmailCredentialsProvider lee Azure Key Vault (Azure Stage/Prod ACS).
+        // Selección por env var USE_AZURE_KEYVAULT en cada Program.cs.
+        private readonly IEmailCredentialsProvider _credsProvider;
 
-        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env, ISeguimientoRepo seguimientoRepo, IEmailCredentialsProvider? credsProvider = null)
+        public NotificacionRepo(ApplicationDbContext context, IAdjuntosRepo adjuntosRepo, IStorageService storageService, IReportesSIVIGILARepo reportesSIVIGILARepo, IWebHostEnvironment env, ISeguimientoRepo seguimientoRepo, IEmailCredentialsProvider credsProvider)
         {
             _credsProvider = credsProvider;
-            try
-            {
-                _context = context;
-                _adjuntosRepo = adjuntosRepo;
-                _storageService = storageService;
-                _reportesSIVIGILARepo = reportesSIVIGILARepo;
-                _seguimientoRepo = seguimientoRepo;
-                _env = env;
-
-                // Obtener configuraciones de correo
-                var emailConfigurations = _context.EmailConfigurations.ToList();
-
-                if (emailConfigurations.Count > 0)
-                {
-                    var emailConfiguration = emailConfigurations[0];
-                    // BUG-LZ 2026-06-20: SendGrid usa UserName="apikey". El remitente real
-                    // debe venir de FromEmail (Single Sender verificado). Fallback a UserName
-                    // si FromEmail no esta seteado (compatibilidad Gmail).
-                    fromMail = !string.IsNullOrWhiteSpace(emailConfiguration.FromEmail)
-                        ? emailConfiguration.FromEmail
-                        : emailConfiguration.UserName;
-                    clienteSmtp = new SmtpClient(emailConfiguration.SmtpServer)
-                    {
-                        Port = 587,
-                        Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                        EnableSsl = emailConfiguration.EnableSsl,
-                        Timeout = 15000
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            _context = context;
+            _adjuntosRepo = adjuntosRepo;
+            _storageService = storageService;
+            _reportesSIVIGILARepo = reportesSIVIGILARepo;
+            _seguimientoRepo = seguimientoRepo;
+            _env = env;
         }
 
         public async Task<List<GetNotificacionResponse>> GetNotificacionUsuario(string AgenteDestinoId)
@@ -648,36 +618,22 @@ namespace Infra.Repositories
                         };
                     }
 
-                    List<EmailConfiguration> emailConfigurations = _context.EmailConfigurations.ToList();
-
-                    if (emailConfigurations.Count == 0)
+                    // Antes: leia EmailConfigurations BD directo. Ahora: via provider
+                    // (DbProvider en EC2, KeyVaultProvider en Azure). Mismo guard de
+                    // "no hay config" pero abstraido tras IEmailCredentialsProvider.
+                    var (clienteSmtp, remitenteFromCreds) = await BuildSmtpAsync();
+                    if (clienteSmtp == null || string.IsNullOrWhiteSpace(remitenteFromCreds))
                     {
-                        // BUG-LZ-086: antes el codigo entraba al if Count>0 y, si la tabla estaba vacia,
-                        // saltaba el bloque silenciosamente y devolvia "enviado correctamente". Ahora
-                        // se reporta el motivo real para que el front muestre el error.
                         return new RespuestaResponse<string>()
                         {
                             Estado = false,
-                            Descripcion = "No hay configuracion SMTP cargada (tabla EmailConfigurations vacia).",
+                            Descripcion = "No hay configuracion SMTP disponible (provider no devolvio credenciales).",
                             Datos = null
                         };
                     }
 
                     {
-                        EmailConfiguration emailConfiguration = emailConfigurations[0];
-                        SmtpClient clienteSmtp = new(emailConfiguration.SmtpServer)
-                        {
-                            Port = 587, // Puerto SMTP
-                            Credentials = new NetworkCredential(emailConfiguration.UserName, emailConfiguration.Password),
-                            EnableSsl = emailConfiguration.EnableSsl, // Habilitar SSL
-                            Timeout = 15000 // BUG-LZ-056: default 100s cuelga UI; falla rápida con try/catch wrapper
-                        };
-
-                        // BUG-LZ 2026-06-20: usar FromEmail (si esta) para evitar mandar
-                        // con "apikey" cuando el provider es SendGrid.
-                        var remitente = !string.IsNullOrWhiteSpace(emailConfiguration.FromEmail)
-                            ? emailConfiguration.FromEmail
-                            : emailConfiguration.UserName;
+                        var remitente = remitenteFromCreds;
 
                         // Creación del mensaje de correo
                         MailMessage mensaje = new()
@@ -1001,7 +957,7 @@ namespace Infra.Repositories
             return listaCasos;
         }
 
-        public List<NotificacionResponse> GetNotificacionAlerta(long AlertaId)
+        public async Task<List<NotificacionResponse>> GetNotificacionAlerta(long AlertaId)
         {
             // BUG-LZ 2026-06-18: tabla expandida en /consultar-alertas siempre venia vacia
             // porque consultaba la tabla legacy "Notificacions". El flujo nuevo persiste los
@@ -1026,6 +982,10 @@ namespace Infra.Repositories
                     .Select(x => x.Id)
                     .ToList();
 
+            // Materializar fromMail antes del LINQ (EF no traduce await dentro de query).
+            var (_, smtpFromForList) = await BuildSmtpAsync();
+            var fromMailLocal = smtpFromForList ?? string.Empty;
+
             var nuevas = (from ne in _context.NotificacionesEntidad
                           join ent in _context.TPEAPB on ne.EntidadId equals ent.Id
                           where ne.AlertaSeguimientoId != null
@@ -1037,7 +997,7 @@ namespace Infra.Repositories
                               FechaNotificacion = ne.FechaEnvio,
                               AsuntoNotificacion = ne.Asunto,
                               Notificacion = ne.Mensaje,
-                              EmailDe = fromMail,
+                              EmailDe = fromMailLocal,
                               EmailPara = ne.EmailPara,
                               EmailConCopia = ne.EmailCC,
                               Firma = ne.Cierre,
@@ -1104,7 +1064,7 @@ namespace Infra.Repositories
 
         // Notificaciones de TODAS las alertas (snapshots) del seguimiento. Usado por el
         // historial del seguimiento para abrir el modal "Ver respuesta" con datos reales.
-        public List<NotificacionResponse> GetNotificacionSeguimiento(long SeguimientoId)
+        public async Task<List<NotificacionResponse>> GetNotificacionSeguimiento(long SeguimientoId)
         {
             var alertaIds = _context.AlertaSeguimientos
                 .Where(x => x.SeguimientoId == SeguimientoId)
@@ -1113,7 +1073,7 @@ namespace Infra.Repositories
             var all = new List<NotificacionResponse>();
             foreach (var id in alertaIds)
             {
-                all.AddRange(GetNotificacionAlerta(id));
+                all.AddRange(await GetNotificacionAlerta(id));
             }
             return all;
         }
@@ -1136,6 +1096,12 @@ namespace Infra.Repositories
             {
                 if (Body != null)
                 {
+                    // Build SMTP via provider (Azure KeyVault o BD segun USE_AZURE_KEYVAULT).
+                    // Local var en cada send => credenciales frescas si rotan en KV.
+                    var (smtpCliente, smtpFrom) = await BuildSmtpAsync();
+                    if (smtpCliente == null || string.IsNullOrWhiteSpace(smtpFrom))
+                        return "Configuracion SMTP no disponible";
+
                     // Configuración de Puppeteer (si es necesario)
                     await new BrowserFetcher().DownloadAsync();
 
@@ -1155,7 +1121,7 @@ namespace Infra.Repositories
                     // Creación del mensaje de correo
                     MailMessage mensaje = new()
                     {
-                        From = new MailAddress(fromMail),
+                        From = new MailAddress(smtpFrom),
                         Subject = Asunto,
                         Body = Body,
                         IsBodyHtml = true
@@ -1221,7 +1187,7 @@ namespace Infra.Repositories
                         mensaje.Attachments.Add(adjuntoPDF);
 
                     // Enviar el correo
-                    await clienteSmtp.SendMailAsync(mensaje);
+                    await smtpCliente.SendMailAsync(mensaje);
 
 
                     return "Correo enviado satisfactoriamente";
@@ -2000,31 +1966,23 @@ namespace Infra.Repositories
         }
 
         /// <summary>
-        /// Construye SmtpClient + FromEmail usando IEmailCredentialsProvider si esta
-        /// disponible (Azure stage con Key Vault), o cae a EmailConfigurations BD
-        /// (EC2 actual). Llamar en cada send para soportar rotacion sin reinicio.
-        /// MIGRACION PENDIENTE: reemplazar usos de this.clienteSmtp + this.fromMail
-        /// (lineas ~60, ~662) por (smtp, from) = await BuildSmtpAsync().
+        /// Construye SmtpClient + FromEmail desde IEmailCredentialsProvider.
+        /// Llamar en cada send para soportar rotacion sin reinicio (KV cache 5 min).
+        /// Si credenciales no disponibles retorna (null, null) y el caller debe
+        /// reportar error claro al usuario en vez de fallar silenciosamente.
         /// </summary>
-        private async Task<(SmtpClient? client, string fromEmail)> BuildSmtpAsync(CancellationToken ct = default)
+        private async Task<(SmtpClient? client, string? fromEmail)> BuildSmtpAsync(CancellationToken ct = default)
         {
-            if (_credsProvider != null)
+            var creds = await _credsProvider.GetAsync(ct);
+            if (creds == null) return (null, null);
+            var smtp = new SmtpClient(creds.SmtpServer)
             {
-                var creds = await _credsProvider.GetAsync(ct);
-                if (creds != null)
-                {
-                    var smtp = new SmtpClient(creds.SmtpServer)
-                    {
-                        Port = creds.Port,
-                        Credentials = new NetworkCredential(creds.UserName, creds.Password),
-                        EnableSsl = creds.EnableSsl,
-                        Timeout = 15000
-                    };
-                    return (smtp, creds.FromEmail);
-                }
-            }
-            // Fallback comportamiento legacy
-            return (clienteSmtp, fromMail);
+                Port = creds.Port,
+                Credentials = new NetworkCredential(creds.UserName, creds.Password),
+                EnableSsl = creds.EnableSsl,
+                Timeout = 15000
+            };
+            return (smtp, !string.IsNullOrWhiteSpace(creds.FromEmail) ? creds.FromEmail : creds.UserName);
         }
     }
 }
