@@ -84,6 +84,19 @@ builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Core.Authorization.PoliticasPermisos.RequiereCoordinadorAdmin, policy =>
+        policy.Requirements.Add(new Core.Authorization.RequiereRolRequirement(
+            Core.Authorization.PoliticasPermisos.RolesSispro.CoordinadorAdmin)));
+
+    options.AddPolicy(Core.Authorization.PoliticasPermisos.RequiereAgenteOAdmin, policy =>
+        policy.Requirements.Add(new Core.Authorization.RequiereRolRequirement(
+            Core.Authorization.PoliticasPermisos.RolesSispro.CoordinadorAdmin,
+            Core.Authorization.PoliticasPermisos.RolesSispro.AgenteSeguimiento)));
+});
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Core.Authorization.RequiereRolHandler>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),

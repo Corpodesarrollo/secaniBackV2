@@ -1,8 +1,10 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.CQRS.MSUsuariosyRoles.Commands.Role;
 using Core.CQRS.MSUsuariosyRoles.Queries.Role;
 using Core.DTOs.MSUsuariosyRoles;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -18,6 +20,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpPost("Create")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
 
         public async Task<ActionResult> CreateRoleAsync(RoleCreateCommand command)
@@ -41,6 +44,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpDelete("Delete/{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
         public async Task<IActionResult> DeleteRoleAsync(string id)
         {
@@ -51,6 +55,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpPut("Edit/{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
         public async Task<ActionResult> EditRole(string id, [FromBody] UpdateRoleCommand command)
         {
