@@ -62,6 +62,19 @@ builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Core.Authorization.PoliticasPermisos.RequiereCoordinadorAdmin, policy =>
+        policy.Requirements.Add(new Core.Authorization.RequiereRolRequirement(
+            Core.Authorization.PoliticasPermisos.RolesSispro.CoordinadorAdmin)));
+
+    options.AddPolicy(Core.Authorization.PoliticasPermisos.RequiereAgenteOAdmin, policy =>
+        policy.Requirements.Add(new Core.Authorization.RequiereRolRequirement(
+            Core.Authorization.PoliticasPermisos.RolesSispro.CoordinadorAdmin,
+            Core.Authorization.PoliticasPermisos.RolesSispro.AgenteSeguimiento)));
+});
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Core.Authorization.RequiereRolHandler>();
+
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 builder.Services.AddScoped(typeof(GenericRepository<NNAs>));
@@ -106,19 +119,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
 builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
 builder.Services.AddSingleton<IJob, AsignacionAutomaticaJob>();
-// SingletonJobFactory.NewJob resuelve por tipo concreto, no por IJob, asi que tambien
-// hay que registrar la clase como singleton accesible por su Type.
-builder.Services.AddSingleton<AsignacionAutomaticaJob>();
 
-// BUG-LZ 2026-06-20: la infraestructura Quartz estaba registrada pero ningun JobSchedule
-// se anyadia a DI -> IEnumerable<JobSchedule> llegaba vacio a QuartzHostedService y el
-// cron nunca corria. Default: cada noche 2am hora Colombia (America/Bogota).
-var cronAsignacion = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos")
-    ?? "0 0 2 * * ?";
-TimeZoneInfo tzBogota;
-try { tzBogota = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time"); }
-catch { try { tzBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota"); } catch { tzBogota = TimeZoneInfo.Utc; } }
-builder.Services.AddSingleton(new JobSchedule(typeof(AsignacionAutomaticaJob), cronAsignacion, tzBogota));
+var temporizadorAsignacionAutomatica = builder.Configuration.GetValue<string>("Quartz:AsignacionAutomaticaSeguimientos");
 
 builder.Services.AddHostedService<QuartzHostedService>();
 
@@ -136,10 +138,6 @@ builder.Services.AddCors(options =>
                 "http://192.168.110.11:8140",
                 "http://localhost:4200",
                 "https://localhost:4200",
-                "http://localhost:9110",
-                "https://localhost:9110",
-                "http://18.232.27.199:9110",
-                "http://localhost:15500",
                 "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
             .AllowAnyHeader()
             .AllowAnyMethod()

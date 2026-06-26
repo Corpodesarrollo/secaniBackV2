@@ -1,6 +1,8 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSTablasParametricas.Api.Controllers
@@ -67,6 +69,7 @@ namespace MSTablasParametricas.Api.Controllers
 
         // POST: api/TablaParametrica
         [HttpPost]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<ActionResult<TablaParametricaDTO>> Add([FromBody] TablaParametricaDTO tablaDTO)
         {
             if (tablaDTO == null)
@@ -78,6 +81,7 @@ namespace MSTablasParametricas.Api.Controllers
 
         // PUT: api/TablaParametrica/{id}
         [HttpPut("{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Update(string id, [FromBody] TablaParametricaDTO tablaDTO)
         {
             if (tablaDTO == null || tablaDTO.Id != id)
@@ -89,6 +93,7 @@ namespace MSTablasParametricas.Api.Controllers
 
         // DELETE: api/TablaParametrica/{id}
         [HttpDelete("{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Delete(string id)
         {
             var existingItem = await _nombreTablaParametricaService.GetByIdAsync(id);

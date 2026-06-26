@@ -48,6 +48,19 @@ builder.Services.AddCustomSwagger();
 
 builder.Services.AddCustomAuthentication(true);
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Core.Authorization.PoliticasPermisos.RequiereCoordinadorAdmin, policy =>
+        policy.Requirements.Add(new Core.Authorization.RequiereRolRequirement(
+            Core.Authorization.PoliticasPermisos.RolesSispro.CoordinadorAdmin)));
+
+    options.AddPolicy(Core.Authorization.PoliticasPermisos.RequiereAgenteOAdmin, policy =>
+        policy.Requirements.Add(new Core.Authorization.RequiereRolRequirement(
+            Core.Authorization.PoliticasPermisos.RolesSispro.CoordinadorAdmin,
+            Core.Authorization.PoliticasPermisos.RolesSispro.AgenteSeguimiento)));
+});
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Core.Authorization.RequiereRolHandler>();
+
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
 builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
@@ -78,8 +91,6 @@ builder.Services.AddScoped<ISeguimientoRepo, SeguimientoRepo>();
 builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
 
 // Add services to the container.
-builder.Services.AddHttpContextAccessor();
-
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
             ));
@@ -96,9 +107,6 @@ builder.Services.AddCors(options =>
             "http://192.168.110.11:8140",
             "http://localhost:4200",
             "https://localhost:4200",
-            "http://localhost:9110",
-            "https://localhost:9110",
-            "http://18.232.27.199:9110",
             "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()

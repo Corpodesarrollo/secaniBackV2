@@ -1,12 +1,12 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.CQRS.MSUsuariosyRoles.Commands.User;
 using Core.CQRS.MSUsuariosyRoles.Queries.User;
 using Core.DTOs.MSUsuariosyRoles;
 using Core.Interfaces.Repositorios;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
-using System.Text.Json;
 
 
 namespace MSAuthentication.Api.Controllers
@@ -15,62 +15,15 @@ namespace MSAuthentication.Api.Controllers
     {
         private readonly IMediator _mediator;
         private readonly IUsurioRepo _usurioRepo;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IConfiguration _configuration;
 
-        public UserController(IMediator mediator, IUsurioRepo usurioRepo, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public UserController(IMediator mediator, IUsurioRepo usurioRepo)
         {
             _mediator = mediator;
             _usurioRepo = usurioRepo;
-            _httpClientFactory = httpClientFactory;
-            _configuration = configuration;
-        }
-
-        // BUG-003: Consultar usuarios SISPRO con fallback a BD local
-        [HttpGet("GetAllFromSispro")]
-        public async Task<IActionResult> GetAllFromSispro([FromQuery] string? role = null)
-        {
-            var baseUrl = _configuration["SisproApi:BaseUrl"];
-            var apiKey = _configuration["SisproApi:ApiKey"];
-
-            if (!string.IsNullOrEmpty(baseUrl) && !string.IsNullOrEmpty(apiKey))
-            {
-                try
-                {
-                    var endpoint = string.IsNullOrEmpty(role)
-                        ? "api/UsuarioInstitucional/GetAllByApp"
-                        : $"api/UsuarioInstitucional/GetAllByRole?role={Uri.EscapeDataString(role)}";
-
-                    var client = _httpClientFactory.CreateClient();
-                    client.BaseAddress = new Uri(baseUrl);
-                    client.DefaultRequestHeaders.Add("ApiKey", apiKey);
-                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    client.Timeout = TimeSpan.FromSeconds(30);
-
-                    var response = await client.GetAsync(endpoint);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var json = await response.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrWhiteSpace(json))
-                        {
-                            using var doc = JsonDocument.Parse(json);
-                            return Ok(doc.RootElement.Clone());
-                        }
-                    }
-                    Console.WriteLine($"SISPRO API returned {(int)response.StatusCode}. Fallback to local DB.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"SISPRO API error: {ex.Message}. Fallback to local DB.");
-                }
-            }
-
-            // Fallback: retornar usuarios locales
-            var localUsers = await _mediator.Send(new GetAllUsersDetailsQuery());
-            return Ok(localUsers);
         }
 
         [HttpPost("Create")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
         public async Task<ActionResult> CreateUser(CreateUserCommand command)
         {
@@ -85,6 +38,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpDelete("Delete/{userId}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
         public async Task<IActionResult> DeleteUser(string userId)
         {
@@ -116,6 +70,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpPost("AssignRoles")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
 
         public async Task<ActionResult> AssignRoles(AssignUsersRoleCommand command)
@@ -125,6 +80,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpPut("EditUserRoles")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesDefaultResponseType(typeof(int))]
 
         public async Task<ActionResult> EditUserRoles(UpdateUserRolesCommand command)
@@ -143,29 +99,24 @@ namespace MSAuthentication.Api.Controllers
 
 
         [HttpPut("EditUserProfile/{id}")]
+        [ProducesDefaultResponseType(typeof(int))]
         public async Task<ActionResult> EditUserProfile(string id, [FromBody] EditUserProfileCommand command)
         {
-            if (id != command.Id) return BadRequest();
-            var result = await _mediator.Send(command);
-            if (result.Code == -1)
+            if (id == command.Id)
             {
-                return BadRequest(new { field = "estado", message = result.Message });
+                var result = await _mediator.Send(command);
+                return Ok(result);
             }
-            return Ok(result.Code);
+            else
+            {
+                return BadRequest();
+            }
         }
 
         [HttpGet("GetUserRole/{userId}")]
         public IActionResult GetUserRole(string userId)
         {
             var result = _usurioRepo.UltimoRolPorIdUsuario(userId);
-            return Ok(result);
-        }
-
-        // BUG-LZ-015: Coordinador lista agentes de seguimiento
-        [HttpGet("GetAgentesSeguimiento")]
-        public async Task<IActionResult> GetAgentesSeguimiento(CancellationToken cancellationToken)
-        {
-            var result = await _usurioRepo.GetAgentesSeguimientoAsync(cancellationToken);
             return Ok(result);
         }
 

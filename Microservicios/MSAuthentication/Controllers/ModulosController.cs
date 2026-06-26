@@ -1,6 +1,8 @@
-﻿using Core.Common;
+using Core.Authorization;
+using Core.Common;
 using Core.DTOs.MSPermisos;
 using Core.Services.MSPermisos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSAuthentication.Api.Controllers
@@ -33,6 +35,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Update(ModuloResponseDTO dto)
         {
             await _service.UpdateAsync(dto, cancellationToken: default);
@@ -40,6 +43,7 @@ namespace MSAuthentication.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Delete(int id)
         {
             var entity = await _service.GetByIdAsync(id, cancellationToken: default);

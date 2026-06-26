@@ -1,8 +1,10 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Modelos;
 using Core.Request;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -17,12 +19,14 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("CrearAlertaSeguimiento")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public string CrearAlerta([FromBody] CrearAlertaSeguimientoRequest request)
         {
             return alertaRepo.CrearAlertaSeguimiento(request);
         }
 
         [HttpPost("GestionarAlerta")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public string GestionarAlerta(GestionarAlertaRequest request)
         {
             return alertaRepo.GestionarAlerta(request);

@@ -1,7 +1,9 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -23,6 +25,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("PostIntento")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public ActionResult<int> PostIntento(PostIntentoRequest request)
         {
             var result = _intentoRepo.RepoInsertarIntento(request);
@@ -30,12 +33,14 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPut("PutIntentoActualizacionFecha")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public int PutIntentoActualizacionFecha(PutIntentoActualizacionFechaRequest request)
         {
             return _intentoRepo.RepoIntentoActualizacionFecha(request);
         }
 
         [HttpPut("PutIntentoUsuarioActualizacionUsuario")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public int PutIntentoUsuarioActualizacionUsuario(PutIntentoActualizacionUsuarioRequest request)
         {
             return _intentoRepo.RepoIntentoActualizacionUsuario(request);

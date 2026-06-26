@@ -1,4 +1,5 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.DTOs;
 using Core.Interfaces;
 using Core.Interfaces.Repositorios;
@@ -6,6 +7,7 @@ using Core.Modelos;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SISPRO.TRV.Web.MVCCore;
 
@@ -18,7 +20,7 @@ namespace Api.Controllers
         private INNAService _nNAService = service;
         private readonly TablaParametricaService tablaParametricaService = tablaParametrica;
 
-        [HttpGet("{id:long}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(long id)
         {
             var response = await _nNARepo.GetById(id);
@@ -26,6 +28,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("Crear")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<ActionResult<RespuestaResponse<NNADto>>> AddAsync(NNADto dto)
         {
             var user = this.GetUser();
@@ -33,6 +36,7 @@ namespace Api.Controllers
         }
 
         [HttpPut("Actualizar")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)
         {
             var user = this.GetUser();
@@ -90,6 +94,7 @@ namespace Api.Controllers
         * Seguimiento
         */
         [HttpPost("ActualizarNNASeguimiento")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public IActionResult ActualizarNNASeguimiento(NNASeguimientoRequest request)
         {
             _nNARepo.ActualizarNNASeguimiento(request);
@@ -112,37 +117,42 @@ namespace Api.Controllers
         }
 
         [HttpPost("SetResidenciaDiagnosticoTratamiento")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public void SetResidenciaDiagnosticoTratamiento(ResidenciaDiagnosticoTratamientoRequest request)
         {
             _nNARepo.SetResidenciaDiagnosticoTratamiento(request);
         }
 
         [HttpPost("SetDiagnosticoTratamiento")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public void SetDiagnosticoTratamiento(DiagnosticoTratamientoRequest request)
         {
             _nNARepo.SetDiagnosticoTratamiento(request);
         }
 
         [HttpPost("SetDificultadesProceso")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public void SetDificultadesProceso(DificultadesProcesoRequest request)
         {
             _nNARepo.SetDificultadesProceso(request);
         }
 
         [HttpPost("SetAdherenciaProceso")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public void SetAdherenciaProceso(AdherenciaProcesoRequest request)
         {
             _nNARepo.SetAdherenciaProceso(request);
         }
 
         [HttpPost("CasosAbiertos")]
-        public async Task<IActionResult> ConsultaCasosAbiertos(CasosAbiertosRequest request)
+        public IActionResult ConsultaCasosAbiertos(CasosAbiertosRequest request)
         {
-            var response = await _nNARepo.ConsultaCasosAbiertos(request);
+            var response = _nNARepo.ConsultaCasosAbiertos(request);
             return Ok(response);
         }
 
         [HttpPost("AsignacionManual")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public void AsignacionManual(AsignacionManualRequest request)
         {
             _nNARepo.AsignacionManual(request);
@@ -156,4 +166,3 @@ namespace Api.Controllers
         }
     }
 }
-
