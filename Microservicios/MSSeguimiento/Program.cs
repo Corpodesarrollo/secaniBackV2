@@ -138,6 +138,7 @@ builder.Services.AddCors(options =>
                 "http://192.168.110.11:8140",
                 "http://localhost:4200",
                 "https://localhost:4200",
+                "http://18.232.27.199:9110",
                 "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
             .AllowAnyHeader()
             .AllowAnyMethod()
