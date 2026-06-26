@@ -1,9 +1,11 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.DTOs;
 using Core.Interfaces.Repositorios;
 using Core.Request;
 using Core.response;
 using Core.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -37,12 +39,6 @@ namespace MSSeguimiento.Api.Controllers
             return response;
         }
 
-        [HttpGet("GetNotificationSeguimiento/{seguimientoId}")]
-        public List<NotificacionResponse> GetNotificationsSeguimiento(long seguimientoId)
-        {
-            return notificacionRepo.GetNotificacionSeguimiento(seguimientoId);
-        }
-
         [HttpGet("GetNumeroNotification/{AgenteDestinoId}")]
         public async Task<int> GetNumeroNotificationsAsync(string agenteDestinoId)
         {
@@ -50,6 +46,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("SetNotification")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> SetNotification(GetNotificacionResponse request)
         {
             var result = await notificacionRepo.SetNotificacion(request);
@@ -64,6 +61,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("OficioNotificacion")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> GenerarOficioNotificacion(OficioNotificacionRequest request)
         {
             var result = await notificacionRepo.GenerarOficioNotificacion(request);
@@ -71,12 +69,14 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("EliminarNotificacion")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public void EliminarNotificacion(EliminarNotificacionRequest request)
         {
             notificacionRepo.EliminarNotificacion(request);
         }
 
         [HttpPost("EnviarOficioNotificacion")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> EnviarOficioNotificacion(EnviarOficioNotifcacionRequest request)
         {
             var result = await notificacionRepo.EnviarOficioNotificacion(request);
@@ -91,6 +91,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("NotificacionRespuesta")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> NotificacionRespuesta([FromForm] NotificacionRespuestaDto data)
         {
             var result = await notificacionRepo.NotificacionRespuesta(data);
@@ -116,6 +117,7 @@ namespace MSSeguimiento.Api.Controllers
 
 
         [HttpPost("EnviarCorreo")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> EnviarCorreo([FromBody] CorreoRequest correoRequest)
         {
             if (correoRequest == null || string.IsNullOrEmpty(correoRequest.Body))
@@ -136,6 +138,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("NotificacionReporteSivigila")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> NotificacionReporteSivigila([FromBody] NotificacionSigivilaRequest request)
         {
 
@@ -145,6 +148,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("ProbarNotificacionReporteSivigila")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> ProbarEnvios()
         {
             await notificacionRepo.RevisarYEnviarNotificaciones();
@@ -153,6 +157,7 @@ namespace MSSeguimiento.Api.Controllers
 
 
         [HttpPost("NotificacionSolicitudSeguimiento")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<IActionResult> NotificacionSolicitudSeguimiento([FromBody] NotificacionSolicitudSeguimientoRequest request)
         {
 

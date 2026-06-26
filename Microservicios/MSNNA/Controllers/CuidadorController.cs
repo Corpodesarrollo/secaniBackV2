@@ -1,5 +1,7 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSNNA.Api.Controllers
@@ -7,6 +9,7 @@ namespace MSNNA.Api.Controllers
     public class CuidadorController(ICuidadorRepo repo) : BaseController
     {
         [HttpPut("SetCuidador/{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<ActionResult> SetUserCuidador(string id)
         {
             try

@@ -70,9 +70,6 @@ builder.Services.AddCors(options =>
             "http://192.168.110.11:8140",
             "http://localhost:4200",
             "https://localhost:4200",
-            "http://localhost:9110",
-            "https://localhost:9110",
-            "http://18.232.27.199:9110",
             "https://secani-cbabfpddahe6ayg9.eastus-01.azurewebsites.net")
                           .AllowAnyMethod()  // Esto incluye OPTIONS autom�ticamente
                           .AllowAnyHeader()
@@ -96,8 +93,6 @@ builder.Services.AddAuthorization(options =>
             Core.Authorization.PoliticasPermisos.RolesSispro.AgenteSeguimiento)));
 });
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Core.Authorization.RequiereRolHandler>();
-
-builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
@@ -123,7 +118,8 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 
 
 builder.CustomConfigureServices();
-builder.Services.AddHttpClient();
+builder.Services.AddScoped<Core.Interfaces.Repositorios.MSTablasParametricas.IHistoricoTransaccionRepository, Infra.Repositorios.MSTablasParametricas.HistoricoTransaccionRepository>();
+builder.Services.AddScoped<Core.Interfaces.Services.MSTablasParametricas.IHistoricoTransaccionService, Core.Services.MSTablasParametricas.HistoricoTransaccionService>();
 builder.Services.AddScoped<IPermisosRepo, PermisosRepo>();
 builder.Services.AddScoped<IPermisoRepository, PermisoRepository>();
 builder.Services.AddScoped<IFuncionalidadRepository, FuncionalidadRepository>();

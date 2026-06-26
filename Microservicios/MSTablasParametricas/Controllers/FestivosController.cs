@@ -1,8 +1,10 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.DTOs.MSTablasParametricas;
 using Core.Interfaces.MSTablasParametricas;
 using Core.Interfaces.Services.MSTablasParametricas;
 using Core.Modelos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -41,6 +43,7 @@ namespace MSTablasParametricas.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<ActionResult<FestivoDTO>> Add([FromBody] CreateFestivoRequest request, CancellationToken cancellationToken)
         {
             if (request.HoraInicio >= request.HoraFin)
@@ -67,6 +70,7 @@ namespace MSTablasParametricas.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateFestivoRequest request, CancellationToken cancellationToken)
         {
             if (id != request.Id)
@@ -99,6 +103,7 @@ namespace MSTablasParametricas.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Delete(long id, CancellationToken cancellationToken)
         {
             var entityAntes = await _service.GetByIdAsync(id, cancellationToken);

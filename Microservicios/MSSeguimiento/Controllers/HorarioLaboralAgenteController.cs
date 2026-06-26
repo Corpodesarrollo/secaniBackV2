@@ -1,5 +1,7 @@
-﻿using Core.DTOs.AusenciasUsuario;
+﻿using Core.Authorization;
+using Core.DTOs.AusenciasUsuario;
 using Core.Interfaces.Services.AusenciasUsuario;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MSSeguimiento.Api.Extensions;
 
@@ -23,6 +25,7 @@ namespace MSSeguimiento.Api.Controllers
         // Body: HorarioLaboralAgenteDto { userId, dia(0..6), horaEntrada, horaSalida, fecha(opc) }
         // ----------------------------------------------
         [HttpPost("guardar-dia")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(HorarioLaboralAgenteDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GuardarDiaAsync([FromBody] HorarioLaboralAgenteDto dto, CancellationToken ct)
@@ -47,6 +50,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("guardar-rango")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(IReadOnlyList<HorarioLaboralAgenteDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GuardarRangoAsync([FromBody] GuardarRangoRequest body, CancellationToken ct)
@@ -67,6 +71,7 @@ namespace MSSeguimiento.Api.Controllers
         // “Borra” el día poniendo 00:00–00:00
         // ----------------------------------------------
         [HttpDelete("eliminar-dia/{userId}/{dia:int}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> EliminarDiaAsync([FromRoute] string userId, [FromRoute] int dia, CancellationToken ct)
@@ -80,6 +85,7 @@ namespace MSSeguimiento.Api.Controllers
         // “Borra” el rango poniendo 00:00–00:00
         // ----------------------------------------------
         [HttpDelete("eliminar-rango/{userId}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(IReadOnlyList<HorarioLaboralAgenteDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> EliminarRangoAsync(

@@ -1,5 +1,7 @@
-﻿using Core.DTOs.AusenciasUsuario;
+﻿using Core.Authorization;
+using Core.DTOs.AusenciasUsuario;
 using Core.Interfaces.Services.AusenciasUsuario;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MSSeguimiento.Api.Extensions;
 
@@ -21,6 +23,7 @@ namespace MSSeguimiento.Api.Controllers
         /// Crea una ausencia. Reglas: Fecha futura (mínimo 1 día) y no duplicada por UsuarioId+Fecha.
         /// </summary>
         [HttpPost]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(AusenciaDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status409Conflict)]
@@ -37,6 +40,7 @@ namespace MSSeguimiento.Api.Controllers
         /// Actualiza una ausencia. (Opcional: puedes hacer cumplir regla de fecha futura en el repositorio)
         /// </summary>
         [HttpPut("{id:long}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(AusenciaDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status404NotFound)]
@@ -105,6 +109,7 @@ namespace MSSeguimiento.Api.Controllers
         /// Elimina definitivamente una ausencia por Id. Solo permitido si FechaAusencia es futura.
         /// </summary>
         [HttpDelete("{id:long}")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status404NotFound)]

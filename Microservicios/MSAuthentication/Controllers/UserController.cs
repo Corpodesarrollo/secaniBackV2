@@ -1,25 +1,30 @@
-﻿using Core.Authorization;
+using Core.Authorization;
 using Core.Common;
 using Core.CQRS.MSUsuariosyRoles.Commands.User;
 using Core.CQRS.MSUsuariosyRoles.Queries.User;
 using Core.DTOs.MSUsuariosyRoles;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Services.MSTablasParametricas;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 
 namespace MSAuthentication.Api.Controllers
 {
     public class UserController : BaseController
     {
+        private const string NombreTablaAudit = "Usuarios";
         private readonly IMediator _mediator;
         private readonly IUsurioRepo _usurioRepo;
+        private readonly IHistoricoTransaccionService _historico;
 
-        public UserController(IMediator mediator, IUsurioRepo usurioRepo)
+        public UserController(IMediator mediator, IUsurioRepo usurioRepo, IHistoricoTransaccionService historico)
         {
             _mediator = mediator;
             _usurioRepo = usurioRepo;
+            _historico = historico;
         }
 
         [HttpPost("Create")]
@@ -27,7 +32,9 @@ namespace MSAuthentication.Api.Controllers
         [ProducesDefaultResponseType(typeof(int))]
         public async Task<ActionResult> CreateUser(CreateUserCommand command)
         {
-            return Ok(await _mediator.Send(command));
+            var result = await _mediator.Send(command);
+            await GuardarAuditoria("Adicionar", anterior: null, nuevo: command);
+            return Ok(result);
         }
 
         [HttpGet("GetAll")]
@@ -43,6 +50,7 @@ namespace MSAuthentication.Api.Controllers
         public async Task<IActionResult> DeleteUser(string userId)
         {
             var result = await _mediator.Send(new DeleteUserCommand() { Id = userId });
+            await GuardarAuditoria("Eliminar", anterior: new { Id = userId }, nuevo: null);
             return Ok(result);
         }
 
@@ -76,6 +84,7 @@ namespace MSAuthentication.Api.Controllers
         public async Task<ActionResult> AssignRoles(AssignUsersRoleCommand command)
         {
             var result = await _mediator.Send(command);
+            await GuardarAuditoria("AsignarRoles", anterior: null, nuevo: command);
             return Ok(result);
         }
 
@@ -86,6 +95,7 @@ namespace MSAuthentication.Api.Controllers
         public async Task<ActionResult> EditUserRoles(UpdateUserRolesCommand command)
         {
             var result = await _mediator.Send(command);
+            await GuardarAuditoria("EditarRoles", anterior: null, nuevo: command);
             return Ok(result);
         }
 
@@ -105,6 +115,7 @@ namespace MSAuthentication.Api.Controllers
             if (id == command.Id)
             {
                 var result = await _mediator.Send(command);
+                await GuardarAuditoria("EditarPerfil", anterior: null, nuevo: command);
                 return Ok(result);
             }
             else
@@ -120,5 +131,35 @@ namespace MSAuthentication.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("Auditoria")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
+        public async Task<IActionResult> Auditoria(CancellationToken cancellationToken)
+        {
+            var historico = await _historico.GetHistoricoByTablaAsync(NombreTablaAudit, cancellationToken);
+            return Ok(historico);
+        }
+
+        private async Task GuardarAuditoria(string transaccion, object? anterior, object? nuevo)
+        {
+            try
+            {
+                var historico = new HistoricoTransaccion
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    NombreTabla = NombreTablaAudit,
+                    FechaTransaccion = DateTime.UtcNow,
+                    Transaccion = transaccion,
+                    UsuarioId = User?.Identity?.Name ?? "Sistema",
+                    RegistroAnterior = anterior != null ? JsonSerializer.Serialize(anterior) : string.Empty,
+                    RegistroNuevo = nuevo != null ? JsonSerializer.Serialize(nuevo) : string.Empty,
+                    Comentario = string.Empty
+                };
+                await _historico.GuardarHistoricoAsync(historico, cancellationToken: default);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"WARN audit Usuarios {transaccion} fallo: {ex.Message}");
+            }
+        }
     }
 }

@@ -1,7 +1,9 @@
-﻿using Core.Common;
+﻿using Core.Authorization;
+using Core.Common;
 using Core.DTOs;
 using Core.Interfaces;
 using Core.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MSSeguimiento.Api.Controllers
@@ -15,7 +17,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpGet("NotificacionEntidad/{idAlerta}")]
-        public Task<NotificacionEntidadDto?> NotificacionEntidad(int idAlerta)
+        public Task<NotificacionEntidadDto> NotificacionEntidad(int idAlerta)
         {
             return repo.GetNotificacionEntidad(idAlerta);
         }
@@ -27,6 +29,7 @@ namespace MSSeguimiento.Api.Controllers
         }
 
         [HttpPost("EnviarRespuesta")]
+        [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<RespuestaResponse<bool>> EnviarRespuesta(EnviarRespuestaDto dto)
         {
             return await repo.EnviarRespuesta(dto);

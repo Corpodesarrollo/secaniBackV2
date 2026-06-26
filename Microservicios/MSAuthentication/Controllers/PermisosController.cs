@@ -1,22 +1,27 @@
-﻿using Core.Authorization;
+using Core.Authorization;
 using Core.Common;
 using Core.DTOs.MSPermisos;
 using Core.Interfaces.Repositorios;
+using Core.Interfaces.Services.MSTablasParametricas;
 using Core.request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 
 namespace MSAuthentication.Api.Controllers
 {
     public class PermisosController : BaseController
     {
+        private const string NombreTablaAudit = "Permisos";
         private IPermisosRepo _service;
+        private readonly IHistoricoTransaccionService _historico;
 
 
-        public PermisosController(IPermisosRepo service)
+        public PermisosController(IPermisosRepo service, IHistoricoTransaccionService historico)
         {
             _service = service;
+            _historico = historico;
         }
 
         [HttpPost("MenuXRolId")]
@@ -82,11 +87,20 @@ namespace MSAuthentication.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("Auditoria")]
+        [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
+        public async Task<IActionResult> Auditoria(CancellationToken cancellationToken)
+        {
+            var historico = await _historico.GetHistoricoByTablaAsync(NombreTablaAudit, cancellationToken);
+            return Ok(historico);
+        }
+
         [HttpPost]
         [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Add(PermisoRequestDTO dto)
         {
             var (success, response) = await _service.AddAsync(dto, cancellationToken: default);
+            await GuardarAuditoria("Adicionar", anterior: null, nuevo: response);
             return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
         }
 
@@ -94,7 +108,9 @@ namespace MSAuthentication.Api.Controllers
         [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Update(PermisoResponseDTO dto)
         {
+            var antes = await _service.GetByIdAsync(dto.Id, cancellationToken: default);
             await _service.UpdateAsync(dto, cancellationToken: default);
+            await GuardarAuditoria("Actualizacion", anterior: antes, nuevo: dto, calcularCamposModificados: true);
             return NoContent();
         }
 
@@ -108,7 +124,33 @@ namespace MSAuthentication.Api.Controllers
                 return NotFound();
             }
             await _service.DeleteAsync(entity, cancellationToken: default);
+            await GuardarAuditoria("Eliminar", anterior: entity, nuevo: null);
             return NoContent();
+        }
+
+        private async Task GuardarAuditoria(string transaccion, object? anterior, object? nuevo, bool calcularCamposModificados = false)
+        {
+            try
+            {
+                var historico = new HistoricoTransaccion
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    NombreTabla = NombreTablaAudit,
+                    FechaTransaccion = DateTime.UtcNow,
+                    Transaccion = transaccion,
+                    UsuarioId = User?.Identity?.Name ?? "Sistema",
+                    RegistroAnterior = anterior != null ? JsonSerializer.Serialize(anterior) : string.Empty,
+                    RegistroNuevo = nuevo != null ? JsonSerializer.Serialize(nuevo) : string.Empty,
+                    Comentario = string.Empty
+                };
+                if (calcularCamposModificados)
+                    historico.Comentario = historico.ObtenerCamposModificados();
+                await _historico.GuardarHistoricoAsync(historico, cancellationToken: default);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"WARN audit Permisos {transaccion} fallo: {ex.Message}");
+            }
         }
     }
 }
