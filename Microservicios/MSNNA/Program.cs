@@ -82,6 +82,8 @@ builder.Services.AddScoped<INNARepo, NNARepo>();
 builder.Services.AddScoped<INNAService, NNAService>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IReportesSIVIGILARepo, ReportesSIVIGILARepo>();
+builder.Services.AddScoped<Core.Interfaces.Repositorios.MSTablasParametricas.IHistoricoTransaccionRepository, Infra.Repositorios.MSTablasParametricas.HistoricoTransaccionRepository>();
+builder.Services.AddScoped<Core.Interfaces.Services.MSTablasParametricas.IHistoricoTransaccionService, Core.Services.MSTablasParametricas.HistoricoTransaccionService>();
 builder.Services.AddScoped<IHelperRepo, HelperRepo>();
 builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddTransient<ICuidadorRepo, CuidadorRepo>();
