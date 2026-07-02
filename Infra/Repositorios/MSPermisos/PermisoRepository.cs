@@ -96,6 +96,17 @@ namespace Infra.Repositorios.MSPermisos
         public async Task<IList<Permisos>> GetPermisosByRoleandModulo(string RoleId, int ModuloId, CancellationToken cancellationToken)
         {
             var funcionalidades = await _context.TPModuloComponenteObjeto.Where(x => x.ModuloComponenteObjetoIdPadre == ModuloId).ToListAsync();
+
+            // Modulo hoja-padre (sin hijos): tratar modulo mismo como funcionalidad unica para que UI permisos lo pueda editar
+            if (!funcionalidades.Any())
+            {
+                var moduloSolo = await _context.TPModuloComponenteObjeto.FirstOrDefaultAsync(x => x.Id == ModuloId);
+                if (moduloSolo != null)
+                {
+                    funcionalidades = new List<TPModuloComponenteObjeto> { moduloSolo };
+                }
+            }
+
             var listaIds = funcionalidades.Select(m => m.Id).ToList();
 
             var permisosFiltrados = await _context.TPermisos
@@ -108,7 +119,8 @@ namespace Infra.Repositorios.MSPermisos
                 {
                     var permisoNuevo = new Permisos();
                     permisoNuevo.ModuloComponenteObjetoId = item.Id;
-                    permisoNuevo.FuncionalidadId = ModuloId;
+                    permisoNuevo.FuncionalidadId = 1; // VwMenu requiere Func=1 (MENU_PRINCIPAL). Antes asignaba ModuloId -> row inservible
+                    permisoNuevo.RoleId = RoleId; // sin esto front envia roleId=null al PUT y UpdateAsync inserta row sin rol
                     permisosFiltrados.Add(permisoNuevo);
                 }
             }

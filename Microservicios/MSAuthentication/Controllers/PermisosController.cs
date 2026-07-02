@@ -108,7 +108,10 @@ namespace MSAuthentication.Api.Controllers
         [Authorize(Policy = PoliticasPermisos.RequiereCoordinadorAdmin)]
         public async Task<IActionResult> Update(PermisoResponseDTO dto)
         {
-            var antes = await _service.GetByIdAsync(dto.Id, cancellationToken: default);
+            // dto.Id=0 cuando UpdateAsync hara INSERT (upsert BUG-LZ-023). Skip GetByIdAsync(0) que causa NPE.
+            var antes = dto.Id > 0
+                ? await _service.GetByIdAsync(dto.Id, cancellationToken: default)
+                : null;
             await _service.UpdateAsync(dto, cancellationToken: default);
             await GuardarAuditoria("Actualizacion", anterior: antes, nuevo: dto, calcularCamposModificados: true);
             return NoContent();

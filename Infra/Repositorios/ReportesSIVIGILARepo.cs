@@ -78,6 +78,12 @@ namespace Infra.Repositorios
                 var entity = GenericMapper.Map<ReportesSIVIGILADto, ReportesSIVIGILA>(data);
                 entity.Estado = 0;
                 entity.Id = 0;
+                // CreatedByUserId: priorizar UsuarioId enviado por front (Cuidador logueado).
+                // Sin SISPRO en EC2 el user de claims es vacio - sin esto quedaba "Sistema" hardcode.
+                var creatorId = !string.IsNullOrEmpty(data.UsuarioId) ? data.UsuarioId
+                                : !string.IsNullOrEmpty(user?.Alias) ? user.Alias
+                                : "Sistema";
+                entity.CreatedByUserId = creatorId;
                 var (success, response) = await _repository.AddAsync(entity);
 
                 if (success)

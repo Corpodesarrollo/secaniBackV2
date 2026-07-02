@@ -38,5 +38,6 @@ namespace Core.DTOs
         // Archivos adjuntos
         public UploadFileRequest? EvidenciaDiagnostico { get; set; }
         public UploadFileRequest? EvidenciaParentesco { get; set; }
+        public string? UsuarioId { get; set; }
     }
 }

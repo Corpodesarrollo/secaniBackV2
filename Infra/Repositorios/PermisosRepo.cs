@@ -233,6 +233,7 @@ namespace Infra.Repositories
             if (!_cache.TryGetValue(cacheKeyId, out PermisoResponseDTO entityDto))
             {
                 var entity = await _repository.GetByIdAsync(id, cancellationToken);
+                if (entity == null) return null; // sin esto entity.Id explotaba NPE
                 var (permiso, modulo, funcionalidad) = await _repository.GetPermisoWithFuncionalidadAndModuloById(entity.Id, cancellationToken);
                 entityDto = permiso.Adapt<PermisoResponseDTO>();
                 entityDto.Funcionalidad = funcionalidad;
@@ -266,9 +267,19 @@ namespace Infra.Repositories
             // BUG-LZ-023: si rol+modulo+funcionalidad no tiene registro previo, hacer INSERT (upsert).
             // El front consulta Permisos/GetByRoleandModuloId y la query devuelve filas virtuales con
             // id=0 cuando aun no existe permiso. PUT con id=0 antes fallaba silenciosamente.
-            var existing = entity.Id > 0
-                ? await _repository.GetByIdAsync(entity.Id, cancellationToken)
-                : null;
+            Permisos existing = null;
+            if (entity.Id > 0)
+            {
+                existing = await _repository.GetByIdAsync(entity.Id, cancellationToken);
+            }
+            // Fallback: aunque dto.Id=0, puede ya existir row por (RoleId+ModuloComponenteObjetoId).
+            // Sin esto generamos duplicados cada click GUARDAR si front no propaga el Id real.
+            if (existing == null && !string.IsNullOrEmpty(entity.RoleId) && entity.ModuloComponenteObjetoId.HasValue)
+            {
+                existing = _context.TPermisos.FirstOrDefault(p =>
+                    p.RoleId == entity.RoleId &&
+                    p.ModuloComponenteObjetoId == entity.ModuloComponenteObjetoId);
+            }
 
             if (existing == null)
             {

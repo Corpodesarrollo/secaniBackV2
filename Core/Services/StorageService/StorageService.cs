@@ -116,5 +116,22 @@ namespace Core.Services.StorageService
                 return [];
             }
         }
+
+        public async Task<List<string>> ListFilesAsync(string prefix)
+        {
+            try
+            {
+                var files = new List<string>();
+                await foreach (var blobItem in _containerClient.GetBlobsAsync(prefix: prefix))
+                    files.Add(blobItem.Name);
+
+                return files;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error al listar archivos prefix={prefix}: {ex.Message}");
+                return [];
+            }
+        }
     }
 }

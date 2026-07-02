@@ -8,6 +8,7 @@ using Core.Modelos.TablasParametricas;
 using Core.Request;
 using Core.Response;
 using Core.Services.MSTablasParametricas;
+using Core.Services.StorageService;
 using Infra.Repositories.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ namespace Infra.Repositorios
         private readonly INotificacionRepo _notificacionRepo;
         private readonly ISeguimientoRepo _seguimientoRepo;
         private readonly ICurrentUserProvider _currentUserProvider;
+        private readonly IStorageService _storageService;
         private readonly User _user;
 
         public NNARepo(
@@ -39,7 +41,8 @@ namespace Infra.Repositorios
             IEAPBRepo eapbRepo,
             IIpsRepo ipsRepo,
             INotificacionRepo notificacionRepo,
-            ICurrentUserProvider currentUserProvider
+            ICurrentUserProvider currentUserProvider,
+            IStorageService storageService
             )
         {
             _context = context;
@@ -50,6 +53,7 @@ namespace Infra.Repositorios
             _currentUserProvider = currentUserProvider;
             _eapbRepo = eapbRepo;
             _ipsRepo = ipsRepo;
+            _storageService = storageService;
             _user = _currentUserProvider.CurrentUser;
         }
 
@@ -2078,5 +2082,142 @@ namespace Infra.Repositorios
             }
         }
 
+        // HU RQ07-HU08 (EAPB) + RQ09-HU10 (ET): listar casos pendientes reportar SIVIGILA.
+        // FUENTE: ReportesSIVIGILA (los reportes hechos por cuidadores/externos via flujo
+        // "Solicitar seguimiento") con Estado=0 (pendiente). Los NNAs validados que ya tienen
+        // FechaNotificacionSIVIGILA=NULL no se incluyen aqui - esos son casos creados por agente,
+        // no por reportante externo.
+        // Filtros opcionales: eapbId (EAPB del usuario), municipioId (municipio), departamentoId (prefix DANE).
+        public async Task<List<NNAPendienteSivigilaDto>> GetPendientesSivigila(int? eapbId, string? municipioId, string? departamentoId)
+        {
+            var q = from r in _context.ReportesSIVIGILA
+                    where r.Estado == 0 && r.IsDeleted == false
+                    join e in _context.TPEAPB on r.Aseguradora equals e.Id into eJ
+                    from e in eJ.DefaultIfEmpty()
+                    join m in _context.BiStgMunicipio on r.MunicipioProcedenciaId equals m.COD_MUNICIPIO into mJ
+                    from m in mJ.DefaultIfEmpty()
+                    select new
+                    {
+                        r.Id,
+                        r.TipoIdentificacionId,
+                        r.NumeroIdentificacion,
+                        r.PrimerNombre,
+                        r.SegundoNombre,
+                        r.PrimerApellido,
+                        r.SegundoApellido,
+                        r.FechaNacimiento,
+                        r.SexoId,
+                        r.TieneDiagnostico,
+                        r.Aseguradora,
+                        r.MunicipioProcedenciaId,
+                        r.DateCreated,
+                        r.CreatedByUserId,
+                        EAPBNombre = e != null ? e.Nombre : null,
+                        MunicipioNombre = m != null ? m.Municipio : null
+                    };
+
+            if (eapbId.HasValue) q = q.Where(x => x.Aseguradora == eapbId.Value);
+            if (!string.IsNullOrEmpty(municipioId)) q = q.Where(x => x.MunicipioProcedenciaId == municipioId);
+            // ET filtra por departamento (prefix codigo DANE 2 digitos) -> ve toda su jurisdiccion
+            if (!string.IsNullOrEmpty(departamentoId)) q = q.Where(x => x.MunicipioProcedenciaId != null && x.MunicipioProcedenciaId.StartsWith(departamentoId));
+
+            var reportes = await q.OrderByDescending(x => x.Id).ToListAsync();
+
+            // Resolver datos Reportante (Cuidador) via AspNetUsers por CreatedByUserId (Alias)
+            var aliases = reportes
+                .Where(x => !string.IsNullOrEmpty(x.CreatedByUserId) && x.CreatedByUserId != "Sistema")
+                .Select(x => x.CreatedByUserId!)
+                .Distinct()
+                .ToList();
+            var reportantesData = aliases.Any()
+                ? await _context.Users
+                    .Where(u => aliases.Contains(u.Id) || aliases.Contains(u.Alias!))
+                    .Select(u => new ReportanteInfo(u.Id, u.Alias, u.FullName, u.Email, u.PhoneNumber))
+                    .ToListAsync()
+                : new List<ReportanteInfo>();
+            // CreatedByUserId puede ser Id o Alias - indexar por ambos para hit garantizado
+            var reportantesMap = new Dictionary<string, ReportanteInfo>();
+            foreach (var u in reportantesData)
+            {
+                if (!string.IsNullOrEmpty(u.Id) && !reportantesMap.ContainsKey(u.Id)) reportantesMap[u.Id] = u;
+                if (!string.IsNullOrEmpty(u.Alias) && !reportantesMap.ContainsKey(u.Alias)) reportantesMap[u.Alias] = u;
+            }
+
+            // Celular real del cuidador vive en ContactosAdicionalesCuidador.Tipo="celular_principal" (mi-perfil-cuidador)
+            var userIds = reportantesData.Select(u => u.Id!).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
+            var celularesMap = userIds.Any()
+                ? (await _context.ContactosAdicionalesCuidador
+                    .Where(c => userIds.Contains(c.UserId!) && c.Tipo == "celular_principal" && !c.IsDeleted)
+                    .Select(c => new { c.UserId, c.Valor })
+                    .ToListAsync())
+                    .GroupBy(c => c.UserId!)
+                    .ToDictionary(g => g.Key, g => g.First().Valor)
+                : new Dictionary<string, string?>();
+
+            // Blob lookups 1 vez por tipo prefix
+            var diagnosticosBlobs = await _storageService.ListFilesAsync("RS-EvidenciaDiagnostico-");
+            var parentescosBlobs = await _storageService.ListFilesAsync("RS-EvidenciaParentesco-");
+
+            string? FindArchivo(List<string> blobs, long reporteId)
+            {
+                var prefix = $"RS-Evidencia{(blobs == diagnosticosBlobs ? "Diagnostico" : "Parentesco")}-{reporteId}-";
+                return blobs.FirstOrDefault(b => b.StartsWith(prefix));
+            }
+
+            return reportes.Select((r, i) =>
+            {
+                var reportanteKey = r.CreatedByUserId;
+                ReportanteInfo? rep = !string.IsNullOrEmpty(reportanteKey) && reportanteKey != "Sistema" && reportantesMap.TryGetValue(reportanteKey, out var found)
+                    ? found
+                    : null;
+
+                return new NNAPendienteSivigilaDto
+                {
+                    Id = r.Id,
+                    NoCaso = i + 1,
+                    TipoIdentificacionId = r.TipoIdentificacionId,
+                    NumeroIdentificacion = r.NumeroIdentificacion,
+                    NombreNnaCompleto = string.Join(" ", new[] { r.PrimerNombre, r.SegundoNombre, r.PrimerApellido, r.SegundoApellido }.Where(s => !string.IsNullOrWhiteSpace(s))),
+                    DiagnosticoSiNo = (r.TieneDiagnostico ?? false) ? "Si" : "No",
+                    IdContacto = null,
+                    NombreReportanteCompleto = rep?.FullName ?? (r.CreatedByUserId != "Sistema" ? r.CreatedByUserId : "Reportado por usuario externo"),
+                    Aseguradora = r.EAPBNombre,
+                    EAPBId = r.Aseguradora,
+                    Municipio = r.MunicipioNombre,
+                    MunicipioId = r.MunicipioProcedenciaId,
+                    FechaConsultaOrigenReporte = r.DateCreated,
+                    IdReporteSivigila = (int)r.Id,
+                    ArchivoDiagnostico = FindArchivo(diagnosticosBlobs, r.Id),
+                    ArchivoParentesco = FindArchivo(parentescosBlobs, r.Id),
+                    FechaNacimientoNNA = r.FechaNacimiento,
+                    SexoNNA = r.SexoId,
+                    NombreReportante = rep?.FullName,
+                    EmailReportante = rep?.Email,
+                    CelularReportante = (rep != null && celularesMap.TryGetValue(rep.Id!, out var cel) ? cel : null) ?? rep?.PhoneNumber,
+                    AliasReportante = rep?.Alias ?? (r.CreatedByUserId == "Sistema" ? null : r.CreatedByUserId),
+                    // Parse Alias "CC9000000003" -> TipoId="CC" + NumeroId="9000000003"
+                    TipoIdReportante = ParseTipoFromAlias(rep?.Alias),
+                    NumeroIdReportante = ParseNumeroFromAlias(rep?.Alias)
+                };
+            }).ToList();
+        }
+
+        // Helpers para descomponer Alias formato {TIPO}{NUMERO} (CC9000000003, TI1234, etc)
+        private static readonly System.Text.RegularExpressions.Regex _aliasRegex = new(@"^(CC|TI|CE|RC|PA|MS|AS|PE)(\d+)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        private static string? ParseTipoFromAlias(string? alias)
+        {
+            if (string.IsNullOrEmpty(alias)) return null;
+            var m = _aliasRegex.Match(alias);
+            return m.Success ? m.Groups[1].Value.ToUpperInvariant() : null;
+        }
+        private static string? ParseNumeroFromAlias(string? alias)
+        {
+            if (string.IsNullOrEmpty(alias)) return null;
+            var m = _aliasRegex.Match(alias);
+            return m.Success ? m.Groups[2].Value : null;
+        }
     }
+
+    // record auxiliar para lookup reportante - anonymous types fallaban con dynamic cross-assembly
+    public record ReportanteInfo(string? Id, string? Alias, string? FullName, string? Email, string? PhoneNumber);
 }

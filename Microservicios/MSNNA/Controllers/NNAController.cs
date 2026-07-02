@@ -35,6 +35,15 @@ namespace Api.Controllers
             return await _nNAService.AddAsync(dto, user);
         }
 
+        // HU RQ07-HU08 (EAPB) + RQ09-HU10 (ET): listar NNAs sin reporte SIVIGILA
+        // eapbId: filtra EAPB del usuario. municipioId: filtra municipio exacto. departamentoId: filtra prefix codigo DANE (ET jurisdiccion)
+        [HttpGet("PendientesSivigila")]
+        public async Task<IActionResult> PendientesSivigila([FromQuery] int? eapbId, [FromQuery] string? municipioId, [FromQuery] string? departamentoId)
+        {
+            var result = await _nNARepo.GetPendientesSivigila(eapbId, municipioId, departamentoId);
+            return Ok(result);
+        }
+
         [HttpPut("Actualizar")]
         [Authorize(Policy = PoliticasPermisos.RequiereAgenteOAdmin)]
         public async Task<(bool, NNAs?)> UpdateAsync(NNADto dto)

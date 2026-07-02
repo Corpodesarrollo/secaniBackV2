@@ -34,5 +34,6 @@ namespace Core.Interfaces.Repositorios
         Task ActualizarFallecido(NNADto data);
         Task AsignacionManual(AsignacionManualRequest request);
         Task CrearSeguimientoInicialNNA(long nnaId, long? contactoNNAId, string? telefono, string? userId);
+        Task<List<NNAPendienteSivigilaDto>> GetPendientesSivigila(int? eapbId, string? municipioId, string? departamentoId);
     }
 }
