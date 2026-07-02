@@ -65,6 +65,14 @@ builder.Services.AddScoped(typeof(GenericRepository<>));
 
 builder.Services.AddScoped<IAdjuntosRepo, AdjuntosRepo>();
 builder.Services.AddScoped<IStorageService, StorageService>();
+
+// Email credentials provider: KeyVault si env var USE_AZURE_KEYVAULT=true, sino BD (EC2 default)
+var useAzureKv = (Environment.GetEnvironmentVariable("USE_AZURE_KEYVAULT") ?? "false").Trim().ToLower() == "true";
+if (useAzureKv)
+    builder.Services.AddSingleton<Core.Interfaces.Services.IEmailCredentialsProvider, Infra.Services.Email.KeyVaultEmailCredentialsProvider>();
+else
+    builder.Services.AddScoped<Core.Interfaces.Services.IEmailCredentialsProvider, Infra.Services.Email.DbEmailCredentialsProvider>();
+
 builder.Services.AddScoped<INotificacionRepo, NotificacionRepo>();
 
 
